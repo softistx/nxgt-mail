@@ -1,0 +1,16 @@
+{
+	"verifyEmail": {
+		"subject": "Confirm your e-mail address",
+		"title": "One step left",
+		"body": "Hello {name}, confirm this address to finish signing up.",
+		"action": "Confirm my address",
+		"expires": "This link expires in {hours, plural, one {# hour} other {# hours}}."
+	},
+	"order": {
+		"summary": "{count, plural, =0 {No items} one {One item} other {# items}}, {total, number, ::currency/EUR}.",
+		"placedAt": "Placed on {at, date, long} at {at, time, short}.",
+		"shipping": "{method, select, express {Express delivery} other {Standard delivery}}",
+		"rank": "Your {position, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} order.",
+		"markup": "Keep <b>this</b> & that as text."
+	}
+}
