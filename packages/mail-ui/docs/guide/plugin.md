@@ -173,6 +173,12 @@ the directory `maizzle` runs in — run it from the project root. The keys of
 `t` are typed by `@nxgt/mail-i18n`'s own generated file: see its guide,
 [Editor and type checking](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-i18n/docs/guide/editor.md).
 
+A project that sets Maizzle's `root`, or a Laravel project (whose types
+Maizzle writes to `resources/js/types/maizzle`), must include the
+`.maizzle/*.d.ts` of the folder `maizzle` runs in itself. If the editor says
+`Property 'brand' does not exist`, see
+[the troubleshooting entry](../troubleshooting.md#the-editor-says-property-brand-does-not-exist-in-a-template).
+
 ## Replacing a component
 
 A file in your project's `components/` named like one of ours replaces it, in

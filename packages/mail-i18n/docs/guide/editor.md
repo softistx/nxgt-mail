@@ -105,12 +105,21 @@ declare module 'vue' {
 // exported from '@nxgt/mail-i18n'
 interface TemplateMessages {} // filled by the generated file
 type TemplateKey = [keyof TemplateMessages] extends [never] ? string : keyof TemplateMessages;
-type TemplateArgs<K> = K extends keyof TemplateMessages
-	? keyof TemplateMessages[K] extends never
-		? [args?: Readonly<Record<string, never>>] // a message with no argument
-		: [args: Readonly<TemplateMessages[K]>] // required, exactly these
-	: [args?: MessageArgs]; // before the file exists
+// simplified: the two checks in capitals are spelled out in the package
+type TemplateArgs<K> = [K] extends [keyof TemplateMessages]
+	? SAME_ARGUMENT_NAMES<K> extends true // every message K may be
+		? NO_ARGUMENT<K> extends true
+			? [args?: Readonly<Record<string, never>>] // a message with no argument
+			: [args: Readonly<TemplateMessages[K]>] // required, exactly these
+		: [args: never] // messages with different arguments: no call fits
+	: [args?: MessageArgs]; // while no key is declared
 ```
+
+A key that may be one of several messages, as
+`t(ok ? 'verifyEmail.greeting' : 'verifyEmail.subject', { name })`, compiles
+when every one of them uses the same argument names, and takes arguments all
+of them accept. Otherwise no call fits: the build refuses an argument a
+message does not use, and one it leaves out.
 
 Each kind of argument, as the catalogue declares it, takes:
 
@@ -132,10 +141,19 @@ fails the build — see
 [a placeholder as an argument](templates.md#a-placeholder-as-an-argument).
 
 **Without the file** — before the first `maizzle prepare`, or with a
-`tsconfig.json` that leaves `.maizzle/*.d.ts` out — `TemplateMessages` is
-empty and `t` takes any string with any arguments, as a plain
-`t(key: string, args?: MessageArgs)`. Nothing is flagged in the editor; the
-build still checks every call.
+`tsconfig.json` that leaves `.maizzle/*.d.ts` out — nothing in the program
+loads `@nxgt/mail-i18n`, so the template checker does not know `t`, `locale`
+or `placeholder` at all: `Property 't' does not exist on type
+'ComponentPublicInstance<…>'`. The build is not affected; see
+[the troubleshooting entry](../troubleshooting.md#the-editor-says-property-t-does-not-exist-in-a-template-or-completes-no-key).
+With the file but catalogues that declare no key, `t` takes any string with
+any arguments, as a plain `t(key: string, args?: MessageArgs)`.
+
+**Only where Maizzle's starter keeps its types.** The file goes to
+`.maizzle/` in the folder Maizzle runs from. A project that sets Maizzle's
+`root`, or a Laravel project (whose types Maizzle writes to
+`resources/js/types/maizzle`), must include that `.maizzle/*.d.ts` in its
+`tsconfig.json` itself.
 
 ## In CI
 

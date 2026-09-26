@@ -54,7 +54,8 @@ declare module 'vue' {
 
 `TemplateKey` is a key of your catalogues, and `TemplateArgs<K>` its
 arguments, once the plugin has written their types — see
-[Editor and type checking](editor.md). Before that, `t` takes any string.
+[Editor and type checking](editor.md). Before that, the template checker does
+not know `t` at all; the build is not affected.
 
 A component used by the template sees them too: they are global, and they
 hold the locale being built.

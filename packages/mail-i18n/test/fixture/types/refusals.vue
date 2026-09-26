@@ -5,7 +5,7 @@
   moment the directive goes unused. The calls that must keep compiling are
   here too, unmarked.
 
-  Five plausible mistakes, five refused.
+  Seven plausible mistakes, seven refused.
 -->
 <template>
   <!-- Must keep compiling. -->
@@ -13,6 +13,7 @@
   <p>{{ t('verifyEmail.greeting', { name: placeholder('name') }) }}</p>
   <p>{{ t('verifyEmail.expires', { minutes: 15 }) }}</p>
   <p>{{ t('verifyEmail.sentOn', { at: new Date(0) }) }} {{ locale }}</p>
+  <p>{{ t(locale === 'fr' ? 'verifyEmail.title' : 'verifyEmail.action') }}</p>
 
   <!-- 1. A key the catalogues do not have. -->
   <!-- @vue-expect-error -->
@@ -33,4 +34,12 @@
   <!-- 5. A key written in snake_case: every key is camelCase. -->
   <!-- @vue-expect-error -->
   {{ t('verify_email.title') }}
+
+  <!-- 6. A key that may be a message without arguments or one with. -->
+  <!-- @vue-expect-error -->
+  {{ t(locale === 'fr' ? 'verifyEmail.title' : 'verifyEmail.expires') }}
+
+  <!-- 7. The same, given the arguments of only one of them. -->
+  <!-- @vue-expect-error -->
+  {{ t(locale === 'fr' ? 'verifyEmail.greeting' : 'verifyEmail.expires', { minutes: 1 }) }}
 </template>

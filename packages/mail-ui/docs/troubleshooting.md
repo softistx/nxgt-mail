@@ -48,6 +48,7 @@ The samples below use the locales `en` and `fr`, the template
 - [A project's own component does not replace the package's](#a-projects-own-component-does-not-replace-the-packages)
 - [An element placed directly in `NxCard` breaks the card](#an-element-placed-directly-in-nxcard-breaks-the-card)
 - [`class="mb-0"` leaves the space under an `NxAlert`, `NxBanner`, `NxCard` or `NxCode`](#classmb-0-leaves-the-space-under-an-nxalert-nxbanner-nxcard-or-nxcode)
+- [The editor says `Property 'brand' does not exist` in a template](#the-editor-says-property-brand-does-not-exist-in-a-template)
 - [A bug in `@nxgt/mail-ui` itself](#a-bug-in-nxgtmail-ui-itself)
 
 ---
@@ -413,6 +414,32 @@ styles the box; the space below is on the table around it.
 change its outer `mb-4` — see
 [Replacing a component](guide/plugin.md#replacing-a-component). On
 `NxTypography` and `NxSummaryData`, `class="mb-0"` works.
+
+### The editor says `Property 'brand' does not exist` in a template
+
+`Property 'brand' does not exist on type 'ComponentPublicInstance<…>'`, in
+the editor or in `vue-tsc`. The build is not affected: `brand` is there when
+Maizzle renders.
+
+**When:** editing a template, in an editor with Vue's language tools, or in
+`vue-tsc`.
+**Why:** the type of `brand` reaches the templates through
+`.maizzle/nxgt-mail-ui.d.ts`, which `ui()` writes each time the config loads.
+Either it has not been written yet — a fresh clone, before any
+`maizzle prepare`, `serve` or `build` — or your `tsconfig.json` does not
+include `.maizzle/*.d.ts`. A project that sets Maizzle's `root`, or a Laravel
+project, has its `.maizzle/` elsewhere: include that one.
+**Fix:** keep the starter's include and write the file once:
+
+```json
+{ "include": ["**/*.vue", ".maizzle/*.d.ts"] }
+```
+
+```sh
+bunx maizzle prepare
+```
+
+See [Typed in the editor and in CI](guide/plugin.md#typed-in-the-editor-and-in-ci).
 
 ### A bug in `@nxgt/mail-ui` itself
 

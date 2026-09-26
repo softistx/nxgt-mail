@@ -10,5 +10,5 @@
 		"skipLibCheck": true
 	},
 	"exclude": ["node_modules", "dist"],
-	"include": ["emails/**/*.vue", ".maizzle/*.d.ts"]
+	"include": ["emails/**/*.vue", "types/**/*.vue", ".maizzle/*.d.ts"]
 }

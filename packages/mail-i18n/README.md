@@ -344,8 +344,9 @@ bunx vue-tsc --noEmit   # after maizzle prepare, as in CI
 The types come from the fallback locale's catalogue, merged with the
 `catalogues` option, and refresh on the next config load: saving a catalogue
 under `maizzle serve`, or running `maizzle prepare` or `maizzle build`.
-Without the generated file, `t` takes any string, and only the build checks
-it. See [Editor and type checking](docs/guide/editor.md).
+Without the generated file, the template checker does not know `t`,
+`locale` or `placeholder` at all (`Property 't' does not exist`); the build is
+not affected. See [Editor and type checking](docs/guide/editor.md).
 
 ## Traps
 
@@ -411,7 +412,7 @@ which fails the typecheck the moment it stops holding:
 The same file holds the calls that must keep compiling: a refusal that refuses
 the correct call is a bug.
 
-**5 template mistakes, 5 refused** by the types generated from the
+**7 template mistakes, 7 refused** by the types generated from the
 catalogues, each measured by a `@vue-expect-error` in
 [`test/fixture/types/refusals.vue`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-i18n/test/fixture/types/refusals.vue),
 checked by `vue-tsc` after `maizzle prepare` (`bun run typecheck:templates`):
@@ -421,6 +422,9 @@ checked by `vue-tsc` after `maizzle prepare` (`bun run typecheck:templates`):
 3. An argument the message does not use.
 4. A plural's count given as a placeholder, which is text.
 5. A key written in `snake_case` (`t('verify_email.title')`).
+6. A key that may be a message without arguments or one with
+   (`t(ok ? 'verifyEmail.title' : 'verifyEmail.expires')`).
+7. The same, given the arguments of only one of them.
 
 The same file holds the template calls that must keep compiling. The build
 still checks every call against every locale's catalogue; the types report

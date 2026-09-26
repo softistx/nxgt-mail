@@ -59,11 +59,7 @@ no dates here, and the version something shipped in is the only number.
 
 ## Later
 
-- **Typed message keys** — `t('verifyEmail.titel')` a compile error in the
-  editor, not only a build failure, from a typing generated out of the
-  catalogues. An open question, not yet decided.
-
-A request is welcome as an
+Nothing yet. A request is welcome as an
 [issue](https://github.com/softistx/nxgt-mail/issues).
 
 ## Not planned

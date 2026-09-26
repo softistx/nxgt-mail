@@ -204,7 +204,9 @@ bunx vue-tsc --noEmit   # after maizzle prepare, as in CI
 
 `t`, `locale` and `placeholder` are typed by `@nxgt/mail-i18n`, which writes
 its own file beside this one. See
-[`brand` in templates](docs/guide/plugin.md#brand-in-templates).
+[`brand` in templates](docs/guide/plugin.md#brand-in-templates), and
+[`Property 'brand' does not exist`](docs/troubleshooting.md#the-editor-says-property-brand-does-not-exist-in-a-template)
+if the editor does not know `brand`.
 
 ### Replacing a component
 
@@ -263,6 +265,14 @@ that fails the typecheck the moment it stops holding:
 
 The same file holds the calls that must keep compiling: a refusal that refuses
 the correct call is a bug.
+
+**2 template mistakes, 2 refused** by `.maizzle/nxgt-mail-ui.d.ts`, each
+measured by a `@vue-expect-error` in
+[`test/fixture/types/refusals.vue`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-ui/test/fixture/types/refusals.vue),
+checked by `vue-tsc` after `maizzle prepare` (`bun run typecheck:templates`):
+
+1. A field the brand does not have (`brand.nmae`).
+2. `brand.logo.src` without `?.`: the logo is optional.
 
 A theme token is a `string`: whether `theme.css` declares it is checked when
 `ui()` is called. A component's props are not in this count: Maizzle declares
