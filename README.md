@@ -1,38 +1,51 @@
 # nxgt-mail
 
-Transactional e-mails that are **typed, translated, and rendered with no engine
-at run time**.
+Less boilerplate, and i18n, for a [Maizzle](https://maizzle.com) 6 project of
+transactional e-mails.
 
-Write one template per e-mail with [Maizzle](https://maizzle.com) and Tailwind
-CSS 4, and one [ICU](https://unicode-org.github.io/icu/userguide/format_parse/messages/)
-message catalogue per language. A build step compiles both into render
-functions whose arguments are checked by TypeScript:
+Keep a normal Maizzle project — `emails/`, `public/`, `maizzle serve`,
+`maizzle build` — and add:
+
+- a base config that plugins extend without dropping each other's hooks;
+- shared components and a theme (`<NxLayout>`, `<NxButton>`, `<NxCode>`…),
+  any of which your own `components/` replaces by name;
+- i18n: one template per e-mail, its text as keys into
+  [ICU](https://unicode-org.github.io/icu/userguide/format_parse/messages/)
+  catalogues, built once per locale — shaped like `@nxgt/i18n`, but a missing
+  key fails the build.
 
 ```ts
-import { mails } from './generated/mail';
+// maizzle.config.ts
+import { defineMailConfig } from '@nxgt/mail-config';
+import { i18n } from '@nxgt/mail-i18n';
+import { ui } from '@nxgt/mail-ui';
 
-const { subject, html, text } = mails.verifyEmail({
-  locale: 'fr',
-  name: 'Ada',
-  link: 'https://example.test/verify?token=…',
-  hours: 24,
+export default defineMailConfig({
+  plugins: [ui(), i18n({ locales: ['en', 'fr'], fallbackLocale: 'en' })],
 });
 ```
 
-A missing or misspelled argument, an unknown locale or an unknown e-mail is a
-compile error. At run time there is string substitution and `Intl`, nothing
-else. Presets ship a theme, layouts, components and shared messages, and every
-piece of them can be overridden or replaced.
+At send time, fill the values only known then, escaped, and hand the e-mail to
+a transport:
+
+```ts
+import { createMailRenderer } from '@nxgt/mail';
+
+const mails = createMailRenderer({ dir: 'dist', getLanguage: () => user.locale });
+await mailer.send({ to, ...mails.render('verify-email', { name, link }) });
+```
 
 ## Status
 
-**Not released yet.** Work follows [docs/plan.md](./docs/plan.md).
+**Not released yet.** The plan was rewritten on 2026-09-26; work follows
+[docs/plan.md](./docs/plan.md).
 
 | Package | Role |
 | --- | --- |
-| `@nxgt/mail` | The `Mailer` port, errors, locale selection, a memory mailer, the transport conformance suite |
-| `@nxgt/mail-build` | The compiler and the `nxgt-mail` CLI — a build-time dependency only |
-| `@nxgt/mail-preset` | The default preset: theme, layouts, components, shared messages in English and French |
+| `@nxgt/mail` | The `Mailer` port, errors, locale selection, a memory mailer, the transport conformance suite, and the renderer |
+| `@nxgt/mail-config` | `defineMailConfig`: the base config and plugins |
+| `@nxgt/mail-i18n` | The i18n plugin and `createTranslator` |
+| `@nxgt/mail-ui` | Components, theme and shared messages |
 | `@nxgt/mail-smtp`, `@nxgt/mail-resend` | Transports |
 
 ## Contributing

@@ -1,311 +1,259 @@
 # Plan
 
 The work, in the order it lands. Each step is one pull request against
-`develop` (sometimes a few), reviewed, with its changeset, CI green on the
-head that is merged. Read [`AGENTS.md`](../AGENTS.md) first: this file says
-*what* and *in which order*, AGENTS.md says *under which rules*.
+`develop` (sometimes a few), reviewed, CI green on the head that is merged.
+Read [`AGENTS.md`](../AGENTS.md) first: this file says *what* and *in which
+order*, AGENTS.md says *under which rules*.
 
 A step is done when its **Done when** holds — measured, not asserted.
 
 ---
 
-## The shape of the result
+## Why this plan was rewritten (2026-09-26)
 
-What a consumer writes:
+The first plan compiled Maizzle templates into TypeScript render functions
+(`@nxgt/mail-build`, steps 2–4, merged in PRs #3–#5). That was a compiler
+*around* Maizzle: templates were rendered once with placeholders, split, and
+turned into code. It lost `maizzle serve`, Maizzle's config and its dev UI,
+forbade `v-if` and `v-for`, and needed an HTML scanner of its own.
 
-```text
-emails/
-  verify-email.vue         one template per e-mail, text as keys
-  reset-password.vue
-messages/
-  en.json                  one ICU catalogue per locale
-  fr.json
-mail.config.ts             defineMailConfig({ … })
-```
+Steve's request was different: **packages that cut the boilerplate of a
+Maizzle project, and i18n shaped like `@nxgt/i18n`** — « des packages liés aux
+mails avec maizzle avec support i18n réduisant les boilerplate codes ». So the
+plan now starts from a **normal Maizzle 6 project** — the official starter:
+`emails/`, `public/`, `maizzle serve`, `maizzle build` — and adds what every
+such project repeats. Steve chose this direction on 2026-09-26.
 
-```vue
-<!-- emails/verify-email.vue — Maizzle 6 templates are Vue single-file components -->
-<script setup>
-defineProps(['link', 'name', 'hours'])
-</script>
+What survives from the first plan:
 
-<template>
-  <Layout :lang="lang">
-    <Heading>{{ t('verifyEmail.title') }}</Heading>
-    <Text>{{ t('verifyEmail.body', { name }) }}</Text>
-    <Button :href="link">{{ t('verifyEmail.action') }}</Button>
-    <Text>{{ t('verifyEmail.expires', { hours }) }}</Text>
-  </Layout>
-</template>
-```
+- `@nxgt/mail` (step 1): the `Mailer` port, the errors, the memory mailer,
+  `pickLocale`, the conformance suite. It gains the run-time renderer.
+- The ICU catalogue checks of `@nxgt/mail-build` (keys in every locale,
+  arguments declared the same way, camelCase keys), moved into
+  `@nxgt/mail-i18n`.
+- The components, theme and shared messages of `@nxgt/mail-preset`, moved into
+  `@nxgt/mail-ui` under a prefix.
+- The SMTP and Resend transports (written, paused before their PR).
 
-```json
-{
-  "verifyEmail": {
-    "subject": "Confirm your e-mail address",
-    "title": "One step left",
-    "body": "Hello {name}, confirm this address to finish signing up.",
-    "action": "Confirm my address",
-    "expires": "This link expires in {hours, plural, one {# hour} other {# hours}}."
-  }
-}
-```
+What goes: `@nxgt/mail-build` — the compiler, the HTML scanner, the generated
+module. It was never published.
 
-```ts
-// mail.config.ts
-import { defineMailConfig } from '@nxgt/mail-build';
-import { nxgtPreset } from '@nxgt/mail-preset';
+What the research proved, on Maizzle 6.1.7, before this plan was written:
 
-export default defineMailConfig({
-  presets: [nxgtPreset({ brand: { primary: '#4f46e5', logo: 'https://…' } })],
-  locales: ['en', 'fr'],
-  fallbackLocale: 'en',
-  out: 'src/generated/mail.ts',
-});
-```
-
-```sh
-bunx nxgt-mail build
-```
-
-```ts
-import { mails } from './generated/mail';
-
-mails.verifyEmail({ locale: 'fr', name: 'Ada', link, hours: 24 });
-// → { subject, html, text }
-
-mails.verifyEmail({ locale: 'de', name: 'Ada', link, hours: 24 });
-//                         ~~~~ 'de' is not a locale of this build
-mails.verifyEmail({ locale: 'fr', nom: 'Ada', link, hours: 24 });
-//                                ~~~ not an argument of verifyEmail
-```
-
-The arguments of a render function are the **union of every argument its
-messages use**, typed from the ICU: `{name}` a string, `{hours, plural, …}` a
-number, `{at, date}` a `Date`, and an `href`/`src` value a URL string checked
-at call time.
+- A config is a plain object loaded by jiti; `maizzle.config.ts` can import a
+  base config from a package. There is **no `extends`**, and a plain merge
+  keeps **one** function per build event — two plugins' hooks must be chained.
+- There are no environments any more: `maizzle build -c
+  maizzle.config.production.ts`.
+- `components.source` can point into `node_modules`, with a `prefix`
+  (`<NxButton>`); a project's `components/NxButton.vue` then replaces the
+  package's, and Maizzle's own `<Button>` stays available.
+- A package can ship a Tailwind 4 `@theme`; a layout imports it **in the same
+  `<style>` as a literal `@import "@maizzle/tailwindcss"`**, or Maizzle scans
+  no source and emits no utility, without a word.
+- **One output per locale in one `maizzle build`**: a wrapper per template and
+  locale (`.maizzle/i18n/fr/verify-email.vue`) as `content`, and a
+  `beforeRender` hook that gives each render its locale's `t`. `maizzle serve`
+  shows each locale and reloads on a catalogue change.
+- A value only known at send time stays `{{ name }}` through inlining,
+  minification and plain text, in text and in `href`. `url.base` would prefix
+  it, so it stays off for links.
+- Tailwind's import fails silently under an isolated install (Bun workspaces,
+  pnpm): `@maizzle/tailwindcss` must be a direct dependency of the project.
 
 ---
 
-## Step 0 — The skeleton
+## The shape of the result
 
-Copy from `nxgt-janus` (it is the fifth copy; AGENTS.md says why): `build.ts`,
-`scripts/verify-artifacts.ts` and its spec, `scripts/publish.ts` and its spec,
-`.github/workflows/ci.yml` and `release.yml`, `bunfig.toml`,
-`tsconfig.base.json`, `tsconfig.json`, `scripts/tsconfig.json`, `biome.json`
-(with `useNamingConvention` and the `test/types` override), `.changeset/`
-(`baseBranch: develop`, the changelog pointing at `softistx/nxgt-mail`), the
-root `package.json` scripts. Adapt names; change nothing else without a reason
-written in the PR.
+A project is the official Maizzle starter plus three packages:
 
-**Done when:** `bun install && bun run check && bun run typecheck && bun run
-build && bun run test && bun run verify:artifacts` pass on an empty
-`packages/mail` that is `private`, and CI runs them on a pull request.
+```text
+emails/verify-email.vue      one template per e-mail, every language
+locales/en.json, fr.json     ICU catalogues
+components/                  the project's own, overriding ours by name
+public/                      images
+maizzle.config.ts            a few lines
+```
 
-## Step 1 — `@nxgt/mail`, the run-time core
+```ts
+// maizzle.config.ts
+import { defineMailConfig } from '@nxgt/mail-config';
+import { i18n } from '@nxgt/mail-i18n';
+import { ui } from '@nxgt/mail-ui';
 
-No dependency at all. Holds:
+export default defineMailConfig({
+  plugins: [ui({ brand: { primary: '#4f46e5' } }), i18n({ locales: ['en', 'fr'], fallbackLocale: 'en' })],
+});
+```
 
-- `Rendered` — `{ subject: string; html: string; text: string }`.
-- `MailMessage` — `Rendered` plus `to`, `from?`, `replyTo?`, `headers?`.
-  Addresses are strings or `{ name, address }`.
-- `Mailer` — the port: `send(message: MailMessage): Promise<SentMail>`, where
-  `SentMail` carries the transport's message id or `null` when it has none. **A
-  failure throws `MailFailure`** (code `MAIL_FAILED`, the transport's error as
-  `cause`); a message the transport refused as malformed throws
-  `MailRefused` (`MAIL_REFUSED`). Never `false`, never a swallowed error.
-- `createMemoryMailer()` — the reference transport: keeps an outbox a test can
-  read (`mailer.sent`), and can be told to fail the next send.
-- `pickLocale(wanted, supported, fallback)` — `wanted` is a list (a user's
-  stored locale, then `Accept-Language` in order); `fr-CA` matches `fr`; an
-  empty or unmatched list answers the fallback. Pure, no request context — the
-  locale of an e-mail is the **recipient's**, usually a user field, not the
-  language of the request that triggered it.
-- `./conformance` — `describeMailer(harness)`: a transport's suite. At least:
-  a send answers `SentMail`; an outage throws `MailFailure` and
-  `instanceof` holds against the class imported from `@nxgt/mail` (the probe
-  AGENTS.md asks for); a message is delivered byte for byte (subject with
-  accents, HTML with an emoji, a text part); nothing is retried silently.
+```vue
+<!-- emails/verify-email.vue -->
+<template>
+  <NxLayout>
+    <NxHeading>{{ t('verifyEmail.title') }}</NxHeading>
+    <NxText>{{ t('common.greeting', { name: placeholder('name') }) }}</NxText>
+    <NxButton :href="placeholder('link')">{{ t('verifyEmail.action') }}</NxButton>
+  </NxLayout>
+</template>
+```
 
-**Done when:** the memory mailer passes `describeMailer`; the type tests hold
-the first refusals (a `MailMessage` without `to`, a `Mailer` missing `send`);
-`docs/vocabulary.md` exists.
+`maizzle serve` shows `verify-email` in English and in French; `maizzle build`
+writes `dist/en/verify-email.html`, `dist/fr/verify-email.html`, their `.txt`,
+and `dist/mail-manifest.json` — each e-mail's variables, and its subject per
+locale. The application sends:
 
-## Step 2 — The message compiler (`@nxgt/mail-build`, part 1)
+```ts
+import { createMailRenderer } from '@nxgt/mail';
 
-ICU only, no HTML yet. Uses `@formatjs/icu-messageformat-parser` **at build
-time**; emits TypeScript that uses only `Intl.PluralRules`,
-`Intl.NumberFormat`, `Intl.DateTimeFormat` at run time.
+const mails = createMailRenderer({ dir: 'dist', getLanguage: () => user.locale });
+await mailer.send({ to, ...mails.render('verify-email', { name, link }) });
+```
 
-- Reads `messages/<locale>.json` (nested objects; keys `camelCase`, refused
-  otherwise).
-- Checks, and **fails the build** naming locale and key: a catalogue that does
-  not parse; a key present in one locale and missing in another (the fallback
-  locale is the reference); an argument used in one locale and not declared in
-  the reference, or declared with another type (`{n, plural}` here, `{n}`
-  there).
-- Emits, per key, a function typed from its arguments.
-- Merges catalogues from presets first, then the application's: a later
-  source overrides a key, never a whole namespace.
+---
 
-**Done when:** specs cover each build failure with its exact message; a golden
-test compares the emitted module; `test/types/` refuses a missing, misspelled
-and mistyped argument against a module generated in the spec run; the plural
-of `fr` (`0` is singular) and `en` are both exercised.
+## Step 0 — The skeleton ✅
 
-## Step 3 — Templates (`@nxgt/mail-build`, part 2)
+Merged in PR #1.
 
-Maizzle 6 with Tailwind CSS 4, driven programmatically (not a Maizzle project
-checked into the consumer's repository).
+## Step 1 — `@nxgt/mail`, the run-time core ✅
 
-- A template is a Vue single-file component (Maizzle 6): it declares its
-  props with `defineProps`, calls `t('key', { prop })` for text and
-  interpolates `{{ prop }}` or binds `:href="prop"` for values (links,
-  mostly). Nothing else — no `v-if`, no `v-for`, no expression: a template
-  renders once, so a condition would be decided at build time. The compiler
-  collects the keys and props of each template: an unknown key fails the
-  build.
-- For each template, Maizzle renders **once, at build time** — not once per
-  locale: `lang` is a placeholder too — with every message and prop replaced
-  by a unique placeholder; CSS is inlined, and the result is split at the
-  placeholders into static chunks. The emitted render function joins the
-  chunks with the escaped values. The `text` part is produced the same way
-  from Maizzle's plain-text output.
-- `href`/`src` placeholders are marked, so the render function checks the URL
-  scheme there and only there.
-- The subject is the message `<email>.subject`, required in every locale.
-- `nxgt-mail build` (the CLI) and `build(config)` (the API) do the same thing;
-  `nxgt-mail dev` renders every e-mail in every locale to a local folder to
-  look at. A preview server is not in this step.
+Merged in PR #2: `Rendered`, `MailMessage`, `Mailer`, `MailFailure` and
+`MailRefused`, `createMemoryMailer`, `pickLocale`, `./conformance`.
 
-**Done when:** a fixture project builds; the emitted `html` of every e-mail is
-checked against a snapshot per locale; an injection test proves `<script>` in
-a name is escaped, `javascript:` in a link is refused, and a line break in a
-subject argument is removed; the render path of the generated module imports
-nothing from Maizzle, Tailwind or the parser (checked by walking its import
-graph, as `nxgt-janus/src/entries.spec.ts` does).
+## Step 2 — Clear the ground
 
-## Step 4 — Presets (`@nxgt/mail-preset`)
+- Remove `packages/mail-build` and `packages/mail-preset` (never published);
+  their code stays in git history for the moves below.
+- Rewrite `docs/vocabulary.md` for the new words (*project*, *plugin*,
+  *placeholder*, *manifest*); drop *render function* and *preset*.
 
-A preset is **data**, typed by `definePreset`:
+**Done when:** the green bar passes with `@nxgt/mail` alone, and no document
+names a removed package except as history.
 
-- `theme` — Tailwind 4 tokens tuned for e-mail clients (colours, fonts with
-  safe fallbacks, spacing, radius), overridable one token at a time:
-  `nxgtPreset({ brand: { primary } })`.
-- `layouts` — at least `transactional` (a header, a body, a footer).
-- `components` — `button`, `heading`, `text`, `divider`, `spacer`, `code`
-  (a one-time code, large and monospaced, easy to copy), `link`.
-- `messages` — shared keys in `en` and `fr` (`common.greeting`,
-  `common.footer.why`, `common.footer.ignore`).
+## Step 3 — `@nxgt/mail-config`
 
-`defineMailConfig({ presets: [a, b] })` applies them in order; the
-application's own files come last. A token that does not exist in any preset
-is a compile error (type test).
+`defineMailConfig({ plugins, ...project })`:
 
-**Done when:** the fixture project of step 3 builds with `nxgtPreset()` and
-with a second preset overriding one token and one message; the rendered
-e-mails are checked in at least Gmail, Outlook and Apple Mail (Maizzle's
-guidance, or a rendering service), and the result is written in the README.
+- A base config: `output.path: 'dist'`, `public/` as static files, CSS
+  inlined and purged, plain text on, `url.base` off for links.
+- Plugins are partial configs merged with Maizzle's own rules (objects merge,
+  arrays replace) — base, then each plugin in order, then the project.
+- **Every build event is chained** in that order; a hook that returns a string
+  hands it to the next one.
+- `productionConfig(overrides)` for `maizzle.config.production.ts` (minify,
+  the production output).
+- Peers: `@maizzle/framework` and `@maizzle/tailwindcss` — the second one
+  because Tailwind's import fails silently when it is not hoisted.
 
-**What step 4 found.**
+**Done when:** a fixture project built with `maizzle build` shows two plugins'
+`beforeRender` hooks both applied, in order; the project's config overrides a
+plugin's key; the production config minifies.
 
-- **The preset is data, and every part of it is checked.** It is a `name`,
-  a `theme` (namespace → token → value), `components` (file name → source)
-  and `messages` (catalogues by locale). `definePreset` lives in
-  `@nxgt/mail-build`. `@nxgt/mail-preset` imports only its type, as a peer.
-- **Why the build merges the components itself.** Given two component
-  folders holding the same name, Maizzle keeps one of them regardless of
-  their order ("naming conflicts … ignored"). So the build writes every
-  preset's components, then the application's `components/`, into one
-  folder: the last write wins, and that folder is Maizzle's only source.
-- **A component may not take a name Maizzle ships (`Button.vue`…).** A
-  component with such a name replaces Maizzle's everywhere, and the
-  replacement can no longer wrap the original. The preset's components are
-  therefore `TransactionalLayout` and `Mail*`.
-- **Tailwind's `@theme` is fed from the preset.** The build writes
-  `theme.css` beside each template. A layout imports it in the *same*
-  `<style>` as Maizzle's Tailwind; tokens in another block do not reach the
-  utilities. The tokens come out inlined (`background-color: #2563eb`), with
-  no `var()` left.
-- **The client check was run against caniemail data, not in real clients.**
-  - On 2026-09-26 the rendered fixture was checked against caniemail data
-    (what Maizzle's compatibility panel reads) for Gmail, Outlook and Apple
-    Mail.
-  - Nothing it uses is unsupported, except `border-radius` in Outlook for
-    Windows and `word-break` in Windows Mail. Both are cosmetic.
-  - A visual check in the real clients is still to do.
-- **The fixture is the preset's own.** It holds the step 3 e-mails rewritten
-  with the preset's components: the step 3 fixture uses Maizzle's `<Layout>`
-  and would not show the tokens.
-- **A token that does not exist is a compile error only in
-  `nxgtPreset({ … })`** (four refusals). A Tailwind class that names a
-  missing token is dropped by Tailwind without a word, and nothing catches
-  it yet.
+## Step 4 — `@nxgt/mail-i18n`
 
-## Step 5 — Transports
+`i18n({ locales, fallbackLocale, dir = 'locales' })`, a plugin:
 
-One package each, `@nxgt/mail` as a required peer, no error class of their
-own, each passing `describeMailer`:
+- Reads `locales/<locale>.json` — nested ICU catalogues, camelCase keys, the
+  conventions of `@nxgt/i18n` — and **fails the build** on a catalogue that
+  does not parse, a key missing in a locale, an argument declared differently
+  (the checks of the old `@nxgt/mail-build`).
+- Writes one wrapper per template and locale, only when it changed, only on
+  the main thread; `content` points at them; the output is
+  `dist/<locale>/<template>.html` (`layout: 'flat'` for
+  `dist/<template>.<locale>.html`).
+- In `beforeRender`, gives the template `t`, `locale` and `placeholder`; a
+  missing key fails the build.
+- `placeholder('name')` writes `{{ name }}`, for a value only known at send
+  time; it can be passed as an ICU argument.
+- In `afterBuild`, writes `dist/mail-manifest.json`: per e-mail, its
+  variables (and which ones sit in an `href` or a `src`), and its subject per
+  locale — the message `<email>.subject`, required.
+- `createTranslator(catalogues, getLanguage)` and `t(key, args)`, shaped like
+  `@nxgt/i18n`, exported for use outside templates — but a missing key or a
+  formatting failure **throws**, where `@nxgt/i18n` answers the key.
+- Types `t`, `locale` and `placeholder` for templates
+  (`ComponentCustomProperties`).
+- A watcher regenerates the wrappers when a template is added or removed
+  under `maizzle serve`.
 
-- `@nxgt/mail-smtp` — on `nodemailer` (a peer, the consumer's version).
-- `@nxgt/mail-resend` — over `fetch`, no SDK.
+**Done when:** a fixture project builds `en` and `fr` from one template, with
+a plural and a date; each build failure has a spec with its exact message;
+`maizzle serve` lists both locales; the manifest matches a golden file.
 
-Others (SES, Postmark, Mailgun) are roadmap entries, not this step.
+## Step 5 — `@nxgt/mail-ui`
 
-**Done when:** both pass the conformance suite — SMTP against a local test
-server started by the specs, Resend against a recorded HTTP exchange — and an
-outage in each ends in `MailFailure` with `cause`.
+`ui({ brand, theme })`, a plugin, from the old `@nxgt/mail-preset`:
 
-## Step 6 — Documentation and the first release
+- Components under the prefix `Nx`: `NxLayout`, `NxHeading`, `NxText`,
+  `NxButton`, `NxLink`, `NxDivider`, `NxSpacer`, `NxCode`. Each wraps
+  Maizzle's, which carries the Outlook fallbacks. A project's
+  `components/NxButton.vue` replaces ours.
+- `theme.css` (`@theme` tokens, neutral brand), imported by `NxLayout` beside
+  the literal `@import "@maizzle/tailwindcss"`.
+- The shared messages `common.greeting`, `common.footer.why`,
+  `common.footer.ignore` in `en` and `fr`, given to `@nxgt/mail-i18n` as a
+  catalogue source the project overrides key by key.
 
-Each package gets its README (the npm page: install, API, traps, the refusal
-count) and a `docs/` folder (guides, troubleshooting, roadmap), as in
-`nxgt-janus`. The guides show, with a snippet that compiles, every case a
-catalogue can hold: a plain message, an argument, a plural, a `select`, a
-date, a number, a nested key, a message shared from a preset, an overridden
-one, a new locale.
+**Done when:** the fixture project renders with `ui()` and with one token and
+one message overridden; the rendered HTML is checked against caniemail data
+for Gmail, Outlook and Apple Mail, and — Steve's part — looked at in the real
+clients.
 
-Then remove `"private"` from each package, one deliberate commit each, with
-the changeset that versions it at `0.1.0`, and merge the Version PR.
+## Step 6 — The run-time renderer, in `@nxgt/mail`
 
-**Done when:** the packages are on npm and install into an empty project that
-builds and renders an e-mail with the README's own snippet.
+`createMailRenderer({ dir, getLanguage, fallbackLocale })`, still with no
+dependency:
 
-## Step 7 — Handing over to janus
+- `render(email, variables, { locale? })` answers `Rendered`: the built
+  `html` and `text` of that locale, the subject from the manifest, every
+  `{{ variable }}` filled.
+- Values are HTML-escaped in `html`, left as is in `text`; a variable in an
+  `href` or a `src` must be an `http:`/`https:` URL (`mailto:` for `href`); a
+  line break in the subject is removed; a missing variable, an unknown e-mail
+  or an unknown locale **throws**.
+- The language comes from `getLanguage`, as in `@nxgt/i18n` (a Hono handler
+  passes `() => c.get('language')`), through `pickLocale`.
 
-Not in this repository: `@nxgt/janus-mail` is built in `nxgt-janus`, with
-`@nxgt/mail-build` and `@nxgt/mail-preset`, holding the default e-mails of the
-janus flows (verification, password reset, one-time codes) in `en` and `fr`.
-This repository's part is done when that package can be written with the
-published packages alone.
+**Done when:** specs render the fixture's built output in both locales;
+injection specs (a `<script>` name, a `javascript:` link, a line break in a
+subject argument) pass.
 
-Then archive `nxgt-maizzle` — Steve decides when.
+## Step 7 — Transports
+
+`@nxgt/mail-smtp` (on the consumer's `nodemailer`) and `@nxgt/mail-resend`
+(over `fetch`), each passing `describeMailer`: SMTP against a local
+`smtp-server`, Resend against a local server answering as Resend does. Written
+before the rewrite and paused; they depend only on `@nxgt/mail`.
+
+**Done when:** both pass the conformance suite, and an outage in each ends in
+`MailFailure` with `cause`.
+
+## Step 8 — A starter, documentation, the first release
+
+- `examples/starter`: the official Maizzle starter with the three packages —
+  the README's snippet, built in CI.
+- Each package's README and `docs/` (guides, troubleshooting, roadmap).
+- Remove `"private"`, one commit per package, with the changeset at `0.1.0`.
+
+**Done when:** the packages are on npm, and an empty project following the
+README serves, builds and renders an e-mail in two languages.
+
+## Step 9 — Handing over to janus
+
+Not in this repository: `@nxgt/janus-mail` in `nxgt-janus`, holding the janus
+e-mails (verification, password reset, one-time codes) as a Maizzle project
+built with these packages. Then archive `nxgt-maizzle` — Steve decides when.
 
 ---
 
 ## Open questions — Steve's to answer
 
-- ~~**Visibility.**~~ Answered 2026-09-25: the repository is **public** from
-  step 0. GitHub would not run CI on it while private (a billing refusal), and
-  Steve chose to open it rather than pay for the minutes.
-- **Which transports first.** SMTP and Resend are proposed; say if another is
-  needed before them.
-- **The default brand of `nxgtPreset`.** Neutral (grey and one accent) is
-  proposed, so a consumer who changes nothing still sends something plain
-  rather than something branded as nxgt. Step 4 shipped it that way
-  (`#2563eb` on greys); one token changes it.
-
-## Risks to check early
-
-- **Maizzle 6 driven programmatically.** Confirmed in step 3: `render()` needs
-  no project folder. One catch, handled: Tailwind resolves Maizzle's
-  `@import "@maizzle/tailwindcss"` from the template's folder, before Maizzle
-  rewrites it, and fails silently where the package is not hoisted (Bun,
-  pnpm). The build renders from a temporary folder that links it, and fails
-  if CSS is left uncompiled. Feeding Tailwind 4's `@theme` from a preset
-  object: confirmed in step 4, through a generated `theme.css` imported in the
-  layout's Tailwind `<style>`.
-- **Plain text from Maizzle.** Confirmed: its output keeps the placeholders.
-- **The size of the generated module.** One HTML string per e-mail, shared by
-  every locale: the fixture's two e-mails in two locales make a 13.8 KB module
-  (3.8 KB gzipped), each `html` about 2.5 KB; a render takes about 11 µs.
+- ~~**Visibility.**~~ Answered 2026-09-25: public.
+- ~~**Compiler or Maizzle project.**~~ Answered 2026-09-26: a Maizzle project,
+  i18n shaped like `@nxgt/i18n`.
+- **Which transports first.** SMTP and Resend are written; say if another is
+  needed.
+- **The default brand.** Neutral (greys and `#2563eb`) is what exists.
+- **Typing the renderer.** An `afterBuild` hook could also write
+  `generated/mail.d.ts` (e-mail names and their variables), so an unknown
+  e-mail or variable is a compile error. Not in this plan unless asked.
