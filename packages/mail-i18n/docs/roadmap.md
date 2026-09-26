@@ -29,6 +29,11 @@ no dates here, and the version something shipped in is the only number.
   catalogues a package ships, as `@nxgt/mail-ui`'s shared messages, merged key
   by key under your project's `locales/<locale>.json`, which overrides any of
   them, and checked with it. Built, not yet published.
+- **Templates from a package** — `i18n({ templates: [{ dir, emails }] })`:
+  folders of templates a package ships, as `@nxgt/mail-presets`' ready
+  e-mails, built with your project's own; `dir` is absolute, `emails` keeps
+  the ones you name, and a template of the same name in your project's
+  `emails/` replaces a package's. Built, not yet published.
 - **`createTranslator` outside templates** — `createTranslator(catalogues,
   getLanguage)` and `t(key, args, language?)`, shaped like `@nxgt/i18n`, for a
   message an application formats itself. Built, not yet published.

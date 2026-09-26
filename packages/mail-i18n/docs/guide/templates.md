@@ -1,8 +1,8 @@
 # Templates
 
 This page is for writing a template once for every locale: what `t`, `locale`
-and `placeholder` do, what fails the build, and what `maizzle serve` and
-`maizzle build` do with it.
+and `placeholder` do, how templates a package ships are built with yours,
+what fails the build, and what `maizzle serve` and `maizzle build` do with it.
 
 ```vue
 <!-- emails/verify-email.vue -->
@@ -152,6 +152,133 @@ digits, joined by single dashes.
 The name also gives the key of its subject, `verifyEmail.subject`, through
 [`emailKey`](catalogues.md#the-subject).
 
+## Templates from a package
+
+A package can ship templates as well as messages — `@nxgt/mail-presets`
+ships nine ready e-mails. The `templates` option builds a package's folder
+with yours, once per locale, into the same output and the same manifest:
+
+```ts
+// maizzle.config.ts
+import { defineMailConfig } from '@nxgt/mail-config';
+import { i18n } from '@nxgt/mail-i18n';
+import { presets } from '@nxgt/mail-presets';
+import { ui, uiCatalogues } from '@nxgt/mail-ui';
+
+const mails = presets({ only: ['verify-email', 'welcome'] });
+
+export default defineMailConfig({
+	plugins: [
+		ui({ brand: { name: 'Acme' } }),
+		i18n({
+			locales: ['en', 'fr'],
+			catalogues: [uiCatalogues, mails.catalogues],
+			templates: [mails.templates],
+		}),
+	],
+});
+```
+
+```ts
+interface I18nOptions {
+	// …
+	readonly templates?: readonly TemplateSource[]; // default []
+}
+
+interface TemplateSource {
+	/** The folder, absolute. */
+	readonly dir: string;
+	/** The e-mails of the folder to build, as ['verify-email']. Default every one. */
+	readonly emails?: readonly [string, ...string[]]; // at least one
+}
+```
+
+A package answers its `TemplateSource` from a function, as `presets()` does,
+so you rarely write one. By hand, `dir` is absolute — a package finds its own
+with `fileURLToPath(new URL('../emails', import.meta.url))` — and `emails`
+names templates of that folder as the plugin names them, `auth/reset-password`
+for `auth/reset-password.vue`:
+
+```ts
+import type { TemplateSource } from '@nxgt/mail-i18n';
+import { TEMPLATES_DIR } from '@nxgt/mail-presets';
+
+const two: TemplateSource = { dir: TEMPLATES_DIR, emails: ['sign-in-code', 'magic-link'] };
+```
+
+### Which template is built
+
+Your `emails/` is read first, then each source as listed:
+
+- **Your template replaces a package's.** With `emails/welcome.vue` in your
+  project, `welcome` is built from yours; the package's `welcome.vue` is
+  never read.
+- **Two sources with the same e-mail are refused.** Neither would be the
+  obvious one, so the build stops rather than pick: keep one with `emails`,
+  or write your own in `emails/`.
+- **`emails` keeps only those.** A source's other templates are not built,
+  and are not in the manifest. Leave it out for every one; an empty list does
+  not compile, and is refused at run time. Your own `emails/` is always built
+  whole.
+- **A source must hold templates.** A `dir` that is missing or has no `.vue`
+  file is refused — usually a path to the package rather than to its
+  e-mails folder.
+
+```ts
+import { i18n } from '@nxgt/mail-i18n';
+
+// the e-mails folders of two packages that both ship welcome.vue
+declare const accountEmails: string;
+declare const otherEmails: string;
+
+// keep the first one's welcome
+i18n({
+	locales: ['en', 'fr'],
+	templates: [
+		{ dir: accountEmails, emails: ['welcome', 'verify-email'] },
+		{ dir: otherEmails, emails: ['invitation'] },
+	],
+});
+```
+
+The wrapper of a package's template imports it from where it is:
+
+```vue
+<!-- .maizzle/i18n/fr/verify-email.vue, generated; the path follows your install -->
+<script setup>
+import Email from '../../../node_modules/@nxgt/mail-presets/emails/verify-email.vue';
+</script>
+<template><Email /></template>
+```
+
+A package's template is built like yours: it calls `t` on the catalogues you
+give the plugin, so its package's messages go in `catalogues` — see
+[Catalogues from a package](catalogues.md#catalogues-from-a-package) — and
+its placeholders are recorded in the manifest. Its names are checked for
+kebab-case like yours, reported as `templates[0]/…`. `maizzle serve` watches
+your `emails/` for added and removed templates, not a package's folder.
+
+The tags of a template under `node_modules` are not resolved by Maizzle,
+which skips that folder. The plugin that ships the components resolves them —
+`@nxgt/mail-ui`'s `ui()` does, for its `Nx*` components and Maizzle's
+built-ins, so list it in `plugins`. A tag left unresolved renders nothing,
+and the build fails on the empty e-mail (see
+[What fails the build](#what-fails-the-build)).
+
+### Its errors
+
+| Error | When |
+| --- | --- |
+| `TypeError: i18n: templates must be a list of template folders, as [{ dir: '/abs/path/emails' }] — emails, when given, names at least one` | When the config loads: `templates` not a list (`templates: mails.templates`), a `dir` that is not absolute, or `emails` that is not a list of names, or is empty |
+| `Error: i18n: templates[0] has no template sign-in.vue — name one of its e-mails` | When the config loads: a name in `emails` the folder does not have. `templates[0]` is the source's place in the list |
+| `Error: i18n: templates[0] holds no template — is /…/emails the folder of a package's e-mails?` | When the config loads: a `dir` that does not exist, or holds no `.vue` file |
+| `Error: i18n: templates[0] and templates[1] both have welcome.vue — keep one with emails: [...], or write the project's own in its folder` | When the config loads: two sources ship an e-mail of the same name, and your `emails/` does not have it |
+
+```ts
+i18n({ locales: ['en'], templates: [{ dir: 'node_modules/@nxgt/mail-presets/emails' }] });
+// TypeError: i18n: templates must be a list of template folders, as [{ dir: '/abs/path/emails' }] — emails, when given, names at least one
+```
+
 ## What fails the build
 
 A template that cannot be right stops the build. The message names the
@@ -169,6 +296,10 @@ the template or the catalogues, to fix, not a condition to catch.
 | `i18n: en: verify-email calls t('verifyEmail.title') with arguments that are not an object, as { name: placeholder('name') }` | `t('verifyEmail.greeting', placeholder('name'))`: the arguments go in an object |
 | `i18n: fr: verify-email calls placeholder() with a name that is not camelCase — as placeholder('firstName')` | `placeholder('first name')`, `placeholder('first_name')` |
 | `i18n: fr: verifyEmail.sentOn could not be formatted` | The formatter refused the value, such as a date that is `NaN`; its error is the `cause` |
+| `i18n: templates[0] has no template sign-in.vue — name one of its e-mails` | A [package's source](#templates-from-a-package) lists, in `emails`, a template its folder does not have; checked when the config loads |
+| `i18n: templates[0] holds no template — is /…/emails the folder of a package's e-mails?` | A package's source whose `dir` is missing or has no template; checked when the config loads |
+| `i18n: templates[0] and templates[1] both have welcome.vue — keep one with emails: [...], or write the project's own in its folder` | Two package sources ship the same e-mail; checked when the config loads |
+| `i18n: fr/welcome.html is empty — a tag of its template resolved to no component; list the plugin that brings it, as ui()` | The e-mail rendered nothing but the doctype: a tag of its template, usually the layout, matched no component, and Vue renders an unknown component as nothing. Typically `ui()` is missing from `plugins`, or a package's template uses a component no plugin brings. Reported when the manifest is written |
 | `i18n: emails/Welcome.vue is not a kebab-case name — name a template as verify-email.vue` | A template whose path is not kebab-case, checked when the config loads. Under `maizzle serve`, one added while the server runs is printed with `console.error`, and the server keeps running |
 | `i18n: welcome has no subject — add welcome.subject to the catalogues` | The e-mail has no subject message; reported when the manifest is written, at the end of the build. The other manifest failures, including an output path set in a template, are in [The manifest](manifest.md#where-it-is-written) |
 | `i18n: emails/verify-email.vue is not built through the i18n plugin — leave content to it, and put templates in emails/` | Maizzle rendered a template directly: the project set its own `content` |

@@ -42,6 +42,10 @@ template `emails/verify-email.vue`, and keys such as `verifyEmail.title`.
 - [`i18n: dir must be a folder of the project`](#i18n-dir-must-be-a-folder-of-the-project)
 - [`i18n: layout must be 'nested' or 'flat'`](#i18n-layout-must-be-nested-or-flat)
 - [`i18n: catalogues must be a list of catalogues by locale, as [{ en: {...}, fr: {...} }]`](#i18n-catalogues-must-be-a-list-of-catalogues-by-locale-as--en--fr--)
+- [`i18n: templates must be a list of template folders, as [{ dir: '/abs/path/emails' }] — emails, when given, names at least one`](#i18n-templates-must-be-a-list-of-template-folders-as--dir-abspathemails---emails-when-given-names-at-least-one)
+- [`i18n: templates[0] has no template sign-in.vue — name one of its e-mails`](#i18n-templates0-has-no-template-sign-invue--name-one-of-its-e-mails)
+- [`i18n: templates[0] holds no template — is … the folder of a package's e-mails?`](#i18n-templates0-holds-no-template--is--the-folder-of-a-packages-e-mails)
+- [`i18n: templates[0] and templates[1] both have welcome.vue — keep one with emails: [...], or write the project's own in its folder`](#i18n-templates0-and-templates1-both-have-welcomevue--keep-one-with-emails--or-write-the-projects-own-in-its-folder)
 - [`createTranslator: catalogues must be an object of catalogues by locale, as { en, fr }`](#createtranslator-catalogues-must-be-an-object-of-catalogues-by-locale-as--en-fr-)
 - [`createTranslator: getLanguage must be a locale or a function that answers one`](#createtranslator-getlanguage-must-be-a-locale-or-a-function-that-answers-one)
 
@@ -76,6 +80,7 @@ template `emails/verify-email.vue`, and keys such as `verifyEmail.title`.
 - [`i18n: welcome has no subject — add welcome.subject to the catalogues`](#i18n-welcome-has-no-subject--add-welcomesubject-to-the-catalogues)
 - [`i18n: en: verifyEmail.subject uses {minutes} as a number — a subject's arguments are placeholders, filled at send time as strings`](#i18n-en-verifyemailsubject-uses-minutes-as-a-number--a-subjects-arguments-are-placeholders-filled-at-send-time-as-strings)
 - [`i18n: en: welcome.subject chooses on {kind} with a select — a subject's arguments are placeholders, which always choose other`](#i18n-en-welcomesubject-chooses-on-kind-with-a-select--a-subjects-arguments-are-placeholders-which-always-choose-other)
+- [`i18n: fr/welcome.html is empty — a tag of its template resolved to no component; list the plugin that brings it, as ui()`](#i18n-frwelcomehtml-is-empty--a-tag-of-its-template-resolved-to-no-component-list-the-plugin-that-brings-it-as-ui)
 - [`i18n: welcome was not built in fr`](#i18n-welcome-was-not-built-in-fr)
 - [`i18n: ../text/welcome.en.txt was written outside the output folder — …`](#i18n-textwelcomeentxt-was-written-outside-the-output-folder--the-i18n-plugin-lays-out-every-e-mail-set-no-plaintextdestination-and-no-output-path-in-a-template)
 - [`i18n: custom/welcome.html is not where the i18n plugin puts an e-mail — set no output path in a template`](#i18n-customwelcomehtml-is-not-where-the-i18n-plugin-puts-an-e-mail--set-no-output-path-in-a-template)
@@ -225,6 +230,123 @@ export default defineMailConfig({
   ],
 });
 ```
+
+### `i18n: templates must be a list of template folders, as [{ dir: '/abs/path/emails' }] — emails, when given, names at least one`
+
+**When:** loading `maizzle.config.ts`, when `templates` is one folder rather
+than a list of them, as in `templates: mails.templates`. It also appears when
+an entry of the list is not `{ dir, emails? }` with `dir` an absolute path
+and `emails` a list of at least one name. Examples: `[{ dir: 'presets' }]`,
+`[{ dir, emails: 'welcome' }]`, `[{ dir, emails: [] }]`, or the folder alone
+as a string.
+**Why:** `templates` is a list, so that several packages can each ship
+templates, and each `dir` is absolute because a package answers where it is
+installed, not a path from your project. An empty `emails` would build
+nothing from the folder; leave it out to build every e-mail of it. The
+project's `emails/` comes first, so a template of the same name there
+replaces a package's.
+**Fix:** wrap it in a list, even when there is one:
+
+```ts
+// maizzle.config.ts
+import { defineMailConfig } from '@nxgt/mail-config';
+import { i18n } from '@nxgt/mail-i18n';
+import { presets } from '@nxgt/mail-presets';
+import { ui, uiCatalogues } from '@nxgt/mail-ui';
+
+const mails = presets();
+
+export default defineMailConfig({
+  plugins: [
+    ui({ brand: { name: 'Acme' } }),
+    i18n({
+      locales: ['en', 'fr'],
+      catalogues: [uiCatalogues, mails.catalogues],
+      templates: [mails.templates],   // not templates: mails.templates
+    }),
+  ],
+});
+```
+
+### `i18n: templates[0] has no template sign-in.vue — name one of its e-mails`
+
+**When:** loading `maizzle.config.ts`, so `maizzle build` stops before any
+template is built. It happens when an entry of `templates` lists in `emails`
+a name its folder has no `.vue` file for. Common causes are a typo, a name
+with `.vue`, or an e-mail the package renamed or does not ship. The message
+names the entry by its place in `templates`.
+**Why:** `emails` keeps the templates it names and no other, so a name with
+no template would silently build nothing.
+**Fix:** name a template of that folder, without `.vue`. For
+`@nxgt/mail-presets`, let `presets({ only })` write the entry. It checks the
+names when it is called, and TypeScript checks them too:
+
+```ts
+import { presets } from '@nxgt/mail-presets';
+
+const mails = presets({ only: ['verify-email', 'sign-in-code'] });
+
+i18n({
+  locales: ['en', 'fr'],
+  catalogues: [uiCatalogues, mails.catalogues],
+  templates: [mails.templates],   // not [{ dir: TEMPLATES_DIR, emails: ['sign-in'] }]
+});
+```
+
+### `i18n: templates[0] holds no template — is … the folder of a package's e-mails?`
+
+The message names the folder, as an absolute path, where `…` is here.
+
+**When:** loading `maizzle.config.ts`, so `maizzle build` stops before any
+template is built. It happens when an entry of `templates` points at a folder
+that does not exist, or that holds no `.vue` file. Common causes are a `dir`
+written by hand that names the package's root rather than its `emails/`
+folder, a typo in the path, or a package installed without its templates.
+**Why:** an entry of `templates` is a package's folder of e-mails. One that
+holds none would build nothing from it, and the build would pass.
+**Fix:** take the entry from the package rather than writing its path. For
+`@nxgt/mail-presets`, `presets().templates` is the folder its templates ship
+in:
+
+```ts
+import { presets } from '@nxgt/mail-presets';
+
+const mails = presets();
+
+i18n({
+  locales: ['en', 'fr'],
+  catalogues: [uiCatalogues, mails.catalogues],
+  templates: [mails.templates],   // not [{ dir: '/…/node_modules/@nxgt/mail-presets' }]
+});
+```
+
+When the entry comes from the package and the error remains, reinstall it:
+its templates are missing from `node_modules`.
+
+### `i18n: templates[0] and templates[1] both have welcome.vue — keep one with emails: [...], or write the project's own in its folder`
+
+**When:** loading `maizzle.config.ts`, so `maizzle build` stops before any
+template is built. It happens when two entries of `templates` each ship an
+e-mail of the same name.
+**Why:** each e-mail is built once, under its name. Between two packages,
+neither is the obvious one, so the build refuses to pick. The project's own
+`emails/` is not concerned: a template there replaces a package's of the same
+name, on purpose.
+**Fix:** keep the e-mail from one package only, with `emails` on the other,
+or write the project's own `emails/welcome.vue`, which replaces both:
+
+```ts
+i18n({
+  locales: ['en', 'fr'],
+  templates: [
+    { dir: onboardingDir },                                  // its welcome.vue is the one built
+    { dir: accountDir, emails: ['verify-email', 'reset-password'] },   // not its welcome.vue
+  ],
+});
+```
+
+With `@nxgt/mail-presets`, `presets({ only: [...] })` writes that entry, and
+leaves out the presets not named.
 
 ### `createTranslator: catalogues must be an object of catalogues by locale, as { en, fr }`
 
@@ -650,6 +772,42 @@ differ, make one e-mail per case:
 ```json
 { "welcome": { "subject": "Welcome, {name}" } }
 ```
+
+### `i18n: fr/welcome.html is empty — a tag of its template resolved to no component; list the plugin that brings it, as ui()`
+
+The message names the built file, in `en` or in `fr` from one run to the
+next. It follows `[Vue warn]: Failed to resolve component: NxLayout`, one
+such warning for each tag that did not resolve.
+
+**When:** `maizzle build`, after the templates, when a template's outermost
+tag is a component that nothing resolves. Most often `ui()` is missing from
+the plugins while a template uses `<NxLayout>`. It also happens when a
+package's template, under `node_modules`, uses a component that no plugin in
+the list resolves for it.
+**Why:** Vue renders a component it cannot resolve as nothing, and Maizzle
+still writes the file, with its doctype alone. The e-mail would go out
+blank, so the build stops.
+**Fix:** list the plugin that brings the components. For the `Nx*`
+components, it is `ui()`, which also resolves the tags of templates
+installed from npm:
+
+```ts
+// maizzle.config.ts
+import { defineMailConfig } from '@nxgt/mail-config';
+import { i18n } from '@nxgt/mail-i18n';
+import { ui, uiCatalogues } from '@nxgt/mail-ui';
+
+export default defineMailConfig({
+  plugins: [
+    ui({ brand: { name: 'Acme' } }),
+    i18n({ locales: ['en', 'fr'], catalogues: [uiCatalogues] }),
+  ],
+});
+```
+
+A template that reads `brand` stops earlier, while it renders, on
+`TypeError: Cannot read properties of undefined (reading 'name')`. The cause
+and the fix are the same.
 
 ### `i18n: welcome was not built in fr`
 

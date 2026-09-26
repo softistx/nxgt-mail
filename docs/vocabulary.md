@@ -25,13 +25,14 @@ either finds it.
 | **theme token** | One named CSS value of the theme, by Tailwind namespace — `color.primary` — written as `--color-primary` in `@theme` and used as a class, `bg-primary` | "variable", "design token" alone |
 | **tint** | A theme token that is a colour mixed over the background at a fixed share, flattened to hex: `--color-primary-15`, used as `bg-primary-15`. It stands for `@nxgt/material-vue`'s alpha class `bg-primary/15`, which a mail client would drop, and follows its colour when a project overrides it | "alpha", "opacity", "shade" |
 | **brand** | Who sends the e-mails, given to `ui({ brand })`: a name, a URL, a logo. The layout's header and footer show it, and a template reads it as `brand` | "company", "tenant", "sender" (the sender is the `from` address) |
+| **preset** | A ready-made e-mail `@nxgt/mail-presets` ships — its template and its messages, as `verify-email` — built by the project with its own brand and theme through `i18n({ templates, catalogues })`. A template of the same name in `emails/` replaces it | "plugin" (a plugin is a partial Maizzle config); "sample" (a sample is a preset's built HTML, kept in the repository); "starter", "default template" |
 | **shared message** | A message a package ships for every project, under `common.` — `common.footer.why` — given to `i18n({ catalogues })` and overridden by the project's catalogue key by key | "default message", "built-in translation" |
 
 ## Building — in the project
 
 | Word | Means | Not |
 | --- | --- | --- |
-| **plugin** | What an `@nxgt/mail-*` package gives a project: a partial Maizzle config, listed in `defineMailConfig({ plugins })`. Plugins merge in order, their build hooks chained, the project's own config last | "preset", "extension", "module" |
+| **plugin** | What an `@nxgt/mail-*` package gives a project: a partial Maizzle config, listed in `defineMailConfig({ plugins })`. Plugins merge in order, their build hooks chained, the project's own config last | "preset" (a preset is a ready-made e-mail, not a config), "extension", "module" |
 | **wrapper** | A file the i18n plugin generates under `.maizzle/i18n/<locale>/`, one per template and locale, so one `maizzle build` builds every locale. Never edited, never committed | "copy", "variant" |
 | **build failure** | The build stopping because the catalogues or the templates cannot be right — a message that does not parse, a key missing in a locale, an argument a translation invents, a template calling an unknown key — naming the template, the locale and the key. A mistake in a plugin's own options is a bare `TypeError` instead | *failure* alone, which is `MailFailure` at send time; "warning" — nothing is only reported |
 | **manifest** | `dist/mail-manifest.json`, written by the build: each e-mail's placeholders — and which ones sit in an `href` or a `src` — and its subject per locale. What the renderer reads | "index", "metadata" |

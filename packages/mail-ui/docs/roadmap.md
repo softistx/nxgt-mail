@@ -27,6 +27,12 @@ no dates here, and the version something shipped in is the only number.
   `@nxgt/mail-i18n` as `i18n({ catalogues: [uiCatalogues] })`, and overridden
   key by key by your own `locales/<locale>.json`. Built, not yet published.
 
+- **Components and templates installed from npm** — `ui()` resolves the
+  tags of a `.vue` file under `node_modules` itself, since Maizzle does not:
+  ours, and a package's templates such as `@nxgt/mail-presets`', render the
+  same installed as in the workspace, with your `components/` still replacing
+  ours by name. Built, not yet published.
+
 ## Next
 
 - **The second set of components** — the material-vue components that fit an
