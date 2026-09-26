@@ -117,11 +117,23 @@ type TemplateArgs<K> = [K] extends [keyof TemplateMessages]
 	: [args?: MessageArgs]; // while no key is declared
 ```
 
-TypeScript reads a key the catalogues do not have as *every* key, so a key
-that may be any message takes any arguments: the error it reports is then the
-key's, `Argument of type '"verifyEmail.titel"' is not assignable to parameter
+When the catalogues have more than one key, TypeScript reads a key they do not
+have as *every* key, so a key that may be any message takes any arguments:
+the error it reports is then the key's, `Argument of type '"verifyEmail.titel"' is not assignable to parameter
 of type 'keyof TemplateMessages'`, rather than one about the arguments. A key
-typed as every key on purpose is checked by the build alone.
+typed as every key on purpose is checked by the build alone, and so is a key
+that may be every message — `ok ? 'a' : 'b'` in catalogues of only those two
+keys:
+
+```vue
+<script setup lang="ts">
+import type { TemplateKey } from '@nxgt/mail-i18n';
+const reason = 'security.reason.newDevice' as TemplateKey; // any message: any arguments
+</script>
+<template>
+  <Text>{{ t(reason, { device: placeholder('device') }) }}</Text>
+</template>
+```
 
 A key that may be one of several messages, as
 `t(ok ? 'verifyEmail.greeting' : 'verifyEmail.subject', { name })`, compiles
