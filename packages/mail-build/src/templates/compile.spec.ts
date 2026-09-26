@@ -194,7 +194,7 @@ describe('compileMail', () => {
 		async () => {
 			const error = await refusal(
 				'a.vue',
-				"<script setup>\ndefineProps(notDefined)\n</script>\n<template><p>{{ t('a.title') }}</p></template>",
+				'<template><p>{{ t(\'a.title\') }}</p></template>\n<style lang="scss">p { color: red }</style>',
 			);
 			expect(error.code).toBe('TEMPLATE_INVALID');
 			expect(error.message).toStartWith(

@@ -105,6 +105,13 @@ describe('readTemplate', () => {
 			'templates: a.vue: holds code in <script setup> — a template declares its props with defineProps([...]), unassigned, and nothing else',
 		],
 		[
+			'a props type the compiler cannot resolve',
+			'a.vue',
+			'<script setup lang="ts">\ndefineProps<Missing>()\n</script>\n<template><p></p></template>',
+			'TEMPLATE_INVALID',
+			'templates: a.vue: does not declare its props in a form the build reads ([@vue/compiler-sfc] Unresolvable type reference or unsupported built-in utility type)',
+		],
+		[
 			'assigned props',
 			'a.vue',
 			"<script setup>\nconst props = defineProps(['name'])\n</script>\n<template><p>{{ name }}</p></template>",

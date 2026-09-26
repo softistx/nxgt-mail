@@ -209,7 +209,16 @@ function readProps(
 ): string[] {
 	if (descriptor.scriptSetup === null) return [];
 	checkScript(file, descriptor.scriptSetup.content);
-	const { bindings } = compileScript(descriptor, { id: file });
+	let bindings: Readonly<Record<string, unknown>> | undefined;
+	try {
+		bindings = compileScript(descriptor, { id: file }).bindings;
+	} catch (cause) {
+		throw templateError(
+			'TEMPLATE_INVALID',
+			file,
+			`does not declare its props in a form the build reads (${cause instanceof Error ? cause.message.split('\n')[0] : String(cause)})`,
+		);
+	}
 	const props: string[] = [];
 	for (const name of Object.keys(bindings ?? {})) {
 		if (RESERVED.has(name)) {
