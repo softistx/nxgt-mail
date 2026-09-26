@@ -1,3 +1,5 @@
 .maizzle
+components
 dist
+dist-project
 node_modules

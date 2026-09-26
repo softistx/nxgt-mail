@@ -269,14 +269,14 @@ and the build fails on the empty e-mail (see
 
 | Error | When |
 | --- | --- |
-| `TypeError: i18n: templates must be a list of template folders, as [{ dir: '/abs/path/emails' }] — emails, when given, names at least one` | When the config loads: `templates` not a list (`templates: mails.templates`), a `dir` that is not absolute, or `emails` that is not a list of names, or is empty |
+| `TypeError: i18n: templates must be a list of template folders, as [{ dir: '/abs/path/emails' }] — emails, when given, names at least one, each once` | When the config loads: `templates` not a list (`templates: mails.templates`), a `dir` that is not absolute, or `emails` that is not a list of names, is empty, or names one twice |
 | `Error: i18n: templates[0] has no template sign-in.vue — name one of its e-mails` | When the config loads: a name in `emails` the folder does not have. `templates[0]` is the source's place in the list |
 | `Error: i18n: templates[0] holds no template — is /…/emails the folder of a package's e-mails?` | When the config loads: a `dir` that does not exist, or holds no `.vue` file |
 | `Error: i18n: templates[0] and templates[1] both have welcome.vue — keep one with emails: [...], or write the project's own in its folder` | When the config loads: two sources ship an e-mail of the same name, and your `emails/` does not have it |
 
 ```ts
 i18n({ locales: ['en'], templates: [{ dir: 'node_modules/@nxgt/mail-presets/emails' }] });
-// TypeError: i18n: templates must be a list of template folders, as [{ dir: '/abs/path/emails' }] — emails, when given, names at least one
+// TypeError: i18n: templates must be a list of template folders, as [{ dir: '/abs/path/emails' }] — emails, when given, names at least one, each once
 ```
 
 ## What fails the build

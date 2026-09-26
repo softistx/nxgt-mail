@@ -169,6 +169,12 @@ this order:
 2. ours, in `COMPONENTS_DIR`;
 3. Maizzle's built-ins (`Container`, `Spacer`, `Button`, …).
 
+Only the top level of your `components/` counts there: a component in a
+subfolder (`components/brand/Logo.vue`, `<BrandLogo>`) or in a
+`components.source` folder is found in your own templates, not inside an
+installed one. Put a component that replaces ours at the top of
+`components/`. Under `maizzle serve`, restart after adding one.
+
 Nothing to write for it: listing `ui()` is enough, and a package's templates
 need no import of their components.
 

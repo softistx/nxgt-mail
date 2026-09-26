@@ -346,7 +346,7 @@ see `@nxgt/mail-i18n`'s
 
 | Message | When |
 | --- | --- |
-| `i18n: templates must be a list of template folders, as [{ dir: '/abs/path/emails' }] — emails, when given, names at least one` | A `TypeError` when the config loads: `templates: mails.templates` without the list, a relative `dir`, or an empty `emails` |
+| `i18n: templates must be a list of template folders, as [{ dir: '/abs/path/emails' }] — emails, when given, names at least one, each once` | A `TypeError` when the config loads: `templates: mails.templates` without the list, a relative `dir`, or an empty `emails` |
 | `i18n: templates[0] has no template sign-in.vue — name one of its e-mails` | A plain `Error` when the config loads: an `emails` list written by hand, naming a template the folder does not have |
 | `i18n: templates[0] holds no template — is /…/emails the folder of a package's e-mails?` | A plain `Error` when the config loads: a `dir` written by hand that is missing or has no template — use `TEMPLATES_DIR` |
 | `i18n: templates[0] and templates[1] both have welcome.vue — keep one with emails: [...], or write the project's own in its folder` | A plain `Error` when the config loads: another package ships an e-mail of the same name as a preset. Keep one with `only`, or write your own `emails/welcome.vue` |

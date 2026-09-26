@@ -146,7 +146,8 @@ describe('buildManifest', () => {
 		expect(() =>
 			manifestOf({
 				'en/welcome.html': '<p/>',
-				'fr/welcome.html': '<!DOCTYPE html>\n',
+				'fr/welcome.html':
+					'<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN">\n',
 			}),
 		).toThrow(
 			new Error(

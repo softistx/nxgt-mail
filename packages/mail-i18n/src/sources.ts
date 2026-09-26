@@ -19,7 +19,8 @@ const isSource = (source: unknown): source is TemplateSource =>
 	(source.emails === undefined ||
 		(Array.isArray(source.emails) &&
 			source.emails.length > 0 &&
-			source.emails.every((email) => typeof email === 'string')));
+			source.emails.every((email) => typeof email === 'string') &&
+			new Set(source.emails).size === source.emails.length));
 
 /** Refuses a `templates` option that is not a list of {@link TemplateSource}. */
 export function checkTemplates(
@@ -30,7 +31,7 @@ export function checkTemplates(
 		(!Array.isArray(templates) || !templates.every(isSource))
 	) {
 		throw new TypeError(
-			"i18n: templates must be a list of template folders, as [{ dir: '/abs/path/emails' }] — emails, when given, names at least one",
+			"i18n: templates must be a list of template folders, as [{ dir: '/abs/path/emails' }] — emails, when given, names at least one, each once",
 		);
 	}
 }

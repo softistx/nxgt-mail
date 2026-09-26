@@ -147,7 +147,7 @@ export function buildManifest(options: {
 			const html = readFileSync(join(options.outputDir, seen.html), 'utf8');
 			// Vue renders an unresolved component as nothing, and Maizzle still
 			// writes the doctype: the build would pass with an empty e-mail.
-			if (html.replace(/<!doctype html>/i, '').trim() === '') {
+			if (html.replace(/<!doctype[^>]*>/i, '').trim() === '') {
 				throw new Error(
 					`i18n: ${seen.html} is empty — a tag of its template resolved to no component; list the plugin that brings it, as ui()`,
 				);

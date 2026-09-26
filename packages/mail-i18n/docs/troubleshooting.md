@@ -42,7 +42,7 @@ template `emails/verify-email.vue`, and keys such as `verifyEmail.title`.
 - [`i18n: dir must be a folder of the project`](#i18n-dir-must-be-a-folder-of-the-project)
 - [`i18n: layout must be 'nested' or 'flat'`](#i18n-layout-must-be-nested-or-flat)
 - [`i18n: catalogues must be a list of catalogues by locale, as [{ en: {...}, fr: {...} }]`](#i18n-catalogues-must-be-a-list-of-catalogues-by-locale-as--en--fr--)
-- [`i18n: templates must be a list of template folders, as [{ dir: '/abs/path/emails' }] — emails, when given, names at least one`](#i18n-templates-must-be-a-list-of-template-folders-as--dir-abspathemails---emails-when-given-names-at-least-one)
+- [`i18n: templates must be a list of template folders, as [{ dir: '/abs/path/emails' }] — emails, when given, names at least one, each once`](#i18n-templates-must-be-a-list-of-template-folders-as--dir-abspathemails---emails-when-given-names-at-least-one-each-once)
 - [`i18n: templates[0] has no template sign-in.vue — name one of its e-mails`](#i18n-templates0-has-no-template-sign-invue--name-one-of-its-e-mails)
 - [`i18n: templates[0] holds no template — is … the folder of a package's e-mails?`](#i18n-templates0-holds-no-template--is--the-folder-of-a-packages-e-mails)
 - [`i18n: templates[0] and templates[1] both have welcome.vue — keep one with emails: [...], or write the project's own in its folder`](#i18n-templates0-and-templates1-both-have-welcomevue--keep-one-with-emails--or-write-the-projects-own-in-its-folder)
@@ -231,14 +231,14 @@ export default defineMailConfig({
 });
 ```
 
-### `i18n: templates must be a list of template folders, as [{ dir: '/abs/path/emails' }] — emails, when given, names at least one`
+### `i18n: templates must be a list of template folders, as [{ dir: '/abs/path/emails' }] — emails, when given, names at least one, each once`
 
 **When:** loading `maizzle.config.ts`, when `templates` is one folder rather
 than a list of them, as in `templates: mails.templates`. It also appears when
 an entry of the list is not `{ dir, emails? }` with `dir` an absolute path
-and `emails` a list of at least one name. Examples: `[{ dir: 'presets' }]`,
-`[{ dir, emails: 'welcome' }]`, `[{ dir, emails: [] }]`, or the folder alone
-as a string.
+and `emails` a list of at least one name, each once. Examples:
+`[{ dir: 'presets' }]`, `[{ dir, emails: 'welcome' }]`, `[{ dir, emails: [] }]`,
+`[{ dir, emails: ['welcome', 'welcome'] }]`, or the folder alone as a string.
 **Why:** `templates` is a list, so that several packages can each ship
 templates, and each `dir` is absolute because a package answers where it is
 installed, not a path from your project. An empty `emails` would build

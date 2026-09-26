@@ -146,7 +146,13 @@ describe('the presets, built by a project', () => {
 
 describe('the presets, installed from npm', () => {
 	beforeAll(async () => {
-		for (const dir of ['dist', 'node_modules', '.maizzle']) {
+		for (const dir of [
+			'dist',
+			'dist-project',
+			'components',
+			'node_modules',
+			'.maizzle',
+		]) {
 			rmSync(`${packaged}/${dir}`, { recursive: true, force: true });
 		}
 		// Maizzle leaves unresolved every tag of a file under node_modules: the
@@ -154,7 +160,13 @@ describe('the presets, installed from npm', () => {
 		install('mail-ui', ['package.json', 'dist', 'components', 'theme.css']);
 		install('mail-presets', ['package.json', 'dist', 'emails']);
 		await buildIn(packaged);
-	}, 180_000);
+		mkdirSync(`${packaged}/components`);
+		await Bun.write(
+			`${packaged}/components/NxButton.vue`,
+			'<template><a data-project-button><slot /></a></template>\n',
+		);
+		await buildIn(packaged, '-c', 'maizzle.config.project.ts');
+	}, 240_000);
 
 	test('builds what the workspace builds, byte for byte', async () => {
 		for (const locale of ['en', 'fr']) {
@@ -169,5 +181,11 @@ describe('the presets, installed from npm', () => {
 				});
 			}
 		}
+	});
+
+	test("the project's components/NxButton.vue replaces ours in an installed template", async () => {
+		expect(
+			await Bun.file(`${packaged}/dist-project/en/magic-link.html`).text(),
+		).toContain('data-project-button');
 	});
 });

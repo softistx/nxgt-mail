@@ -61,7 +61,7 @@ describe('i18n — wiring mistakes', () => {
 
 	test('refuses templates that are not a list of absolute folders', () => {
 		const message =
-			"i18n: templates must be a list of template folders, as [{ dir: '/abs/path/emails' }] — emails, when given, names at least one";
+			"i18n: templates must be a list of template folders, as [{ dir: '/abs/path/emails' }] — emails, when given, names at least one, each once";
 		refuses({ locales: ['en'], templates: { dir: '/x' } }, message);
 		refuses({ locales: ['en'], templates: [{ dir: 'presets' }] }, message);
 		refuses(
