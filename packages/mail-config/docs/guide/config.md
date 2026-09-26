@@ -17,8 +17,12 @@ export default defineMailConfig({
 ```
 
 `maizzle serve` and `maizzle build` load that file as they load any Maizzle
-config. `defineMailConfig` runs once, when the file loads, and answers a plain
-Maizzle config.
+config, and `defineMailConfig` runs each time the file is loaded, answering a
+plain Maizzle config. That can be more than once: above 50 templates Maizzle 6
+builds in parallel, and each worker loads the file again. Keep the call free
+of side effects. The per-template events (`beforeRender`, `afterRender`,
+`afterTransform`) then run in the workers; `beforeCreate` and `afterBuild` run
+only on the main thread, once per build.
 
 ## The signature
 
@@ -263,8 +267,8 @@ export default defineMailConfig({
 ## Errors
 
 A mistake in how the config is wired is a bare `TypeError`, thrown by
-`defineMailConfig` when `maizzle.config.ts` loads — before any template is
-built. A message names the plugin by its `name`, or by its index when it has
+`defineMailConfig` each time `maizzle.config.ts` is loaded — the first time
+before any template is built, so the build stops there. A message names the plugin by its `name`, or by its index when it has
 none. Several are also refused at compile time — a plugin without a `name`,
 `plugins` that is not a list, a build event that is not a function, a plugin
 that lists plugins; the count is in the

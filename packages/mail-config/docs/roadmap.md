@@ -63,9 +63,10 @@ Nothing yet beyond **Next**. A request is welcome as an
   `beforeRender` (or any other event); here every layer's handler runs, in
   order. A plugin silently disabling another's hook is the bug this package
   exists to remove.
-- **`moduleResolution: "nodenext"`** — sources and emitted declarations import
-  without extensions, and resolve as Bun and every bundler do. Use
-  `"moduleResolution": "bundler"`.
+- **`moduleResolution: "nodenext"` as a contract** — bundler resolution
+  (`"moduleResolution": "bundler"`) is what is supported and tested, as Bun,
+  every bundler and Maizzle's own config loader resolve. `nodenext` may work;
+  it is not promised.
 
 ## Shipped
 

@@ -20,7 +20,7 @@ How the messages are shaped:
 ## Index
 
 **Install and types**
-- [`TS2834: Relative import paths need explicit file extensions in ECMAScript imports when '--moduleResolution' is 'node16' or 'nodenext'.`](#ts2834-relative-import-paths-need-explicit-file-extensions-in-ecmascript-imports-when---moduleresolution-is-node16-or-nodenext)
+- [Which `moduleResolution` is supported](#install-and-types)
 
 **Configuration**
 - [`defineMailConfig: config must be an object, as { plugins, ...maizzleConfig }`](#definemailconfig-config-must-be-an-object-as--plugins-maizzleconfig-)
@@ -46,33 +46,17 @@ How the messages are shaped:
 - [A plugin's `content` (or another list) disappears](#a-plugins-content-or-another-list-disappears)
 - [`maizzle build -c maizzle.config.production.ts` ignores `maizzle.config.ts`](#maizzle-build--c-maizzleconfigproductionts-ignores-maizzleconfigts)
 - [A hook's change is lost](#a-hooks-change-is-lost)
+- [A plugin's component tag stays in the HTML, unresolved](#a-plugins-component-tag-stays-in-the-html-unresolved)
+- [One of two configs' hooks never runs](#one-of-two-configs-hooks-never-runs)
 - [A bug in `@nxgt/mail-config` itself](#a-bug-in-nxgtmail-config-itself)
 
 ---
 
 ## Install and types
 
-### `TS2834: Relative import paths need explicit file extensions in ECMAScript imports when '--moduleResolution' is 'node16' or 'nodenext'.`
-
-**When:** `tsc` on your project, reported inside
-`node_modules/@nxgt/mail-config/dist/*.d.ts`.
-**Why:** the declarations import their siblings without an extension, the way
-a bundler resolves them. `moduleResolution: "nodenext"` (or `"node16"`)
-demands an extension on every relative import and is **not supported** by
-this package. With `skipLibCheck: true` the same cause shows up as `TS2305:
-Module '"@nxgt/mail-config"' has no exported member 'defineMailConfig'.`
-**Fix:** resolve as a bundler does. Maizzle loads the config through jiti,
-which already does:
-
-```jsonc
-// tsconfig.json
-{
-  "compilerOptions": {
-    "module": "preserve",          // or "esnext"
-    "moduleResolution": "bundler"
-  }
-}
-```
+Resolve as a bundler does (`"moduleResolution": "bundler"`, as Maizzle's jiti
+loader does): that is the supported contract. `nodenext` and `node16` are out
+of contract — they may work today, and are not tested.
 
 ---
 
@@ -452,6 +436,55 @@ export const tidy = defineMailPlugin({
     const result = await posthtml([]).process(html);
     return result.html;                        // not return result
   },
+});
+```
+
+### A plugin's component tag stays in the HTML, unresolved
+
+**When:** `maizzle build` succeeds, but a plugin's component — say
+`<BrandFooter>` — is not rendered: the tag is left unresolved in the built
+HTML.
+**Why:** the plugin set `components.source` to a relative path
+(`'./components'`). Maizzle resolves a relative `components.source` against
+the directory `maizzle` runs in — the project — not against the plugin's
+file, so it looks for the folder in the wrong place and finds no component.
+**Fix:** make the path absolute, relative to the plugin's own file:
+
+```ts
+import { fileURLToPath } from 'node:url';
+import { defineMailPlugin } from '@nxgt/mail-config';
+
+export const brand = defineMailPlugin({
+  name: 'brand',
+  components: {
+    source: [{ path: fileURLToPath(new URL('./components', import.meta.url)), prefix: 'Brand' }],
+  },
+});
+```
+
+When the plugin is compiled to `dist/`, point the URL at where the folder sits
+from the built file (`'../components'`), and ship the folder in `files`.
+
+### One of two configs' hooks never runs
+
+**When:** the build succeeds, but a `beforeRender` (or any other build event)
+from one of two configs you combined has no effect.
+**Why:** spreading configs yourself — `{ ...a, ...b }` — keeps one value per
+key: `b.beforeRender` replaces `a.beforeRender`, without a word. Nested
+objects are replaced the same way (`b.css` drops every key of `a.css`).
+**Fix:** give each config a `name` and list both as plugins; their hooks are
+chained, in order, and their objects merged:
+
+```ts
+import { defineMailConfig } from '@nxgt/mail-config';
+import { a, b } from './configs';
+
+// not: export default defineMailConfig({ ...a, ...b });
+export default defineMailConfig({
+  plugins: [
+    { name: 'a', ...a },
+    { name: 'b', ...b },
+  ],
 });
 ```
 

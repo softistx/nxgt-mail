@@ -38,9 +38,8 @@ Peers, all required:
 - `@maizzle/tailwindcss` (`^1.5.6`) — **as a direct dependency of your
   project**, even if another package already brings it: see
   [Setup](#setup).
-- `typescript` (6). Your tsconfig resolves as a bundler does
-  (`"moduleResolution": "bundler"`): the declarations import without
-  extensions, so `nodenext` is not supported.
+- `typescript` (6). Bundler resolution (`"moduleResolution": "bundler"`) is
+  what is supported and tested; `nodenext` is out of contract.
 
 ## Setup
 
