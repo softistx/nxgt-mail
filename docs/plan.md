@@ -158,28 +158,40 @@ Merged in PR #8. `defineMailConfig({ plugins, ...project })`:
 `beforeRender` hooks both applied, in order; the project's config overrides a
 plugin's key; the production config minifies.
 
-## Step 4 — `@nxgt/mail-i18n`
+## Step 4 — `@nxgt/mail-i18n` ✅
 
-`i18n({ locales, fallbackLocale, dir = 'locales' })`, a plugin:
+Merged in PR #9. `i18n({ locales, fallbackLocale, dir = 'locales', emails = 'emails', layout = 'nested' })`,
+a plugin for `defineMailConfig` (`fallbackLocale` defaults to the first locale):
 
 - Reads `locales/<locale>.json` — nested ICU catalogues, camelCase keys, the
-  conventions of `@nxgt/i18n` — and **fails the build** on a catalogue that
-  does not parse, a key missing in a locale, an argument declared differently
-  (the checks of the old `@nxgt/mail-build`).
-- Writes one wrapper per template and locale, only when it changed, only on
-  the main thread; `content` points at them; the output is
-  `dist/<locale>/<template>.html` (`layout: 'flat'` for
-  `dist/<template>.<locale>.html`).
-- In `beforeRender`, gives the template `t`, `locale` and `placeholder`; a
-  missing key fails the build.
+  conventions of `@nxgt/i18n` — and **fails the build** on a missing or
+  broken catalogue, a key that is not camelCase, a message that does not
+  parse, a key missing in a locale or unknown to the fallback locale, an
+  argument a translation invents or types differently (the checks of the old
+  `@nxgt/mail-build`).
+- Writes one wrapper per template and locale under `.maizzle/i18n/`, only
+  when it changed, only on the main thread; `content` points at them; the
+  output is `dist/<locale>/<template>.html` (`layout: 'flat'` for
+  `dist/<template>.<locale>.html`). A template name is kebab-case.
+- In `beforeRender`, gives the template `t`, `locale` and `placeholder`. `t`
+  fails the build on an unknown key, an argument left out, one the message
+  does not use, or one of the wrong kind — a placeholder where a number is
+  expected, or passed to a `select`, which would always choose `other`.
 - `placeholder('name')` writes `{{ name }}`, for a value only known at send
-  time; it can be passed as an ICU argument.
+  time; it can be passed as an ICU argument of string kind.
 - In `afterBuild`, writes `dist/mail-manifest.json`: per e-mail, its
-  variables (and which ones sit in an `href` or a `src`), and its subject per
-  locale — the message `<email>.subject`, required.
-- `createTranslator(catalogues, getLanguage)` and `t(key, args)`, shaped like
-  `@nxgt/i18n`, exported for use outside templates — but a missing key or a
-  formatting failure **throws**, where `@nxgt/i18n` answers the key.
+  variables (in the HTML, the text part or the subject), its URL variables —
+  those a URL attribute (`href`, `src`, `background`, `poster`, `action`)
+  **starts** with, so they decide the scheme; one later in the value, as
+  `?token={{ token }}`, is not one — its subject per locale — the message
+  `<email>.subject`, required, its arguments kept as placeholders, never a
+  number, a date or a `select` — and its files per locale. A file written
+  outside the plugin's layout, or an e-mail missing in a locale, fails the
+  build.
+- `createTranslator(catalogues, getLanguage)` and `t(key, args, language?)`,
+  shaped like `@nxgt/i18n`, exported for use outside templates — but a
+  missing key, a language with no catalogue or a formatting failure
+  **throws**, where `@nxgt/i18n` answers the key.
 - Types `t`, `locale` and `placeholder` for templates
   (`ComponentCustomProperties`).
 - A watcher regenerates the wrappers when a template is added or removed
@@ -266,3 +278,9 @@ built with these packages. Then archive `nxgt-maizzle` — Steve decides when.
 - **Typing the renderer.** An `afterBuild` hook could also write
   `generated/mail.d.ts` (e-mail names and their variables), so an unknown
   e-mail or variable is a compile error. Not in this plan unless asked.
+- **A placeholder inside a URL.** Step 4 records as a URL variable only a
+  placeholder a URL attribute starts with (it decides the scheme, so the
+  renderer checks it is `http:`/`https:`). One later in the value —
+  `https://app.example/verify?token={{ token }}` — is HTML-escaped like any
+  other; step 6 could also percent-encode it. Say if a URL should only ever be
+  one whole placeholder.

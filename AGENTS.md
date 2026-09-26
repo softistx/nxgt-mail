@@ -91,6 +91,11 @@ What it means here:
 A refusal at **wiring** time (a bad option passed to a factory or a plugin) is
 a bare `TypeError`. A refusal at **call** time is a class with a `code`, the
 codes a union of `SCREAMING_SNAKE` literals so a `switch` is exhaustive.
+A **build failure** is a plain `Error` naming the locale, the template and the
+key — nothing catches it but the person reading the build's output. So is a
+refusal of `createTranslator`'s `t` (an unknown key or language, a message
+that does not format): each is a mistake in the code or the catalogues, never
+a condition a caller would `switch` on.
 
 A message reports **a shape, never a value**: never a recipient address, never
 a subject, never a link — a link in a verification e-mail is a credential.

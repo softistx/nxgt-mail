@@ -1,8 +1,8 @@
 # Troubleshooting `@nxgt/mail-config`
 
-Each entry is headed by the text you see: a compiler error or a message. The
-last section holds the traps that print nothing — a build that succeeds and
-is wrong. Search this page for the words of your message.
+Each entry is headed by the message you see. The last section holds the
+traps that print nothing — a build that succeeds and is wrong. Search this
+page for the words of your message.
 
 How the messages are shaped:
 

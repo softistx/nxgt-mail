@@ -26,9 +26,9 @@ no dates here, and the version something shipped in is the only number.
 
 ## Next
 
-- **i18n as a plugin** — `@nxgt/mail-i18n`'s `i18n({ locales, fallbackLocale
-  })`, listed in `plugins`: one template per e-mail, ICU catalogues, and one
-  output per locale from a single `maizzle build`.
+- **i18n as a plugin** — `@nxgt/mail-i18n`'s `i18n({ locales, fallbackLocale })`,
+  listed in `plugins`: built, not yet published — see
+  [its roadmap](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-i18n/docs/roadmap.md).
 - **UI components as a plugin** — `@nxgt/mail-ui`'s `ui({ brand, theme })`,
   listed in `plugins`: a neutral theme, a layout and the `Nx*` components,
   each replaceable by name in your project.

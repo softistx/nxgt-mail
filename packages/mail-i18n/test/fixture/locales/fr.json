@@ -1,0 +1,16 @@
+{
+	"verifyEmail": {
+		"subject": "Confirmez votre adresse e-mail, {name}",
+		"title": "Confirmez votre adresse e-mail",
+		"greeting": "Bonjour {name},",
+		"expires": "Le lien expire dans {minutes, plural, one {# minute} other {# minutes}}.",
+		"sentOn": "Envoyé le {at, date, long}.",
+		"action": "Confirmer mon adresse"
+	},
+	"auth": {
+		"resetPassword": {
+			"subject": "Réinitialisez votre mot de passe",
+			"body": "Quelqu'un a demandé à réinitialiser le mot de passe de {email}."
+		}
+	}
+}

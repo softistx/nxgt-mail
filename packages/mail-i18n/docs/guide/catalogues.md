@@ -1,0 +1,258 @@
+# Catalogues
+
+This page is for writing the catalogues: one JSON file of ICU messages per
+locale, checked against each other when the config loads.
+
+```json
+// locales/en.json
+{
+	"verifyEmail": {
+		"subject": "Confirm your e-mail address, {name}",
+		"title": "Confirm your e-mail address",
+		"greeting": "Hello {name},",
+		"expires": "The link expires in {minutes, plural, one {# minute} other {# minutes}}.",
+		"sentOn": "Sent on {at, date, long}.",
+		"action": "Confirm my address"
+	},
+	"auth": {
+		"resetPassword": {
+			"subject": "Reset your password",
+			"body": "Someone asked to reset the password of {email}."
+		}
+	}
+}
+```
+
+```json
+// locales/fr.json
+{
+	"verifyEmail": {
+		"subject": "Confirmez votre adresse e-mail, {name}",
+		"title": "Confirmez votre adresse e-mail",
+		"greeting": "Bonjour {name},",
+		"expires": "Le lien expire dans {minutes, plural, one {# minute} other {# minutes}}.",
+		"sentOn": "Envoyé le {at, date, long}.",
+		"action": "Confirmer mon adresse"
+	},
+	"auth": {
+		"resetPassword": {
+			"subject": "Réinitialisez votre mot de passe",
+			"body": "Quelqu'un a demandé à réinitialiser le mot de passe de {email}."
+		}
+	}
+}
+```
+
+```ts
+// maizzle.config.ts
+import { defineMailConfig } from '@nxgt/mail-config';
+import { i18n } from '@nxgt/mail-i18n';
+
+export default defineMailConfig({
+	plugins: [i18n({ locales: ['en', 'fr'], fallbackLocale: 'en' })],
+});
+```
+
+A template writes `t('verifyEmail.expires', { minutes: 15 })`. The English
+build shows `The link expires in 15 minutes.` and the French one
+`Le lien expire dans 15 minutes.`.
+
+## Where they are read
+
+`i18n()` reads `<dir>/<locale>.json` for every locale in `locales`, where
+`dir` defaults to `locales` and is resolved against the directory `maizzle`
+runs in. It checks them at once, when `maizzle.config.ts` loads, before any
+template is built. A failure stops the build there.
+
+```ts
+i18n({ locales: ['en', 'fr', 'pt-BR'], dir: 'i18n' }); // i18n/en.json, i18n/fr.json, i18n/pt-BR.json
+```
+
+Every locale needs its file, and the file must be valid JSON:
+
+| Build failure | Cause |
+| --- | --- |
+| `i18n: locales/fr.json is missing — every locale has a catalogue` | `fr` is in `locales`, and there is no `locales/fr.json` |
+| `i18n: locales/fr.json is not valid JSON` | The file is empty, or does not parse |
+
+`maizzle serve` watches `locales/` already. For another `dir`, the plugin adds
+that folder to Maizzle's `server.watch`. Either way, saving a catalogue reloads
+the config, which checks the catalogues again.
+
+## The format
+
+A catalogue is an object. A leaf is an ICU message (a string), and anything
+else is an object of messages. The key of a message is its path, dotted:
+`verifyEmail.title`, `auth.resetPassword.body`.
+
+```ts
+import type { Catalogue } from '@nxgt/mail-i18n';
+
+const en: Catalogue = { verifyEmail: { subject: 'Confirm, {name}' } };
+```
+
+```ts
+interface Catalogue {
+	readonly [key: string]: string | Catalogue;
+}
+type Catalogues = Readonly<Record<string, Catalogue>>; // { en, fr }
+```
+
+**Every segment of a key is `camelCase`**: a lower-case letter, then letters
+and digits. Keys are **nested, never dotted**: a dot inside a key is refused
+the same way as a dash.
+
+```json
+{ "verifyEmail": { "title": "…" } }
+```
+
+| Build failure | Cause |
+| --- | --- |
+| `i18n: en: verify-email is not camelCase — every segment of a key is camelCase, and nested rather than dotted, as verifyEmail.title` | A key with a dash, an underscore, or a capital first letter |
+| `i18n: en: verifyEmail.title is not camelCase — …` | A dotted key, `{ "verifyEmail.title": "…" }`: nest it |
+| `i18n: en: the catalogue must be an object of messages` | The file holds an array, a string, `null` |
+| `i18n: en: verifyEmail.expires must be a message (a string) or an object of messages` | A leaf that is a number, a boolean, `null`, an array |
+| `i18n: en: verifyEmail.greeting is not a valid ICU message (EXPECT_ARGUMENT_CLOSING_BRACE)` | The message does not parse: here an unclosed `{name`. A `plural` or `select` with no `other` gives `(MISSING_OTHER_CLAUSE)`. The parser's reason is in brackets. The text of the message is not repeated |
+
+HTML-like tags in a message are text: `"<b>{name}</b>"` is a message whose
+argument `name` counts, and whose `<b>` is written as it is.
+
+## Arguments
+
+An argument is a named value a message writes. Its **kind** comes from the way
+the message uses it:
+
+| In the message | Kind | What `t` accepts for it |
+| --- | --- | --- |
+| `{name}` | `string` | a string or a number |
+| `{gender, select, female {…} other {…}}` | `string` | a string or a number |
+| `{total, number}`, `{total, number, ::currency/EUR}` | `number` | a number |
+| `{count, plural, one {# item} other {# items}}` | `number` | a number |
+| `{at, date, long}`, `{at, time, short}` | `date` | a `Date`, or a timestamp in milliseconds |
+
+```ts
+import type { ArgumentKind } from '@nxgt/mail-i18n'; // 'string' | 'number' | 'date'
+```
+
+A placeholder is a string, so it can only fill a `string` argument — and not
+one a `select` chooses on, which would always choose `other`. See
+[Templates](templates.md#a-placeholder-as-an-argument).
+
+An argument's name is `camelCase`, like a key. A message may use one name
+twice, as long as it keeps one kind: a plain `{n}` beside `{n, number}` takes
+the kind `number`.
+
+| Build failure | Cause |
+| --- | --- |
+| `i18n: en: welcome.body uses {first_name}, which is not camelCase — an argument is a camelCase name, as {firstName}` | An argument name that is not `camelCase` |
+| `i18n: en: welcome.body uses {n} as number and as date` | One name used as two kinds in one message |
+
+## The fallback locale is the reference
+
+The fallback locale (`fallbackLocale`, the first of `locales` by default)
+declares the keys and the arguments. Every other locale is checked against
+it:
+
+- **The same keys.** A key the fallback has must be in every locale; a key the
+  fallback does not have is refused.
+- **No new argument.** A translation may leave an argument out ("Bonjour"
+  for "Hello {name}"), but never use one the fallback does not declare.
+- **The same kind.** A translation that uses an argument uses it as the kind
+  the fallback declares.
+
+```json
+// en.json
+{ "welcome": { "body": "Hello {name}, you have {count, plural, one {# message} other {# messages}}." } }
+```
+
+```json
+// fr.json — {name} left out: allowed
+{ "welcome": { "body": "Vous avez {count, plural, one {# message} other {# messages}}." } }
+```
+
+| Build failure | Cause |
+| --- | --- |
+| `i18n: fr: verifyEmail.title is missing — en, the fallback locale, has it` | A key only the fallback has |
+| `i18n: fr: welcome.extra is not a key of en, the fallback locale` | A key the fallback does not have: add it there first |
+| `i18n: fr: welcome.body uses {name}, which en does not declare` | An argument a translation invents |
+| `i18n: fr: welcome.body uses {n} as date, and en declares it as number` | An argument a translation uses as another kind |
+
+The keys are compared in sorted order, so the first one reported is always the
+same one.
+
+## The subject
+
+Every e-mail has a subject in every locale: the message `<emailKey>.subject`.
+`emailKey` turns a template's path under `emails/` into the key its messages
+live under. Each path segment is converted from kebab-case to `camelCase`,
+and the segments are joined with dots:
+
+```ts
+import { emailKey } from '@nxgt/mail-i18n';
+
+emailKey('verify-email'); // 'verifyEmail'
+emailKey('auth/reset-password'); // 'auth.resetPassword'
+emailKey('auth/reset-password-2'); // 'auth.resetPassword2'
+```
+
+```ts
+function emailKey(email: string): string;
+```
+
+| Template | Its subject |
+| --- | --- |
+| `emails/verify-email.vue` | `verifyEmail.subject` |
+| `emails/auth/reset-password.vue` | `auth.resetPassword.subject` |
+
+The template never writes the subject. After the build, the plugin formats
+it in each locale into the [manifest](manifest.md), and **each argument
+becomes a placeholder**:
+
+```json
+{ "verifyEmail": { "subject": "Confirm your e-mail address, {name}" } }
+```
+
+```json
+{ "subject": { "en": "Confirm your e-mail address, {{ name }}" } }
+```
+
+`name` is then one of the e-mail's variables, filled at send time like any
+other placeholder. A line break in a value filled into a subject is the
+sending side's to remove. The vocabulary's *subject* row says how.
+
+A subject's arguments are therefore plain `{name}`: they are strings, and
+they are not known when the subject is formatted. A `select` would always
+choose `other` on a placeholder, so it is refused too.
+
+| Build failure | Cause |
+| --- | --- |
+| `i18n: welcome has no subject — add welcome.subject to the catalogues` | `emails/welcome.vue` exists, and `welcome.subject` does not |
+| `i18n: en: welcome.subject uses {count} as a number — a subject's arguments are placeholders, filled at send time as strings` | A `number`, `plural` or `date` argument in a subject |
+| `i18n: en: welcome.subject chooses on {kind} with a select — a subject's arguments are placeholders, which always choose other` | A `select` in a subject: the placeholder `{{ kind }}` would always pick `other`. Write one subject, or one e-mail per case |
+
+These three fail at the end of `maizzle build`, when the manifest is written.
+`maizzle serve` does not write a manifest, so it does not report them.
+
+Keeping the rest of an e-mail's messages under the same key
+(`verifyEmail.title`, `verifyEmail.action`) is a convention, not a rule. A
+template can call any key, such as a shared `common.footer`.
+
+## In CI
+
+The build is the check. To fail a pull request on a catalogue that
+cannot be right, build in CI:
+
+```sh
+maizzle build
+```
+
+A catalogue that fails prints its message (`i18n: fr: … is missing — en, the
+fallback locale, has it`) and exits non-zero.
+
+## See also
+
+- [Templates](templates.md) — calling `t` with the right arguments, and what
+  fails when a template does not.
+- [The manifest](manifest.md) — where the subjects end up.
+- [Translating outside templates](translator.md) — the same catalogues in your
+  application's code.

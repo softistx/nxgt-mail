@@ -1,0 +1,42 @@
+{
+	"locales": ["en", "fr"],
+	"fallbackLocale": "en",
+	"emails": {
+		"auth/reset-password": {
+			"variables": ["email", "resetLink"],
+			"urlVariables": ["resetLink"],
+			"subject": {
+				"en": "Reset your password",
+				"fr": "Réinitialisez votre mot de passe"
+			},
+			"files": {
+				"en": {
+					"html": "en/auth/reset-password.html",
+					"text": "en/auth/reset-password.txt"
+				},
+				"fr": {
+					"html": "fr/auth/reset-password.html",
+					"text": "fr/auth/reset-password.txt"
+				}
+			}
+		},
+		"verify-email": {
+			"variables": ["link", "name"],
+			"urlVariables": ["link"],
+			"subject": {
+				"en": "Confirm your e-mail address, {{ name }}",
+				"fr": "Confirmez votre adresse e-mail, {{ name }}"
+			},
+			"files": {
+				"en": {
+					"html": "en/verify-email.html",
+					"text": "en/verify-email.txt"
+				},
+				"fr": {
+					"html": "fr/verify-email.html",
+					"text": "fr/verify-email.txt"
+				}
+			}
+		}
+	}
+}
