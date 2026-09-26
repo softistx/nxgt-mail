@@ -552,21 +552,27 @@ starts with `conformance: `; the test title names the case id
 
 Most failures below have the same fix: catch what the provider throws or
 answers, and throw the `@nxgt/mail` class that says what happened, with the
-provider's error as `cause`. Once, and without retrying:
+provider's error as `cause`. Once, and without retrying. The same
+transport as in [the transports guide](guide/transports.md#a-transport-over-http),
+shortened:
 
 ```ts
+// http-mailer.ts
 import { checkMessage, MailFailure, type Mailer, MailRefused } from '@nxgt/mail';
 
 export function createHttpMailer(options: {
-  endpoint: string;
-  apiKey: string;
+  readonly endpoint: string;
+  readonly apiKey: string;
+  /** For tests; the global fetch otherwise. */
+  readonly fetch?: (url: string, init: RequestInit) => Promise<Response>;
 }): Mailer {
+  const post = options.fetch ?? ((url, init) => fetch(url, init));
   return {
     async send(message) {
       checkMessage(message);
       let response: Response;
       try {
-        response = await fetch(options.endpoint, {
+        response = await post(options.endpoint, {
           method: 'POST',
           headers: {
             authorization: `Bearer ${options.apiKey}`,
@@ -595,9 +601,10 @@ export function createHttpMailer(options: {
 
 A `TypeError`.
 
-**When:** loading the file that calls `describeMailer`, where no global
-`describe` and `it` exist: vitest without `globals: true`, or a script run
-outside a test runner.
+**When:** loading the file that calls `describeMailer` without `runner`,
+where no global `describe` and `it` exist: under `bun test`, which never puts
+them on `globalThis`; under Vitest without `globals: true`; or in a script run
+outside a test runner. Jest defines them, unless `injectGlobals` is off.
 **Why:** the suite depends on no test runner; without `runner`, it looks for
 the globals and finds none.
 **Fix:** pass them:
@@ -647,25 +654,26 @@ the transport fail the way its provider fails, and the failure contract —
 reported, never passed over.
 **Fix:** give the harness `faults`, driven by the fake provider the transport
 talks to in the test — not by a wrapper that throws in front of the
-transport, which would prove the wrapper:
+transport, which would prove the wrapper. With the `fakeProvider()` of
+[the transports guide](guide/transports.md#faults--failing-the-way-the-provider-fails),
+which answers 503 for an outage and 422 for a refusal:
 
 ```ts
 import type { MailerHarness } from '@nxgt/mail/conformance';
-import { createHttpMailer } from '../src';
-import { startFakeProvider } from './fake-provider'; // your test double
+import { fakeProvider } from './fake-provider'; // the guide's, as is
+import { createHttpMailer } from './http-mailer'; // yours
 
 export const harness: MailerHarness = {
   async open() {
-    const provider = await startFakeProvider();
+    const provider = fakeProvider(); // one per case, never shared
     return {
-      mailer: createHttpMailer({ endpoint: provider.url, apiKey: 'test' }),
-      delivered: async () => provider.accepted(),
-      faults: {
-        // The next request is answered 503 (outage) or 422 (refusal).
-        failNext: async (kind) => provider.failNext(kind === 'outage' ? 503 : 422),
-        attempts: async () => provider.requestCount(),
-      },
-      close: () => provider.stop(),
+      mailer: createHttpMailer({
+        endpoint: 'https://mail.example.test/send',
+        apiKey: 'test',
+        fetch: provider.fetch,
+      }),
+      delivered: async () => provider.delivered(),
+      faults: provider.faults,
     };
   },
 };

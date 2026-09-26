@@ -16,19 +16,29 @@ export async function runMailerCase(
 	harness: MailerHarness,
 ): Promise<{ readonly skipped: string } | { readonly passed: true }> {
 	const opened = await harness.open();
+	let outcome: { readonly skipped: string } | { readonly passed: true };
 	try {
 		if (mailerCase.needs === 'faults' && opened.faults === undefined) {
-			return { skipped: MAILER_SKIP_REASONS.faults };
+			outcome = { skipped: MAILER_SKIP_REASONS.faults };
+		} else {
+			await mailerCase.run({
+				mailer: opened.mailer,
+				delivered: () => opened.delivered(),
+				faults: opened.faults ?? null,
+			});
+			outcome = { passed: true };
 		}
-		await mailerCase.run({
-			mailer: opened.mailer,
-			delivered: () => opened.delivered(),
-			faults: opened.faults ?? null,
-		});
-		return { passed: true };
-	} finally {
-		await opened.close?.();
+	} catch (error) {
+		// The case's failure is what the author needs to read: a close that
+		// fails too must not replace it.
+		await opened.close?.().then(
+			() => undefined,
+			() => undefined,
+		);
+		throw error;
 	}
+	await opened.close?.();
+	return outcome;
 }
 
 function globalRunner(): MailerRunner {
