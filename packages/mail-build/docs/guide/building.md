@@ -434,10 +434,14 @@ The codes of the catalogues are listed in
 | The messages folder holds no `<locale>.json` for any locale, or does not exist | `build: /home/ada/shop/messages holds no catalogue — write one <locale>.json per locale there, or set messages in the config` |
 | No config file found (CLI) | `nxgt-mail: no config — write mail.config.ts, or pass --config <file>` |
 | `--config` names a missing file (CLI) | `nxgt-mail: missing.ts does not exist` |
-| `locales: []` | `compileMessages: locales must hold at least one locale` |
 | `locales: ['en', 'en']` | `compileMessages: locales holds the same locale twice` |
-| `fallbackLocale` not in `locales` | `compileMessages: fallbackLocale must be one of locales` |
 | `locales: ['en_US']` | `compileMessages: en_US is not a locale — write it as a BCP 47 tag, as en or pt-BR` |
+| `locales: []` — `compileMail` and `compileMessages` only | `compileMessages: locales must hold at least one locale` |
+| `fallbackLocale` not in `locales` — `compileMail` and `compileMessages` only | `compileMessages: fallbackLocale must be one of locales` |
+
+Through `build`, `compileProject` and `dev`, the config check runs first: an
+empty `locales`, or a `fallbackLocale` that is not in it, fails with
+`build: fallbackLocale must be one of locales, as 'en'`.
 
 A messages folder that holds the fallback locale's catalogue but not another
 locale's is not a wiring mistake: that locale is read as empty, and the build

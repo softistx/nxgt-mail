@@ -50,6 +50,7 @@ try {
 **Running `nxgt-mail`**
 - [`nxgt-mail: unknown command <command>`](#nxgt-mail-unknown-command-command)
 - [`nxgt-mail: Unknown option '<option>'`](#nxgt-mail-unknown-option-option)
+- [`nxgt-mail: Option '-c, --config <value>' argument missing`](#nxgt-mail-option--c---config-value-argument-missing)
 - [`nxgt-mail: --out is for dev — build writes where the config's out says`](#nxgt-mail---out-is-for-dev--build-writes-where-the-configs-out-says)
 - [`nxgt-mail: no config — write mail.config.ts, or pass --config <file>`](#nxgt-mail-no-config--write-mailconfigts-or-pass---config-file)
 - [`nxgt-mail: <file> does not exist`](#nxgt-mail-file-does-not-exist)
@@ -90,6 +91,7 @@ try {
 - [`TEMPLATE_INVALID` — `templates: <file>: has no <template>`](#template_invalid--templates-file-has-no-template)
 - [`TEMPLATE_INVALID` — `templates: <file>: has a <script> without setup — declare the props in <script setup>`](#template_invalid--templates-file-has-a-script-without-setup--declare-the-props-in-script-setup)
 - [`TEMPLATE_UNSUPPORTED` — `templates: <file>: holds code in <script setup> — a template declares its props with defineProps([...]), unassigned, and nothing else`](#template_unsupported--templates-file-holds-code-in-script-setup--a-template-declares-its-props-with-defineprops-unassigned-and-nothing-else)
+- [`TEMPLATE_INVALID` — `templates: <file>: does not declare its props in a form the build reads (<reason>)`](#template_invalid--templates-file-does-not-declare-its-props-in-a-form-the-build-reads-reason)
 - [`TEMPLATE_INVALID` — `templates: <file>: declares the prop <prop>, a name the render function uses itself`](#template_invalid--templates-file-declares-the-prop-prop-a-name-the-render-function-uses-itself)
 - [`TEMPLATE_INVALID` — `templates: <file>: declares the prop <prop>, which is not camelCase — name it as firstName`](#template_invalid--templates-file-declares-the-prop-prop-which-is-not-camelcase--name-it-as-firstname)
 - [`TEMPLATE_UNSUPPORTED` — `templates: <file>: <<tag>> uses v-<directive> — a template renders once, at build time, so it has no condition, no loop and no event`](#template_unsupported--templates-file-tag-uses-v-directive--a-template-renders-once-at-build-time-so-it-has-no-condition-no-loop-and-no-event)
@@ -98,9 +100,11 @@ try {
 - [`TEMPLATE_UNSUPPORTED` — `templates: <file>: <where> uses <name>, which is not a prop — declare it with defineProps`](#template_unsupported--templates-file-where-uses-name-which-is-not-a-prop--declare-it-with-defineprops)
 
 **Templates: where a value lands**
-- [`TEMPLATE_UNSUPPORTED` — `templates: <file>: <value> lands in a <script> element`](#template_unsupported--templates-file-value-lands-in-a-script-element)
+- [`TEMPLATE_UNSUPPORTED` — `templates: <file>: <value> lands in a <<element>> element`](#template_unsupported--templates-file-value-lands-in-a-element-element)
+- [`TEMPLATE_UNSUPPORTED` — `templates: <file>: <value> lands in a tag outside a quoted attribute value`](#template_unsupported--templates-file-value-lands-in-a-tag-outside-a-quoted-attribute-value)
 - [`TEMPLATE_UNSUPPORTED` — `templates: <file>: <value> lands in the <attribute> attribute — only text attributes (alt, title, aria-*…) and URLs (href, src) take a value`](#template_unsupported--templates-file-value-lands-in-the-attribute-attribute--only-text-attributes-alt-title-aria--and-urls-href-src-take-a-value)
 - [`TEMPLATE_UNSUPPORTED` — `templates: <file>: <value> starts an href — a URL is a prop, checked when the e-mail is rendered`](#template_unsupported--templates-file-value-starts-an-href--a-url-is-a-prop-checked-when-the-e-mail-is-rendered)
+- [`TEMPLATE_UNSUPPORTED` — `templates: <file>: <value> lands in an href whose fixed start is not http:, https: or mailto:`](#template_unsupported--templates-file-value-lands-in-an-href-whose-fixed-start-is-not-http-https-or-mailto)
 
 **Templates: against the catalogues**
 - [`TEMPLATE_KEY_UNKNOWN` — `templates: <file>: t('<key>') is not a key of <fallback>, the fallback locale`](#template_key_unknown--templates-file-tkey-is-not-a-key-of-fallback-the-fallback-locale)
@@ -175,7 +179,14 @@ module, `src/generated/mail.ts` by default, holding `t` as well as `mails`.
 ## Wiring the build
 
 Each of these is a bare `TypeError`, thrown by `compileMessages` before any
-catalogue is read.
+catalogue is read. You meet them when you call `compileMessages` or
+`compileMail` yourself. Through `nxgt-mail build` or `dev`, `build()` or
+`dev()`, the config is checked first, and the same mistakes answer with the
+`build:` messages of [Running `nxgt-mail`](#running-nxgt-mail): an empty
+`locales` or a `fallbackLocale` outside it gives
+[`build: fallbackLocale must be one of locales, as 'en'`](#build-fallbacklocale-must-be-one-of-locales-as-en).
+A locale written twice, or one that is not a BCP 47 tag but has its
+`<locale>.json`, still reaches `compileMessages` and gets the message below.
 
 ### `compileMessages: locales must hold at least one locale`
 
@@ -264,19 +275,35 @@ nxgt-mail dev     # renders every e-mail in every locale to .nxgt-mail/
 
 ### `nxgt-mail: Unknown option '<option>'`
 
-Or another of the command-line parser's own messages, as
-`nxgt-mail: Option '-c, --config <value>' argument missing`.
+The message goes on: `To specify a positional argument starting with a '-',
+place it at the end of the command after '--', …`
 
-**When:** `nxgt-mail`, with an option it does not know (`--bogus`, `--watch`)
-or an option without its value (`--config` last on the line). The usage
-follows the message.
-**Why:** the CLI takes `--config`, `--out` and `--help`, each with its short
-form, and nothing else.
+**When:** `nxgt-mail build` or `dev`, with an option it does not know:
+`--bogus`, `--watch`. The usage follows the message, and the exit code is 1.
+**Why:** the CLI takes `--config` (`-c`), `--out` (`-o`) and `--help` (`-h`),
+and nothing else.
 **Fix:**
 
 ```sh
 nxgt-mail build --config mail.config.ts
 nxgt-mail dev --out .nxgt-mail
+```
+
+### `nxgt-mail: Option '-c, --config <value>' argument missing`
+
+With `--out` last: `nxgt-mail: Option '-o, --out <value>' argument missing`.
+
+**When:** `nxgt-mail build --config` or `dev --out` with nothing after the
+option, typically a script whose variable came back empty:
+`nxgt-mail build --config $MAIL_CONFIG`. The usage follows the message, and
+the exit code is 1.
+**Why:** `--config` and `--out` each take a path; with none, the command
+line cannot be read.
+**Fix:** give the path, or leave the option out to use the default:
+
+```sh
+nxgt-mail build --config mail.config.ts
+nxgt-mail build
 ```
 
 ### `nxgt-mail: --out is for dev — build writes where the config's out says`
@@ -949,18 +976,56 @@ defineProps(['link', 'name', 'hours']);
 ### `TEMPLATE_UNSUPPORTED` — `templates: <file>: holds code in <script setup> — a template declares its props with defineProps([...]), unassigned, and nothing else`
 
 **When:** the build, on a `<script setup>` that holds anything but one
-`defineProps([...])` call: a `const`, a function, an `import`, a
-`computed`, a `console.log`, or the props assigned, as
-`const props = defineProps([…])`.
+`defineProps(['a', 'b'])` or `defineProps<{ … }>()` call:
+- a `const`, a function, an `import`, a `computed`, a `console.log`;
+- the props assigned, as `const props = defineProps([…])`;
+- the object form, `defineProps({ name: String })`, and so a prop with a
+  `validator`, a `default` or `required`;
+- a list holding anything but quoted names, as `defineProps(names)`.
 **Why:** the script runs once, at build time, on markers rather than values:
-a value computed there would be computed from a marker, and frozen into
-every e-mail. Whatever the e-mail needs is a prop, computed by the caller.
-**Fix:** declare the props, unassigned, and compute the value where you call
-the e-mail:
+a value computed there, a default or a validator, would run on a marker and
+be frozen into every e-mail. Whatever the e-mail needs is a prop, computed
+by the caller — and every prop is required, so a default has nothing to do.
+**Fix:** declare the props by name, unassigned, as a list or as a type, and
+compute a value or a default where you call the e-mail:
 
 ```vue
 <script setup>
 defineProps(['link', 'name', 'hours']);
+</script>
+```
+
+```vue
+<script setup lang="ts">
+defineProps<{ link: string; name: string; hours: number }>();
+</script>
+```
+
+The types written in `defineProps<{ … }>()` are not read: each prop is typed
+in the generated module from the way the template uses it.
+
+### `TEMPLATE_INVALID` — `templates: <file>: does not declare its props in a form the build reads (<reason>)`
+
+**When:** the build, on a `defineProps<…>()` whose type Vue's compiler
+cannot resolve: a name declared nowhere in the script, as
+`defineProps<Missing>()`. `<reason>` is the compiler's first line, as
+`[@vue/compiler-sfc] Unresolvable type reference or unsupported built-in
+utility type`.
+**Why:** the build takes the prop names from Vue's compiler. A type declared
+beside the call, or imported, would need a second statement in
+`<script setup>`, which the build refuses; a name alone leaves the compiler
+nothing to read.
+**Fix:** write the props as a list of names, or as an inline type:
+
+```vue
+<script setup>
+defineProps(['link', 'name', 'hours']);
+</script>
+```
+
+```vue
+<script setup lang="ts">
+defineProps<{ link: string; name: string; hours: number }>();
 </script>
 ```
 
@@ -1082,15 +1147,20 @@ landed in the HTML, and escapes it for that place. A place where escaping is
 not enough fails the build. In these messages, `<value>` is `the prop
 <prop>`, `a message` or `lang`.
 
-### `TEMPLATE_UNSUPPORTED` — `templates: <file>: <value> lands in a <script> element`
+### `TEMPLATE_UNSUPPORTED` — `templates: <file>: <value> lands in a <<element>> element`
 
-The same for a `<style>` element: `<value> lands in a <style> element`.
+`<element>` is one of `style`, `script`, `textarea`, `title`, `xmp`,
+`noembed`, `noframes`, `iframe` and `plaintext`.
 
-**When:** the build, on a value written inside a `<script>` or a `<style>`
-element — for instance `<svg><script>{{ name }}</script></svg>`.
-**Why:** inside those elements, a value is code or CSS, and HTML escaping
-does not make it safe there. Most mail clients strip scripts anyway.
-**Fix:** write the value as text, in an element of its own:
+**When:** the build, on a value written inside one of those elements:
+`<Head><title>{{ t('verifyEmail.subject') }}</title></Head>`,
+`<textarea>{{ name }}</textarea>`, `<svg><script>{{ name }}</script></svg>`.
+**Why:** a browser reads the content of those elements as raw text or as
+code, not as markup: HTML escaping means nothing there, and a value could
+close the element and write markup of its own. Most mail clients strip
+scripts and frames anyway.
+**Fix:** write the value as text, in an ordinary element. A `<title>` is
+fixed text, or left out — the subject is the e-mail's title in every client:
 
 ```vue
 <Text>{{ t('verifyEmail.body', { name }) }}</Text>
@@ -1099,6 +1169,25 @@ does not make it safe there. Most mail clients strip scripts anyway.
 A `<style>` or `<script>` written straight in the `<template>` is dropped by
 Vue; a prop used only there fails with
 [`declares the prop <prop> and never uses it`](#template_unsupported--templates-file-declares-the-prop-prop-and-never-uses-it--remove-it-or-write-it-in-the-template).
+
+### `TEMPLATE_UNSUPPORTED` — `templates: <file>: <value> lands in a tag outside a quoted attribute value`
+
+**When:** the build, rarely: a value that ends up inside a tag's own syntax —
+as a tag name, as an attribute name, in an attribute value without quotes,
+or in a `<!DOCTYPE>` or a conditional comment's opening. A template cannot
+write this with Vue alone, which always quotes a bound attribute; it comes
+from a component that writes its HTML as a string with the value in it.
+**Why:** outside a quoted value, a value is markup: a space or a `>` in it
+would add attributes or close the tag.
+**Fix:** take the value out of that component, and bind it as an ordinary
+quoted attribute or write it as text:
+
+```vue
+<img :src="logo" :alt="t('verifyEmail.title')">
+```
+
+With only Maizzle's own components around it, it is
+[a bug in `@nxgt/mail-build`](#a-bug-in-nxgtmail-build-itself).
 
 ### `TEMPLATE_UNSUPPORTED` — `templates: <file>: <value> lands in the <attribute> attribute — only text attributes (alt, title, aria-*…) and URLs (href, src) take a value`
 
@@ -1140,9 +1229,27 @@ translator writes; it never decides where a link goes.
 <Button :href="link">{{ t('verifyEmail.action') }}</Button>
 ```
 
-A value after a fixed start is accepted when that start is `http://`,
-`https://` or `mailto:`; after any other, the build says `<value> lands in
-an href whose fixed start is not http:, https: or mailto:` (or `a src`).
+A value after a fixed start that is `http://`, `https://` or `mailto:` is
+accepted, as part of that URL; after any other start, see the next entry.
+
+### `TEMPLATE_UNSUPPORTED` — `templates: <file>: <value> lands in an href whose fixed start is not http:, https: or mailto:`
+
+With `src`, `background` or `poster`: `<value> lands in a src whose fixed
+start is not http:, https: or mailto:`.
+
+**When:** the build, rarely: a value lands in the middle of a URL attribute
+whose beginning the template or a component wrote, and that beginning is not
+`http://`, `https://` or `mailto:` — `javascript:`, a relative path such as
+`/verify?token=`, a `cid:`. Vue binds a whole attribute, so this comes from a
+component that builds the URL as a string around the value.
+**Why:** the build checks a URL when the e-mail is rendered only when the
+prop is the whole URL. After a fixed start, the start decides where the link
+goes, so only a safe, absolute one is accepted.
+**Fix:** build the whole URL in the caller, and bind it as one prop:
+
+```vue
+<Button :href="link">{{ t('verifyEmail.action') }}</Button>
+```
 
 ---
 
@@ -1290,17 +1397,19 @@ which Vue drops.
 
 **When:** the build, on a template that parses and passes the checks above,
 but throws while Maizzle and Vue render it. `<reason>` is their own message,
-and the original error is `error.cause`: a `v-slot` that shadows `t`
-(`t is not a function`), a component used with the wrong slots, a Maizzle
-configuration error.
+and the original error is `error.cause`: a `<style lang="scss">` with no
+Sass installed (`Preprocessor dependency "sass-embedded" not found. Did you
+install it? …`), a `v-slot` that shadows `t` (`t is not a function`), a
+component used with the wrong slots.
 **Why:** the template is rendered once at build time; an error there stops
 the build rather than writing a module without that e-mail.
-**Fix:** follow the reason, and look at the rendering with
+**Fix:** follow the reason — for the Sass one, write the `<style>` in plain
+CSS, or style with Tailwind classes — and look at the rendering with
 `nxgt-mail dev`, which renders every e-mail in every locale to
 `.nxgt-mail/`:
 
-```sh
-nxgt-mail dev
+```vue
+<Text class="text-indigo-600">{{ t('verifyEmail.title') }}</Text>
 ```
 
 ### `TEMPLATE_INVALID` — `templates: <file>: uses <<Name>>, which is not a component — check its name`

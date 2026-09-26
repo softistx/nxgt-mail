@@ -76,7 +76,8 @@ different template; text that differs goes in the message, as a
 | --- | --- | --- |
 | One file per e-mail in the templates folder (`emails/` by default), named in `kebab-case` | `emails/verify-email.vue` → `mails.verifyEmail`; `reset-password-2.vue` → `mails.resetPassword2` | `TEMPLATE_INVALID` — `is not a kebab-case .vue file name — name it as verify-email.vue` |
 | A `<template>` | | `TEMPLATE_INVALID` — `has no <template>` |
-| `<script setup>` holds one statement, `defineProps([...])`, unassigned — no `const props = defineProps(…)`, no import, no other code | `defineProps(['name', 'link'])` | `TEMPLATE_UNSUPPORTED` — `holds code in <script setup> — a template declares its props with defineProps([...]), unassigned, and nothing else` |
+| `<script setup>` holds one statement, `defineProps` unassigned, with the names as an array of string literals or as a type — no object with validators or defaults, no `const props = defineProps(…)`, no import, no other code | `defineProps(['name', 'link'])`, `defineProps<{ name: string; link: string }>()` | `TEMPLATE_UNSUPPORTED` — `holds code in <script setup> — a template declares its props with defineProps([...]), unassigned, and nothing else` |
+| The type form in `<script setup lang="ts">` | `defineProps<{ name: string }>()` | `TEMPLATE_INVALID` — `does not declare its props in a form the build reads ([vue/compiler-sfc] Unexpected token (2:27))`, without `lang="ts"` |
 | No plain `<script>` | | `TEMPLATE_INVALID` — `has a <script> without setup — declare the props in <script setup>` |
 | Each prop `camelCase` | `firstName` | `TEMPLATE_INVALID` — `declares the prop first_name, which is not camelCase — name it as firstName` |
 | No prop named `t`, `lang`, `locale` or `timeZone` — the render function's own | | `TEMPLATE_INVALID` — `declares the prop locale, a name the render function uses itself` |
@@ -96,8 +97,26 @@ A template with no props needs no `<script setup>` at all:
 Only files ending in `.vue` are read, and the folder must hold at least one;
 the e-mails come out sorted by file name.
 
-`<script setup>` runs once, at build time: a constant computed there would be
-frozen into every e-mail. That is why it may hold nothing but the props.
+`<script setup>` runs once, at build time: a constant computed there — or a
+validator or a default of the object form, `defineProps({ name: { default: … } })`
+— would be frozen into every e-mail. That is why it may hold nothing but the
+names of the props, in one of two forms:
+
+```vue
+<script setup>
+defineProps(['name', 'link', 'hours']);
+</script>
+```
+
+```vue
+<script setup lang="ts">
+defineProps<{ name: string; link: string; hours: number }>();
+</script>
+```
+
+The TypeScript form declares the names only: the types of the render
+function's arguments still come from how each prop is used (see
+[How props are typed](#how-props-are-typed)), not from the ones written here.
 
 ## What a template may hold
 
@@ -258,13 +277,19 @@ Every value — a prop, a message, `lang` — is HTML-escaped in `html` (`&`, `<
 | The start of an `href` or `xlink:href` | `:href="link"` | Escaped, and checked when the e-mail is rendered: `http:`, `https:` or `mailto:` |
 | The start of a `src`, `background` or `poster` | `:src="logo"` | Escaped, and checked: `http:` or `https:` |
 | Any other attribute — `style`, `on*`, `srcset`, `srcdoc`, `content`, … | `:style="color"`, `:onclick="name"`, `:srcset="logo"` | `TEMPLATE_UNSUPPORTED` — `the prop name lands in the style attribute — only text attributes (alt, title, aria-*…) and URLs (href, src) take a value` |
-| A `<style>` or `<script>` element, even inside an Outlook conditional comment | | `TEMPLATE_UNSUPPORTED` — `the prop name lands in a <style> element` |
+| An element whose content is read as text, not markup — `<style>`, `<script>`, `<title>`, `<textarea>`, `<iframe>`, `<xmp>`, `<noembed>`, `<noframes>`, `<plaintext>` — even inside an Outlook conditional comment | | `TEMPLATE_UNSUPPORTED` — `the prop name lands in a <title> element` |
 | A tag, outside a quoted attribute value | | `TEMPLATE_UNSUPPORTED` — `the prop name lands in a tag outside a quoted attribute value` |
 | A message at the start of a link | `:href="t('a.url')"` | `TEMPLATE_UNSUPPORTED` — `a message starts an href — a URL is a prop, checked when the e-mail is rendered` |
 
 `class` is a text attribute too, but a bound one never reaches the output —
 see [Components](#components). The attributes are read from the HTML Maizzle
 produced, so a `:href` passed to `<Button>` is checked on the `<a>` it renders.
+
+That HTML is scanned as a mail client reads it. What follows an abrupt comment
+— `<!-->`, as in the `<!--[if !mso]><!-->` that `<NotOutlook>` and `<Img>`
+emit — is markup in every client but Outlook, so it is scanned and checked as
+markup, not skipped as a comment. A comment also ends at `--!>`, and a
+`<![CDATA[` section at `]]>`.
 
 A URL check is anchored at the first character — a leading space is refused,
 not trimmed — and throws a `TypeError` from the render function:

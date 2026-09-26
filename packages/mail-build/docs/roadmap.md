@@ -6,7 +6,7 @@ no dates here, and the version something shipped in is the only number.
 `@nxgt/mail-build` is the build side of `@nxgt/mail`: a `devDependency` that
 runs at build time and is never shipped to a server. The run-time core, its
 transports and its presets have their own roadmap in
-[`@nxgt/mail`](../../mail/docs/roadmap.md).
+[`@nxgt/mail`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/roadmap.md).
 
 ## Now
 
@@ -29,14 +29,24 @@ and ships with the first release, under **Next**.
   render function per e-mail, `mails.verifyEmail({ locale: 'fr', name, link })`,
   answering `{ subject, html, text }`, whose arguments are the union of every
   argument its messages and template use. Every value is HTML-escaped in
-  `html`, a line break in the subject is removed, and a link that is not
+  `html`, each run of line breaks in the subject becomes a space, and a link that is not
   `http:`, `https:` or `mailto:` is refused at call time. The render path
   imports nothing from Maizzle, Tailwind or the ICU parser.
 - **Build-time refusals for templates** — what one render at build time
-  cannot reproduce fails the build instead of rendering wrong: `v-if`,
-  `v-for`, `v-html`, an expression, a name that is not a prop, a value in a
-  `style` or `on*` attribute, a message key no catalogue holds, an argument a
-  message needs and the template does not pass, an e-mail without a subject.
+  cannot reproduce fails the build instead of rendering wrong:
+  - `v-if`, `v-for`, `v-html`, an expression, a name that is not a prop;
+  - `<script setup>` holding anything but `defineProps([...])` with the prop
+    names;
+  - an unknown component (`<Buton>`), and a value a component drops or
+    consumes at build time;
+  - a value in an attribute outside the allow-list: only text attributes
+    (`alt`, `title`, `aria-*`, `data-*`…) take a value, and `href`/`src` are
+    URLs checked at call time — so `style` and `on*` are refused;
+  - a value in a raw-text element (`<style>`, `<script>`, `<title>`,
+    `<textarea>`…);
+  - two files for one e-mail;
+  - a message key no catalogue holds, an argument a message needs and the
+    template does not pass, an e-mail without a subject.
 - **The `nxgt-mail build` and `nxgt-mail dev` commands, and `build(config)`** —
   the CLI and the API do the same thing: read the configuration, compile the
   templates and catalogues, write the module to your `generated/` folder.
@@ -75,7 +85,6 @@ and ships with the first release, under **Next**.
   is rendered once, at build time, so a condition would be decided there and
   not by your arguments. Send a different e-mail, or pass the text that
   differs as a message argument (`select` and `plural` in the catalogue).
-
 - **A template engine at run time** — no Handlebars, no MJML, no Maizzle in
   your server. An engine is untyped and a run-time dependency for work the
   build can finish; the render functions only join strings and call `Intl`.
@@ -96,5 +105,6 @@ and ships with the first release, under **Next**.
 
 ## Shipped
 
-Nothing yet: what is under **Now** ships with the first release, 0.1.0. From then on, the last ten items are
-listed here, newest first, and `CHANGELOG.md` holds the rest.
+Nothing yet: what is under **Now** ships with the first release, 0.1.0.
+From then on, the last ten items are listed here, newest first, and
+`CHANGELOG.md` holds the rest.

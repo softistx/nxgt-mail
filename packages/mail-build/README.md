@@ -100,7 +100,8 @@ defineProps(['name', 'link', 'hours']);
 
 A template renders **once, at build time**: each `{{ }}` or bound attribute
 holds a prop, `lang`, or `t('key', { prop })` — no `v-if`, no `v-for`, no
-expression — and `<script setup>` holds `defineProps([...])` and nothing else. Everything a template may and may not hold is in
+expression — and `<script setup>` holds `defineProps([...])` or `defineProps<{ … }>()`
+and nothing else. Everything a template may and may not hold is in
 [Templates](docs/guide/templates.md).
 
 ### Writing catalogues — `messages/<locale>.json`
@@ -153,7 +154,9 @@ templates: verify-email.vue: t('verifyEmail.acton') is not a key of en, the fall
 
 `nxgt-mail dev` renders every e-mail in every locale, with a sample value for
 each prop, to `.nxgt-mail/` — open its `index.html`. The same two commands are
-functions, `build(config)` and `dev(config)`. See
+functions, `build(config)` and `dev(config)`; `compileProject(config)` and
+`compileMail({ locales, fallbackLocale, sources, templates })` compile without
+writing a file, for a test or a CI check. See
 [Building](docs/guide/building.md).
 
 ### Sending — `mails`
@@ -228,8 +231,8 @@ try {
 | `KEY_UNKNOWN` | A locale holds a key the fallback locale does not |
 | `ARGUMENT_UNDECLARED` | A translation uses an argument the fallback locale's message does not |
 | `ARGUMENT_TYPE_MISMATCH` | An argument is a number in one place and a string or a date in another — in the catalogues, or through a prop a template uses twice |
-| `TEMPLATE_INVALID` | A template the build cannot read: a file name that is not `kebab-case.vue`, two files for one e-mail, no `<template>`, a `<script>` without `setup`, a reserved or non-`camelCase` prop, a component that does not exist (`<Buton>`), or one Maizzle could not render |
-| `TEMPLATE_UNSUPPORTED` | A template holds what one render at build time cannot reproduce safely: `v-if`, `v-for`, `v-html`, `v-on`, an expression, a name that is not a prop, a value in an attribute that is neither text (`alt`, `title`, `aria-*`…) nor a URL (`href`, `src`), a message starting a link, a prop it never uses, a value a component drops |
+| `TEMPLATE_INVALID` | A template the build cannot read: a file name that is not `kebab-case.vue`, two files for one e-mail, no `<template>`, a `<script>` without `setup`, props it cannot read (the type form without `lang="ts"`), a reserved or non-`camelCase` prop, a component that does not exist (`<Buton>`), or one Maizzle could not render |
+| `TEMPLATE_UNSUPPORTED` | A template holds what one render at build time cannot reproduce safely: code in `<script setup>` (anything but `defineProps([...])` or `defineProps<{ … }>()`), `v-if`, `v-for`, `v-html`, `v-on`, an expression, a name that is not a prop, a value in an attribute that is neither text (`alt`, `title`, `aria-*`…) nor a URL (`href`, `src`), a value in a `<style>`, `<script>`, `<title>`, `<textarea>` or another raw-text element, a message starting a link, a prop it never uses, a value a component drops |
 | `TEMPLATE_KEY_UNKNOWN` | A template calls `t()` with a key the fallback locale does not hold |
 | `TEMPLATE_ARGUMENT_MISSING` | A `t()` call leaves out an argument its message declares, or a subject uses an argument that is not a prop |
 | `TEMPLATE_ARGUMENT_UNKNOWN` | A `t()` call passes an argument its message does not declare |
@@ -275,13 +278,6 @@ t('en', 'verifyEmail.expires', { hours: 0 }); // 'This link expires in 0 hours.'
 How sources merge and how each argument is typed is in
 [Catalogues](docs/guide/catalogues.md). The module `nxgt-mail build` writes
 exports the same `t`, beside `mails`.
-
-## Size and speed
-
-Measured on a project of two e-mails in two locales: the module is 13.9 KB
-(3.8 KB gzipped), each `html` about 2.5 KB and shared by every locale. A render
-takes about 11 µs — it joins strings and calls `Intl`. The build renders each
-template once with Maizzle, about half a second to a second each.
 
 ## Traps
 
@@ -355,6 +351,13 @@ A message, `t(locale, key, args)`:
 
 The same files hold the calls that must keep compiling: a refusal that refuses
 the correct call is a bug.
+
+## Size and speed
+
+Measured on a project of two e-mails in two locales: the module is 13.9 KB
+(3.8 KB gzipped), each `html` about 2.5 KB and shared by every locale. A render
+takes about 11 µs — it joins strings and calls `Intl`. The build renders each
+template once with Maizzle, about half a second to a second each.
 
 ## Documentation
 
