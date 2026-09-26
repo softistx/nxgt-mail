@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { MailBuildError } from '../errors';
@@ -94,8 +94,8 @@ describe('compileMessages — presets, then the application', () => {
 			],
 		});
 
-		expect(module).toContain('"common.hi": (a, o) => "Hello"');
-		expect(module).toContain('"common.bye": (a, o) => "Goodbye"');
+		expect(module).toContain('"common.hi": (_a, _o) => "Hello"');
+		expect(module).toContain('"common.bye": (_a, _o) => "Goodbye"');
 	});
 
 	it('lets a source leave a locale out', () => {
@@ -146,10 +146,40 @@ describe('compileMessages — every build failure names the locale and the key',
 			'messages: en: (root) in messages/ must be an object of messages',
 		],
 		[
-			'an unsupported style',
+			'an unsupported number style',
 			{ en: { a: '{n, number, currency}' } },
-			'MESSAGE_UNPARSABLE',
-			'messages: en: a uses a number style currency, which is not supported',
+			'MESSAGE_UNSUPPORTED',
+			'messages: en: a uses the number style currency, which is not supported',
+		],
+		[
+			'an unsupported date style',
+			{ en: { a: '{at, date, weekday}' } },
+			'MESSAGE_UNSUPPORTED',
+			'messages: en: a uses the date style weekday, which is not supported',
+		],
+		[
+			'a skeleton option Intl does not read',
+			{ en: { a: '{n, number, ::percent scale/100}' } },
+			'MESSAGE_UNSUPPORTED',
+			'messages: en: a uses a number skeleton option Intl does not read (scale), which is not supported',
+		],
+		[
+			'a currency skeleton without a currency',
+			{ en: { a: '{n, number, ::currency}' } },
+			'MESSAGE_UNSUPPORTED',
+			'messages: en: a uses a number skeleton Intl refuses in en, which is not supported',
+		],
+		[
+			'a leaf that is not a string',
+			{ en: { a: { b: 42 } } as unknown as Catalogue },
+			'CATALOGUE_INVALID',
+			'messages: en: a.b in messages/ must be a message (a string) or an object of messages',
+		],
+		[
+			'a key with a dot in it',
+			{ en: JSON.parse('{ "verifyEmail.title": "x" }') },
+			'KEY_NOT_CAMEL_CASE',
+			'messages: en: verifyEmail.title in messages/ holds a dot — nest it instead, one object per segment',
 		],
 	])('refuses %s', (_, catalogues, code, message) => {
 		const error = failure(() =>
@@ -231,7 +261,25 @@ describe('compileMessages — every build failure names the locale and the key',
 
 		expect(error.code).toBe('KEY_CONFLICT');
 		expect(error.message).toBe(
-			'messages: en: common is a namespace in one catalogue and a message in messages/ — a later catalogue overrides a message, never a namespace',
+			'messages: en: common is a namespace in preset and a message in messages/ — a later catalogue overrides a message, never a namespace',
+		);
+	});
+
+	it('refuses a message a later source turns into a namespace', () => {
+		const error = failure(() =>
+			compileMessages({
+				locales: ['en'],
+				fallbackLocale: 'en',
+				sources: [
+					{ name: 'preset', catalogues: { en: { common: 'Hi' } } },
+					app({ en: { common: { hi: 'Hi' } } }),
+				],
+			}),
+		);
+
+		expect(error.code).toBe('KEY_CONFLICT');
+		expect(error.message).toBe(
+			'messages: en: common is a message in preset and a namespace in messages/ — a later catalogue overrides a message, never a namespace',
 		);
 	});
 
@@ -245,6 +293,8 @@ describe('compileMessages — every build failure names the locale and the key',
 		);
 
 		expect(error.message).not.toContain('secret-7f3a');
+		// The parser's own error holds the text, so it is not the cause.
+		expect(error.cause).toBeUndefined();
 	});
 });
 
@@ -274,6 +324,18 @@ describe('compileMessages — wiring mistakes are TypeErrors', () => {
 });
 
 describe('readCatalogues', () => {
+	it('lets a file-system error other than a missing file through', async () => {
+		const dir = await mkdtemp(join(tmpdir(), 'mail-build-dir-'));
+		await mkdir(join(dir, 'en.json'));
+		const error = await readCatalogues(dir, ['en']).then(
+			() => null,
+			(e: unknown) => e as NodeJS.ErrnoException,
+		);
+		await rm(dir, { recursive: true });
+
+		expect(error?.code).toBe('EISDIR');
+	});
+
 	it('answers null for a locale without a file', async () => {
 		expect(await readCatalogues(FIXTURE, ['en', 'de'])).toMatchObject({
 			de: null,

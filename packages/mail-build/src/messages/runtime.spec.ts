@@ -59,6 +59,22 @@ describe('the emitted module', () => {
 		);
 	});
 
+	it('subtracts the offset for the rules and #, and matches =N on the raw value', () => {
+		expect(t('en', 'order.guests', { count: 0, host: 'Ada' })).toBe(
+			'Nobody came',
+		);
+		expect(t('en', 'order.guests', { count: 1, host: 'Ada' })).toBe('Ada came');
+		expect(t('en', 'order.guests', { count: 2, host: 'Ada' })).toBe(
+			'Ada and 1 other came',
+		);
+		expect(t('en', 'order.guests', { count: 3, host: 'Ada' })).toBe(
+			'Ada and 2 others came',
+		);
+		expect(t('fr', 'order.guests', { count: 2, host: 'Ada' })).toBe(
+			'Ada et 1 autre personne sont venus',
+		);
+	});
+
 	it('keeps a tag as text, and a message without arguments needs none', () => {
 		expect(t('en', 'order.markup')).toBe('Keep <b>this</b> & that as text.');
 		expect(t('fr', 'verifyEmail.title')).toBe("Plus qu'une étape");

@@ -33,10 +33,12 @@ export function parseMessage(
 	} catch (cause) {
 		const reason =
 			cause instanceof Error ? cause.message : 'the parser refused it';
+		// Not passed as `cause`: the parser's error carries the whole text of
+		// the message, and a build failure names a key, never a text.
 		throw new MailBuildError(
 			'MESSAGE_UNPARSABLE',
 			`messages: ${locale}: ${key} is not a valid ICU message (${reason})`,
-			{ locale, key, cause },
+			{ locale, key },
 		);
 	}
 }

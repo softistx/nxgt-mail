@@ -6,22 +6,23 @@ export const fallbackLocale: Locale = "en";
 
 /** Options every message accepts. */
 export interface FormatOptions {
-	/** The time zone dates are written in, usually the recipient's. Defaults to UTC. */
+	/** The time zone dates are written in, usually the recipient's. Defaults to UTC; an unknown zone throws a RangeError. */
 	readonly timeZone?: string;
 }
 
 /** The arguments of each message, typed from its ICU. */
 export interface MessageArgs {
-	"order.markup": Record<never, never>;
+	"order.guests": { readonly count: number; readonly host: string; };
+	"order.markup": { readonly [argument: string]: never };
 	"order.placedAt": { readonly at: Date; };
 	"order.rank": { readonly position: number; };
 	"order.shipping": { readonly method: string; };
 	"order.summary": { readonly count: number; readonly total: number; };
-	"verifyEmail.action": Record<never, never>;
+	"verifyEmail.action": { readonly [argument: string]: never };
 	"verifyEmail.body": { readonly name: string; };
 	"verifyEmail.expires": { readonly hours: number; };
-	"verifyEmail.subject": Record<never, never>;
-	"verifyEmail.title": Record<never, never>;
+	"verifyEmail.subject": { readonly [argument: string]: never };
+	"verifyEmail.title": { readonly [argument: string]: never };
 }
 
 export type MessageKey = keyof MessageArgs;
@@ -30,32 +31,34 @@ type Format<K extends MessageKey> = (a: MessageArgs[K], o: FormatOptions) => str
 
 const catalogues: { readonly [L in Locale]: { readonly [K in MessageKey]: Format<K> } } = {
 	"en": {
-		"order.markup": (a, o) => "Keep <b>this</b> & that as text.",
+		"order.guests": (a, _o) => plural("en", a.count, 1, "cardinal", { ["=0"]: () => "Nobody came", ["=1"]: () => String(a.host) + " came", ["one"]: () => String(a.host) + " and " + formatNumber("en", (a.count - 1), {}) + " other came", ["other"]: () => String(a.host) + " and " + formatNumber("en", (a.count - 1), {}) + " others came" }),
+		"order.markup": (_a, _o) => "Keep <b>this</b> & that as text.",
 		"order.placedAt": (a, o) => "Placed on " + formatDate("en", a.at, {"month":"long","day":"numeric","year":"numeric"}, o) + " at " + formatDate("en", a.at, {"hour":"numeric","minute":"numeric"}, o) + ".",
-		"order.rank": (a, o) => "Your " + plural("en", a.position, 0, "ordinal", { "one": () => formatNumber("en", a.position, {}) + "st", "two": () => formatNumber("en", a.position, {}) + "nd", "few": () => formatNumber("en", a.position, {}) + "rd", "other": () => formatNumber("en", a.position, {}) + "th" }) + " order.",
-		"order.shipping": (a, o) => select(a.method, { "express": () => "Express delivery", "other": () => "Standard delivery" }),
-		"order.summary": (a, o) => plural("en", a.count, 0, "cardinal", { "=0": () => "No items", "one": () => "One item", "other": () => formatNumber("en", a.count, {}) + " items" }) + ", " + formatNumber("en", a.total, {"style":"currency","currency":"EUR"}) + ".",
-		"verifyEmail.action": (a, o) => "Confirm my address",
-		"verifyEmail.body": (a, o) => "Hello " + String(a.name) + ", confirm this address to finish signing up.",
-		"verifyEmail.expires": (a, o) => "This link expires in " + plural("en", a.hours, 0, "cardinal", { "one": () => formatNumber("en", a.hours, {}) + " hour", "other": () => formatNumber("en", a.hours, {}) + " hours" }) + ".",
-		"verifyEmail.subject": (a, o) => "Confirm your e-mail address",
-		"verifyEmail.title": (a, o) => "One step left",
+		"order.rank": (a, _o) => "Your " + plural("en", a.position, 0, "ordinal", { ["one"]: () => formatNumber("en", a.position, {}) + "st", ["two"]: () => formatNumber("en", a.position, {}) + "nd", ["few"]: () => formatNumber("en", a.position, {}) + "rd", ["other"]: () => formatNumber("en", a.position, {}) + "th" }) + " order.",
+		"order.shipping": (a, _o) => select(a.method, { ["express"]: () => "Express delivery", ["other"]: () => "Standard delivery" }),
+		"order.summary": (a, _o) => plural("en", a.count, 0, "cardinal", { ["=0"]: () => "No items", ["one"]: () => "One item", ["other"]: () => formatNumber("en", a.count, {}) + " items" }) + ", " + formatNumber("en", a.total, {"style":"currency","currency":"EUR"}) + ".",
+		"verifyEmail.action": (_a, _o) => "Confirm my address",
+		"verifyEmail.body": (a, _o) => "Hello " + String(a.name) + ", confirm this address to finish signing up.",
+		"verifyEmail.expires": (a, _o) => "This link expires in " + plural("en", a.hours, 0, "cardinal", { ["one"]: () => formatNumber("en", a.hours, {}) + " hour", ["other"]: () => formatNumber("en", a.hours, {}) + " hours" }) + ".",
+		"verifyEmail.subject": (_a, _o) => "Confirm your e-mail address",
+		"verifyEmail.title": (_a, _o) => "One step left",
 	},
 	"fr": {
-		"order.markup": (a, o) => "Gardez <b>ceci</b> & cela comme texte.",
+		"order.guests": (a, _o) => plural("fr", a.count, 1, "cardinal", { ["=0"]: () => "Personne n'est venu", ["=1"]: () => String(a.host) + " est venu", ["one"]: () => String(a.host) + " et " + formatNumber("fr", (a.count - 1), {}) + " autre personne sont venus", ["other"]: () => String(a.host) + " et " + formatNumber("fr", (a.count - 1), {}) + " autres personnes sont venus" }),
+		"order.markup": (_a, _o) => "Gardez <b>ceci</b> & cela comme texte.",
 		"order.placedAt": (a, o) => "Passée le " + formatDate("fr", a.at, {"month":"long","day":"numeric","year":"numeric"}, o) + " à " + formatDate("fr", a.at, {"hour":"numeric","minute":"numeric"}, o) + ".",
-		"order.rank": (a, o) => "Votre " + plural("fr", a.position, 0, "ordinal", { "one": () => formatNumber("fr", a.position, {}) + "re", "other": () => formatNumber("fr", a.position, {}) + "e" }) + " commande.",
-		"order.shipping": (a, o) => select(a.method, { "express": () => "Livraison express", "other": () => "Livraison standard" }),
-		"order.summary": (a, o) => plural("fr", a.count, 0, "cardinal", { "=0": () => "Aucun article", "one": () => "Un article", "other": () => formatNumber("fr", a.count, {}) + " articles" }) + ", " + formatNumber("fr", a.total, {"style":"currency","currency":"EUR"}) + ".",
-		"verifyEmail.action": (a, o) => "Confirmer mon adresse",
-		"verifyEmail.body": (a, o) => "Bonjour " + String(a.name) + ", confirmez cette adresse pour terminer votre inscription.",
-		"verifyEmail.expires": (a, o) => "Ce lien expire dans " + plural("fr", a.hours, 0, "cardinal", { "one": () => formatNumber("fr", a.hours, {}) + " heure", "other": () => formatNumber("fr", a.hours, {}) + " heures" }) + ".",
-		"verifyEmail.subject": (a, o) => "Confirmez votre adresse e-mail",
-		"verifyEmail.title": (a, o) => "Plus qu'une étape",
+		"order.rank": (a, _o) => "Votre " + plural("fr", a.position, 0, "ordinal", { ["one"]: () => formatNumber("fr", a.position, {}) + "re", ["other"]: () => formatNumber("fr", a.position, {}) + "e" }) + " commande.",
+		"order.shipping": (a, _o) => select(a.method, { ["express"]: () => "Livraison express", ["other"]: () => "Livraison standard" }),
+		"order.summary": (a, _o) => plural("fr", a.count, 0, "cardinal", { ["=0"]: () => "Aucun article", ["one"]: () => "Un article", ["other"]: () => formatNumber("fr", a.count, {}) + " articles" }) + ", " + formatNumber("fr", a.total, {"style":"currency","currency":"EUR"}) + ".",
+		"verifyEmail.action": (_a, _o) => "Confirmer mon adresse",
+		"verifyEmail.body": (a, _o) => "Bonjour " + String(a.name) + ", confirmez cette adresse pour terminer votre inscription.",
+		"verifyEmail.expires": (a, _o) => "Ce lien expire dans " + plural("fr", a.hours, 0, "cardinal", { ["one"]: () => formatNumber("fr", a.hours, {}) + " heure", ["other"]: () => formatNumber("fr", a.hours, {}) + " heures" }) + ".",
+		"verifyEmail.subject": (_a, _o) => "Confirmez votre adresse e-mail",
+		"verifyEmail.title": (_a, _o) => "Plus qu'une étape",
 	},
 };
 
-type Rest<K extends MessageKey> = keyof MessageArgs[K] extends never
+type Rest<K extends MessageKey> = MessageArgs[K] extends { readonly [argument: string]: never }
 	? [args?: MessageArgs[K], options?: FormatOptions]
 	: [args: MessageArgs[K], options?: FormatOptions];
 
@@ -66,8 +69,6 @@ export function t<K extends MessageKey>(locale: Locale, key: K, ...rest: Rest<K>
 }
 
 const numberFormats = new Map<string, Intl.NumberFormat>();
-const dateFormats = new Map<string, Intl.DateTimeFormat>();
-const pluralRules = new Map<string, Intl.PluralRules>();
 
 function formatNumber(locale: string, value: number, options: Intl.NumberFormatOptions): string {
 	const id = locale + JSON.stringify(options);
@@ -78,6 +79,8 @@ function formatNumber(locale: string, value: number, options: Intl.NumberFormatO
 	}
 	return format.format(value);
 }
+
+const dateFormats = new Map<string, Intl.DateTimeFormat>();
 
 function formatDate(
 	locale: string,
@@ -95,12 +98,14 @@ function formatDate(
 	return format.format(value);
 }
 
+const pluralRules = new Map<string, Intl.PluralRules>();
+
 function plural(
 	locale: string,
 	value: number,
 	offset: number,
 	type: Intl.PluralRuleType,
-	options: Readonly<Record<string, () => string>>,
+	options: { readonly [branch: string]: () => string },
 ): string {
 	const exact = options[`=${value}`];
 	if (exact !== undefined) return exact();
@@ -110,10 +115,13 @@ function plural(
 		rules = new Intl.PluralRules(locale, { type });
 		pluralRules.set(id, rules);
 	}
-	return (options[rules.select(value - offset)] ?? options.other ?? (() => ''))();
+	const chosen = options[rules.select(value - offset)] ?? options['other'];
+	return chosen === undefined ? '' : chosen();
 }
 
-function select(value: string, options: Readonly<Record<string, () => string>>): string {
-	const chosen = Object.hasOwn(options, value) ? options[value] : options.other;
-	return (chosen ?? (() => ''))();
+function select(value: string, options: { readonly [branch: string]: () => string }): string {
+	const chosen = Object.prototype.hasOwnProperty.call(options, value)
+		? options[value]
+		: options['other'];
+	return chosen === undefined ? '' : chosen();
 }

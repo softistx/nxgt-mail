@@ -8,7 +8,7 @@
  *
  * The calls that **must keep compiling** are here too, unmarked.
  *
- * **Seven plausible mistakes, seven refused.**
+ * **Eight plausible mistakes, eight refused.**
  */
 
 import { type Locale, locales, t } from './generated/messages';
@@ -50,3 +50,9 @@ t('de', 'verifyEmail.title');
 // ── 7. A key that does not exist ─────────────────────────────────────────────
 // @ts-expect-error — no such message.
 t('en', 'verifyEmail.titel');
+
+// ── 8. An argument passed to a message that takes none ───────────────────────
+// Typed `{}`, it would accept anything: this is the call left behind when a
+// message drops `{name}`.
+// @ts-expect-error — verifyEmail.title takes no argument.
+t('en', 'verifyEmail.title', { name: 'Ada' });

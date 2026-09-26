@@ -1,12 +1,10 @@
 import {
-	type DateElement,
 	type MessageFormatElement,
-	type NumberElement,
-	type TimeElement,
 	TYPE,
 } from '@formatjs/icu-messageformat-parser';
-import { MailBuildError } from '../errors';
 import type { ArgumentKind } from './analyse';
+import { type Helper, runtimeSource } from './runtime';
+import { dateOptions, numberOptions, unsupported, type Where } from './styles';
 
 /** One message of one locale, ready to emit. */
 export interface EmittableMessage {
@@ -14,83 +12,34 @@ export interface EmittableMessage {
 	readonly ast: readonly MessageFormatElement[];
 }
 
-const DATE_STYLES: Readonly<Record<string, Intl.DateTimeFormatOptions>> = {
-	short: { month: 'numeric', day: 'numeric', year: '2-digit' },
-	medium: { month: 'short', day: 'numeric', year: 'numeric' },
-	long: { month: 'long', day: 'numeric', year: 'numeric' },
-	full: { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' },
-};
-
-const TIME_STYLES: Readonly<Record<string, Intl.DateTimeFormatOptions>> = {
-	short: { hour: 'numeric', minute: 'numeric' },
-	medium: { hour: 'numeric', minute: 'numeric', second: 'numeric' },
-	long: {
-		hour: 'numeric',
-		minute: 'numeric',
-		second: 'numeric',
-		timeZoneName: 'short',
-	},
-	full: {
-		hour: 'numeric',
-		minute: 'numeric',
-		second: 'numeric',
-		timeZoneName: 'short',
-	},
-};
-
-const NUMBER_STYLES: Readonly<Record<string, Intl.NumberFormatOptions>> = {
-	integer: { maximumFractionDigits: 0 },
-	percent: { style: 'percent' },
-};
-
 const literal = (value: unknown) => JSON.stringify(value);
 
-function numberOptions(
-	element: NumberElement,
+/** What emitting one message needed: helpers, arguments, format options. */
+interface Needs {
+	readonly helpers: Set<Helper>;
+	args: boolean;
+	options: boolean;
+}
+
+/**
+ * The branches of a select or plural as an object literal. The keys are
+ * computed — `["__proto__"]` — because a plain `"__proto__":` key sets the
+ * prototype instead of adding a branch.
+ */
+function branches(
+	options: Readonly<
+		Record<string, { readonly value: readonly MessageFormatElement[] }>
+	>,
 	where: Where,
-): Intl.NumberFormatOptions {
-	const style = element.style;
-	if (style === null || style === undefined) return {};
-	if (typeof style === 'string') {
-		const options = NUMBER_STYLES[style];
-		if (options === undefined)
-			throw unsupported(where, `number style ${style}`);
-		return options;
-	}
-	return style.parsedOptions;
-}
-
-function dateOptions(
-	element: DateElement | TimeElement,
-	where: Where,
-): Intl.DateTimeFormatOptions {
-	const styles = element.type === TYPE.date ? DATE_STYLES : TIME_STYLES;
-	const style = element.style;
-	if (style === null || style === undefined) return styles.medium ?? {};
-	if (typeof style === 'string') {
-		const options = styles[style];
-		if (options === undefined) {
-			throw unsupported(
-				where,
-				`${element.type === TYPE.date ? 'date' : 'time'} style ${style}`,
-			);
-		}
-		return options;
-	}
-	return style.parsedOptions;
-}
-
-interface Where {
-	readonly locale: string;
-	readonly key: string;
-}
-
-function unsupported(where: Where, what: string): MailBuildError {
-	return new MailBuildError(
-		'MESSAGE_UNPARSABLE',
-		`messages: ${where.locale}: ${where.key} uses a ${what}, which is not supported`,
-		{ locale: where.locale, key: where.key },
-	);
+	pound: string | null,
+	needs: Needs,
+): string {
+	return Object.entries(options)
+		.map(
+			([name, option]) =>
+				`[${literal(name)}]: () => ${expression(option.value, where, pound, needs)}`,
+		)
+		.join(', ');
 }
 
 /** The JavaScript expression of a message: a concatenation of strings. */
@@ -98,6 +47,7 @@ function expression(
 	elements: readonly MessageFormatElement[],
 	where: Where,
 	pound: string | null,
+	needs: Needs,
 ): string {
 	const locale = literal(where.locale);
 	const parts: string[] = [];
@@ -107,48 +57,52 @@ function expression(
 				parts.push(literal(element.value));
 				break;
 			case TYPE.argument:
+				needs.args = true;
 				parts.push(`String(a.${element.value})`);
 				break;
 			case TYPE.number:
+				needs.args = true;
+				needs.helpers.add('formatNumber');
 				parts.push(
 					`formatNumber(${locale}, a.${element.value}, ${literal(numberOptions(element, where))})`,
 				);
 				break;
 			case TYPE.date:
 			case TYPE.time:
+				needs.args = true;
+				needs.options = true;
+				needs.helpers.add('formatDate');
 				parts.push(
 					`formatDate(${locale}, a.${element.value}, ${literal(dateOptions(element, where))}, o)`,
 				);
 				break;
 			case TYPE.pound:
-				if (pound === null) throw unsupported(where, '# outside a plural');
+				if (pound === null) throw unsupported(where, 'a # outside a plural');
+				needs.helpers.add('formatNumber');
 				parts.push(`formatNumber(${locale}, ${pound}, {})`);
 				break;
-			case TYPE.select: {
-				const options = Object.entries(element.options).map(
-					([name, option]) =>
-						`${literal(name)}: () => ${expression(option.value, where, pound)}`,
+			case TYPE.select:
+				needs.args = true;
+				needs.helpers.add('select');
+				parts.push(
+					`select(a.${element.value}, { ${branches(element.options, where, pound, needs)} })`,
 				);
-				parts.push(`select(a.${element.value}, { ${options.join(', ')} })`);
 				break;
-			}
 			case TYPE.plural: {
+				needs.args = true;
+				needs.helpers.add('plural');
 				const value =
 					element.offset === 0
 						? `a.${element.value}`
 						: `(a.${element.value} - ${element.offset})`;
-				const options = Object.entries(element.options).map(
-					([name, option]) =>
-						`${literal(name)}: () => ${expression(option.value, where, value)}`,
-				);
 				parts.push(
-					`plural(${locale}, a.${element.value}, ${element.offset}, ${literal(element.pluralType)}, { ${options.join(', ')} })`,
+					`plural(${locale}, a.${element.value}, ${element.offset}, ${literal(element.pluralType)}, { ${branches(element.options, where, value, needs)} })`,
 				);
 				break;
 			}
 			case TYPE.tag:
 				// Parsed with ignoreTag, so a tag is text and never reaches here.
-				throw unsupported(where, 'tag');
+				throw unsupported(where, 'a tag');
 		}
 	}
 	return parts.length === 0 ? '""' : parts.join(' + ');
@@ -160,63 +114,20 @@ const TS_TYPE: Readonly<Record<ArgumentKind, string>> = {
 	date: 'Date',
 };
 
-/** The helpers the emitted functions call: `Intl`, and nothing else. */
-const RUNTIME = `const numberFormats = new Map<string, Intl.NumberFormat>();
-const dateFormats = new Map<string, Intl.DateTimeFormat>();
-const pluralRules = new Map<string, Intl.PluralRules>();
+// A message with no argument takes an object with no property. `{}` —
+// `Record<never, never>` — would accept `{ name: 'x' }` without a word.
+const NO_ARGUMENTS = '{ readonly [argument: string]: never }';
 
-function formatNumber(locale: string, value: number, options: Intl.NumberFormatOptions): string {
-	const id = locale + JSON.stringify(options);
-	let format = numberFormats.get(id);
-	if (format === undefined) {
-		format = new Intl.NumberFormat(locale, options);
-		numberFormats.set(id, format);
-	}
-	return format.format(value);
+function argsShape(args: ReadonlyMap<string, ArgumentKind>): string {
+	const entries = [...args].sort(([a], [b]) => a.localeCompare(b));
+	if (entries.length === 0) return NO_ARGUMENTS;
+	return `{ ${entries.map(([name, kind]) => `readonly ${name}: ${TS_TYPE[kind]};`).join(' ')} }`;
 }
-
-function formatDate(
-	locale: string,
-	value: Date,
-	options: Intl.DateTimeFormatOptions,
-	o: FormatOptions,
-): string {
-	const all = { ...options, timeZone: o.timeZone ?? 'UTC' };
-	const id = locale + JSON.stringify(all);
-	let format = dateFormats.get(id);
-	if (format === undefined) {
-		format = new Intl.DateTimeFormat(locale, all);
-		dateFormats.set(id, format);
-	}
-	return format.format(value);
-}
-
-function plural(
-	locale: string,
-	value: number,
-	offset: number,
-	type: Intl.PluralRuleType,
-	options: Readonly<Record<string, () => string>>,
-): string {
-	const exact = options[\`=\${value}\`];
-	if (exact !== undefined) return exact();
-	const id = locale + type;
-	let rules = pluralRules.get(id);
-	if (rules === undefined) {
-		rules = new Intl.PluralRules(locale, { type });
-		pluralRules.set(id, rules);
-	}
-	return (options[rules.select(value - offset)] ?? options.other ?? (() => ''))();
-}
-
-function select(value: string, options: Readonly<Record<string, () => string>>): string {
-	const chosen = Object.hasOwn(options, value) ? options[value] : options.other;
-	return (chosen ?? (() => ''))();
-}`;
 
 /**
  * Emits the TypeScript module of a set of catalogues: the locales, one typed
- * function per message and locale, and `t(locale, key, args)`.
+ * function per message and locale, `t(locale, key, args)`, and the `Intl`
+ * helpers those functions call — only those.
  *
  * `args` holds the arguments of each key, typed from the fallback locale;
  * `messages` holds, per locale, every key in `args`.
@@ -228,8 +139,26 @@ export function emitMessagesModule(options: {
 	readonly messages: ReadonlyMap<string, readonly EmittableMessage[]>;
 }): string {
 	const keys = [...options.args.keys()].sort();
-	const lines: string[] = [];
-	lines.push(
+	const helpers = new Set<Helper>();
+
+	const tables: string[] = [];
+	for (const locale of options.locales) {
+		tables.push(`\t${literal(locale)}: {`);
+		const byKey = new Map(
+			(options.messages.get(locale) ?? []).map((m) => [m.key, m]),
+		);
+		for (const key of keys) {
+			const message = byKey.get(key);
+			if (message === undefined) continue;
+			const needs: Needs = { helpers, args: false, options: false };
+			const body = expression(message.ast, { locale, key }, null, needs);
+			const params = `${needs.args ? 'a' : '_a'}, ${needs.options ? 'o' : '_o'}`;
+			tables.push(`\t\t${literal(key)}: (${params}) => ${body},`);
+		}
+		tables.push('\t},');
+	}
+
+	return [
 		'// Generated by @nxgt/mail-build. Do not edit: change the catalogues and build again.',
 		'',
 		`export const locales = ${literal(options.locales)} as const;`,
@@ -238,24 +167,16 @@ export function emitMessagesModule(options: {
 		'',
 		'/** Options every message accepts. */',
 		'export interface FormatOptions {',
-		"\t/** The time zone dates are written in, usually the recipient's. Defaults to UTC. */",
+		"\t/** The time zone dates are written in, usually the recipient's. Defaults to UTC; an unknown zone throws a RangeError. */",
 		'\treadonly timeZone?: string;',
 		'}',
 		'',
 		'/** The arguments of each message, typed from its ICU. */',
 		'export interface MessageArgs {',
-	);
-	for (const key of keys) {
-		const args = [
-			...(options.args.get(key) ?? new Map<string, ArgumentKind>()),
-		].sort(([a], [b]) => a.localeCompare(b));
-		const shape =
-			args.length === 0
-				? 'Record<never, never>'
-				: `{ ${args.map(([name, kind]) => `readonly ${name}: ${TS_TYPE[kind]};`).join(' ')} }`;
-		lines.push(`\t${literal(key)}: ${shape};`);
-	}
-	lines.push(
+		...keys.map(
+			(key) =>
+				`\t${literal(key)}: ${argsShape(options.args.get(key) ?? new Map<string, ArgumentKind>())};`,
+		),
 		'}',
 		'',
 		'export type MessageKey = keyof MessageArgs;',
@@ -263,25 +184,10 @@ export function emitMessagesModule(options: {
 		'type Format<K extends MessageKey> = (a: MessageArgs[K], o: FormatOptions) => string;',
 		'',
 		'const catalogues: { readonly [L in Locale]: { readonly [K in MessageKey]: Format<K> } } = {',
-	);
-	for (const locale of options.locales) {
-		lines.push(`\t${literal(locale)}: {`);
-		const byKey = new Map(
-			(options.messages.get(locale) ?? []).map((m) => [m.key, m]),
-		);
-		for (const key of keys) {
-			const message = byKey.get(key);
-			if (message === undefined) continue;
-			lines.push(
-				`\t\t${literal(key)}: (a, o) => ${expression(message.ast, { locale, key }, null)},`,
-			);
-		}
-		lines.push('\t},');
-	}
-	lines.push(
+		...tables,
 		'};',
 		'',
-		'type Rest<K extends MessageKey> = keyof MessageArgs[K] extends never',
+		`type Rest<K extends MessageKey> = MessageArgs[K] extends ${NO_ARGUMENTS}`,
 		'\t? [args?: MessageArgs[K], options?: FormatOptions]',
 		'\t: [args: MessageArgs[K], options?: FormatOptions];',
 		'',
@@ -290,9 +196,7 @@ export function emitMessagesModule(options: {
 		'\tconst [args, options] = rest;',
 		'\treturn catalogues[locale][key]((args ?? {}) as MessageArgs[K], options ?? {});',
 		'}',
+		...(helpers.size > 0 ? ['', runtimeSource(helpers)] : []),
 		'',
-		RUNTIME,
-		'',
-	);
-	return lines.join('\n');
+	].join('\n');
 }

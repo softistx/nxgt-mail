@@ -11,6 +11,7 @@
 		"placedAt": "Passée le {at, date, long} à {at, time, short}.",
 		"shipping": "{method, select, express {Livraison express} other {Livraison standard}}",
 		"rank": "Votre {position, selectordinal, one {#re} other {#e}} commande.",
-		"markup": "Gardez <b>ceci</b> & cela comme texte."
+		"markup": "Gardez <b>ceci</b> & cela comme texte.",
+		"guests": "{count, plural, offset:1 =0 {Personne n'est venu} =1 {{host} est venu} one {{host} et # autre personne sont venus} other {{host} et # autres personnes sont venus}}"
 	}
 }

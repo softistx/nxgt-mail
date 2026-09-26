@@ -11,6 +11,7 @@
 		"placedAt": "Placed on {at, date, long} at {at, time, short}.",
 		"shipping": "{method, select, express {Express delivery} other {Standard delivery}}",
 		"rank": "Your {position, selectordinal, one {#st} two {#nd} few {#rd} other {#th}} order.",
-		"markup": "Keep <b>this</b> & that as text."
+		"markup": "Keep <b>this</b> & that as text.",
+		"guests": "{count, plural, offset:1 =0 {Nobody came} =1 {{host} came} one {{host} and # other came} other {{host} and # others came}}"
 	}
 }

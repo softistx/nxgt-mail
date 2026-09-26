@@ -21,9 +21,14 @@ export type FlatCatalogue = ReadonlyMap<string, string>;
 
 const SEGMENT = /^[a-z][a-zA-Z0-9]*$/;
 
+interface Seen {
+	readonly kind: 'message' | 'namespace';
+	readonly source: string;
+}
+
 function flattenInto(
 	into: Map<string, string>,
-	kinds: Map<string, 'message' | 'namespace'>,
+	kinds: Map<string, Seen>,
 	catalogue: Catalogue,
 	locale: string,
 	source: string,
@@ -42,6 +47,13 @@ function flattenInto(
 	}
 	for (const [segment, value] of Object.entries(catalogue)) {
 		const key = prefix === '' ? segment : `${prefix}.${segment}`;
+		if (segment.includes('.')) {
+			throw new MailBuildError(
+				'KEY_NOT_CAMEL_CASE',
+				`messages: ${locale}: ${key} in ${source} holds a dot — nest it instead, one object per segment`,
+				{ locale, key },
+			);
+		}
 		if (!SEGMENT.test(segment)) {
 			throw new MailBuildError(
 				'KEY_NOT_CAMEL_CASE',
@@ -49,16 +61,26 @@ function flattenInto(
 				{ locale, key },
 			);
 		}
-		const kind = typeof value === 'string' ? 'message' : 'namespace';
-		const before = kinds.get(key);
-		if (before !== undefined && before !== kind) {
+		if (
+			typeof value !== 'string' &&
+			(typeof value !== 'object' || value === null || Array.isArray(value))
+		) {
 			throw new MailBuildError(
-				'KEY_CONFLICT',
-				`messages: ${locale}: ${key} is a ${before} in one catalogue and a ${kind} in ${source} — a later catalogue overrides a message, never a namespace`,
+				'CATALOGUE_INVALID',
+				`messages: ${locale}: ${key} in ${source} must be a message (a string) or an object of messages`,
 				{ locale, key },
 			);
 		}
-		kinds.set(key, kind);
+		const kind = typeof value === 'string' ? 'message' : 'namespace';
+		const before = kinds.get(key);
+		if (before !== undefined && before.kind !== kind) {
+			throw new MailBuildError(
+				'KEY_CONFLICT',
+				`messages: ${locale}: ${key} is a ${before.kind} in ${before.source} and a ${kind} in ${source} — a later catalogue overrides a message, never a namespace`,
+				{ locale, key },
+			);
+		}
+		kinds.set(key, { kind, source });
 		if (typeof value === 'string') {
 			into.set(key, value);
 		} else {
@@ -79,7 +101,7 @@ export function mergeCatalogues(
 	sources: readonly { readonly name: string; readonly catalogue: Catalogue }[],
 ): FlatCatalogue {
 	const merged = new Map<string, string>();
-	const kinds = new Map<string, 'message' | 'namespace'>();
+	const kinds = new Map<string, Seen>();
 	for (const { name, catalogue } of sources) {
 		flattenInto(merged, kinds, catalogue, locale, name, '');
 	}

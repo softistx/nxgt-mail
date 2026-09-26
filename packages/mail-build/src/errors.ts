@@ -11,6 +11,13 @@ export type MailBuildErrorCode =
 	| 'CATALOGUE_INVALID'
 	/** A message does not parse as ICU. */
 	| 'MESSAGE_UNPARSABLE'
+	/**
+	 * A message parses, and uses something the build cannot turn into a
+	 * correct `Intl` call: a named style it does not know, a skeleton option
+	 * `Intl` does not read (`scale/100`), or options `Intl` refuses (a currency
+	 * style without a currency).
+	 */
+	| 'MESSAGE_UNSUPPORTED'
 	/** A key is not `camelCase`: `verify_email.title`, `Verify.title`. */
 	| 'KEY_NOT_CAMEL_CASE'
 	/** Two catalogues disagree on whether a key is a message or a namespace. */
