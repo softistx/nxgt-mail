@@ -29,18 +29,29 @@ type Both<U> = (U extends unknown ? (u: U) => void : never) extends (
 	? I
 	: never;
 
+/** Whether `K` is every declared key, when there are several. */
+type Every<K> = [Declared] extends [K]
+	? [Declared] extends [Both<Declared>]
+		? false
+		: true
+	: false;
+
 /**
  * The arguments of `key`: none, its declared ones, or any while no key is
  * declared. A key that may be one of several messages (`ok ? 'a' : 'b'`)
  * takes arguments every one of them accepts; the build refuses an argument a
- * message does not use, so they must all use the same names.
+ * message does not use, so they must all use the same names. A key that may
+ * be any message takes any arguments: TypeScript reads an unknown key as
+ * every key, and the key is then what it reports.
  */
 export type TemplateArgs<K> = [K] extends [Declared]
-	? [Uneven<K>] extends [never]
-		? [Names<K>] extends [never]
-			? [args?: Readonly<Record<string, never>>]
-			: [args: Readonly<Both<TemplateMessages[K]>>]
-		: [args: never]
+	? Every<K> extends true
+		? [args?: MessageArgs]
+		: [Uneven<K>] extends [never]
+			? [Names<K>] extends [never]
+				? [args?: Readonly<Record<string, never>>]
+				: [args: Readonly<Both<TemplateMessages[K]>>]
+			: [args: never]
 	: [args?: MessageArgs];
 
 /**
