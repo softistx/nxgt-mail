@@ -415,7 +415,7 @@ instead.
 `Intl` ignores: `{n, number, ::scale/100}`, or `::percent scale/100` —
 `(scale)` in the message. Also on the ES2023 rounding options:
 `::.00 rounding-mode-floor` (`roundingMode`), `::.00/w`
-(`trailingZeroDisplay`), `roundingIncrement`, `roundingPriority`.
+(`trailingZeroDisplay`), `roundingPriority`.
 **Why:** `Intl` would silently drop the option and format another number
 than the one the skeleton says. The rounding options are refused because the
 generated module compiles down to ES2020: an older `lib` rejects them, and an
@@ -618,8 +618,9 @@ t('en', 'order.placedAt', { at: new Date('2026-09-25T21:30:00Z') });
 
 `"en" | "fr"` is the list of your build's locales.
 
-**When:** `tsc`, on a locale the build does not hold: `t('de', …)`, or a
-`string` from a request or a user profile.
+**When:** `tsc`, on a locale the build does not hold: `t('de', …)`. With a
+`string` from a request or a user profile, the same mistake reads
+`Argument of type 'string' is not assignable to parameter of type '"en" | "fr"'.`
 **Why:** the module has a catalogue for each locale in `locales`, and none
 for any other.
 **Fix:** choose one of them first, with `pickLocale` from `@nxgt/mail` and
@@ -662,7 +663,7 @@ value you passed.
 **Why:** a message without arguments accepts an empty object, or nothing,
 and every property of it is typed `never`, so a stale argument is caught
 rather than silently ignored.
-**Fix:** drop the argument, or put the placeholder back in the fallback
+**Fix:** drop the argument, or put the argument back in the fallback
 locale's message:
 
 ```ts

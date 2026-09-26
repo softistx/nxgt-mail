@@ -42,13 +42,15 @@ export interface MessageArgs {
 
 export type MessageKey = keyof MessageArgs;
 
-export function t<K extends MessageKey>(
-	locale: Locale,
-	key: K,
-	...rest: MessageArgs[K] extends { readonly [argument: string]: never }
+// Distributive: an unknown key widens K to every key, some of which take no
+// argument, so tsc reports the key rather than a missing arguments object.
+type Rest<K extends MessageKey> = K extends MessageKey
+	? MessageArgs[K] extends { readonly [argument: string]: never }
 		? [args?: MessageArgs[K], options?: FormatOptions]
 		: [args: MessageArgs[K], options?: FormatOptions]
-): string;
+	: never;
+
+export function t<K extends MessageKey>(locale: Locale, key: K, ...rest: Rest<K>): string;
 ```
 
 `Locale`, `MessageKey` and `MessageArgs` are literal types written from the

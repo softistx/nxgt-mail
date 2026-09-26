@@ -45,8 +45,8 @@ out of your linter and your coverage; commit it or ignore it in git, as you
 prefer — the same catalogues always produce the same bytes. Your compiler does
 check it, and it compiles under the strictest options — `strict`,
 `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`, `noUnusedLocals`,
-`noUnusedParameters`, `noPropertyAccessFromIndexSignature`, down to an ES2020
-`lib`.
+`noUnusedParameters`, `noPropertyAccessFromIndexSignature`, `noImplicitReturns`,
+down to an ES2020 `lib`.
 
 ## Usage
 
@@ -234,17 +234,6 @@ every locale — `{n, number}` where a translation needs only the number.
 declares the arguments: `fr` may leave `{name}` out, but `{nom}` fails the
 build (`ARGUMENT_UNDECLARED`). Add an argument to the fallback locale first.
 
-## Documentation
-
-- [The guides](docs/README.md) — one page per area, with every case and every
-  error.
-- [Troubleshooting](docs/troubleshooting.md) — a build error or a compile
-  error, its cause and its fix.
-- [Roadmap](docs/roadmap.md) — what is next, and what is deliberately not
-  planned.
-- [Vocabulary](https://github.com/softistx/nxgt-mail/blob/develop/docs/vocabulary.md)
-  — the words these pages use, defined once.
-
 ## Type safety, counted
 
 **8 plausible mistakes, 8 refused** at compile time, each measured by a
@@ -266,6 +255,17 @@ hand-written one:
 
 The same file holds the calls that must keep compiling: a refusal that refuses
 the correct call is a bug.
+
+## Documentation
+
+- [The guides](docs/README.md) — one page per area, with every case and every
+  error.
+- [Troubleshooting](docs/troubleshooting.md) — a build error or a compile
+  error, its cause and its fix.
+- [Roadmap](docs/roadmap.md) — what is next, and what is deliberately not
+  planned.
+- [Vocabulary](https://github.com/softistx/nxgt-mail/blob/develop/docs/vocabulary.md)
+  — the words these pages use, defined once.
 
 ## Licence
 

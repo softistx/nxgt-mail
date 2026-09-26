@@ -92,7 +92,7 @@ t('en', 'verifyEmail.subject'); // 'Confirm your e-mail address'
 
 No argument: `t` takes none. An empty `{}` is accepted; any property is a
 compile error — `t('en', 'verifyEmail.subject', { name: 'Ada' })` is refused,
-which is the call a message leaves behind when a translator drops its
+which is the call left behind when the fallback locale's message drops its
 `{name}`.
 
 ### An argument — `{name}`
