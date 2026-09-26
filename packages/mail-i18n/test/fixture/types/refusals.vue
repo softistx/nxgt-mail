@@ -14,6 +14,7 @@
   <p>{{ t('verifyEmail.expires', { minutes: 15 }) }}</p>
   <p>{{ t('verifyEmail.sentOn', { at: new Date(0) }) }} {{ locale }}</p>
   <p>{{ t(locale === 'fr' ? 'verifyEmail.title' : 'verifyEmail.action') }}</p>
+  <p>{{ t(locale === 'fr' ? 'verifyEmail.greeting' : 'verifyEmail.subject', { name: placeholder('name') }) }}</p>
 
   <!-- 1. A key the catalogues do not have. -->
   <!-- @vue-expect-error -->

@@ -214,7 +214,7 @@ bun run test
 bun run verify:artifacts   # on the tarball actually packed
 ```
 
-A package's `tsconfig.json` also includes its fixture's
-`test/fixture/.maizzle/*.d.ts`, for the editor only, so its own templates and
+`mail-ui`'s and `mail-presets`' `tsconfig.json` also include their fixture's
+`test/fixture/.maizzle/*.d.ts`, for the editor only, so their own templates and
 components see `t` and `brand` while you edit them; the measurement is the
 fixture's own `tsconfig.json`, which `typecheck:templates` uses.

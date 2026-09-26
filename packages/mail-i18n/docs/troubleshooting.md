@@ -993,7 +993,9 @@ on type 'ComponentPublicInstance<…>'`. The build is not affected.
 **Why:** the types of `t` are in `.maizzle/nxgt-mail-i18n.d.ts`, which the
 plugin writes each time the config loads. Either it has not been written yet
 — a fresh clone, before any `maizzle prepare`, `serve` or `build` — or your
-`tsconfig.json` does not include `.maizzle/*.d.ts`.
+`tsconfig.json` does not include `.maizzle/*.d.ts`. A project that sets
+Maizzle's `root`, or a Laravel project, has its `.maizzle/` elsewhere: include
+that one.
 **Fix:** keep the starter's include and write the file once:
 
 ```json

@@ -105,12 +105,12 @@ declare module 'vue' {
 // exported from '@nxgt/mail-i18n'
 interface TemplateMessages {} // filled by the generated file
 type TemplateKey = [keyof TemplateMessages] extends [never] ? string : keyof TemplateMessages;
-// simplified: the two checks in capitals are spelled out in the package
+// simplified: the checks in capitals are spelled out in the package
 type TemplateArgs<K> = [K] extends [keyof TemplateMessages]
 	? SAME_ARGUMENT_NAMES<K> extends true // every message K may be
 		? NO_ARGUMENT<K> extends true
 			? [args?: Readonly<Record<string, never>>] // a message with no argument
-			: [args: Readonly<TemplateMessages[K]>] // required, exactly these
+			: [args: Readonly<ALL_OF<TemplateMessages[K]>>] // required, exactly these
 		: [args: never] // messages with different arguments: no call fits
 	: [args?: MessageArgs]; // while no key is declared
 ```
