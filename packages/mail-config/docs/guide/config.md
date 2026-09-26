@@ -268,11 +268,11 @@ export default defineMailConfig({
 
 A mistake in how the config is wired is a bare `TypeError`, thrown by
 `defineMailConfig` each time `maizzle.config.ts` is loaded — the first time
-before any template is built, so the build stops there. A message names the plugin by its `name`, or by its index when it has
-none. Several are also refused at compile time — a plugin without a `name`,
-`plugins` that is not a list, a build event that is not a function, a plugin
-that lists plugins; the count is in the
-[README](../../README.md#type-safety-counted).
+before any template is built, so the build stops there. A message names the
+plugin by its `name`, or by its index when it has none. Several are also
+refused at compile time — a plugin without a `name`, `plugins` that is not a
+list, a build event that is not a function, a plugin that lists plugins; the
+count is in the [README](../../README.md#type-safety-counted).
 
 | Message | Cause |
 | --- | --- |

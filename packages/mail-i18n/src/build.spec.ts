@@ -1,0 +1,287 @@
+import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const fixture = fileURLToPath(new URL('../test/fixture', import.meta.url));
+const cases = fileURLToPath(new URL('../test/.cases', import.meta.url));
+const maizzle = fileURLToPath(
+	new URL('../node_modules/.bin/maizzle', import.meta.url),
+);
+
+/** Runs `maizzle <args>` in `cwd`, as a project runs it. */
+async function run(cwd: string, ...args: string[]) {
+	const child = Bun.spawn([maizzle, ...args], {
+		cwd,
+		stdout: 'pipe',
+		stderr: 'pipe',
+	});
+	const [code, stdout, stderr] = await Promise.all([
+		child.exited,
+		new Response(child.stdout).text(),
+		new Response(child.stderr).text(),
+	]);
+	return { code, output: stdout + stderr };
+}
+
+async function build(cwd: string, ...args: string[]): Promise<void> {
+	const { code, output } = await run(cwd, 'build', ...args);
+	if (code !== 0) throw new Error(`maizzle build failed:\n${output}`);
+}
+
+const read = (path: string) => Bun.file(`${fixture}/${path}`).text();
+
+describe('a project built with the i18n plugin', () => {
+	beforeAll(async () => {
+		for (const dir of ['dist', 'dist-flat', 'dist-parallel', '.maizzle']) {
+			rmSync(`${fixture}/${dir}`, { recursive: true, force: true });
+		}
+		await build(fixture, '-c', 'maizzle.config.flat.ts');
+		await build(fixture, '-c', 'maizzle.config.parallel.ts');
+		await build(fixture);
+	}, 120_000);
+
+	test('writes every template in every locale, with its text part', async () => {
+		for (const locale of ['en', 'fr']) {
+			for (const email of ['verify-email', 'auth/reset-password']) {
+				expect(
+					await Bun.file(`${fixture}/dist/${locale}/${email}.html`).exists(),
+				).toBe(true);
+				expect(
+					await Bun.file(`${fixture}/dist/${locale}/${email}.txt`).exists(),
+				).toBe(true);
+			}
+		}
+	});
+
+	test('formats each locale with its own plural and date', async () => {
+		const en = await read('dist/en/verify-email.html');
+		const fr = await read('dist/fr/verify-email.html');
+		expect(en).toContain('<html lang="en"');
+		expect(en).toContain('<h1>Confirm your e-mail address</h1>');
+		expect(en).toContain('The link expires in 15 minutes.');
+		expect(en).toContain('Sent on January 2, 2026.');
+		expect(fr).toContain('<html lang="fr"');
+		expect(fr).toContain('Le lien expire dans 15 minutes.');
+		expect(fr).toContain('Envoyé le 2 janvier 2026.');
+	});
+
+	test('keeps each placeholder for the renderer, in text and in a link', async () => {
+		const fr = await read('dist/fr/verify-email.html');
+		expect(fr).toContain('<p>Bonjour {{ name }},</p>');
+		expect(fr).toContain('<a href="{{ link }}">');
+		expect(await read('dist/fr/verify-email.txt')).toContain('{{ link }}');
+	});
+
+	test('writes the manifest the renderer reads', async () => {
+		expect(JSON.parse(await read('dist/mail-manifest.json'))).toEqual(
+			JSON.parse(await read('mail-manifest.golden.json')),
+		);
+	});
+
+	test('a parallel build writes the same manifest: the workers write no wrapper', async () => {
+		expect(JSON.parse(await read('dist-parallel/mail-manifest.json'))).toEqual(
+			JSON.parse(await read('mail-manifest.golden.json')),
+		);
+		expect(await read('dist-parallel/fr/verify-email.html')).toContain(
+			'Envoyé le 2 janvier 2026.',
+		);
+	});
+
+	test('the flat layout writes each locale next to the others', async () => {
+		expect(await read('dist-flat/verify-email.fr.html')).toContain(
+			'Le lien expire dans 15 minutes.',
+		);
+		const manifest = JSON.parse(await read('dist-flat/mail-manifest.json'));
+		expect(manifest.emails['auth/reset-password'].files.fr).toEqual({
+			html: 'auth/reset-password.fr.html',
+			text: 'auth/reset-password.fr.txt',
+		});
+	});
+
+	test('maizzle serve lists every template in every locale', async () => {
+		const port = 39_000 + Math.floor(Math.random() * 900);
+		const child = Bun.spawn([maizzle, 'serve', '--port', String(port)], {
+			cwd: fixture,
+			stdout: 'ignore',
+			stderr: 'ignore',
+		});
+		try {
+			let list: { path: string }[] = [];
+			for (let attempt = 0; attempt < 60 && list.length === 0; attempt++) {
+				list = await fetch(`http://localhost:${port}/__maizzle/templates`)
+					.then((response) => (response.ok ? response.json() : []))
+					.catch(() => Bun.sleep(500).then(() => []));
+			}
+			expect(list.map((template) => template.path).sort()).toEqual([
+				'.maizzle/i18n/en/auth/reset-password.vue',
+				'.maizzle/i18n/en/verify-email.vue',
+				'.maizzle/i18n/fr/auth/reset-password.vue',
+				'.maizzle/i18n/fr/verify-email.vue',
+			]);
+			const fr = await fetch(
+				`http://localhost:${port}/__maizzle/render/.maizzle/i18n/fr/verify-email`,
+			).then((response) => response.text());
+			expect(fr).toContain('Bonjour {{ name }},');
+		} finally {
+			child.kill();
+			await child.exited;
+		}
+	}, 60_000);
+});
+
+const en = {
+	verifyEmail: {
+		subject: 'Confirm your address, {name}',
+		title: 'Confirm your address',
+		expires: 'In {minutes, plural, one {# minute} other {# minutes}}.',
+	},
+};
+const fr = {
+	verifyEmail: {
+		subject: 'Confirmez votre adresse, {name}',
+		title: 'Confirmez votre adresse',
+		expires: 'Dans {minutes, plural, one {# minute} other {# minutes}}.',
+	},
+};
+
+/** Writes a project under test/.cases/<name>, builds it, and answers what the build printed. */
+async function failure(
+	name: string,
+	files: Record<string, string | object | null>,
+): Promise<string> {
+	const root = `${cases}/${name}`;
+	rmSync(root, { recursive: true, force: true });
+	const all: Record<string, string | object | null> = {
+		'maizzle.config.ts': [
+			"import { defineMailConfig } from '@nxgt/mail-config';",
+			"import { i18n } from '../../../src/index';",
+			"export default defineMailConfig({ plugins: [i18n({ locales: ['en', 'fr'] })] });",
+		].join('\n'),
+		'locales/en.json': en,
+		'locales/fr.json': fr,
+		'emails/verify-email.vue':
+			"<template><p>{{ t('verifyEmail.title') }}</p></template>",
+		...files,
+	};
+	for (const [path, content] of Object.entries(all)) {
+		if (content === null) continue;
+		mkdirSync(dirname(`${root}/${path}`), { recursive: true });
+		writeFileSync(
+			`${root}/${path}`,
+			typeof content === 'string' ? content : JSON.stringify(content),
+		);
+	}
+	const { code, output } = await run(root, 'build');
+	expect(code).not.toBe(0);
+	return output;
+}
+
+describe('a build failure names the locale, the template and the key', () => {
+	afterAll(() => rmSync(cases, { recursive: true, force: true }));
+
+	const template = (body: string) => ({
+		'emails/verify-email.vue': `<template><p>${body}</p></template>`,
+	});
+
+	test.each([
+		[
+			'unknown-key',
+			template("{{ t('verifyEmail.titel') }}"),
+			"i18n: <locale>: verify-email calls t('verifyEmail.titel'), which is not a key of the catalogues",
+		],
+		[
+			'missing-argument',
+			template("{{ t('verifyEmail.expires') }}"),
+			"i18n: <locale>: verify-email calls t('verifyEmail.expires') without {minutes}",
+		],
+		[
+			'placeholder-as-number',
+			template(
+				"{{ t('verifyEmail.expires', { minutes: placeholder('minutes') }) }}",
+			),
+			'i18n: <locale>: verify-email passes {minutes} to verifyEmail.expires as a string — the message uses it as a number',
+		],
+		[
+			'unused-argument',
+			template("{{ t('verifyEmail.title', { name: 'Ada' }) }}"),
+			'i18n: <locale>: verify-email passes {name} to verifyEmail.title, which does not use it',
+		],
+		[
+			'placeholder-name',
+			template("{{ placeholder('first name') }}"),
+			"i18n: <locale>: verify-email calls placeholder() with a name that is not camelCase — as placeholder('firstName')",
+		],
+		[
+			'no-subject',
+			{ 'emails/welcome.vue': '<template><p>hi</p></template>' },
+			'i18n: welcome has no subject — add welcome.subject to the catalogues',
+		],
+		[
+			'template-name',
+			{ 'emails/Welcome.vue': '<template><p>hi</p></template>' },
+			'i18n: emails/Welcome.vue is not a kebab-case name — name a template as verify-email.vue',
+		],
+		[
+			'content-set-by-the-project',
+			{
+				'maizzle.config.ts': [
+					"import { defineMailConfig } from '@nxgt/mail-config';",
+					"import { i18n } from '../../../src/index';",
+					"export default defineMailConfig({ plugins: [i18n({ locales: ['en', 'fr'] })], content: ['emails/**/*.vue'] });",
+				].join('\n'),
+			},
+			'i18n: emails/verify-email.vue is not built through the i18n plugin — leave content to it, and put templates in emails/',
+		],
+		[
+			'subject-number',
+			{
+				'locales/en.json': {
+					verifyEmail: { ...en.verifyEmail, subject: '{n, number} to confirm' },
+				},
+				'locales/fr.json': {
+					verifyEmail: {
+						...fr.verifyEmail,
+						subject: '{n, number} à confirmer',
+					},
+				},
+			},
+			"i18n: <locale>: verifyEmail.subject uses {n} as a number — a subject's arguments are placeholders, filled at send time as strings",
+		],
+		[
+			'arguments-not-an-object',
+			template("{{ t('verifyEmail.title', null) }}"),
+			"i18n: <locale>: verify-email calls t('verifyEmail.title') with arguments that are not an object, as { name: placeholder('name') }",
+		],
+		[
+			'no-catalogue',
+			{ 'locales/fr.json': null },
+			'i18n: locales/fr.json is missing — every locale has a catalogue',
+		],
+		[
+			'broken-catalogue',
+			{ 'locales/fr.json': '' },
+			'i18n: locales/fr.json is not valid JSON',
+		],
+		[
+			'missing-key',
+			{
+				'locales/fr.json': {
+					verifyEmail: { ...fr.verifyEmail, title: undefined },
+				},
+			},
+			'i18n: fr: verifyEmail.title is missing — en, the fallback locale, has it',
+		],
+	])(
+		'%s',
+		async (name, files, message) => {
+			// Maizzle builds the locales in no set order: either may fail first.
+			const pattern = message
+				.split('<locale>')
+				.map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+				.join('(en|fr)');
+			expect(await failure(name, files)).toMatch(new RegExp(pattern));
+		},
+		60_000,
+	);
+});
