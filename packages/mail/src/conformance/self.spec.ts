@@ -21,16 +21,10 @@ describe('the suite itself', () => {
 	});
 
 	it('reports a missing faults as a skip with its reason, never as a pass', async () => {
-		const withoutFaults: MailerHarness = {
-			async open() {
-				const { faults: _, ...opened } = await referenceMailerHarness().open();
-				return opened;
-			},
-		};
 		const outage = allMailerCases.find((c) => c.id === 'failure.outage');
 		if (outage === undefined) throw new Error('failure.outage is missing');
 
-		expect(await runMailerCase(outage, withoutFaults)).toEqual({
+		expect(await runMailerCase(outage, withoutFaults())).toEqual({
 			skipped: MAILER_SKIP_REASONS.faults,
 		});
 	});
@@ -180,6 +174,64 @@ describe('the suite fails a bad transport', () => {
 		expect(
 			await failureOf(runMailerCase(byId('failure.outage'), retrying)),
 		).toContain('resolved; it must reject');
+	});
+
+	it('fails a transport that retries a failed hand-over and still throws', async () => {
+		// The provider stays down for both hand-overs, so the caller does get a
+		// MailFailure — only the attempts count shows the hidden retry.
+		const retryingInVain: MailerHarness = {
+			async open() {
+				const opened = await referenceMailerHarness().open();
+				const faults = opened.faults;
+				if (faults === undefined) throw new Error('the reference has faults');
+				return {
+					...opened,
+					mailer: {
+						async send(message) {
+							return opened.mailer
+								.send(message)
+								.catch(() => opened.mailer.send(message));
+						},
+					},
+					faults: {
+						...faults,
+						async failNext(kind) {
+							await faults.failNext(kind);
+							await faults.failNext(kind);
+						},
+					},
+				};
+			},
+		};
+
+		expect(
+			await failureOf(runMailerCase(byId('failure.outage'), retryingInVain)),
+		).toContain('the transport retried a failed hand-over');
+		expect(
+			await failureOf(runMailerCase(byId('failure.refusal'), retryingInVain)),
+		).toContain('the transport retried a refused message');
+	});
+
+	it('reports the case failure when close fails too', async () => {
+		const closeFails: MailerHarness = {
+			async open() {
+				return {
+					mailer: {
+						async send() {
+							return { messageId: '' };
+						},
+					},
+					delivered: async () => [],
+					close: async () => {
+						throw new Error('connection already closed');
+					},
+				};
+			},
+		};
+
+		expect(
+			await failureOf(runMailerCase(byId('send.answersSentMail'), closeFails)),
+		).toContain('messageId must be a non-empty string or null');
 	});
 
 	it('fails a transport whose name lets a second recipient through', async () => {
