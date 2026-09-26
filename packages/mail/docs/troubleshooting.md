@@ -134,6 +134,14 @@ entry declaration's re-exports do not resolve, so everything they carry is
 missing.
 **Fix:** `"moduleResolution": "bundler"`, as in the entry above.
 
+The other cause: `createMailRenderer`, `MailRenderer`, `MailRendererOptions`,
+`RenderOptions` or `MailVariables` imported from `@nxgt/mail`. The renderer is
+its own entry, since it reads files with `node:fs`:
+
+```ts
+import { createMailRenderer } from '@nxgt/mail/renderer';
+```
+
 ### `TS2741: Property 'to' is missing in type '…' but required in type 'MailMessage'.`
 
 **When:** `tsc`, where you build the message you pass to `mailer.send`,
@@ -158,8 +166,8 @@ await mailer.send({ ...rendered, to: 'ada@example.com' });
 **Why:** every e-mail carries a plain-text part: some clients show nothing
 else, and spam filters score an e-mail without one. The port has no room for
 a message without it.
-**Fix:** write the text part. The run-time renderer (coming) always answers
-one, from the plain text Maizzle builds beside the HTML:
+**Fix:** write the text part. The run-time renderer (`@nxgt/mail/renderer`)
+always answers one, from the plain text Maizzle builds beside the HTML:
 
 ```ts
 import type { MailMessage } from '@nxgt/mail';

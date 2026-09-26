@@ -14,7 +14,7 @@ manifest.emails['verify-email']?.variables; // ['link', 'name']
 manifest.emails['verify-email']?.subject.fr; // 'Confirmez votre adresse e-mail, {{ name }}'
 ```
 
-`createMailRenderer` from `@nxgt/mail` reads this file, and every file it
+`createMailRenderer` from `@nxgt/mail/renderer` reads this file, and every file it
 lists, so that sending takes one call:
 
 ```ts

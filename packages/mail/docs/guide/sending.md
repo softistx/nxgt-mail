@@ -283,7 +283,7 @@ import { MailError, type Mailer } from '@nxgt/mail';
 import { type MailRenderer } from '@nxgt/mail/renderer';
 
 // Yours: your user store, your token issuer.
-declare function createUser(email: string): Promise<{ id: string; email: string }>;
+declare function createUser(email: string): Promise<{ id: string; email: string; name: string }>;
 declare function issueVerificationToken(userId: string): Promise<string>;
 
 export function signUpHandler(mailer: Mailer, mails: MailRenderer) {
@@ -295,7 +295,7 @@ export function signUpHandler(mailer: Mailer, mails: MailRenderer) {
 
 		try {
 			// Inside the try: render throws MailRefused for a link that is not a safe URL.
-			await mailer.send({ to: user.email, ...mails.render('verify-email', { link }) });
+			await mailer.send({ to: user.email, ...mails.render('verify-email', { name: user.name, link }) });
 		} catch (error) {
 			if (!(error instanceof MailError)) throw error;
 			// MAIL_FAILED: offer "send it again" later. MAIL_REFUSED: the address is unusable.

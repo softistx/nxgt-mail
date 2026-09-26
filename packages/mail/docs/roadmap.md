@@ -24,6 +24,13 @@ the only number.
   outage throws a `MailFailure` which `instanceof` recognises, that an e-mail
   arrives byte for byte, and that nothing is retried in secret. Runs under
   bun:test, Vitest or Jest. Built, not yet published.
+- **The run-time renderer** — `createMailRenderer`, from `@nxgt/mail/renderer`:
+  `mails.render('verify-email', { name, link })` answers `Rendered` from the
+  built files of the recipient's locale, every `{{ placeholder }}` filled.
+  Values are HTML-escaped in `html`; a link that is not `http:`, `https:` or
+  `mailto:` is refused with `MailRefused`; a missing variable, an unknown
+  e-mail or locale throws. Its own entry because it reads files with
+  `node:fs`: `@nxgt/mail` itself runs anywhere. Built, not yet published.
 
 ## Next
 
@@ -47,12 +54,6 @@ the only number.
   components an e-mail needs (`<NxButton>`, `<NxHeading>`, `<NxText>`…), and
   shared messages in English and French. Replace one component or one message
   by name in your project, and keep the rest.
-- **The run-time renderer** — `createMailRenderer`, in `@nxgt/mail`, still with
-  no dependency: `mails.render('verify-email', { name, link })` answers
-  `Rendered` from the built files of the recipient's locale, every
-  `{{ placeholder }}` filled. Values are HTML-escaped in `html`; a link that is
-  not `http:`, `https:` or `mailto:` is refused; a missing variable, an unknown
-  e-mail or an unknown locale throws.
 - **An SMTP transport** — `@nxgt/mail-smtp`, on the `nodemailer` you install,
   passing the conformance suite.
 - **A Resend transport** — `@nxgt/mail-resend`, over `fetch` with no SDK,

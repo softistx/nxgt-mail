@@ -112,7 +112,9 @@ person's.
 import { type Mailer, parseAcceptLanguage, pickLocale } from '@nxgt/mail';
 import { createMailRenderer } from '@nxgt/mail/renderer';
 
-const supported = ['en', 'fr'] as const; // the locales the build was made in
+// The locales the build was made in, as a tuple for the Locale type; at run
+// time they are also mails.locales.
+const supported = ['en', 'fr'] as const;
 type Locale = (typeof supported)[number];
 
 const mails = createMailRenderer({ dir: 'dist' });

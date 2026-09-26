@@ -268,7 +268,7 @@ image URL starts with, its subject in each locale, and its files:
 }
 ```
 
-`createMailRenderer` from `@nxgt/mail` reads it at send time:
+`createMailRenderer` from `@nxgt/mail/renderer` reads it at send time:
 `createMailRenderer({ dir: 'dist' }).render('verify-email', { name, link })`
 answers the subject, HTML and text, every value escaped. See
 [The manifest](docs/guide/manifest.md).

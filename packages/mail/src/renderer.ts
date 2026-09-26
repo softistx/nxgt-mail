@@ -85,7 +85,7 @@ const SAFE_URL = /^(?:https?:\/\/|mailto:)/i;
 /** Whitespace, a control, a quote or a bracket: what no URL holds as is. */
 const hasUnsafeUrlChar = (value: string) =>
 	[...value].some((char) => {
-		const code = char.codePointAt(0) as number;
+		const code = char.codePointAt(0) ?? 0;
 		return code < 0x21 || code === 0x7f || /[\s"'<>`]/.test(char);
 	});
 
@@ -98,7 +98,7 @@ const HTML_ESCAPES: Readonly<Record<string, string>> = {
 };
 
 const escapeHtml = (value: string) =>
-	value.replace(/[&<>"']/g, (char) => HTML_ESCAPES[char] as string);
+	value.replace(/[&<>"']/g, (char) => HTML_ESCAPES[char] ?? char);
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
 	typeof value === 'object' && value !== null && !Array.isArray(value);
