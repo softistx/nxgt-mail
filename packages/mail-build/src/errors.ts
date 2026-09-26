@@ -30,12 +30,17 @@ export type MailBuildErrorCode =
 	| 'ARGUMENT_UNDECLARED'
 	/** An argument is a number in one place and a string or a date in another. */
 	| 'ARGUMENT_TYPE_MISMATCH'
-	/** A template is not a single-file component the build can read: no `<template>`, props not a list of names. */
+	/**
+	 * A template the build cannot read: not a kebab-case `.vue` name, no
+	 * `<template>`, a prop that is reserved or not camelCase, a component that
+	 * does not exist, two files for one e-mail, or Maizzle failing to render it.
+	 */
 	| 'TEMPLATE_INVALID'
 	/**
-	 * A template uses something a render function cannot reproduce safely: a
-	 * `v-if`, an expression that is not a prop or a `t()` call, a value in a
-	 * `style` or an `on*` attribute, a message in a link.
+	 * A template uses something a render function cannot reproduce safely:
+	 * code in `<script setup>`, a `v-if`, an expression that is not a prop or a
+	 * `t()` call, a value in an attribute that is not text (`style`, `on*`…) or
+	 * in a `<style>`, a message starting a link, a value a component dropped.
 	 */
 	| 'TEMPLATE_UNSUPPORTED'
 	/** A template calls `t()` with a key the fallback locale does not hold. */

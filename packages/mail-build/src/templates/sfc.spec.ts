@@ -41,6 +41,15 @@ describe('readTemplate', () => {
 		).toEqual([]);
 	});
 
+	test('accepts props declared as a type', () => {
+		expect(
+			readTemplate(
+				'a.vue',
+				'<script setup lang="ts">\ndefineProps<{ name: string }>()\n</script>\n<template><p>{{ name }}</p></template>',
+			).props,
+		).toEqual(['name']);
+	});
+
 	test('emailName camel-cases a kebab-case file name', () => {
 		expect(emailName('reset-password-2.vue')).toBe('resetPassword2');
 	});
@@ -85,6 +94,13 @@ describe('readTemplate', () => {
 			'a statement run at build time',
 			'a.vue',
 			"<script setup>\ndefineProps([])\nconsole.log('built')\n</script>\n<template><p></p></template>",
+			'TEMPLATE_UNSUPPORTED',
+			'templates: a.vue: holds code in <script setup> — a template declares its props with defineProps([...]), unassigned, and nothing else',
+		],
+		[
+			'a validator in defineProps, which would run at build time',
+			'a.vue',
+			'<script setup>\ndefineProps({ name: { validator: () => true } })\n</script>\n<template><p>{{ name }}</p></template>',
 			'TEMPLATE_UNSUPPORTED',
 			'templates: a.vue: holds code in <script setup> — a template declares its props with defineProps([...]), unassigned, and nothing else',
 		],

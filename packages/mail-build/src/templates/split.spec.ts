@@ -229,6 +229,16 @@ describe('splitHtml', () => {
 			`<!-- x --!><p style="${P1}">x</p>`,
 			'templates: a.vue: the prop name lands in the style attribute — only text attributes (alt, title, aria-*…) and URLs (href, src) take a value',
 		],
+		[
+			'a value in a <title> after an odd quote',
+			`<title>it's ${P1}</title>`,
+			'templates: a.vue: the prop name lands in a <title> element',
+		],
+		[
+			'a style after a CDATA section holding -->',
+			`<svg><![CDATA[ --> ]]><p style="${P1}">x</p></svg>`,
+			'templates: a.vue: the prop name lands in the style attribute — only text attributes (alt, title, aria-*…) and URLs (href, src) take a value',
+		],
 	];
 	for (const [name, html, message] of cases) {
 		test(`refuses ${name}`, () => {

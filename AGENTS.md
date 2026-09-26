@@ -93,9 +93,11 @@ a subject, never a link — a link in a verification e-mail is a credential.
   line breaks — a header injection is a line break in a subject.
 - A template renders **once, at build time**, so it holds nothing the render
   function would have to decide: no `v-if`, no `v-for`, no expression — a
-  prop, `lang` or a `t()` call on a string key. A value that would land in a
-  `style` or an `on*` attribute, a `<style>` or a `<script>`, or a message
-  that would start a link, **fails the build**: there, escaping is not enough.
+  prop, `lang` or a `t()` call on a string key. A value lands only in text
+  (escaped), in a text attribute (`alt`, `title`, `aria-*`, `data-*`…) or at
+  the start of an `href`/`src` (a URL checked at call time). Anywhere else —
+  `style`, `on*`, `srcdoc`, a `<style>` or a `<script>`, a message starting a
+  link — **the build fails**: there, escaping is not enough.
 
 ## No `snake_case`, anywhere
 

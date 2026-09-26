@@ -130,6 +130,15 @@ describe('escaping', () => {
 			reference: 'A-1\r\nBcc: victim@example.com',
 		});
 		expect(subject).toBe('Order A-1 Bcc: victim@example.com confirmed');
+		for (const separator of ['\u0085', '\u2028', '\u2029']) {
+			expect(
+				mails.orderPlaced({
+					locale: 'en',
+					...orderPlaced,
+					reference: `A-1${separator}B`,
+				}).subject,
+			).toBe('Order A-1 B confirmed');
+		}
 		expect(text).toContain('A-1\r\nBcc: victim@example.com');
 	});
 });

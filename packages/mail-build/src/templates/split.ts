@@ -40,7 +40,19 @@ const TEXT_PREFIXES = ['aria-', 'data-'];
 const LINKS = new Set(['href', 'xlink:href']);
 const RESOURCES = new Set(['src', 'background', 'poster']);
 const SAFE_PREFIX = /^(https?:\/\/|mailto:)/i;
-const RAW_TEXT = new Set(['style', 'script']);
+// Elements whose content a browser reads as text, not markup: a value there
+// is refused, rather than scanned as markup that is not.
+const RAW_TEXT = new Set([
+	'style',
+	'script',
+	'textarea',
+	'title',
+	'xmp',
+	'noembed',
+	'noframes',
+	'iframe',
+	'plaintext',
+]);
 
 /** What the scanner is in at a position of the output. */
 type State =
@@ -81,6 +93,7 @@ function scan(
 	let state: State = { in: 'text' };
 	let element = '';
 	let valueStart = 0;
+	let cdata = false;
 	let next = 0;
 	let i = 0;
 
@@ -111,6 +124,12 @@ function scan(
 		const char = html[i];
 		switch (state.in) {
 			case 'text': {
+				if (html.startsWith('<![CDATA[', i)) {
+					state = { in: 'comment' }; // ends at `]]>`, below
+					advance(i + 9);
+					cdata = true;
+					continue;
+				}
 				if (html.startsWith('<!--[if', i)) state = { in: 'declaration' };
 				else if (html.startsWith('<!-->', i) || html.startsWith('<!--->', i)) {
 					// An abrupt comment, closed where it opens: `<!--[if !mso]><!-->`
@@ -137,6 +156,16 @@ function scan(
 				continue;
 			}
 			case 'comment':
+				if (cdata) {
+					if (html.startsWith(']]>', i)) {
+						state = { in: 'text' };
+						cdata = false;
+						advance(i + 3);
+						continue;
+					}
+					i += 1;
+					continue;
+				}
 				if (html.startsWith('-->', i) || html.startsWith('--!>', i)) {
 					state = { in: 'text' };
 					advance(i + (html.startsWith('-->', i) ? 3 : 4));

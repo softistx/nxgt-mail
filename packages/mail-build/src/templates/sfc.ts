@@ -172,13 +172,28 @@ function checkScript(file: string, content: string): void {
 		ts.ScriptTarget.ES2020,
 	);
 	const [first, ...rest] = source.statements;
+	const call =
+		first !== undefined &&
+		rest.length === 0 &&
+		ts.isExpressionStatement(first) &&
+		ts.isCallExpression(first.expression)
+			? first.expression
+			: null;
+	// `defineProps(['a', 'b'])`, or `defineProps<{ a: string }>()`: names,
+	// never code — a validator or a default would run at build time.
 	const onlyDefineProps =
 		first === undefined ||
-		(rest.length === 0 &&
-			ts.isExpressionStatement(first) &&
-			ts.isCallExpression(first.expression) &&
-			ts.isIdentifier(first.expression.expression) &&
-			first.expression.expression.text === 'defineProps');
+		(call !== null &&
+			ts.isIdentifier(call.expression) &&
+			call.expression.text === 'defineProps' &&
+			(call.arguments.length === 0
+				? call.typeArguments !== undefined
+				: call.arguments.length === 1 &&
+					call.arguments.every(
+						(argument) =>
+							ts.isArrayLiteralExpression(argument) &&
+							argument.elements.every(ts.isStringLiteral),
+					)));
 	if (!onlyDefineProps) {
 		throw templateError(
 			'TEMPLATE_UNSUPPORTED',
