@@ -56,14 +56,22 @@ and ships with the first release, under **Next**.
 - **`defineMailConfig`** — one typed `mail.config.ts`: the locales, the
   fallback locale, the templates and catalogues folders, and where the module
   is written.
+- **Presets** — `defineMailConfig({ presets: [a, b] })` applies theme
+  tokens, components and shared messages in order: a later preset overrides
+  an earlier one token by token, component by component and message by
+  message, never a whole namespace. The application's own `components/`
+  folder comes last, one PascalCase `.vue` file each, and overrides any
+  preset's component of the same name. The merged tokens are written to a
+  `theme.css` of Tailwind CSS 4 `@theme` variables that a layout imports.
+  `definePreset({ name, theme, components, messages })` types a preset of
+  your own; a preset that is not well formed — no name, two presets with one
+  name, a token that is not `camelCase`, a component that is not a `.vue`
+  file name — fails the build with a `TypeError` naming the preset.
+  The default preset, `nxgtPreset()`, is
+  [`@nxgt/mail-preset`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-preset/docs/roadmap.md).
 
 ## Next
 
-- **Presets** — `defineMailConfig({ presets: [a, b] })` applies a theme,
-  layouts, components and shared messages in order, the application's own
-  files last. The theme is a set of Tailwind CSS 4 `@theme` tokens tuned for
-  e-mail clients. Change one token, add one language or replace one e-mail,
-  and keep the rest; a token no preset defines is a compile error.
 - **Rendering checked in real clients** — the e-mails the build produces,
   checked in Gmail, Outlook and Apple Mail, with the result written down.
 - **The first release, 0.1.0** — on npm, installable into an empty project
@@ -79,6 +87,16 @@ and ships with the first release, under **Next**.
   one per template. Waiting on Maizzle to export its transformer pipeline.
 - **A better plain-text part** — `text` laid out in lines and paragraphs as
   the HTML reads, where Maizzle's plain-text output joins blocks with spaces.
+- **A component that uses a value refused at build time** — a component that
+  computes something from a value a template passes, or branches on it,
+  fails the build instead of rendering an e-mail that is wrong for some
+  arguments. The build could find it by rendering twice, with placeholders
+  of different shapes, and comparing. Today it goes undetected; component
+  authors are asked to pass each value through untouched.
+- **A warning for a class naming a missing token** — a Tailwind class such as
+  `bg-brand` that names no token of the theme is reported at build time,
+  with the template that uses it. Today Tailwind drops such a class
+  silently, and the e-mail renders without it.
 
 ## Not planned
 
@@ -99,6 +117,11 @@ and ships with the first release, under **Next**.
   `html`. An escape hatch is where an injection gets in; if you need markup,
   put it in the template, or write that e-mail's render function yourself —
   any function answering `Rendered` from `@nxgt/mail` is accepted.
+- **Replacing Maizzle's own components** — a preset or your `components/`
+  folder cannot ship a `Button.vue` or any other file named like a component
+  Maizzle provides; the build refuses it. A replaced built-in could no longer
+  be wrapped by a preset's own component, so give yours a name of its own
+  (`MailButton`).
 - **Running on a general-purpose i18n library** — the ICU syntax is the same,
   but a library that logs a formatting failure and returns the raw message
   would send a broken e-mail, and a run-time dependency (with its own

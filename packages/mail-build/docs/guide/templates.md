@@ -135,17 +135,39 @@ The key is a string literal, and each argument a prop: `t('a.' + name)`,
 all fail with `TEMPLATE_UNSUPPORTED` —
 `{{ }} holds an expression — write a prop, or t('key', { prop }), and nothing else`.
 
-Everything else in the file is Maizzle's: its components (`Layout`,
-`Container`, `Heading`, `Text`, `Button`, …), plain HTML, and Tailwind classes,
-compiled and inlined once.
+Everything else in the file is components (Maizzle's `Layout`, `Container`,
+`Heading`, `Text`, `Button`, …, and those of your presets), plain HTML, and
+Tailwind classes, compiled and inlined once.
 
 ### Components
 
-Only **Maizzle's own components** are available. The build renders each
-template from a temporary folder, so a `components/` folder in your project is
-not read; components of your own will come with presets (see the
-[roadmap](../roadmap.md)). A name no component answers — a typo — fails the
-build rather than vanishing from the e-mail:
+A template may use, with no import:
+
+- **Maizzle's own components** — `Layout`, `Container`, `Button`…;
+- **the presets' components** — `TransactionalLayout`, `MailButton`… with
+  [`@nxgt/mail-preset`](https://github.com/softistx/nxgt-mail/tree/develop/packages/mail-preset);
+- **the application's own**, one PascalCase `.vue` each in the `components/`
+  folder beside `mail.config.ts`, replacing a preset's of the same name.
+
+With `nxgtPreset()` in the config and a `components/OrderLine.vue`:
+
+```vue
+<script setup>
+defineProps(['reference']);
+</script>
+
+<template>
+  <TransactionalLayout>
+    <MailText>{{ t('orderPlaced.body') }}</MailText>
+    <OrderLine>{{ reference }}</OrderLine>
+  </TransactionalLayout>
+</template>
+```
+
+No component may take a name Maizzle ships, and a layout imports the presets'
+tokens in a set way; both are in [Presets](presets.md). Nothing else is read:
+a `.vue` elsewhere in your project is not a component. A name no component
+answers — a typo — fails the build rather than vanishing from the e-mail:
 
 ```text
 templates: verify-email.vue: uses <Buton>, which is not a component — check its name
@@ -161,6 +183,14 @@ templates: a.vue: t('a.title') is not in the output — a component dropped it, 
 ```
 
 A `class` is written as a literal, `class="text-2xl"`, never bound.
+
+A component of your own — a preset's or the application's — may branch or
+compute on its **own static props** (a `level="2"` written as a literal), never
+on a value a template passes: `v-if="href.startsWith('https:')"` or
+`encodeURIComponent(href)` is decided at build time on a placeholder and
+frozen into every e-mail, and the build does not catch it. Pass such a value
+through untouched; see
+[Presets](presets.md#a-components-own-rule--never-compute-on-a-passed-value).
 
 ### The directives
 
