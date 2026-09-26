@@ -1,7 +1,8 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
 import { cpSync, mkdirSync, readdirSync, rmSync, symlinkSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { createMailRenderer, MailRefused } from '@nxgt/mail';
+import { MailRefused } from '@nxgt/mail';
+import { createMailRenderer } from '@nxgt/mail/renderer';
 import { PRESETS } from './presets';
 
 const root = fileURLToPath(new URL('..', import.meta.url));

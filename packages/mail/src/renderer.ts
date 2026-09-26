@@ -1,3 +1,9 @@
+/**
+ * `@nxgt/mail/renderer` — fills the files `maizzle build` wrote with
+ * `@nxgt/mail-i18n`. Its own entry because it reads them with `node:fs`: the
+ * main entry, which every transport imports, stays free of Node built-ins.
+ */
+
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { MailRefused } from './errors';
@@ -63,7 +69,11 @@ interface Email {
 	readonly locales: ReadonlyMap<string, Parts>;
 }
 
-/** `{{ name }}` — what `@nxgt/mail-i18n`'s `placeholder('name')` writes. */
+/**
+ * `{{ name }}` — what `@nxgt/mail-i18n`'s `placeholder('name')` writes. A
+ * copy of `PLACEHOLDER` in `packages/mail-i18n/src/manifest.ts`, as is the
+ * manifest's shape below: change both, or a declared variable goes unfilled.
+ */
 const PLACEHOLDER = /\{\{\s*([a-z][a-zA-Z0-9]*)\s*\}\}/g;
 
 /** A line break a header would split on: each run becomes one space. */
@@ -315,7 +325,7 @@ export function createMailRenderer(options: MailRendererOptions): MailRenderer {
 			const parts = email.locales.get(locale);
 			if (parts === undefined) {
 				throw new Error(
-					`render: ${String(locale)} is not a locale of the build — one of ${manifest.locales.join(', ')}`,
+					`render: the locale asked for is not one of the build's, ${manifest.locales.join(', ')}`,
 				);
 			}
 			const values = checkVariables(name, email, variables);

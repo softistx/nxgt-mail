@@ -23,9 +23,8 @@ Your project stays a Maizzle project: `emails/`, `components/`, `public/`,
 template `t`, `locale` and `placeholder`.
 
 > **Not published yet.** The package is `private` while the rest of the
-> repository — the shared components, the run-time renderer and the
-> transports — is written. It is published at `0.1.0` with them; the surface
-> below is the one that will ship.
+> repository — the transports and a starter — is written. It is published at
+> `0.1.0` with them; the surface below is the one that will ship.
 
 ## Install
 
@@ -269,7 +268,10 @@ image URL starts with, its subject in each locale, and its files:
 }
 ```
 
-See [The manifest](docs/guide/manifest.md).
+`createMailRenderer` from `@nxgt/mail` reads it at send time:
+`createMailRenderer({ dir: 'dist' }).render('verify-email', { name, link })`
+answers the subject, HTML and text, every value escaped. See
+[The manifest](docs/guide/manifest.md).
 
 ### Outside templates — `createTranslator`
 

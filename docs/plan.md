@@ -103,7 +103,7 @@ and `dist/mail-manifest.json` — each e-mail's variables, and its subject per
 locale. The application sends:
 
 ```ts
-import { createMailRenderer } from '@nxgt/mail';
+import { createMailRenderer } from '@nxgt/mail/renderer';
 
 const mails = createMailRenderer({ dir: 'dist', getLanguage: () => user.locale });
 await mailer.send({ to, ...mails.render('verify-email', { name, link }) });
@@ -298,7 +298,9 @@ not a safe URL throws `MailRefused` (the message is refused, and would be
 again); a missing, unknown or non-text variable, an unknown e-mail or locale
 throws a plain `Error` or `TypeError` — a mistake in the calling code. The
 manifest and every file are read when the renderer is created, so a missing
-build fails at start-up rather than at the first send.
+build fails at start-up rather than at the first send. The renderer is its own
+entry, `@nxgt/mail/renderer`, because it imports `node:fs`: `@nxgt/mail`,
+which every transport imports, stays free of Node built-ins.
 
 ## Step 7 — Transports
 

@@ -15,7 +15,6 @@
 
 import type { MailerHarness } from '../../src/conformance/index';
 import {
-	createMailRenderer,
 	createMemoryMailer,
 	MailError,
 	type MailErrorCode,
@@ -26,6 +25,7 @@ import {
 	type Rendered,
 	type SentMail,
 } from '../../src/index';
+import { createMailRenderer } from '../../src/renderer';
 
 declare const rendered: Rendered;
 

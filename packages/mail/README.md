@@ -1,29 +1,27 @@
 # @nxgt/mail
 
-The run-time side of transactional e-mail: the `Mailer` port a transport
-implements, the shape it sends, the two errors it throws, a memory transport for
-tests, and locale selection. **No dependency.**
+The run-time side of transactional e-mail: the renderer that fills a Maizzle
+build made with `@nxgt/mail-i18n`, the `Mailer` port a transport implements,
+the shape it sends, the two errors it throws, a memory transport for tests, and
+locale selection. **No dependency.**
 
 ```ts
-import { createMemoryMailer, type MailMessage } from '@nxgt/mail';
+import { createMemoryMailer } from '@nxgt/mail';
+import { createMailRenderer } from '@nxgt/mail/renderer';
 
-const mailer = createMemoryMailer();
+const mails = createMailRenderer({ dir: 'dist' }); // the folder `maizzle build` wrote
+const mailer = createMemoryMailer(); // in production, a transport's mailer
 
-const message: MailMessage = {
+const { messageId } = await mailer.send({
 	to: { name: 'Ada Lovelace', address: 'ada@example.com' },
 	from: 'noreply@example.com',
-	subject: 'Your password was changed',
-	html: '<p>Your password was changed.</p>',
-	text: 'Your password was changed.',
-};
-
-const { messageId } = await mailer.send(message); // 'memory-1' — or it throws
+	...mails.render('verify-email', { name: 'Ada', link: 'https://app.example.com/verify?token=abc' }),
+}); // 'memory-1' — or it throws
 ```
 
 > **Not published yet.** The package is `private` while the rest of the
-> repository — the Maizzle plugins (base config, i18n, UI components), the
-> run-time renderer and the SMTP and HTTP transports — is written. It is
-> published at `0.1.0` with them; the surface below is the one that will ship.
+> repository — the transports and a starter — is written. It is published at
+> `0.1.0` with them; the surface below is the one that will ship.
 
 ## Install
 
@@ -39,18 +37,47 @@ import without extensions, so `nodenext` is not supported.
 
 | Import | What it holds |
 | --- | --- |
-| `@nxgt/mail` | The port (`Mailer`, `MailMessage`, `Rendered`, `SentMail`, `Address`), the errors (`MailError`, `MailFailure`, `MailRefused`), `createMemoryMailer`, `pickLocale` and `parseAcceptLanguage`, and what a transport calls first: `checkMessage`, `recipientsOf`, `addressOf` |
+| `@nxgt/mail` | The port (`Mailer`, `MailMessage`, `Rendered`, `SentMail`, `Address`), the errors (`MailError`, `MailFailure`, `MailRefused`), `createMemoryMailer`, `pickLocale` and `parseAcceptLanguage`, and what a transport calls first: `checkMessage`, `recipientsOf`, `addressOf`. No Node built-in: it runs anywhere |
+| `@nxgt/mail/renderer` | The renderer: `createMailRenderer`, `MailRenderer`, `MailRendererOptions`, `RenderOptions`, `MailVariables`. Reads the build with `node:fs` |
 | `@nxgt/mail/conformance` | **For transport authors**: `describeMailer`, its cases as data, `runMailerCase`, and the memory mailer's harness as a worked example |
 
 ## Usage
 
+### Rendering — `createMailRenderer`
+
+Build the project with `maizzle build` and the `i18n()` plugin of
+`@nxgt/mail-i18n`, deploy its output folder with your server, and create one
+renderer at start-up. It reads `mail-manifest.json` and every built file once,
+so a missing build fails there, not at the first send:
+
+```ts
+import { type Mailer, pickLocale } from '@nxgt/mail';
+import { createMailRenderer } from '@nxgt/mail/renderer';
+
+export const mails = createMailRenderer({ dir: 'dist' }); // throws now if dist/ is missing
+
+export async function sendVerification(
+	mailer: Mailer,
+	user: { email: string; name: string; locale: string | null },
+	link: string,
+): Promise<void> {
+	const locale = pickLocale(user.locale, mails.locales, 'en'); // 'fr-CA' renders 'fr'
+	await mailer.send({ to: user.email, ...mails.render('verify-email', { name: user.name, link }, { locale }) });
+}
+```
+
+Each value is HTML-escaped in `html` and written as is in `text` and the
+subject; line breaks in the subject become a space. A variable that starts an
+`href` or a `src` must be an `http:`, `https:` or `mailto:` URL, or `render`
+throws `MailRefused`. A missing or unknown variable, e-mail or locale throws an
+`Error`. See [Rendering](docs/guide/rendering.md) for the options, the locale
+chosen through `getLanguage`, and every error.
+
 ### Sending — the port and `MailMessage`
 
 A `MailMessage` is a rendered e-mail — `subject`, `html`, `text` — plus its
-addresses. `Rendered` is what the run-time renderer answers (coming:
-`mails.render('verify-email', { name, link })` fills a built Maizzle template),
-and any function answering the same shape fits, so an e-mail can be written by
-hand:
+addresses. `Rendered` is what `mails.render(…)` answers, and any function
+answering the same shape fits, so an e-mail can also be written by hand:
 
 ```ts
 import type { Mailer, Rendered, SentMail } from '@nxgt/mail';
@@ -203,6 +230,25 @@ e-mail over rejects with `MailFailure`; it never answers `false`, and it never
 logs and resolves. A caller that reports a failed send as sent has told a user
 to check an inbox that will stay empty. The conformance suite fails a transport
 that breaks the rule.
+
+**Deploy the build with the server, and point `dir` at it.** `dir` is read
+from the working directory; resolve it from the module when the process may
+start elsewhere: `fileURLToPath(new URL('../mails/dist', import.meta.url))`.
+
+**The renderer needs a file system.** `@nxgt/mail/renderer` imports
+`node:fs`: it runs on Node, Bun and Deno, not on an edge runtime without `fs`.
+`@nxgt/mail` itself imports no Node built-in.
+
+**Create the renderer once.** It reads the whole build when created; one per
+request reads it every time, and a rebuild is only seen by a new renderer.
+
+**`{ locale }` must be one of `mails.locales`, spelled the same.** `'fr-CA'`
+throws where the build has `fr`; pass
+`pickLocale(user.locale, mails.locales, 'en')`.
+
+**A URL variable is refused unless it is `http:`, `https:` or `mailto:`.**
+`render` throws `MailRefused` before anything is sent, so keep it inside the
+`try` that handles `MailError`.
 
 **A string address is only an address.** `'Ada <ada@example.com>'` is refused
 with `MailRefused`; write `{ name: 'Ada', address: 'ada@example.com' }`.

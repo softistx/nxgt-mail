@@ -18,7 +18,7 @@ At run time, `@nxgt/mail` fills the values only known at send time into the
 built files and hands the result to a transport:
 
 ```ts
-const mails = createMailRenderer({ dir: 'dist', getLanguage: () => user.locale });
+const mails = createMailRenderer({ dir: 'dist', getLanguage: () => user.locale }); // @nxgt/mail/renderer
 await mailer.send({ to, ...mails.render('verify-email', { name, link }) });
 ```
 
@@ -94,8 +94,13 @@ codes a union of `SCREAMING_SNAKE` literals so a `switch` is exhaustive.
 A **build failure** is a plain `Error` naming the locale, the template and the
 key — nothing catches it but the person reading the build's output. So is a
 refusal of `createTranslator`'s `t` (an unknown key or language, a message
-that does not format): each is a mistake in the code or the catalogues, never
-a condition a caller would `switch` on.
+that does not format), and of the renderer's `render` (an unknown e-mail or
+locale, a missing or unknown variable): each is a mistake in the code or the
+catalogues, never a condition a caller would `switch` on. An argument of the
+wrong type at call time (variables that are not an object, a value that is
+not text) is a `TypeError`, as at wiring. The one `render` refusal a caller
+handles is a URL value it will not write: `MailRefused`, since the URL may
+come from outside and sending it again unchanged fails again.
 
 A message reports **a shape, never a value**: never a recipient address, never
 a subject, never a link — a link in a verification e-mail is a credential.
@@ -107,9 +112,11 @@ a subject, never a link — a link in a verification e-mail is a credential.
 - A value only known at send time is a **placeholder** in the built file
   (`placeholder('name')` writes `{{ name }}`). The renderer **HTML-escapes**
   it in `html` and leaves it as is in `text`.
-- A placeholder in an `href` or a `src` must be filled with an `http:` or
-  `https:` URL (or `mailto:` for `href`); anything else is refused at send
-  time. The build records which placeholders sit there, in the manifest.
+- A placeholder that starts a URL attribute (`href`, `src`, `background`,
+  `poster`, `action`) must be filled with an `http:`, `https:` or `mailto:`
+  URL; anything else is refused at send time with `MailRefused`. The build
+  records which placeholders sit there, in the manifest — not which
+  attribute, so `mailto:` is accepted in a `src` too, where it runs nothing.
 - The subject is a message like any other, translated, and stripped of line
   breaks — a header injection is a line break in a subject.
 - `url.base` stays off for links: it would prefix a placeholder.
@@ -139,7 +146,7 @@ they are built.
 
 | Package | Runs | Holds |
 | --- | --- | --- |
-| `@nxgt/mail` | at run time | The `Mailer` port, the errors, locale selection, a memory mailer, `./conformance` for transports, and the renderer that fills built files. **No dependency** |
+| `@nxgt/mail` | at run time | The `Mailer` port, the errors, locale selection, a memory mailer, `./conformance` for transports, and `./renderer`, which fills built files. **No dependency**; only `./renderer` imports a Node built-in (`node:fs`) |
 | `@nxgt/mail-config` | in the Maizzle project | `defineMailConfig`: the base config, and the plugins merged with their hooks chained |
 | `@nxgt/mail-i18n` | in the Maizzle project | The i18n plugin: ICU catalogues, `t()` in templates, one output per locale, the manifest; `createTranslator` |
 | `@nxgt/mail-ui` | in the Maizzle project | The `Nx*` components in the style of `@nxgt/material-vue`, its theme, the shared messages |

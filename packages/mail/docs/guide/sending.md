@@ -86,10 +86,22 @@ interface MailMessage extends Rendered {
 | `replyTo` | `Address` | no | Where replies go |
 | `headers` | `Record<string, string>` | no | Extra headers, such as `List-Unsubscribe` |
 
-`Rendered` is what the run-time renderer answers — coming:
-`mails.render('verify-email', { name, link })` fills the values only known at
-send time into a built Maizzle template — and a rendered e-mail is spread into
-the message and addressed. Any function answering the same shape fits:
+`Rendered` is what the renderer answers — `mails.render('verify-email', { name, link })`
+fills the values only known at send time into a built Maizzle template — and a
+rendered e-mail is spread into the message and addressed:
+
+```ts
+import { type Mailer } from '@nxgt/mail';
+import { createMailRenderer } from '@nxgt/mail/renderer';
+
+const mails = createMailRenderer({ dir: 'dist' });
+
+export async function sendVerification(mailer: Mailer, to: string, name: string, link: string): Promise<void> {
+	await mailer.send({ to, ...mails.render('verify-email', { name, link }) });
+}
+```
+
+See [Rendering](rendering.md). Any function answering the same shape fits too:
 
 ```ts
 import type { Mailer, Rendered } from '@nxgt/mail';
@@ -108,9 +120,10 @@ export async function sendWelcome(mailer: Mailer, email: string): Promise<void> 
 }
 ```
 
-Escaping is the renderer's job: the run-time renderer HTML-escapes every value
-it fills into `html`. A hand-written function that interpolates a value must
-escape it in `html` itself.
+Escaping is the renderer's job: `createMailRenderer` HTML-escapes every value
+it fills into `html` ([Rendering — escaping](rendering.md#escaping)). A
+hand-written function that interpolates a value must escape it in `html`
+itself.
 
 ## Addresses
 
@@ -266,14 +279,14 @@ The account is created whatever happens to the e-mail; what the visitor is told
 depends on whether the e-mail left:
 
 ```ts
-import { MailError, type Mailer, type Rendered } from '@nxgt/mail';
+import { MailError, type Mailer } from '@nxgt/mail';
+import { type MailRenderer } from '@nxgt/mail/renderer';
 
-// Yours: your user store, your token issuer, whatever renders the e-mail.
+// Yours: your user store, your token issuer.
 declare function createUser(email: string): Promise<{ id: string; email: string }>;
 declare function issueVerificationToken(userId: string): Promise<string>;
-declare function verificationEmail(link: string): Rendered;
 
-export function signUpHandler(mailer: Mailer) {
+export function signUpHandler(mailer: Mailer, mails: MailRenderer) {
 	return async (request: Request): Promise<Response> => {
 		const { email } = (await request.json()) as { email: string };
 		const user = await createUser(email);
@@ -281,7 +294,8 @@ export function signUpHandler(mailer: Mailer) {
 		const link = `https://app.example.com/verify?token=${encodeURIComponent(token)}`;
 
 		try {
-			await mailer.send({ ...verificationEmail(link), to: user.email });
+			// Inside the try: render throws MailRefused for a link that is not a safe URL.
+			await mailer.send({ to: user.email, ...mails.render('verify-email', { link }) });
 		} catch (error) {
 			if (!(error instanceof MailError)) throw error;
 			// MAIL_FAILED: offer "send it again" later. MAIL_REFUSED: the address is unusable.
@@ -294,6 +308,7 @@ export function signUpHandler(mailer: Mailer) {
 
 ## See also
 
+- [Rendering](rendering.md) — filling a Maizzle build into the `Rendered` a message spreads.
 - [Testing](testing.md) — the memory mailer, and making a send fail on purpose.
 - [Locales](locales.md) — choosing the locale an e-mail is rendered in.
 - [Writing a transport](transports.md) — implementing the port.

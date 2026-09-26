@@ -35,7 +35,9 @@ function pickLocale<const L extends string>(
 It answers one of `supported`, **spelled as in `supported`**, typed as their
 union — `'en' | 'fr'` above — so it goes straight into whatever renders the
 e-mail: your own function's `locale` argument, or the `locale` option of the
-run-time renderer (coming: `mails.render(email, variables, { locale })`).
+renderer, `mails.render(email, variables, { locale })` — see
+[Rendering — choosing the locale](rendering.md#choosing-the-locale). With the
+renderer, pass `mails.locales` as `supported`.
 
 Pure: no request context, no global, no I/O.
 
@@ -107,14 +109,13 @@ inviting a user, a job sending a reminder — the request's language is the wron
 person's.
 
 ```ts
-import { type Mailer, parseAcceptLanguage, pickLocale, type Rendered } from '@nxgt/mail';
+import { type Mailer, parseAcceptLanguage, pickLocale } from '@nxgt/mail';
+import { createMailRenderer } from '@nxgt/mail/renderer';
 
-const supported = ['en', 'fr'] as const;
+const supported = ['en', 'fr'] as const; // the locales the build was made in
 type Locale = (typeof supported)[number];
 
-// Yours: any function answering Rendered — hand-written, or wrapping the
-// run-time renderer once it ships.
-declare function invitation(args: { locale: Locale; link: string }): Rendered;
+const mails = createMailRenderer({ dir: 'dist' });
 
 // The visitor is the recipient: their stored locale, then their browser's.
 export function localeOfVisitor(request: Request, stored: string | null): Locale {
@@ -128,10 +129,11 @@ export async function invite(
 	link: string,
 ): Promise<void> {
 	const locale = pickLocale(invitee.locale, supported, 'en');
-	await mailer.send({ ...invitation({ locale, link }), to: invitee.email });
+	await mailer.send({ to: invitee.email, ...mails.render('invitation', { link }, { locale }) });
 }
 ```
 
 ## See also
 
+- [Rendering](rendering.md) — the renderer's `getLanguage` and `{ locale }`.
 - [Sending](sending.md) — what to do with the rendered e-mail next.

@@ -136,7 +136,9 @@ describe('createMailRenderer — a mistake throws', () => {
 		expect(() =>
 			mails.render('sign-in-code', { code: '1' }, { locale: 'de' }),
 		).toThrow(
-			new Error('render: de is not a locale of the build — one of en, fr'),
+			new Error(
+				"render: the locale asked for is not one of the build's, en, fr",
+			),
 		);
 	});
 
@@ -164,13 +166,16 @@ describe('createMailRenderer — a mistake throws', () => {
 	});
 
 	it('never puts a value in a message', () => {
-		try {
+		const refuse = () =>
 			mails.render('verify-email', {
-				name: 'Ada',
+				name: 'secret-name',
 				link: 'javascript:secret-token',
 			});
+		expect(refuse).toThrow(MailRefused);
+		try {
+			refuse();
 		} catch (error) {
-			expect(String(error)).not.toContain('secret-token');
+			expect(String(error)).not.toContain('secret');
 		}
 	});
 });
@@ -244,6 +249,16 @@ describe('createMailRenderer — wiring and a broken build', () => {
 		rmSync(join(copy(), 'fr/sign-in-code.txt'));
 		expect(() => createMailRenderer({ dir })).toThrow(
 			`createMailRenderer: ${join(dir, 'fr/sign-in-code.txt')} cannot be read`,
+		);
+	});
+
+	it('fails on an e-mail whose entry lacks a locale', () => {
+		const at = editManifest((m) => {
+			const files = m.emails['sign-in-code']?.files;
+			if (files) delete files.fr;
+		});
+		expect(() => createMailRenderer({ dir: at })).toThrow(
+			'createMailRenderer: mail-manifest.json describes sign-in-code in a shape this version does not read — rebuild with the same version of @nxgt/mail-i18n',
 		);
 	});
 
