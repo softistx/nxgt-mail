@@ -8,7 +8,7 @@
 	},
 	"files": {
 		"ignoreUnknown": false,
-		"includes": ["**", "!**/dist", "!**/generated"]
+		"includes": ["**", "!**/dist", "!**/generated", "!**/samples"]
 	},
 	"formatter": {
 		"enabled": true,

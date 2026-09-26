@@ -49,6 +49,7 @@ await mailer.send({ to, ...mails.render('verify-email', { name, link }) });
 | [`@nxgt/mail`](./packages/mail) | The `Mailer` port, errors, locale selection, a memory mailer, the transport conformance suite, and the renderer |
 | [`@nxgt/mail-config`](./packages/mail-config) | `defineMailConfig`: the base config, plugins with their build hooks chained, and the production config |
 | [`@nxgt/mail-i18n`](./packages/mail-i18n) | The i18n plugin: ICU catalogues checked at build time, `t()` in templates, one output per locale, the manifest; and `createTranslator` |
+| [`@nxgt/mail-presets`](./packages/mail-presets) | Nine ready e-mails — verify-email, reset-password, sign-in-code, magic-link, welcome, invitation… — in `en` and `fr`, built by your project with your brand; [built samples](./packages/mail-presets/samples) |
 | [`@nxgt/mail-ui`](./packages/mail-ui) | E-mail components in the style of `@nxgt/material-vue`, its theme, and the shared messages |
 | `@nxgt/mail-smtp`, `@nxgt/mail-resend` | Transports |
 

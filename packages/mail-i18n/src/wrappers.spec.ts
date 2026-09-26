@@ -49,8 +49,7 @@ describe('writeWrappers', () => {
 		}
 		return (layout: 'nested' | 'flat' = 'nested') =>
 			writeWrappers({
-				emailsDir: join(root, 'emails'),
-				emailsName: 'emails',
+				folders: [{ dir: join(root, 'emails'), label: 'emails' }],
 				wrappersDir: join(root, '.maizzle/i18n'),
 				locales: ['en', 'fr'],
 				layout,
@@ -147,5 +146,61 @@ describe('watchTemplates', () => {
 		} finally {
 			error.mockRestore();
 		}
+	});
+});
+
+describe('writeWrappers — a package folder under the project', () => {
+	let root = '';
+	afterEach(() => rmSync(root, { recursive: true, force: true }));
+
+	const folder = (name: string, emails: string[]) => {
+		for (const email of emails) {
+			mkdirSync(join(root, name), { recursive: true });
+			writeFileSync(join(root, name, `${email}.vue`), '<template />');
+		}
+		return join(root, name);
+	};
+
+	const write = (only?: string[]) => {
+		root ||= mkdtempSync(join(tmpdir(), 'mail-i18n-'));
+		return writeWrappers({
+			folders: [
+				{ dir: folder('emails', ['welcome']), label: 'emails' },
+				{
+					dir: folder('presets', ['welcome', 'verify-email', 'magic-link']),
+					label: 'templates[0]',
+					...(only && { only }),
+				},
+			],
+			wrappersDir: join(root, '.maizzle/i18n'),
+			locales: ['en'],
+			layout: 'nested',
+		});
+	};
+
+	const importOf = (email: string) =>
+		readFileSync(join(root, `.maizzle/i18n/en/${email}.vue`), 'utf8');
+
+	test("builds the package's templates, the project's replacing one of the same name", () => {
+		root = mkdtempSync(join(tmpdir(), 'mail-i18n-'));
+		expect(write()).toEqual(['magic-link', 'verify-email', 'welcome']);
+		expect(importOf('welcome')).toContain("from '../../../emails/welcome.vue'");
+		expect(importOf('verify-email')).toContain(
+			"from '../../../presets/verify-email.vue'",
+		);
+	});
+
+	test('keeps only the e-mails asked for', () => {
+		root = mkdtempSync(join(tmpdir(), 'mail-i18n-'));
+		expect(write(['verify-email'])).toEqual(['verify-email', 'welcome']);
+	});
+
+	test('refuses an e-mail the package does not have', () => {
+		root = mkdtempSync(join(tmpdir(), 'mail-i18n-'));
+		expect(() => write(['sign-in'])).toThrow(
+			new Error(
+				'i18n: templates[0] has no template sign-in.vue — name one of its e-mails',
+			),
+		);
 	});
 });

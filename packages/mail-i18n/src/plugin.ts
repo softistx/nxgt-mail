@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { join, relative, resolve, sep } from 'node:path';
+import { isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { isMainThread } from 'node:worker_threads';
 import { defineMailPlugin, type MailPlugin } from '@nxgt/mail-config';
 import {
@@ -36,6 +36,20 @@ export interface I18nOptions {
 	 * the next, and the project's `<locale>.json` over all of them.
 	 */
 	readonly catalogues?: readonly Catalogues[];
+	/**
+	 * Folders of templates under the project's own, as a package ships them —
+	 * `presets().templates` from `@nxgt/mail-presets`. A template in the
+	 * project's `emails/` replaces a package's of the same name.
+	 */
+	readonly templates?: readonly TemplateSource[];
+}
+
+/** A package's folder of templates, for {@link I18nOptions.templates}. */
+export interface TemplateSource {
+	/** The folder, absolute. */
+	readonly dir: string;
+	/** The e-mails of the folder to build, as `['verify-email']`. Default every one. */
+	readonly emails?: readonly string[];
 }
 
 /** Where the wrappers go, under the project. */
@@ -102,6 +116,24 @@ function checkOptions(options: I18nOptions): void {
 			'i18n: catalogues must be a list of catalogues by locale, as [{ en: {...}, fr: {...} }]',
 		);
 	}
+	const { templates } = options;
+	if (
+		templates !== undefined &&
+		(!Array.isArray(templates) ||
+			!templates.every(
+				(source) =>
+					isObject(source) &&
+					typeof source.dir === 'string' &&
+					isAbsolute(source.dir) &&
+					(source.emails === undefined ||
+						(Array.isArray(source.emails) &&
+							source.emails.every((email) => typeof email === 'string'))),
+			))
+	) {
+		throw new TypeError(
+			"i18n: templates must be a list of template folders, as [{ dir: '/abs/path/emails' }]",
+		);
+	}
 }
 
 /** Reads `<dir>/<locale>.json` for each locale. A missing or broken file **throws**. */
@@ -163,7 +195,19 @@ export function i18n(options: I18nOptions): MailPlugin {
 	const reference = messages.get(fallbackLocale) as Messages;
 	const format = createFormatter('i18n');
 	const regenerate = () =>
-		writeWrappers({ emailsDir, emailsName, wrappersDir, locales, layout });
+		writeWrappers({
+			folders: [
+				{ dir: emailsDir, label: emailsName },
+				...(options.templates ?? []).map((source, index) => ({
+					dir: source.dir,
+					label: `templates[${index}]`,
+					...(source.emails && { only: source.emails }),
+				})),
+			],
+			wrappersDir,
+			locales,
+			layout,
+		});
 	// A parallel build loads the config again in each worker: only the main
 	// thread writes, so two workers never write the same file.
 	if (isMainThread) regenerate();

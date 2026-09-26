@@ -309,7 +309,7 @@ layout, and the build fails when the manifest is written.
 
 ## Type safety, counted
 
-**14 plausible mistakes, 14 refused** at compile time. Each one is measured by
+**16 plausible mistakes, 16 refused** at compile time. Each one is measured by
 a `@ts-expect-error` in
 [`test/types/refusals.ts`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-i18n/test/types/refusals.ts),
 which fails the typecheck the moment it stops holding:
@@ -330,6 +330,8 @@ which fails the typecheck the moment it stops holding:
     a locale nor a function that answers one.
 13. `catalogues` given one catalogue by locale rather than a list of them.
 14. `catalogues` holding a locale whose value is a message, not a catalogue.
+15. `templates` given one folder rather than a list of them.
+16. A template folder's `emails` given as one name rather than a list.
 
 The same file holds the calls that must keep compiling: a refusal that refuses
 the correct call is a bug.
