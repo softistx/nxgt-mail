@@ -1,0 +1,43 @@
+{
+	"name": "@nxgt/mail",
+	"version": "0.0.0",
+	"private": true,
+	"description": "The run-time port for transactional e-mail. Not published yet.",
+	"license": "MIT",
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"files": [
+		"dist",
+		"README.md",
+		"package.json",
+		"LICENSE"
+	],
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
+			"default": "./dist/index.js"
+		},
+		"./package.json": "./package.json"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/softistx/nxgt-mail.git",
+		"directory": "packages/mail"
+	},
+	"publishConfig": {
+		"registry": "https://registry.npmjs.org",
+		"access": "public"
+	},
+	"scripts": {
+		"build": "bun run ../../build.ts",
+		"test": "bun test src --pass-with-no-tests",
+		"typecheck": "tsc --noEmit"
+	},
+	"nxgt": {
+		"entrypoints": [
+			"src/index.ts"
+		]
+	}
+}
