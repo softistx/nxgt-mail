@@ -42,13 +42,6 @@ import without extensions, so `nodenext` is not supported.
 | `@nxgt/mail` | The port (`Mailer`, `MailMessage`, `Rendered`, `SentMail`, `Address`), the errors (`MailError`, `MailFailure`, `MailRefused`), `createMemoryMailer`, `pickLocale` and `parseAcceptLanguage`, and what a transport calls first: `checkMessage`, `recipientsOf`, `addressOf` |
 | `@nxgt/mail/conformance` | **For transport authors**: `describeMailer`, its cases as data, `runMailerCase`, and the memory mailer's harness as a worked example |
 
-## The one rule
-
-**A failure throws.** A mailer that could not hand an e-mail over rejects with
-`MailFailure`; it never answers `false`, and it never logs and resolves. A
-caller that maps a failed send to "sent" has told a user to check an inbox that
-will stay empty. The conformance suite fails a transport that breaks the rule.
-
 ## Usage
 
 ### Sending — the port and `MailMessage`
@@ -203,6 +196,12 @@ skips.
 
 ## Traps
 
+**A failure throws; never map it to "sent".** A mailer that could not hand an
+e-mail over rejects with `MailFailure`; it never answers `false`, and it never
+logs and resolves. A caller that reports a failed send as sent has told a user
+to check an inbox that will stay empty. The conformance suite fails a transport
+that breaks the rule.
+
 **A string address is only an address.** `'Ada <ada@example.com>'` is refused
 with `MailRefused`; write `{ name: 'Ada', address: 'ada@example.com' }`.
 
@@ -225,16 +224,6 @@ the conformance suite with it.
 **Under `bun test`, pass `runner: { describe, it }` to `describeMailer`.** Bun
 gives a test file `describe` and `it` as bare identifiers, not on `globalThis`.
 
-## Documentation
-
-- [The guides](docs/README.md) — one page per area, with every option and error.
-- [Troubleshooting](docs/troubleshooting.md) — an error message, its cause and
-  its fix.
-- [Roadmap](docs/roadmap.md) — what is next, and what is deliberately not
-  planned.
-- [Vocabulary](https://github.com/softistx/nxgt-mail/blob/develop/docs/vocabulary.md)
-  — the words these pages use, defined once.
-
 ## Type safety, counted
 
 **9 plausible mistakes, 9 refused** at compile time, each measured by a
@@ -255,6 +244,16 @@ that fails the typecheck the moment it stops holding:
 
 The same file holds the calls that must keep compiling: a refusal that refuses
 the correct call is a bug.
+
+## Documentation
+
+- [The guides](docs/README.md) — one page per area, with every option and error.
+- [Troubleshooting](docs/troubleshooting.md) — an error message, its cause and
+  its fix.
+- [Roadmap](docs/roadmap.md) — what is next, and what is deliberately not
+  planned.
+- [Vocabulary](https://github.com/softistx/nxgt-mail/blob/develop/docs/vocabulary.md)
+  — the words these pages use, defined once.
 
 ## Licence
 

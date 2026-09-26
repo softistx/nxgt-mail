@@ -82,7 +82,7 @@ interface MailMessage extends Rendered {
 | `html` | `string` | yes | The HTML part, sent as is — escaping is the render function's job |
 | `text` | `string` | yes | The plain-text part. Every e-mail has one |
 | `to` | `Address \| readonly Address[]` | yes | One recipient or several, at least one |
-| `from` | `Address` | no | The sender. A transport is usually wired with a default one; a transport with none refuses a message without it |
+| `from` | `Address` | no | The sender. `checkMessage` does not require one: a transport is usually wired with a default sender, and one without a default may refuse a message without `from` — see its documentation |
 | `replyTo` | `Address` | no | Where replies go |
 | `headers` | `Record<string, string>` | no | Extra headers, such as `List-Unsubscribe` |
 
@@ -194,9 +194,13 @@ const message: MailMessage = {
 ```ts
 type MailErrorCode = 'MAIL_FAILED' | 'MAIL_REFUSED';
 
+interface MailErrorOptions {
+	readonly cause?: unknown; // the error that caused this one, typically the transport's
+}
+
 abstract class MailError extends Error {
 	abstract readonly code: MailErrorCode;
-	constructor(message: string, options?: { readonly cause?: unknown });
+	constructor(message: string, options?: MailErrorOptions);
 }
 class MailFailure extends MailError {
 	readonly code: 'MAIL_FAILED';

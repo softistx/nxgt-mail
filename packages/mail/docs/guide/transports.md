@@ -173,7 +173,22 @@ function describeMailer(options: {
 | `harness` | `MailerHarness` | — | Opens a fresh transport and receiving end for each case |
 | `runner` | `{ describe, it }` | the global `describe` and `it` | The test framework's functions. **Pass it under `bun test`**, which does not put them on `globalThis` |
 | `skip` | `Record<caseId, reason>` | `{}` | Cases to skip, each with its reason, which appears in the test's name |
-| `faults` | `boolean` | — | `false` declares that the harness has no faults: the failure cases are skipped, with the reason in their name |
+| `faults` | `boolean` | absent | Absent: the failure cases run, and on a harness without faults they **fail** with `conformance: failure.outage: faults not provided: … — pass faults: false to describeMailer to skip it on purpose`. `false` declares that the harness has no faults: the failure cases are skipped, with the reason in their name |
+
+`runner` is the smallest part of a test framework the suite needs:
+
+```ts
+interface MailerRunner {
+	describe(name: string, body: () => void): void;
+	it: {
+		(name: string, body: () => Promise<void>): void;
+		skip(name: string, body: () => Promise<void>): void;
+	};
+}
+```
+
+bun:test, vitest and jest all have it. A hand-rolled runner needs `it.skip`
+too: every skip — from `skip`, or from `faults: false` — goes through it.
 
 It throws a `TypeError` when no runner is found
 (`describeMailer: no test runner found — pass runner: { describe, it } from your test framework`)
@@ -196,7 +211,35 @@ and when `skip` names a case that does not exist
 | `failure.recovers` | after a failure, the next send goes through | yes |
 
 The message they send is exported as `sampleMessage`, and the cases as data:
-`sendCases`, `failureCases`, `allMailerCases`.
+`sendCases` (the seven `send.*`), `failureCases` (the three `failure.*`) and
+`allMailerCases` (both, in the order above). A transport's own tests can reuse
+them — send the sample through your transport, or run only the cases that
+need no faults:
+
+```ts
+import { expect, it } from 'bun:test';
+import { recipientsOf } from '@nxgt/mail';
+import { failureCases, type MailerHarness, runMailerCase, sampleMessage, sendCases } from '@nxgt/mail/conformance';
+
+declare const harness: MailerHarness; // yours
+
+it('delivers the sample message as sent', async () => {
+	const { mailer, delivered, close } = await harness.open();
+	await mailer.send(sampleMessage);
+	const [mail] = await delivered();
+	expect(mail?.to).toEqual(recipientsOf(sampleMessage));
+	expect(mail?.subject).toBe(sampleMessage.subject);
+	await close?.();
+});
+
+for (const mailerCase of sendCases) {
+	it(mailerCase.id, async () => {
+		await runMailerCase(mailerCase, harness);
+	});
+}
+
+failureCases.map((c) => c.needs); // ['faults', 'faults', 'faults']
+```
 
 ## The harness
 
@@ -317,10 +360,32 @@ describeMailer({
 
 ## Without `describeMailer`
 
-`runMailerCase(case, harness)` runs one case against a harness, closes it, and
-answers `{ passed: true }` or `{ skipped: reason }`; it throws when the case
-fails. The cases depend on no assertion library, so they run under any
-framework, or none:
+```ts
+function runMailerCase(
+	mailerCase: MailerCase,
+	harness: MailerHarness,
+): Promise<{ readonly skipped: string } | { readonly passed: true }>;
+
+interface MailerCase {
+	readonly id: string; // unique and stable: 'send.deliversBytes', 'failure.outage'
+	readonly title: string; // what the case proves, as a sentence
+	readonly needs?: 'faults'; // present when the case can only run with MailerFaults
+	run(context: MailerCaseContext): Promise<void>; // throws on failure, resolves on success
+}
+
+interface MailerCaseContext {
+	readonly mailer: Mailer;
+	delivered(): Promise<readonly DeliveredMail[]>;
+	readonly faults: MailerFaults | null; // null, never undefined, when the harness has none
+}
+```
+
+`runMailerCase(case, harness)` opens the harness, builds the
+`MailerCaseContext`, runs the case, and closes the harness, pass or fail — a
+close that fails after a failed case does not hide the case's error. It answers
+`{ passed: true }`, or `{ skipped: reason }` when the case needs faults the
+harness does not have; it throws when the case fails. The cases depend on no
+assertion library, so they run under any framework, or none:
 
 ```ts
 import { allMailerCases, referenceMailerHarness, runMailerCase } from '@nxgt/mail/conformance';
@@ -328,6 +393,48 @@ import { allMailerCases, referenceMailerHarness, runMailerCase } from '@nxgt/mai
 for (const mailerCase of allMailerCases) {
 	const result = await runMailerCase(mailerCase, referenceMailerHarness());
 	console.log(mailerCase.id, 'skipped' in result ? `skipped: ${result.skipped}` : 'passed');
+}
+```
+
+The reasons a case can be skipped for are exported as `MAILER_SKIP_REASONS`.
+Its one entry, `MAILER_SKIP_REASONS.faults`, is the text `runMailerCase` answers
+as `skipped`, and the text `describeMailer` puts in a skipped test's title —
+`failure.outage: … (skipped: faults not provided: the failure contract is not
+proven for this transport)`. Compare against the constant, not a copy of the
+text:
+
+```ts
+import { allMailerCases, MAILER_SKIP_REASONS, type MailerHarness, runMailerCase } from '@nxgt/mail/conformance';
+
+declare const harnessWithoutFaults: MailerHarness; // yours
+
+const outage = allMailerCases.find((c) => c.id === 'failure.outage');
+if (outage !== undefined) {
+	const result = await runMailerCase(outage, harnessWithoutFaults);
+	if ('skipped' in result && result.skipped === MAILER_SKIP_REASONS.faults) {
+		console.warn('the failure contract is not proven: add faults to the harness');
+	}
+}
+```
+
+Calling a case directly — to run it under your own reporting, say — takes
+a context you build from an opened harness:
+
+```ts
+import type { MailerCase, MailerCaseContext, MailerHarness } from '@nxgt/mail/conformance';
+
+export async function runDirectly(mailerCase: MailerCase, harness: MailerHarness): Promise<void> {
+	const opened = await harness.open();
+	const context: MailerCaseContext = {
+		mailer: opened.mailer,
+		delivered: () => opened.delivered(),
+		faults: opened.faults ?? null,
+	};
+	try {
+		await mailerCase.run(context);
+	} finally {
+		await opened.close?.();
+	}
 }
 ```
 
