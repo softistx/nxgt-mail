@@ -79,6 +79,12 @@ describe('a project built with the i18n plugin', () => {
 		);
 	});
 
+	test('writes the types of t for the editor, in .maizzle/ where the starter looks', async () => {
+		const types = await read('.maizzle/nxgt-mail-i18n.d.ts');
+		expect(types).toContain("'verifyEmail.expires': { minutes: number };");
+		expect(types).toContain("'verifyEmail.title': { };");
+	});
+
 	test('a parallel build writes the same manifest: the workers write no wrapper', async () => {
 		expect(JSON.parse(await read('dist-parallel/mail-manifest.json'))).toEqual(
 			JSON.parse(await read('mail-manifest.golden.json')),

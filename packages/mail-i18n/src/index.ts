@@ -41,4 +41,5 @@ export {
 	type MessageArgs,
 	type Translate,
 } from './translator';
+export type { TemplateArgs, TemplateKey, TemplateMessages } from './vue';
 export type { Layout } from './wrappers';
