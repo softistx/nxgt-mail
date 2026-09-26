@@ -120,7 +120,9 @@ Merged in PR #1.
 Merged in PR #2: `Rendered`, `MailMessage`, `Mailer`, `MailFailure` and
 `MailRefused`, `createMemoryMailer`, `pickLocale`, `./conformance`.
 
-## Step 2 — Clear the ground
+## Step 2 — Clear the ground ✅
+
+Merged in PR #7.
 
 - Remove `packages/mail-build` and `packages/mail-preset` (never published);
   their code stays in git history for the moves below.
@@ -130,18 +132,25 @@ Merged in PR #2: `Rendered`, `MailMessage`, `Mailer`, `MailFailure` and
 **Done when:** the green bar passes with `@nxgt/mail` alone, and no document
 names a removed package except as history.
 
-## Step 3 — `@nxgt/mail-config`
+## Step 3 — `@nxgt/mail-config` ✅
 
-`defineMailConfig({ plugins, ...project })`:
+Merged in PR #8. `defineMailConfig({ plugins, ...project })`:
 
-- A base config: `output.path: 'dist'`, `public/` as static files, CSS
-  inlined and purged, plain text on, `url.base` off for links.
-- Plugins are partial configs merged with Maizzle's own rules (objects merge,
-  arrays replace) — base, then each plugin in order, then the project.
+- A base config of one key, `plaintext: true`: `dist/`, `public/` as static
+  files and CSS inlined and purged are already Maizzle's defaults, and
+  `url.base` is off unless set.
+- Plugins are partial configs with a `name`, merged with Maizzle's own rules
+  (objects merge, arrays replace) — base, then each plugin in order, then the
+  project. Three lists are **joined** instead: `components.source`,
+  `vite.plugins` and `vue.plugins`, so two plugins that each bring components
+  keep both.
 - **Every build event is chained** in that order; a hook that returns a string
   hands it to the next one.
-- `productionConfig(overrides)` for `maizzle.config.production.ts` (minify,
-  the production output).
+- `defineMailPlugin(plugin)` checks a plugin where a package writes it.
+- `productionConfig(config, overrides)` for `maizzle.config.production.ts`:
+  the project config, HTML minified, then the overrides. Maizzle has no
+  environments; `maizzle build -c maizzle.config.production.ts` loads that
+  file alone, so it imports the project config.
 - Peers: `@maizzle/framework` and `@maizzle/tailwindcss` — the second one
   because Tailwind's import fails silently when it is not hoisted.
 
