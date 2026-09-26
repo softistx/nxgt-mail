@@ -121,10 +121,11 @@ mailer.sent[0]?.subject; // 'Confirm your e-mail address'
 ```
 
 - **`html`** is the whole document Maizzle built — CSS inlined — with every
-  value HTML-escaped: `&`, `<`, `>`, `"` and `'`.
+  value HTML-escaped, the locale in `lang="…"` included: `&`, `<`, `>`, `"`
+  and `'`.
 - **`text`** is the plain-text part, every value as is.
-- **`subject`** is the message `<email>.subject`, with every line break
-  replaced by a space.
+- **`subject`** is the message `<email>.subject`, with every run of line
+  breaks — CR, LF, U+0085, U+2028, U+2029 — replaced by one space.
 
 ```ts
 import { mails } from './generated/mail';
@@ -415,7 +416,7 @@ escaped before it goes into `html`, and a link checked before it goes into an
   `noImplicitReturns`, with `target` and `lib` as low as ES2020. It holds only
   the `Intl` helpers its messages call, and only the escaping and URL helpers
   its templates need.
-- **Little room.** For two e-mails in two locales the module is 13.8 KB
+- **Little room.** For two e-mails in two locales the module is 13.9 KB
   (3.8 KB gzipped), each `html` about 2.5 KB and shared by every locale; a
   render takes about 11 µs.
 - **Not edited by hand.** The first line says so; the next build replaces it.

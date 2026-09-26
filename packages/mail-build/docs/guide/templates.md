@@ -76,11 +76,12 @@ different template; text that differs goes in the message, as a
 | --- | --- | --- |
 | One file per e-mail in the templates folder (`emails/` by default), named in `kebab-case` | `emails/verify-email.vue` → `mails.verifyEmail`; `reset-password-2.vue` → `mails.resetPassword2` | `TEMPLATE_INVALID` — `is not a kebab-case .vue file name — name it as verify-email.vue` |
 | A `<template>` | | `TEMPLATE_INVALID` — `has no <template>` |
-| Props declared in `<script setup>` with `defineProps`, and nothing else there | `defineProps(['name', 'link'])` | `TEMPLATE_UNSUPPORTED` — `declares x in <script setup> — a template declares its props, and nothing else` |
+| `<script setup>` holds one statement, `defineProps([...])`, unassigned — no `const props = defineProps(…)`, no import, no other code | `defineProps(['name', 'link'])` | `TEMPLATE_UNSUPPORTED` — `holds code in <script setup> — a template declares its props with defineProps([...]), unassigned, and nothing else` |
 | No plain `<script>` | | `TEMPLATE_INVALID` — `has a <script> without setup — declare the props in <script setup>` |
 | Each prop `camelCase` | `firstName` | `TEMPLATE_INVALID` — `declares the prop first_name, which is not camelCase — name it as firstName` |
 | No prop named `t`, `lang`, `locale` or `timeZone` — the render function's own | | `TEMPLATE_INVALID` — `declares the prop locale, a name the render function uses itself` |
 | Every declared prop used | | `TEMPLATE_UNSUPPORTED` — `declares the prop name and never uses it — remove it, or write it in the template` |
+| One file per e-mail name — `a1b.vue` and `a-1b.vue` are both `mails.a1b` | | `TEMPLATE_INVALID` — `is the e-mail a1b, as a-1b.vue is — rename one of them` |
 
 A template with no props needs no `<script setup>` at all:
 
@@ -92,7 +93,11 @@ A template with no props needs no `<script setup>` at all:
 </template>
 ```
 
-Only files ending in `.vue` are read; the e-mails come out sorted by file name.
+Only files ending in `.vue` are read, and the folder must hold at least one;
+the e-mails come out sorted by file name.
+
+`<script setup>` runs once, at build time: a constant computed there would be
+frozen into every e-mail. That is why it may hold nothing but the props.
 
 ## What a template may hold
 
@@ -104,7 +109,7 @@ Each `{{ }}` and each bound attribute (`:attr="…"`) holds exactly one of:
 | A message with no argument | `{{ t('verifyEmail.title') }}`, `:alt="t('orderPlaced.logoAlt')"` | The message in the e-mail's locale, escaped |
 | A message with props as its arguments | `{{ t('verifyEmail.body', { name }) }}` | The same, the prop passed to `{name}` |
 | A prop passed under another name | `{{ t('orderPlaced.placedAt', { at: placedAt }) }}` | The prop `placedAt` passed to `{at}` |
-| `lang` | `<Layout :lang="lang">` | The locale the e-mail is rendered in: `lang="fr"` |
+| `lang` | `<Layout :lang="lang">` | The locale the e-mail is rendered in, escaped: `lang="fr"` |
 
 The key is a string literal, and each argument a prop: `t('a.' + name)`,
 `t('a.b', { name: 'Ada' })`, `name.toUpperCase()` or a third argument to `t`
@@ -113,8 +118,30 @@ all fail with `TEMPLATE_UNSUPPORTED` —
 
 Everything else in the file is Maizzle's: its components (`Layout`,
 `Container`, `Heading`, `Text`, `Button`, …), plain HTML, and Tailwind classes,
-compiled and inlined once. A `class` is fixed at build time; binding one to a
-prop gives Tailwind nothing to compile.
+compiled and inlined once.
+
+### Components
+
+Only **Maizzle's own components** are available. The build renders each
+template from a temporary folder, so a `components/` folder in your project is
+not read; components of your own will come with presets (see the
+[roadmap](../roadmap.md)). A name no component answers — a typo — fails the
+build rather than vanishing from the e-mail:
+
+```text
+templates: verify-email.vue: uses <Buton>, which is not a component — check its name
+```
+
+A value must reach the output as it was written. A component that drops a prop
+or a message, or uses it at build time — `:class="name"`, which Tailwind turns
+into CSS, or a `QrCode` that encodes its value into an image — fails the build:
+
+```text
+templates: a.vue: the prop name is not in the output — a component dropped it, or used it at build time (as a QR code does)
+templates: a.vue: t('a.title') is not in the output — a component dropped it, or used it at build time
+```
+
+A `class` is written as a literal, `class="text-2xl"`, never bound.
 
 ### The directives
 
@@ -147,8 +174,8 @@ needs a prop `reference` in `order-placed.vue`.
 | No `orderPlaced.subject` in the fallback locale | `SUBJECT_MISSING` — `the e-mail orderPlaced has no subject — add orderPlaced.subject to en, the fallback locale` |
 | `{reference}` in the subject, and no prop `reference` | `TEMPLATE_ARGUMENT_MISSING` — `orderPlaced.subject uses {reference}, which is not a prop of the template — declare it with defineProps` |
 
-A line break in the rendered subject becomes a space: a line break in a
-subject is a header injection.
+Any run of line breaks in the rendered subject — CR, LF, U+0085, U+2028,
+U+2029 — becomes one space: a line break in a subject is a header injection.
 
 ## Keys and arguments, checked against the catalogues
 
@@ -226,13 +253,18 @@ Every value — a prop, a message, `lang` — is HTML-escaped in `html` (`&`, `<
 
 | Where | Example | What happens |
 | --- | --- | --- |
-| Text | `<p>{{ name }}</p>` | Escaped |
-| A quoted attribute | `:alt="t('orderPlaced.logoAlt')"`, `:title="name"` | Escaped, so it cannot leave its quotes |
-| The start of an `href` (or `action`, `formaction`, `xlink:href`) | `:href="link"` | Escaped, and checked when the e-mail is rendered: `http:`, `https:` or `mailto:` |
-| The start of a `src` (or `background`, `poster`, `cite`) | `:src="logo"` | Escaped, and checked: `http:` or `https:` |
-| A `style` or `on*` attribute | `:style="color"`, `:onclick="name"` | `TEMPLATE_UNSUPPORTED` — `the prop name lands in the style attribute — a value there is code, not text` |
-| A `<style>` or `<script>` element | | `TEMPLATE_UNSUPPORTED` — `the prop name lands in a <style> element` |
-| A message at the start of a link | `:href="t('a.url')"` | `TEMPLATE_UNSUPPORTED` — `a message starts a href — a URL is a prop, checked when the e-mail is rendered` |
+| Text, or a plain HTML comment | `<p>{{ name }}</p>` | Escaped |
+| A text attribute — `alt`, `title`, `lang`, `xml:lang`, `dir`, `id`, `name`, `role`, `width`, `height`, `label`, `summary`, `abbr`, `aria-*`, `data-*` | `:alt="t('orderPlaced.logoAlt')"`, `:title="name"`, `:aria-label="name"` | Escaped, so it cannot leave its quotes |
+| The start of an `href` or `xlink:href` | `:href="link"` | Escaped, and checked when the e-mail is rendered: `http:`, `https:` or `mailto:` |
+| The start of a `src`, `background` or `poster` | `:src="logo"` | Escaped, and checked: `http:` or `https:` |
+| Any other attribute — `style`, `on*`, `srcset`, `srcdoc`, `content`, … | `:style="color"`, `:onclick="name"`, `:srcset="logo"` | `TEMPLATE_UNSUPPORTED` — `the prop name lands in the style attribute — only text attributes (alt, title, aria-*…) and URLs (href, src) take a value` |
+| A `<style>` or `<script>` element, even inside an Outlook conditional comment | | `TEMPLATE_UNSUPPORTED` — `the prop name lands in a <style> element` |
+| A tag, outside a quoted attribute value | | `TEMPLATE_UNSUPPORTED` — `the prop name lands in a tag outside a quoted attribute value` |
+| A message at the start of a link | `:href="t('a.url')"` | `TEMPLATE_UNSUPPORTED` — `a message starts an href — a URL is a prop, checked when the e-mail is rendered` |
+
+`class` is a text attribute too, but a bound one never reaches the output —
+see [Components](#components). The attributes are read from the HTML Maizzle
+produced, so a `:href` passed to `<Button>` is checked on the `<a>` it renders.
 
 A URL check is anchored at the first character — a leading space is refused,
 not trimmed — and throws a `TypeError` from the render function:

@@ -32,7 +32,8 @@ bun add -d @nxgt/mail-build
 ```
 
 A devDependency: nothing of it reaches your server. `typescript` (6) is a
-required peer; Maizzle, Vue and Tailwind CSS come with the package. Your
+required peer. Maizzle 6 and what it needs — Vue, Tailwind CSS, and Shiki,
+a peer Maizzle requires — are dependencies of this package, installed with it. Your
 tsconfig resolves as a bundler does (`"moduleResolution": "bundler"`): the
 declarations import without extensions, so `nodenext` is not supported.
 
@@ -99,7 +100,7 @@ defineProps(['name', 'link', 'hours']);
 
 A template renders **once, at build time**: each `{{ }}` or bound attribute
 holds a prop, `lang`, or `t('key', { prop })` — no `v-if`, no `v-for`, no
-expression. Everything a template may and may not hold is in
+expression — and `<script setup>` holds `defineProps([...])` and nothing else. Everything a template may and may not hold is in
 [Templates](docs/guide/templates.md).
 
 ### Writing catalogues — `messages/<locale>.json`
@@ -175,7 +176,7 @@ export function sendVerification(
 ```
 
 Every value is HTML-escaped in `html` and left as is in `text`; a line break
-in the subject becomes a space. A prop that starts an `href` must be an
+in the subject (CR, LF, U+0085, U+2028, U+2029) becomes a space. A prop that starts an `href` must be an
 `http:`, `https:` or `mailto:` URL, and one that starts a `src` an `http:` or
 `https:` URL — anything else throws
 `TypeError: mails.verifyEmail: link must be an http:, https: or mailto: URL`.
@@ -227,16 +228,17 @@ try {
 | `KEY_UNKNOWN` | A locale holds a key the fallback locale does not |
 | `ARGUMENT_UNDECLARED` | A translation uses an argument the fallback locale's message does not |
 | `ARGUMENT_TYPE_MISMATCH` | An argument is a number in one place and a string or a date in another — in the catalogues, or through a prop a template uses twice |
-| `TEMPLATE_INVALID` | A template the build cannot read: a file name that is not `kebab-case.vue`, no `<template>`, a `<script>` without `setup`, a reserved or non-`camelCase` prop, or one Maizzle could not render |
-| `TEMPLATE_UNSUPPORTED` | A template holds what one render at build time cannot reproduce safely: `v-if`, `v-for`, `v-html`, `v-on`, an expression, a name that is not a prop, a value in a `style` or `on*` attribute, a message starting a link, a prop it never uses |
+| `TEMPLATE_INVALID` | A template the build cannot read: a file name that is not `kebab-case.vue`, two files for one e-mail, no `<template>`, a `<script>` without `setup`, a reserved or non-`camelCase` prop, a component that does not exist (`<Buton>`), or one Maizzle could not render |
+| `TEMPLATE_UNSUPPORTED` | A template holds what one render at build time cannot reproduce safely: `v-if`, `v-for`, `v-html`, `v-on`, an expression, a name that is not a prop, a value in an attribute that is neither text (`alt`, `title`, `aria-*`…) nor a URL (`href`, `src`), a message starting a link, a prop it never uses, a value a component drops |
 | `TEMPLATE_KEY_UNKNOWN` | A template calls `t()` with a key the fallback locale does not hold |
 | `TEMPLATE_ARGUMENT_MISSING` | A `t()` call leaves out an argument its message declares, or a subject uses an argument that is not a prop |
 | `TEMPLATE_ARGUMENT_UNKNOWN` | A `t()` call passes an argument its message does not declare |
 | `SUBJECT_MISSING` | An e-mail has no `<email>.subject` message in the fallback locale |
 
-A mistake in how the build is **wired** — no config, a templates folder that
-does not exist, no locale, a `fallbackLocale` that is not in `locales`, `en_US`
-for `en-US` — is a bare `TypeError`. Every message, with its fix, is in
+A mistake in how the build is **wired** — no config, a config that is not an
+object, a templates folder that is missing or holds no `.vue`, a messages
+folder with no catalogue, no locale, a `fallbackLocale` that is not in
+`locales`, `en_US` for `en-US` — is a bare `TypeError`. Every message, with its fix, is in
 [Troubleshooting](docs/troubleshooting.md).
 
 ### Only the messages — `compileMessages` and `t`
@@ -276,7 +278,7 @@ exports the same `t`, beside `mails`.
 
 ## Size and speed
 
-Measured on a project of two e-mails in two locales: the module is 13.8 KB
+Measured on a project of two e-mails in two locales: the module is 13.9 KB
 (3.8 KB gzipped), each `html` about 2.5 KB and shared by every locale. A render
 takes about 11 µs — it joins strings and calls `Intl`. The build renders each
 template once with Maizzle, about half a second to a second each.
@@ -289,6 +291,14 @@ recipient's: `mails.orderPlaced({ locale, timeZone: user.timeZone, … })`.
 **A template has no condition.** It renders once, at build time: `v-if` and
 `v-for` fail the build. Send another e-mail, or let the message decide with
 `select` or `plural`.
+
+**Only Maizzle's own components exist.** A `components/` folder in your
+project is not read — each template renders from a temporary folder — and
+`<Buton>` fails the build. Components of your own come with presets.
+
+**A value goes in text, a text attribute (`alt`, `title`, `aria-*`…) or a URL
+(`href`, `src`).** `:style`, `:onclick`, `:srcset` or a bound `:class` fail
+the build.
 
 **A link is a whole, absolute URL.** Bind it as `:href="link"` and build it in
 your code: a relative path or `javascript:` throws when the e-mail is rendered.

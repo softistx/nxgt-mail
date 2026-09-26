@@ -78,7 +78,17 @@ export default defineMailConfig({
 
 Keep the module in a folder named `generated/`, and that folder out of your
 linter and your coverage. The config is loaded as TypeScript by the CLI, with
-no build step of yours; it must be the **default** export.
+no build step of yours; it must be the **default** export — a named export
+fails with `build: locales must be a list of locales, as ['en', 'fr']`.
+`build`, `compileProject` and `dev` check the config before using it, since
+it is data you wrote, possibly in JavaScript:
+
+| Mistake | `TypeError` message |
+| --- | --- |
+| The config is not an object | `build: the config must be an object — export default defineMailConfig({ … })` |
+| `locales` is not a list of strings, or the config is not the default export | `build: locales must be a list of locales, as ['en', 'fr']` |
+| `fallbackLocale` is not a string | `build: fallbackLocale must be one of locales, as 'en'` |
+| `emails`, `messages` or `out` is not a string | `build: out must be a path, or left out` |
 
 ## The CLI — `nxgt-mail`
 
@@ -122,13 +132,17 @@ In `package.json`, so the module exists before your code compiles:
 | Previews written | `nxgt-mail: 5 file(s) in .nxgt-mail — open index.html` | `0` |
 | A `MailBuildError`, or a wiring mistake | Its message alone, on stderr — `templates: verify-email.vue: t('verifyEmail.acton') is not a key of en, the fallback locale` | `1` |
 | No config found | `nxgt-mail: no config — write mail.config.ts, or pass --config <file>` | `1` |
+| `--config` names a file that does not exist | `nxgt-mail: missing.ts does not exist` | `1` |
 | An unknown command | `nxgt-mail: unknown command <name>`, then the usage | `1` |
+| An unknown option | `nxgt-mail: Unknown option '--bogus'. …`, then the usage | `1` |
+| `--out` given to `build` | `nxgt-mail: --out is for dev — build writes where the config's out says`, then the usage | `1` |
 | No command | The usage | `1` |
 | `--help` | The usage | `0` |
 
 A build that fails writes nothing: the module you had stays as it was. Any
 other error is printed with its stack — a bug, or a file the build could not
-read.
+read. `build` always writes where the config's `out` says; `--out` is only for
+`dev`.
 
 ## `build(config, options)`
 
@@ -413,17 +427,20 @@ The codes of the catalogues are listed in
 
 | Mistake | `TypeError` message |
 | --- | --- |
+| The config is malformed | `build: the config must be an object …`, `build: locales must be …`, `build: fallbackLocale must be …`, `build: <name> must be a path, or left out` — see [The config](#the-config--definemailconfig) |
 | The templates folder does not exist | `build: /home/ada/shop/emails does not exist — put one .vue template per e-mail there, or set emails in the config` |
-| No config file found | `nxgt-mail: no config — write mail.config.ts, or pass --config <file>` |
+| The templates folder holds no `.vue` file | `build: /home/ada/shop/emails holds no .vue template — put one per e-mail there` |
+| The messages folder holds no `<locale>.json` for any locale, or does not exist | `build: /home/ada/shop/messages holds no catalogue — write one <locale>.json per locale there, or set messages in the config` |
+| No config file found (CLI) | `nxgt-mail: no config — write mail.config.ts, or pass --config <file>` |
+| `--config` names a missing file (CLI) | `nxgt-mail: missing.ts does not exist` |
 | `locales: []` | `compileMessages: locales must hold at least one locale` |
 | `locales: ['en', 'en']` | `compileMessages: locales holds the same locale twice` |
 | `fallbackLocale` not in `locales` | `compileMessages: fallbackLocale must be one of locales` |
 | `locales: ['en_US']` | `compileMessages: en_US is not a locale — write it as a BCP 47 tag, as en or pt-BR` |
 
-A catalogues folder that does not exist is not reported as such: every locale
-is read as empty, so the first `t()` call of the first template fails with
-`TEMPLATE_KEY_UNKNOWN`. Check `messages` in the config when every key is
-unknown at once.
+A messages folder that holds the fallback locale's catalogue but not another
+locale's is not a wiring mistake: that locale is read as empty, and the build
+fails with `KEY_MISSING` for its first key.
 
 Every message, with its cause and its fix, is in
 [Troubleshooting](../troubleshooting.md).
