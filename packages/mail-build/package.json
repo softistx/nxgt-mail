@@ -1,0 +1,61 @@
+{
+	"name": "@nxgt/mail-build",
+	"version": "0.0.0",
+	"private": true,
+	"description": "The build side of @nxgt/mail: compiles ICU message catalogues (and, next, Maizzle templates) into typed render functions. A devDependency; never shipped to a server.",
+	"license": "MIT",
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"files": [
+		"dist",
+		"docs",
+		"README.md",
+		"package.json",
+		"LICENSE"
+	],
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
+			"default": "./dist/index.js"
+		},
+		"./package.json": "./package.json"
+	},
+	"keywords": [
+		"email",
+		"transactional",
+		"icu",
+		"i18n",
+		"codegen",
+		"typescript"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/softistx/nxgt-mail.git",
+		"directory": "packages/mail-build"
+	},
+	"publishConfig": {
+		"registry": "https://registry.npmjs.org",
+		"access": "public"
+	},
+	"scripts": {
+		"build": "bun run ../../build.ts",
+		"test": "bun test src",
+		"typecheck": "tsc --noEmit"
+	},
+	"nxgt": {
+		"entrypoints": [
+			"src/index.ts"
+		]
+	},
+	"dependencies": {
+		"@formatjs/icu-messageformat-parser": "^3.5.20"
+	},
+	"devDependencies": {
+		"@types/bun": "^1.4.2"
+	},
+	"peerDependencies": {
+		"typescript": "^6.0.3"
+	}
+}

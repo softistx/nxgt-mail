@@ -13,8 +13,9 @@ either finds it.
 | **template** | The one file that lays out an e-mail, for every locale. Its text is keys into the catalogues, never words | "layout" (a layout is what a template is placed in, and comes from a preset); "view"; one template *per language* — there is none |
 | **catalogue** | One JSON file of messages for one locale: `messages/fr.json` | "translation file", "dictionary", "bundle", "resources" |
 | **message** | In a catalogue: one ICU string under a `camelCase` key, `verifyEmail.title`. When sending: the `MailMessage` handed to `send` — a rendered e-mail, addressed — as in `checkMessage`, `sampleMessage` and the texts `send: the message must be an object`, `the provider refused the message`. The context says which; when both are near, write *the `MailMessage`* | the text of an error (say *the error's `message`*) |
+| **argument** | A named value a message writes, `{name}` or `{hours, plural, …}`, passed when the message is used: `t('en', 'verifyEmail.body', { name })`. `camelCase`. The fallback locale's message declares them; a translation may leave one out, never add one | "variable" (kept for a value a template interpolates directly, such as a link); "placeholder", "parameter", "param" |
 | **locale** | A language tag an e-mail is rendered in: `en`, `fr`, `pt-BR`. **The recipient's**, usually a field of the user, not the language of the request that triggered the send | "language" when a region may matter; "lang" |
-| **fallback locale** | The locale used when none of the wanted ones is supported, and the reference every other catalogue is checked against | "default language" |
+| **fallback locale** | The locale used when none of the wanted ones is supported, and the reference every other catalogue is checked against: its keys are the keys every locale must hold, and its messages declare the arguments and their kinds | "default language", "source locale", "base locale" |
 | **preset** | A package of defaults, as data: theme tokens, layouts, components and shared messages. The build applies a list of them, a later one overriding an earlier one key by key, the application's own files last | "theme" (the tokens are one part of a preset); "plugin" — a preset runs no code |
 
 ## Building and rendering
@@ -22,6 +23,10 @@ either finds it.
 | Word | Means | Not |
 | --- | --- | --- |
 | **render function** | A function that takes an e-mail's arguments and a locale and answers `Rendered`. The build generates one per e-mail; any hand-written function answering the same shape is accepted where a generated one is | "template function", "renderer" — nothing is rendered by an engine at run time |
+| **source** | One set of catalogues handed to the build, by locale, with a name for the errors: a preset's, or the application's `messages/`. Sources merge earliest first, a later one overriding a message — never a whole namespace | "layer", "origin"; "source" for the text of a message (say *the message*) |
+| **argument kind** | What the build infers an argument to be from how the fallback locale's message uses it — `string`, `number` or `date` — and so its TypeScript type: `{n, plural, …}` is a `number`, `{at, date}` a `Date` | "argument type" for the inferred kind (the TypeScript type is what the kind becomes); "format" |
+| **generated module** | The TypeScript file the build writes into a `generated/` folder — `src/generated/messages.ts` — typed from the catalogues, importing nothing, using only `Intl` at run time. Replaced on every build, never edited | "output", "bundle", "codegen file"; a `.generated.ts` or `.gen.ts` suffix — there is none |
+| **build failure** | A `MailBuildError`: the catalogues cannot be right — a message that does not parse, a key missing in a locale, an argument a translation invents — so the build stops, naming the locale and the key, and writes nothing. A mistake in the build's own options is a bare `TypeError` instead | *failure* alone, which is `MailFailure` at send time; "warning" — nothing is only reported |
 | **rendered** | The `Rendered` shape, `{ subject, html, text }`: one e-mail in one locale, every value already substituted and escaped | "compiled", "output" |
 
 ## Sending — `@nxgt/mail`
