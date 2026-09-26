@@ -52,9 +52,9 @@ describe('the presets, built by a project', () => {
 
 	test('samples/ is what the build writes — run `bun run samples` after a change', async () => {
 		for (const locale of ['en', 'fr']) {
-			const built = readdirSync(`${fixture}/dist/${locale}`).filter((file) =>
-				file.endsWith('.html'),
-			);
+			const built = readdirSync(`${fixture}/dist/${locale}`)
+				.filter((file) => file.endsWith('.html'))
+				.sort();
 			expect(built).toEqual(PRESETS.map((name) => `${name}.html`).sort());
 			expect(readdirSync(`${root}samples/${locale}`).sort()).toEqual(built);
 			for (const file of built) {
