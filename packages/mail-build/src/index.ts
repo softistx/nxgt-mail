@@ -39,6 +39,14 @@ export {
 	type MessageSource,
 } from './messages/compile';
 export {
+	definePreset,
+	type Preset,
+	type ResolvedPresets,
+	resolvePresets,
+	type Theme,
+	themeCss,
+} from './presets';
+export {
 	type CompiledEmail,
 	type CompiledMail,
 	type CompileMailOptions,

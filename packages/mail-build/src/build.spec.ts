@@ -1,9 +1,18 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import { cp, mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
+import {
+	cp,
+	mkdir,
+	mkdtemp,
+	readdir,
+	readFile,
+	rm,
+	writeFile,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { build, type MailConfig } from './build';
+import { build, compileProject, type MailConfig } from './build';
 import { dev } from './dev';
+import { definePreset } from './presets';
 
 const FIXTURE = join(import.meta.dir, '../test/fixtures/mail');
 const GOLDEN = join(import.meta.dir, '../test/types/generated/mail.ts');
@@ -47,6 +56,54 @@ describe('build', () => {
 	});
 });
 
+describe('build with presets', () => {
+	const preset = definePreset({
+		name: 'acme',
+		theme: { color: { brand: '#e11d48' } },
+		components: {
+			'Brand.vue': '<template><p class="text-brand">preset</p></template>',
+		},
+		messages: { en: { a: { subject: 'From the preset' } } },
+	});
+
+	test("renders a preset's component with its tokens, and lets the application replace it", async () => {
+		const dir = await mkdtemp(join(tmpdir(), 'mail-build-presets-'));
+		try {
+			await mkdir(join(dir, 'emails'));
+			await writeFile(
+				join(dir, 'emails', 'a.vue'),
+				`<template>
+  <Html :lang="lang">
+    <Head><style>@import "@maizzle/tailwindcss"; @import "./theme.css";</style></Head>
+    <Body><Brand /></Body>
+  </Html>
+</template>
+`,
+			);
+			const presetOnly = {
+				locales: ['en'],
+				fallbackLocale: 'en',
+				presets: [preset],
+			};
+			const first = await compileProject(presetOnly, { root: dir });
+			expect(first.module).toContain('color: #e11d48');
+			expect(first.module).toContain('>preset</p>');
+			expect(first.module).toContain('From the preset');
+
+			await mkdir(join(dir, 'components'));
+			await writeFile(
+				join(dir, 'components', 'Brand.vue'),
+				'<template><p class="text-brand">application</p></template>',
+			);
+			const second = await compileProject(presetOnly, { root: dir });
+			expect(second.module).toContain('>application</p>');
+			expect(second.module).not.toContain('>preset</p>');
+		} finally {
+			await rm(dir, { recursive: true, force: true });
+		}
+	}, 30_000);
+});
+
 describe('build refuses a wiring mistake', () => {
 	test('no catalogue in the messages folder', async () => {
 		await expect(
@@ -68,6 +125,16 @@ describe('build refuses a wiring mistake', () => {
 		);
 	});
 
+	test('a components folder the config names, which does not exist', async () => {
+		await expect(
+			build({ ...config, components: 'parts' }, { root }),
+		).rejects.toThrow(
+			new TypeError(
+				`build: ${join(root, 'parts')} does not exist — put the application's components there, or leave components out of the config`,
+			),
+		);
+	});
+
 	test('a config that is not one', async () => {
 		await expect(
 			build({ fallbackLocale: 'en' } as unknown as MailConfig, { root }),
@@ -85,6 +152,13 @@ describe('build refuses a wiring mistake', () => {
 			build({ locales: ['en'], fallbackLocale: 'fr' }, { root }),
 		).rejects.toThrow(
 			new TypeError("build: fallbackLocale must be one of locales, as 'en'"),
+		);
+		await expect(
+			build({ ...config, presets: {} } as unknown as MailConfig, { root }),
+		).rejects.toThrow(
+			new TypeError(
+				'build: presets must be a list, as [nxgtPreset()], or left out',
+			),
 		);
 		await expect(
 			build(undefined as unknown as MailConfig, { root }),

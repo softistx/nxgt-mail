@@ -6,6 +6,7 @@ import type { App } from 'vue';
 import { MailBuildError } from '../errors';
 import { templateError } from './error';
 import type { TemplateSource } from './sfc';
+import type { RenderWorkspace } from './workspace';
 
 /** A `t()` call of a template: its key, and the prop behind each argument. */
 export interface MessageCall {
@@ -99,7 +100,7 @@ const UNRESOLVED = /Failed to resolve component: (\S+)/;
 /** Runs Maizzle on the template file, from the render workspace. */
 async function runMaizzle(
 	template: TemplateSource,
-	workspace: string,
+	workspace: RenderWorkspace,
 	props: Record<string, string>,
 	globals: Record<string, unknown>,
 ): Promise<{ readonly html: string; readonly text: string }> {
@@ -114,12 +115,14 @@ async function runMaizzle(
 	let rendered: { readonly html: string; readonly plaintext?: string };
 	try {
 		// Rendered from a file, so Tailwind scans that file alone for classes;
-		// `root` is the workspace, so a `components/` folder in the working
-		// directory never replaces Maizzle's components.
-		const path = join(workspace, template.file);
+		// `root` is the workspace, and the presets' components its only
+		// source, so a `components/` folder in the working directory never
+		// replaces Maizzle's components.
+		const path = join(workspace.dir, template.file);
 		await writeFile(path, template.source);
 		rendered = await render(path, {
-			root: workspace,
+			root: workspace.dir,
+			components: { source: [workspace.components] },
 			props,
 			vue: { globalProperties: globals, plugins: [capture] },
 			plaintext: true,
@@ -195,7 +198,7 @@ function checkOutput(
  */
 export async function renderTemplate(
 	template: TemplateSource,
-	workspace: string,
+	workspace: RenderWorkspace,
 ): Promise<RenderedTemplate> {
 	const marks = new Placeholders();
 	const { t, calls } = messageRecorder(template, marks);

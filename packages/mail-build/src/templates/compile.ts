@@ -2,6 +2,7 @@ import {
 	type CompileMessagesOptions,
 	compileMessages,
 } from '../messages/compile';
+import type { Theme } from '../presets';
 import { emitMails } from './emit';
 import { type EmailPlan, type MailProp, planEmail } from './plan';
 
@@ -21,6 +22,14 @@ export interface TemplateFile {
 export interface CompileMailOptions extends CompileMessagesOptions {
 	/** One single-file component per e-mail. */
 	readonly templates: readonly TemplateFile[];
+	/**
+	 * The components the templates may use beside Maizzle's, by file name:
+	 * `{ 'Transactional.vue': source }`. Presets merged, as `resolvePresets`
+	 * answers them.
+	 */
+	readonly components?: Readonly<Record<string, string>>;
+	/** The Tailwind tokens written to `theme.css`, which a layout imports. */
+	readonly theme?: Theme;
 }
 
 /** One e-mail of a compiled module. */
@@ -72,11 +81,16 @@ export async function compileMail(
 	}
 
 	const plans: EmailPlan[] = [];
-	const workspace = await openWorkspace();
+	const workspace = await openWorkspace({
+		...(options.theme === undefined ? {} : { theme: options.theme }),
+		...(options.components === undefined
+			? {}
+			: { components: options.components }),
+	});
 	try {
 		// One at a time: each render starts and stops a Vite server of its own.
 		for (const template of templates) {
-			const rendered = await renderTemplate(template, workspace.dir);
+			const rendered = await renderTemplate(template, workspace);
 			plans.push(
 				planEmail({
 					template,
