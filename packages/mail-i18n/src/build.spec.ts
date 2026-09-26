@@ -254,6 +254,26 @@ describe('a build failure names the locale, the template and the key', () => {
 			"i18n: <locale>: verify-email calls t('verifyEmail.title') with arguments that are not an object, as { name: placeholder('name') }",
 		],
 		[
+			'placeholder-to-select',
+			{
+				'locales/en.json': {
+					verifyEmail: {
+						...en.verifyEmail,
+						title: '{plan, select, pro {Pro} other {Free}}',
+					},
+				},
+				'locales/fr.json': {
+					verifyEmail: {
+						...fr.verifyEmail,
+						title: '{plan, select, pro {Pro} other {Gratuit}}',
+					},
+				},
+				'emails/verify-email.vue':
+					"<template><p>{{ t('verifyEmail.title', { plan: placeholder('plan') }) }}</p></template>",
+			},
+			'i18n: <locale>: verify-email passes a placeholder to {plan}, which verifyEmail.title chooses on with a select — a placeholder always chooses other',
+		],
+		[
 			'no-catalogue',
 			{ 'locales/fr.json': null },
 			'i18n: locales/fr.json is missing — every locale has a catalogue',

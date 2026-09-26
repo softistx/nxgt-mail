@@ -18,10 +18,12 @@ const t = createTranslator({ en, fr }, () => pickLocale(user.locale, ['en', 'fr'
 t('verifyEmail.expires', { minutes: 15 }); // 'The link expires in 15 minutes.' for an English user
 ```
 
-`pickLocale`, from `@nxgt/mail`, answers the first of the user's locales that
-the catalogues have, or the fallback. It picks `fr` for `fr-CA`, and `en` for
+`pickLocale` comes from `@nxgt/mail` (`bun add @nxgt/mail`, a package with
+no dependency). It answers the first of the user's locales that the
+catalogues have, or the fallback. It picks `fr` for `fr-CA`, and `en` for
 `null` or `de`. Put it in the language provider, and `t` never meets a
-language it has no catalogue for.
+language it has no catalogue for. Any function that returns one of the
+catalogues' locales works as well: `() => (user.locale === 'fr' ? 'fr' : 'en')`.
 
 ## The signature
 
@@ -93,6 +95,10 @@ code or the catalogues, to fix, never a condition to `switch` on.
 | `Error` | `t` is called | `t: the language is not a locale of the catalogues — pick one with pickLocale` |
 | `Error` | `t` is called | `t: fr: common.greting is not a key` |
 | `Error` | `t` is called | `t: en: common.greeting could not be formatted` (with `cause`) |
+
+The error's own message names the locale and the key, never the text of the
+message. Its `cause`, the formatter's error, may quote that text: it is kept
+for debugging, and a catalogue's text is not a secret.
 
 ```ts
 const t = createTranslator({ en, fr }, () => 'de');

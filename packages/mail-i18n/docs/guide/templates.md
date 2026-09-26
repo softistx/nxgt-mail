@@ -164,6 +164,7 @@ the template or the catalogues, to fix, not a condition to catch.
 | `i18n: en: verify-email calls t('verifyEmail.expires') without {minutes}` | An argument the message declares, not passed |
 | `i18n: fr: verify-email passes {minutes} to verifyEmail.expires as a string — the message uses it as a number` | An argument of the wrong kind; here, a placeholder where a plural needs a number |
 | `i18n: en: verify-email passes {name} to verifyEmail.title, which does not use it` | An argument the message does not use |
+| `i18n: en: verify-email passes a placeholder to {plan}, which verifyEmail.title chooses on with a select — a placeholder always chooses other` | `placeholder()` passed to an argument the message chooses on with a `select`: it would always choose `other`. Pass a value the build knows |
 | `i18n: en: verify-email calls t('verifyEmail.title') with arguments that are not an object, as { name: placeholder('name') }` | `t('verifyEmail.greeting', placeholder('name'))`: the arguments go in an object |
 | `i18n: fr: verify-email calls placeholder() with a name that is not camelCase — as placeholder('firstName')` | `placeholder('first name')`, `placeholder('first_name')` |
 | `i18n: fr: verifyEmail.sentOn could not be formatted` | The formatter refused the value, such as a date that is `NaN`; its error is the `cause` |
@@ -204,8 +205,9 @@ import Email from '../../../emails/verify-email.vue';
 ```
 
 Wrappers are written when the config loads, only when their text changed, and
-only on the main thread: above 50 templates Maizzle builds in parallel, each
-worker loads the config again, and the workers do not write. A parallel build
+only on the main thread: above 50 wrappers (templates × locales; Maizzle's
+`parallel.threshold`) Maizzle builds in parallel, each worker loads the
+config again, and the workers do not write. A parallel build
 writes the same files and the same manifest, which the package's specs check. A wrapper whose template is gone is removed.
 `.maizzle/` belongs in `.gitignore`.
 

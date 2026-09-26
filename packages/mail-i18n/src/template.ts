@@ -10,6 +10,9 @@ const KINDS: Record<ArgumentKind, (value: unknown) => boolean> = {
 	date: (value) => value instanceof Date || typeof value === 'number',
 };
 
+const isPlaceholder = (value: unknown) =>
+	typeof value === 'string' && /^\{\{ [a-z][a-zA-Z0-9]* \}\}$/.test(value);
+
 const kindOf = (value: unknown) =>
 	value === null ? 'null' : value instanceof Date ? 'date' : typeof value;
 
@@ -48,6 +51,11 @@ export function templateProperties(options: {
 			for (const [name, kind] of declared.args) {
 				if (!Object.hasOwn(args, name)) {
 					throw new Error(`${where} calls t('${key}') without {${name}}`);
+				}
+				if (declared.selects.has(name) && isPlaceholder(args[name])) {
+					throw new Error(
+						`${where} passes a placeholder to {${name}}, which ${key} chooses on with a select — a placeholder always chooses other`,
+					);
 				}
 				if (!KINDS[kind](args[name])) {
 					throw new Error(

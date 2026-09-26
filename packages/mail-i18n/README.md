@@ -226,6 +226,9 @@ t('verifyEmail.expires', { minutes: 15 }); // in the user's locale
 t('verifyEmail.expires', { minutes: 15 }, 'fr'); // 'Le lien expire dans 15 minutes.'
 ```
 
+`pickLocale` comes from `@nxgt/mail` (`bun add @nxgt/mail`); `getLanguage`
+can be any function that returns one of the catalogues' locales.
+
 `createTranslator(catalogues, getLanguage)` and `t(key, args, language?)`
 have the shape of `@nxgt/i18n`, with one difference: this `t` **throws**
 where `@nxgt/i18n` would answer the key. It throws on a key the catalogue

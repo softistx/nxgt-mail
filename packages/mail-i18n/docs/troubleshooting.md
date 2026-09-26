@@ -9,15 +9,21 @@ How the messages are shaped:
 - **A wiring mistake is a `TypeError`**, from the call you wrote: `i18n: …`
   when `maizzle.config.ts` loads, `createTranslator: …` when your server
   creates its translator. Fix the call.
-- **A build failure is a plain `Error` starting `i18n:`**, naming the locale,
-  the template and the key — never the text of a message. It has no `code`:
-  it is a mistake in the templates or the catalogues, to fix, not a condition
-  to catch. The catalogues are
-  checked when `maizzle.config.ts` loads, before any template is built; a
-  template is checked while it is rendered; the subjects after the build.
+- **A build failure is a plain `Error` starting `i18n:`**, naming what to fix
+  (the locale, the template, the key or the file). It has no `code`: it is a
+  mistake in the templates or the catalogues, to fix, not a condition to
+  catch. The catalogues are checked when `maizzle.config.ts` loads, before
+  any template is built; a template is checked while it is rendered; the
+  subjects and the files after the build.
 - **A run-time failure is a plain `Error` starting `t:`**, from the `t` that
-  `createTranslator` answers, and like a build failure it is a mistake to fix. It throws where `@nxgt/i18n` would answer the key: an e-mail is not
+  `createTranslator` answers, and like a build failure it is a mistake to
+  fix. It throws where `@nxgt/i18n` would answer the key: an e-mail is not
   sent with a key in it.
+- **The error's own message never holds the text of a message.** Its
+  `cause` may: a "could not be formatted" error keeps the formatter's error
+  as its `cause`, and that error quotes the message, for debugging. A
+  catalogue's text is not a secret; the values filled at send time never
+  reach these errors.
 
 The samples below use the locales `en` (the fallback locale) and `fr`, the
 template `emails/verify-email.vue`, and keys such as `verifyEmail.title`.
@@ -61,6 +67,7 @@ template `emails/verify-email.vue`, and keys such as `verifyEmail.title`.
 - [`i18n: en: verify-email passes {minutes} to verifyEmail.expires as a string — the message uses it as a number`](#i18n-en-verify-email-passes-minutes-to-verifyemailexpires-as-a-string--the-message-uses-it-as-a-number)
 - [`i18n: en: verify-email passes {name} to verifyEmail.title, which does not use it`](#i18n-en-verify-email-passes-name-to-verifyemailtitle-which-does-not-use-it)
 - [`i18n: en: verify-email calls t('verifyEmail.title') with arguments that are not an object, as { name: placeholder('name') }`](#i18n-en-verify-email-calls-tverifyemailtitle-with-arguments-that-are-not-an-object-as--name-placeholdername-)
+- [`i18n: en: verify-email passes a placeholder to {plan}, which verifyEmail.title chooses on with a select — a placeholder always chooses other`](#i18n-en-verify-email-passes-a-placeholder-to-plan-which-verifyemailtitle-chooses-on-with-a-select--a-placeholder-always-chooses-other)
 - [`i18n: en: verify-email calls placeholder() with a name that is not camelCase — as placeholder('firstName')`](#i18n-en-verify-email-calls-placeholder-with-a-name-that-is-not-camelcase--as-placeholderfirstname)
 - [`i18n: en: verifyEmail.sentOn could not be formatted`](#i18n-en-verifyemailsenton-could-not-be-formatted)
 
@@ -81,6 +88,7 @@ template `emails/verify-email.vue`, and keys such as `verifyEmail.title`.
 - [`[Vue warn]: Property "name" was accessed during render but is not defined on instance.`](#vue-warn-property-name-was-accessed-during-render-but-is-not-defined-on-instance)
 - [A link's placeholder is prefixed with a domain](#a-links-placeholder-is-prefixed-with-a-domain)
 - [`.maizzle/` shows up in `git status`](#maizzle-shows-up-in-git-status)
+- [`No templates found`, or old templates, when Maizzle is built from a worker thread](#no-templates-found-or-old-templates-when-maizzle-is-built-from-a-worker-thread)
 - [A bug in `@nxgt/mail-i18n` itself](#a-bug-in-nxgtmail-i18n-itself)
 
 ---
@@ -98,7 +106,7 @@ of contract — they may work today, and are not tested.
 ### `i18n: options must be an object, as { locales: ['en', 'fr'] }`
 
 **When:** loading `maizzle.config.ts`, when `i18n` is called with nothing,
-`null`, or the locales alone.
+`null`, or a string such as `i18n('en')`.
 **Why:** `i18n` takes one object of options; `locales` is the one it
 requires.
 **Fix:**
@@ -109,20 +117,21 @@ import { defineMailConfig } from '@nxgt/mail-config';
 import { i18n } from '@nxgt/mail-i18n';
 
 export default defineMailConfig({
-  plugins: [i18n({ locales: ['en', 'fr'] })],   // not i18n(['en', 'fr'])
+  plugins: [i18n({ locales: ['en', 'fr'] })],   // not i18n('en')
 });
 ```
 
 ### `i18n: locales must hold at least one locale, as ['en', 'fr']`
 
 **When:** loading `maizzle.config.ts`, when `locales` is missing, empty, or a
-single string.
+single string — or the locales passed alone, `i18n(['en', 'fr'])`: a list is
+an object, and it has no `locales`.
 **Why:** the plugin builds each template once per locale; with none there is
 nothing to build.
 **Fix:**
 
 ```ts
-i18n({ locales: ['en'] });   // not locales: 'en'
+i18n({ locales: ['en'] });   // not locales: 'en', not i18n(['en'])
 ```
 
 ### `i18n: locales holds something that is not a locale — write each as a BCP 47 tag, as en or pt-BR`
@@ -300,8 +309,8 @@ The reason in brackets is the ICU parser's own code.
 **When:** loading `maizzle.config.ts`, for a message the ICU parser refuses:
 an unclosed `{`, a `plural` without an `other` case, a literal `{` that is not
 quoted.
-**Why:** every message is parsed at build time, so none fails later. The
-message's text is left out of the error on purpose.
+**Why:** every message is parsed at build time, so none fails later. Only
+the parser's code is kept: the error names the key, not the message's text.
 **Fix:** close the argument, give each `plural` and `select` an `other` case,
 and quote a literal brace with apostrophes:
 
@@ -522,6 +531,23 @@ other than an object — a placeholder or a value on its own, or `null`.
 
 not `t('verifyEmail.greeting', placeholder('name'))`.
 
+### `i18n: en: verify-email passes a placeholder to {plan}, which verifyEmail.title chooses on with a select — a placeholder always chooses other`
+
+**When:** `maizzle build`, when a template passes `placeholder()` to an
+argument the message chooses on with a `select`:
+`t('verifyEmail.title', { plan: placeholder('plan') })` for
+`"{plan, select, pro {Pro} other {Free}}"`.
+**Why:** a `select` chooses at build time, and a placeholder is the string
+`{{ plan }}` then: it always matches `other`, and the `pro` branch would never
+be sent.
+**Fix:** choose at build time with a value the build knows, or make one
+e-mail (or one message) per case, and choose which to send in your
+application:
+
+```vue
+<Heading>{{ t('verifyEmail.title', { plan: 'pro' }) }}</Heading>
+```
+
 ### `i18n: en: verify-email calls placeholder() with a name that is not camelCase — as placeholder('firstName')`
 
 **When:** `maizzle build`, for `placeholder()` called with no name, a name
@@ -540,7 +566,8 @@ with a space, in snake_case or kebab-case, or starting with a capital.
 checks and still cannot be formatted — typically an invalid `Date`
 (`new Date('')`) for a `date` or `time` argument.
 **Why:** the formatter refused the value; its own error is the `cause` of
-this one, printed under it.
+this one, printed under it. The `cause` may quote the message's text, which
+this error's own message never does.
 **Fix:** pass a valid date or timestamp:
 
 ```vue
@@ -680,8 +707,8 @@ t('verifyEmail.subject', { name: 'Ada' });
 **When:** calling `t`, when the message cannot be formatted with the
 arguments given — most often an argument left out, or an invalid `Date` for a
 `date`.
-**Why:** the formatter refused; its own error, which names the argument, is
-the `cause` of this one. `createTranslator` does not check arguments as the
+**Why:** the formatter refused; its own error, which names the argument and
+may quote the message's text, is the `cause` of this one. `createTranslator` does not check arguments as the
 build does.
 **Fix:** pass every argument the message uses:
 
@@ -744,6 +771,30 @@ build, and removed when their template is.
 ```
 
 Never edit a wrapper: the change is lost on the next build.
+
+### `No templates found`, or old templates, when Maizzle is built from a worker thread
+
+**When:** Maizzle's `build()` is called from code that runs in a worker
+thread, such as a job runner or a Vitest `threads` pool. The build prints
+`No templates found`, or builds templates that were since renamed or
+removed, without the ones added.
+**Why:** the plugin writes the wrappers under `.maizzle/i18n/` only on the
+main thread, so that the workers of a parallel build never write the same
+file twice. From a worker thread it writes none, and the build finds whatever
+wrappers are already there, or none at all.
+**Fix:** run the build on the main thread. Spawn the command:
+
+```ts
+const child = Bun.spawn(['maizzle', 'build'], { cwd: 'mails', stdout: 'inherit', stderr: 'inherit' });
+if ((await child.exited) !== 0) throw new Error('maizzle build failed');
+```
+
+or, under Vitest, run those tests in processes rather than threads:
+
+```ts
+// vitest.config.ts
+export default { test: { pool: 'forks' } };
+```
 
 ### A bug in `@nxgt/mail-i18n` itself
 
