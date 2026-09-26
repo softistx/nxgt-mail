@@ -5,7 +5,7 @@
  * refusal that stops holding the moment the directive goes unused. The
  * calls that **must keep compiling** are here too, unmarked.
  *
- * **Three plausible mistakes, three refused.**
+ * **Five plausible mistakes, five refused.**
  */
 
 import { i18n } from '@nxgt/mail-i18n';
@@ -25,6 +25,12 @@ presets({ only: ['sign-in'] });
 
 // @ts-expect-error — only is a list.
 presets({ only: 'welcome' });
+
+// @ts-expect-error — only names at least one; leave it out for every preset.
+presets({ only: [] });
+
+// @ts-expect-error — the list goes in only.
+presets(['welcome']);
 
 // @ts-expect-error — the whole templates source, not its folder alone.
 i18n({ locales: ['en'], templates: [mails.templates.dir] });

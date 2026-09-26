@@ -1,15 +1,20 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
-import { readdirSync, rmSync } from 'node:fs';
+import { cpSync, mkdirSync, readdirSync, rmSync, symlinkSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { PRESETS } from './presets';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const fixture = `${root}test/fixture`;
+const packaged = `${root}test/packaged`;
 const maizzle = `${root}node_modules/.bin/maizzle`;
 
 async function build(...args: string[]): Promise<void> {
+	await buildIn(fixture, ...args);
+}
+
+async function buildIn(cwd: string, ...args: string[]): Promise<void> {
 	const child = Bun.spawn([maizzle, 'build', ...args], {
-		cwd: fixture,
+		cwd,
 		stdout: 'pipe',
 		stderr: 'pipe',
 	});
@@ -22,6 +27,19 @@ async function build(...args: string[]): Promise<void> {
 }
 
 const read = (path: string) => Bun.file(`${fixture}/${path}`).text();
+
+/**
+ * Installs a workspace package in test/packaged/node_modules as npm would: a
+ * real folder, not a link to the workspace, with its dependencies beside it.
+ */
+function install(name: string, files: readonly string[]): void {
+	const from = fileURLToPath(new URL(`../../${name}/`, import.meta.url));
+	const to = `${packaged}/node_modules/@nxgt/${name}`;
+	mkdirSync(to, { recursive: true });
+	for (const file of files)
+		cpSync(`${from}${file}`, `${to}/${file}`, { recursive: true });
+	symlinkSync(`${from}node_modules`, `${to}/node_modules`);
+}
 
 describe('the presets, built by a project', () => {
 	beforeAll(async () => {
@@ -124,4 +142,32 @@ describe('the presets, built by a project', () => {
 			await child.exited;
 		}
 	}, 90_000);
+});
+
+describe('the presets, installed from npm', () => {
+	beforeAll(async () => {
+		for (const dir of ['dist', 'node_modules', '.maizzle']) {
+			rmSync(`${packaged}/${dir}`, { recursive: true, force: true });
+		}
+		// Maizzle leaves unresolved every tag of a file under node_modules: the
+		// e-mails would build empty unless ui() resolves them itself.
+		install('mail-ui', ['package.json', 'dist', 'components', 'theme.css']);
+		install('mail-presets', ['package.json', 'dist', 'emails']);
+		await buildIn(packaged);
+	}, 180_000);
+
+	test('builds what the workspace builds, byte for byte', async () => {
+		for (const locale of ['en', 'fr']) {
+			for (const name of PRESETS) {
+				const file = `${locale}/${name}.html`;
+				expect({
+					file,
+					html: await Bun.file(`${packaged}/dist/${file}`).text(),
+				}).toEqual({
+					file,
+					html: await Bun.file(`${root}samples/${file}`).text(),
+				});
+			}
+		}
+	});
 });

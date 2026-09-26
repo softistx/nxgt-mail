@@ -142,6 +142,19 @@ describe('buildManifest', () => {
 		);
 	});
 
+	test('fails the build on an e-mail that rendered empty', () => {
+		expect(() =>
+			manifestOf({
+				'en/welcome.html': '<p/>',
+				'fr/welcome.html': '<!DOCTYPE html>\n',
+			}),
+		).toThrow(
+			new Error(
+				'i18n: fr/welcome.html is empty — a tag of its template resolved to no component; list the plugin that brings it, as ui()',
+			),
+		);
+	});
+
 	test('fails the build on a subject whose argument is not a string', () => {
 		expect(() =>
 			manifestOf(both('<p/>'), {

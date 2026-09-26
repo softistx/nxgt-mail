@@ -28,12 +28,23 @@ export const TEMPLATES_DIR = fileURLToPath(
 	new URL('../emails', import.meta.url),
 );
 
+/** `catalogue` and every group in it, frozen: a project reads them, never changes them. */
+function freeze(catalogue: Catalogue): Catalogue {
+	for (const value of Object.values(catalogue)) {
+		if (typeof value === 'object' && value !== null) freeze(value as Catalogue);
+	}
+	return Object.freeze(catalogue);
+}
+
 /** The messages of every preset, in `en` and `fr`, before {@link presets} keeps the ones asked for. */
-export const presetCatalogues: Catalogues = { en, fr };
+export const presetCatalogues: Catalogues = Object.freeze({
+	en: freeze(en),
+	fr: freeze(fr),
+});
 
 export interface PresetsOptions {
 	/** The presets to build, as `['verify-email', 'reset-password']`. Default every one. */
-	readonly only?: readonly PresetName[];
+	readonly only?: readonly [PresetName, ...PresetName[]];
 }
 
 /** What {@link presets} answers, for `@nxgt/mail-i18n`. */
@@ -44,7 +55,9 @@ export interface Presets {
 	readonly catalogues: Catalogues;
 }
 
-function checkOnly(only: unknown): asserts only is readonly PresetName[] {
+function checkOnly(
+	only: unknown,
+): asserts only is readonly [PresetName, ...PresetName[]] {
 	if (!Array.isArray(only) || only.length === 0) {
 		throw new TypeError(
 			"presets: only must list at least one preset, as ['verify-email']",
@@ -86,7 +99,11 @@ function pick(catalogue: Catalogue, keys: ReadonlySet<string>): Catalogue {
  * overrides any message key by key.
  */
 export function presets(options: PresetsOptions = {}): Presets {
-	if (typeof options !== 'object' || options === null) {
+	if (
+		typeof options !== 'object' ||
+		options === null ||
+		Array.isArray(options)
+	) {
 		throw new TypeError(
 			"presets: options must be an object, as { only: ['verify-email'] }",
 		);
@@ -95,9 +112,10 @@ export function presets(options: PresetsOptions = {}): Presets {
 		return { templates: { dir: TEMPLATES_DIR }, catalogues: presetCatalogues };
 	}
 	checkOnly(options.only);
+	const [first, ...rest] = options.only;
 	const keys = new Set(['presets', ...options.only.map(emailKey)]);
 	return {
-		templates: { dir: TEMPLATES_DIR, emails: [...options.only] },
+		templates: { dir: TEMPLATES_DIR, emails: [first, ...rest] },
 		catalogues: Object.fromEntries(
 			Object.entries(presetCatalogues).map(([locale, catalogue]) => [
 				locale,

@@ -1,5 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import { defineMailPlugin, type MailPlugin } from '@nxgt/mail-config';
+import { packagedComponents } from './packaged';
 import { themeCss } from './theme';
 
 /** Who sends the e-mail: the layout's header and footer. */
@@ -118,6 +119,7 @@ export function ui(options: UiOptions): MailPlugin {
 	return defineMailPlugin({
 		name: 'ui',
 		components: { source: [{ path: COMPONENTS_DIR, prefix: 'Nx' }] },
+		vite: { plugins: packagedComponents(COMPONENTS_DIR) },
 		vue: {
 			globalProperties: { brand },
 			plugins: [{ install: (app) => app.provide(UI_CONTEXT, context) }],

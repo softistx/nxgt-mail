@@ -1,6 +1,6 @@
 {
 	"presets": {
-		"linkFallback": "Si le bouton ne fonctionne pas, ouvrez ce lien :",
+		"linkFallback": "Si le bouton ne fonctionne pas, ouvrez ce lien :",
 		"notYou": "Si ce n'était pas vous, sécurisez votre compte dès maintenant."
 	},
 	"verifyEmail": {
@@ -32,11 +32,11 @@
 		"action": "Annuler ce changement"
 	},
 	"signInCode": {
-		"subject": "Votre code de connexion : {code}",
+		"subject": "Votre code de connexion : {code}",
 		"preheader": "Saisissez ce code pour vous connecter.",
 		"title": "Votre code de connexion",
 		"body": "Saisissez ce code pour vous connecter à {brand}. Il ne fonctionne qu'une fois.",
-		"ignore": "Si vous n'avez pas essayé de vous connecter, vous pouvez ignorer cet e-mail : personne ne peut se connecter sans ce code."
+		"ignore": "Si vous n'avez pas essayé de vous connecter, vous pouvez ignorer cet e-mail : personne ne peut se connecter sans ce code."
 	},
 	"magicLink": {
 		"subject": "Votre lien de connexion",

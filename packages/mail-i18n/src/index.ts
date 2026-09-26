@@ -32,9 +32,9 @@ export {
 	type I18nOptions,
 	i18n,
 	MANIFEST_FILE,
-	type TemplateSource,
 	WRAPPERS_DIR,
 } from './plugin';
+export type { TemplateSource } from './sources';
 export {
 	createTranslator,
 	type LanguageProvider,

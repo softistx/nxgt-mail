@@ -7,10 +7,10 @@ const refuses = (options: unknown, message: string) =>
 
 describe('presets — wiring mistakes', () => {
 	test('refuses options that are not an object', () => {
-		refuses(
-			null,
-			"presets: options must be an object, as { only: ['verify-email'] }",
-		);
+		const message =
+			"presets: options must be an object, as { only: ['verify-email'] }";
+		refuses(null, message);
+		refuses(['welcome'], message);
 	});
 
 	test('refuses only that is not a list of presets', () => {
@@ -55,5 +55,11 @@ describe('presets — what it answers', () => {
 				expect(catalogue[emailKey(name)]).toBeObject();
 			}
 		}
+	});
+
+	test('hands out frozen catalogues: a project overrides a message in its own', () => {
+		expect(Object.isFrozen(presetCatalogues)).toBe(true);
+		expect(Object.isFrozen(presetCatalogues.en)).toBe(true);
+		expect(Object.isFrozen(presetCatalogues.en?.welcome)).toBe(true);
 	});
 });

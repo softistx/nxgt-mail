@@ -13,6 +13,7 @@ import { join } from 'node:path';
 import {
 	entryPath,
 	parseEntry,
+	type TemplateFolder,
 	watchTemplates,
 	writeWrappers,
 } from './wrappers';
@@ -169,6 +170,7 @@ describe('writeWrappers — a package folder under the project', () => {
 				{
 					dir: folder('presets', ['welcome', 'verify-email', 'magic-link']),
 					label: 'templates[0]',
+					packaged: true,
 					...(only && { only }),
 				},
 			],
@@ -200,6 +202,46 @@ describe('writeWrappers — a package folder under the project', () => {
 		expect(() => write(['sign-in'])).toThrow(
 			new Error(
 				'i18n: templates[0] has no template sign-in.vue — name one of its e-mails',
+			),
+		);
+	});
+
+	const writeFolders = (...folders: TemplateFolder[]) =>
+		writeWrappers({
+			folders,
+			wrappersDir: join(root, '.maizzle/i18n'),
+			locales: ['en'],
+			layout: 'nested',
+		});
+
+	test('refuses a package folder that is missing or holds no template', () => {
+		root = mkdtempSync(join(tmpdir(), 'mail-i18n-'));
+		const dir = join(root, 'gone');
+		const message = `i18n: templates[0] holds no template — is ${dir} the folder of a package's e-mails?`;
+		const packaged = { dir, label: 'templates[0]', packaged: true };
+		expect(() => writeFolders(packaged)).toThrow(new Error(message));
+		mkdirSync(dir);
+		expect(() => writeFolders(packaged)).toThrow(new Error(message));
+	});
+
+	test('refuses two packages with the same e-mail', () => {
+		root = mkdtempSync(join(tmpdir(), 'mail-i18n-'));
+		expect(() =>
+			writeFolders(
+				{
+					dir: folder('a', ['welcome']),
+					label: 'templates[0]',
+					packaged: true,
+				},
+				{
+					dir: folder('b', ['welcome']),
+					label: 'templates[1]',
+					packaged: true,
+				},
+			),
+		).toThrow(
+			new Error(
+				"i18n: templates[0] and templates[1] both have welcome.vue — keep one with emails: [...], or write the project's own in its folder",
 			),
 		);
 	});

@@ -95,31 +95,60 @@ function listFiles(dir: string): string[] {
 /**
  * A folder of templates. `label` names it in an error: `emails`, or
  * `templates[0]` for a package's. `only`, when given, keeps those e-mails of
- * the folder and no other.
+ * the folder and no other. A `packaged` folder — a package's — must hold
+ * templates, and shares no name with another package's.
  */
 export interface TemplateFolder {
 	readonly dir: string;
 	readonly label: string;
 	readonly only?: readonly string[];
+	readonly packaged?: boolean;
 }
 
-/** Each e-mail of `folders` and its file: a name in an earlier folder wins. */
+/** The e-mails of `folder`, the ones it keeps, checked. */
+function folderEmails({
+	dir,
+	label,
+	only,
+	packaged,
+}: TemplateFolder): string[] {
+	const emails = listEmails(dir, label);
+	if (packaged && emails.length === 0) {
+		throw new Error(
+			`i18n: ${label} holds no template — is ${dir} the folder of a package's e-mails?`,
+		);
+	}
+	for (const email of only ?? []) {
+		if (!emails.includes(email)) {
+			throw new Error(
+				`i18n: ${label} has no template ${email}.vue — name one of its e-mails`,
+			);
+		}
+	}
+	return [...(only ?? emails)];
+}
+
+/**
+ * Each e-mail of `folders` and its file. The project's folder, first, wins
+ * over a package's; two packages with the same e-mail **throw**, since
+ * neither would be the obvious one.
+ */
 function collectTemplates(
 	folders: readonly TemplateFolder[],
 ): Map<string, string> {
 	const templates = new Map<string, string>();
-	for (const { dir, label, only } of folders) {
-		const emails = listEmails(dir, label);
-		for (const email of only ?? []) {
-			if (!emails.includes(email)) {
+	const owners = new Map<string, TemplateFolder>();
+	for (const folder of folders) {
+		for (const email of folderEmails(folder)) {
+			const owner = owners.get(email);
+			if (owner === undefined) {
+				owners.set(email, folder);
+				templates.set(email, join(folder.dir, `${email}.vue`));
+			} else if (owner.packaged) {
 				throw new Error(
-					`i18n: ${label} has no template ${email}.vue — name one of its e-mails`,
+					`i18n: ${owner.label} and ${folder.label} both have ${email}.vue — keep one with emails: [...], or write the project's own in its folder`,
 				);
 			}
-		}
-		for (const email of only ?? emails) {
-			if (!templates.has(email))
-				templates.set(email, join(dir, `${email}.vue`));
 		}
 	}
 	return templates;

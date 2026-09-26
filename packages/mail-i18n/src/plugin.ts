@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { join, relative, resolve, sep } from 'node:path';
 import { isMainThread } from 'node:worker_threads';
 import { defineMailPlugin, type MailPlugin } from '@nxgt/mail-config';
 import {
@@ -10,6 +10,11 @@ import {
 	type Messages,
 } from './catalogues';
 import { buildManifest } from './manifest';
+import {
+	checkTemplates,
+	type TemplateSource,
+	templateFolders,
+} from './sources';
 import { templateProperties } from './template';
 import { createFormatter } from './translator';
 import {
@@ -42,14 +47,6 @@ export interface I18nOptions {
 	 * project's `emails/` replaces a package's of the same name.
 	 */
 	readonly templates?: readonly TemplateSource[];
-}
-
-/** A package's folder of templates, for {@link I18nOptions.templates}. */
-export interface TemplateSource {
-	/** The folder, absolute. */
-	readonly dir: string;
-	/** The e-mails of the folder to build, as `['verify-email']`. Default every one. */
-	readonly emails?: readonly string[];
 }
 
 /** Where the wrappers go, under the project. */
@@ -116,24 +113,7 @@ function checkOptions(options: I18nOptions): void {
 			'i18n: catalogues must be a list of catalogues by locale, as [{ en: {...}, fr: {...} }]',
 		);
 	}
-	const { templates } = options;
-	if (
-		templates !== undefined &&
-		(!Array.isArray(templates) ||
-			!templates.every(
-				(source) =>
-					isObject(source) &&
-					typeof source.dir === 'string' &&
-					isAbsolute(source.dir) &&
-					(source.emails === undefined ||
-						(Array.isArray(source.emails) &&
-							source.emails.every((email) => typeof email === 'string'))),
-			))
-	) {
-		throw new TypeError(
-			"i18n: templates must be a list of template folders, as [{ dir: '/abs/path/emails' }]",
-		);
-	}
+	checkTemplates(options.templates);
 }
 
 /** Reads `<dir>/<locale>.json` for each locale. A missing or broken file **throws**. */
@@ -196,14 +176,10 @@ export function i18n(options: I18nOptions): MailPlugin {
 	const format = createFormatter('i18n');
 	const regenerate = () =>
 		writeWrappers({
-			folders: [
-				{ dir: emailsDir, label: emailsName },
-				...(options.templates ?? []).map((source, index) => ({
-					dir: source.dir,
-					label: `templates[${index}]`,
-					...(source.emails && { only: source.emails }),
-				})),
-			],
+			folders: templateFolders(
+				{ dir: emailsDir, name: emailsName },
+				options.templates ?? [],
+			),
 			wrappersDir,
 			locales,
 			layout,

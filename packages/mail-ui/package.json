@@ -47,6 +47,9 @@
 		"test": "bun test src",
 		"typecheck": "tsc --noEmit"
 	},
+	"dependencies": {
+		"unplugin-vue-components": "^32.1.0"
+	},
 	"devDependencies": {
 		"@maizzle/framework": "6.1.7",
 		"@maizzle/tailwindcss": "1.5.6",

@@ -13,7 +13,7 @@
  * A message key is a `string`: whether it exists is checked by the build,
  * against the catalogues, not by the compiler.
  *
- * **Sixteen plausible mistakes, sixteen refused.**
+ * **Seventeen plausible mistakes, seventeen refused.**
  */
 
 import type { MailPlugin } from '@nxgt/mail-config';
@@ -102,5 +102,8 @@ i18n({ locales: ['en'], templates: { dir: '/pkg/emails' } });
 const pkg = '/pkg/emails';
 // @ts-expect-error — ['welcome'].
 i18n({ locales: ['en'], templates: [{ dir: pkg, emails: 'welcome' }] });
+
+// @ts-expect-error — emails names at least one; leave it out for every one.
+i18n({ locales: ['en'], templates: [{ dir: pkg, emails: [] }] });
 
 export { broken, plugin };
