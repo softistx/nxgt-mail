@@ -81,12 +81,17 @@ function checkConfig(config: unknown): asserts config is MailConfig {
 		string,
 		unknown
 	>;
+	if (locales === undefined && fallbackLocale === undefined) {
+		throw new TypeError(
+			'build: the config has no locales — is it the default export? export default defineMailConfig({ … })',
+		);
+	}
 	if (!isStringArray(locales)) {
 		throw new TypeError(
 			"build: locales must be a list of locales, as ['en', 'fr']",
 		);
 	}
-	if (typeof fallbackLocale !== 'string') {
+	if (typeof fallbackLocale !== 'string' || !locales.includes(fallbackLocale)) {
 		throw new TypeError(
 			"build: fallbackLocale must be one of locales, as 'en'",
 		);

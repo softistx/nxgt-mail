@@ -106,6 +106,15 @@ describe('splitHtml', () => {
 		).toEqual(['attribute', 'attribute', 'attribute']);
 	});
 
+	test('a link inside a block hidden from Outlook only is checked', () => {
+		expect(
+			splitHtml(
+				'a.vue',
+				rendered(`<!--[if !mso]><!--><a href="${P0}">x</a><!--<![endif]-->`),
+			)[1],
+		).toEqual({ kind: 'prop', prop: 'link', context: 'link' });
+	});
+
 	test('a value in a plain comment is escaped text', () => {
 		expect(splitHtml('a.vue', rendered(`<!-- ${P1} --><p>x</p>`))[1]).toEqual({
 			kind: 'prop',
@@ -199,6 +208,26 @@ describe('splitHtml', () => {
 			'a value in a <style> inside an Outlook conditional comment',
 			`<!--[if mso]><style>p { color: ${P1} }</style><![endif]-->`,
 			'templates: a.vue: the prop name lands in a <style> element',
+		],
+		[
+			'a link inside a block hidden from Outlook only',
+			`<!--[if !mso]><!--><a href="${M0}">x</a><!--<![endif]-->`,
+			'templates: a.vue: a message starts an href — a URL is a prop, checked when the e-mail is rendered',
+		],
+		[
+			'an event handler inside a block hidden from Outlook only',
+			`<!--[if !mso]><!--><p onclick="${P1}">x</p><!--<![endif]-->`,
+			'templates: a.vue: the prop name lands in the onclick attribute — only text attributes (alt, title, aria-*…) and URLs (href, src) take a value',
+		],
+		[
+			'a style after an abrupt <!---> comment',
+			`<!---><p style="${P1}">x</p>`,
+			'templates: a.vue: the prop name lands in the style attribute — only text attributes (alt, title, aria-*…) and URLs (href, src) take a value',
+		],
+		[
+			'a style after a comment closed by --!>',
+			`<!-- x --!><p style="${P1}">x</p>`,
+			'templates: a.vue: the prop name lands in the style attribute — only text attributes (alt, title, aria-*…) and URLs (href, src) take a value',
 		],
 	];
 	for (const [name, html, message] of cases) {

@@ -168,6 +168,13 @@ describe('compileMail', () => {
 				'TEMPLATE_UNSUPPORTED',
 				'templates: a.vue: the prop name lands in the onclick attribute — only text attributes (alt, title, aria-*…) and URLs (href, src) take a value',
 			],
+			[
+				'a link bound inside <NotOutlook>, still checked',
+				'a.vue',
+				sfc('<NotOutlook><a :href="t(\'a.title\')">x</a></NotOutlook>', []),
+				'TEMPLATE_UNSUPPORTED',
+				'templates: a.vue: a message starts an href — a URL is a prop, checked when the e-mail is rendered',
+			],
 		];
 	for (const [name, file, source, code, message, en] of cases) {
 		test(

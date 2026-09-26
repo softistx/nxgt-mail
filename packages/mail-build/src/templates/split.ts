@@ -112,7 +112,12 @@ function scan(
 		switch (state.in) {
 			case 'text': {
 				if (html.startsWith('<!--[if', i)) state = { in: 'declaration' };
-				else if (html.startsWith('<!--', i)) {
+				else if (html.startsWith('<!-->', i) || html.startsWith('<!--->', i)) {
+					// An abrupt comment, closed where it opens: `<!--[if !mso]><!-->`
+					// hides nothing from a browser — what follows is markup.
+					advance(i + (html.startsWith('<!-->', i) ? 5 : 6));
+					continue;
+				} else if (html.startsWith('<!--', i)) {
 					state = { in: 'comment' };
 					advance(i + 4);
 					continue;
@@ -132,9 +137,9 @@ function scan(
 				continue;
 			}
 			case 'comment':
-				if (html.startsWith('-->', i)) {
+				if (html.startsWith('-->', i) || html.startsWith('--!>', i)) {
 					state = { in: 'text' };
-					advance(i + 3);
+					advance(i + (html.startsWith('-->', i) ? 3 : 4));
 					continue;
 				}
 				i += 1;

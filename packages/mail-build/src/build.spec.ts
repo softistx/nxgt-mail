@@ -76,6 +76,16 @@ describe('build refuses a wiring mistake', () => {
 				"build: locales must be a list of locales, as ['en', 'fr']",
 			),
 		);
+		await expect(build({} as MailConfig, { root })).rejects.toThrow(
+			new TypeError(
+				'build: the config has no locales — is it the default export? export default defineMailConfig({ … })',
+			),
+		);
+		await expect(
+			build({ locales: ['en'], fallbackLocale: 'fr' }, { root }),
+		).rejects.toThrow(
+			new TypeError("build: fallbackLocale must be one of locales, as 'en'"),
+		);
 		await expect(
 			build(undefined as unknown as MailConfig, { root }),
 		).rejects.toThrow(

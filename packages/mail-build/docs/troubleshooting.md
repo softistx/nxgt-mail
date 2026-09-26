@@ -54,6 +54,7 @@ try {
 - [`nxgt-mail: no config — write mail.config.ts, or pass --config <file>`](#nxgt-mail-no-config--write-mailconfigts-or-pass---config-file)
 - [`nxgt-mail: <file> does not exist`](#nxgt-mail-file-does-not-exist)
 - [`build: the config must be an object — export default defineMailConfig({ … })`](#build-the-config-must-be-an-object--export-default-definemailconfig--)
+- [`build: the config has no locales — is it the default export? export default defineMailConfig({ … })`](#build-the-config-has-no-locales--is-it-the-default-export-export-default-definemailconfig--)
 - [`build: locales must be a list of locales, as ['en', 'fr']`](#build-locales-must-be-a-list-of-locales-as-en-fr)
 - [`build: fallbackLocale must be one of locales, as 'en'`](#build-fallbacklocale-must-be-one-of-locales-as-en)
 - [`build: <name> must be a path, or left out`](#build-name-must-be-a-path-or-left-out)
@@ -336,9 +337,27 @@ cd packages/mailer && nxgt-mail build --config mail.config.ts
 
 **When:** `nxgt-mail build` or `dev`, on a config whose default export is not
 an object — `undefined`, `null`, a function — or `build()` called without
-one. A config with no default export at all fails on its `locales` instead,
-below.
+one. A config with no default export at all gets the next entry.
 **Why:** the config is read as data, and checked before it is used.
+**Fix:**
+
+```ts
+// mail.config.ts
+import { defineMailConfig } from '@nxgt/mail-build';
+
+export default defineMailConfig({
+  locales: ['en', 'fr'],
+  fallbackLocale: 'en',
+});
+```
+
+### `build: the config has no locales — is it the default export? export default defineMailConfig({ … })`
+
+**When:** `nxgt-mail build` or `dev`, on a config file that exports its config
+under a name (`export const config = …`) instead of `export default`, or
+`build({})`: neither `locales` nor `fallbackLocale` is there.
+**Why:** the CLI reads the default export; without one it finds an empty
+module.
 **Fix:**
 
 ```ts
@@ -355,8 +374,7 @@ export default defineMailConfig({
 
 **When:** `nxgt-mail build` or `dev`, or `build()`, on a config whose
 `locales` is missing or is not an array of strings: `locales: 'en'`, a list
-read from an environment variable and not split. Also a config file that
-exports its config under a name instead of `export default`.
+read from an environment variable and not split.
 **Why:** `locales` is every locale the build compiles, in order.
 **Fix:**
 
@@ -372,8 +390,9 @@ export default defineMailConfig({
 ### `build: fallbackLocale must be one of locales, as 'en'`
 
 **When:** `nxgt-mail build` or `dev`, or `build()`, on a config whose
-`fallbackLocale` is missing or is not a string (`['en']`). A string that is
-not in `locales` fails next, with
+`fallbackLocale` is missing, is not a string (`['en']`), or is not one of
+`locales` (`locales: ['en'], fallbackLocale: 'fr'`). Calling
+`compileMessages` directly gives the same mistake as
 [`compileMessages: fallbackLocale must be one of locales`](#compilemessages-fallbacklocale-must-be-one-of-locales).
 **Why:** the fallback locale is the reference every other locale and every
 template is checked against.

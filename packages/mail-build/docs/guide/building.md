@@ -79,15 +79,16 @@ export default defineMailConfig({
 Keep the module in a folder named `generated/`, and that folder out of your
 linter and your coverage. The config is loaded as TypeScript by the CLI, with
 no build step of yours; it must be the **default** export — a named export
-fails with `build: locales must be a list of locales, as ['en', 'fr']`.
+fails with `build: the config has no locales — is it the default export? …`.
 `build`, `compileProject` and `dev` check the config before using it, since
 it is data you wrote, possibly in JavaScript:
 
 | Mistake | `TypeError` message |
 | --- | --- |
 | The config is not an object | `build: the config must be an object — export default defineMailConfig({ … })` |
-| `locales` is not a list of strings, or the config is not the default export | `build: locales must be a list of locales, as ['en', 'fr']` |
-| `fallbackLocale` is not a string | `build: fallbackLocale must be one of locales, as 'en'` |
+| The config is not the default export: no `locales`, no `fallbackLocale` | `build: the config has no locales — is it the default export? export default defineMailConfig({ … })` |
+| `locales` is not a list of strings | `build: locales must be a list of locales, as ['en', 'fr']` |
+| `fallbackLocale` is not one of `locales` | `build: fallbackLocale must be one of locales, as 'en'` |
 | `emails`, `messages` or `out` is not a string | `build: out must be a path, or left out` |
 
 ## The CLI — `nxgt-mail`
@@ -427,7 +428,7 @@ The codes of the catalogues are listed in
 
 | Mistake | `TypeError` message |
 | --- | --- |
-| The config is malformed | `build: the config must be an object …`, `build: locales must be …`, `build: fallbackLocale must be …`, `build: <name> must be a path, or left out` — see [The config](#the-config--definemailconfig) |
+| The config is malformed | `build: the config must be an object …`, `build: the config has no locales …`, `build: locales must be …`, `build: fallbackLocale must be …`, `build: <name> must be a path, or left out` — see [The config](#the-config--definemailconfig) |
 | The templates folder does not exist | `build: /home/ada/shop/emails does not exist — put one .vue template per e-mail there, or set emails in the config` |
 | The templates folder holds no `.vue` file | `build: /home/ada/shop/emails holds no .vue template — put one per e-mail there` |
 | The messages folder holds no `<locale>.json` for any locale, or does not exist | `build: /home/ada/shop/messages holds no catalogue — write one <locale>.json per locale there, or set messages in the config` |
