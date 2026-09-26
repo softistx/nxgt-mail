@@ -3,6 +3,9 @@
 This page is for writing the catalogues — one JSON file of ICU messages per
 locale — and compiling them: every form a message can take, what each argument
 becomes in TypeScript, how sources merge, and every way the build fails.
+`nxgt-mail build` reads them from `messages/` with the templates (see
+[Building](building.md)); this page also shows `compileMessages`, which
+compiles them alone.
 
 ```json
 {
@@ -35,9 +38,10 @@ import { t } from './generated/messages';
 t('en', 'verifyEmail.expires', { hours: 1 }); // 'This link expires in 1 hour.'
 ```
 
-The script is yours for now: the `nxgt-mail` CLI and `defineMailConfig` come
-with the templates, in the next part of this package. What the emitted module
-exports is in [The generated module](generated-module.md).
+That script is for a project with catalogues and no templates. With
+templates, `nxgt-mail build` compiles both into `src/generated/mail.ts`, which
+exports the same `t` beside `mails`. What the emitted module exports is in
+[The generated module](generated-module.md).
 
 ## Files and keys
 
@@ -338,9 +342,9 @@ apostrophe. A lone apostrophe elsewhere (`L'équipe`) is kept as written.
 t('en', 'order.markup'); // 'Keep <b>this</b> & that as text'
 ```
 
-A tag is never parsed and never markup: `t` answers the characters, and the
-render functions of the next part escape them in `html`. Emphasis, links and
-layout belong in the template.
+A tag is never parsed and never markup: `t` answers the characters, and a
+render function escapes them in `html`. Emphasis, links and layout belong in
+the [template](templates.md).
 
 ## How arguments are typed
 
@@ -514,8 +518,12 @@ class MailBuildError extends Error {
 	readonly code: MailBuildErrorCode;
 	readonly locale: string | undefined;
 	readonly key: string | undefined;
+	readonly template: string | undefined; // set by a template's errors — see Templates
 }
 ```
+
+The codes below are the catalogues'; the templates' (`TEMPLATE_*`,
+`SUBJECT_MISSING`) are in [Templates](templates.md).
 
 | `code` | Example `message` |
 | --- | --- |

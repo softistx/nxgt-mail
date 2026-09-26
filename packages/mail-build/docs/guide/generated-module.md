@@ -1,27 +1,37 @@
 # The generated module
 
-This page is for using the module `compileMessages` writes — usually
-`src/generated/messages.ts`: what it exports, what `t` accepts and answers, and
-how it fits with the rest of your code. How to write the catalogues it comes
-from is in [Catalogues](catalogues.md).
+This page is for using the module the build writes — `src/generated/mail.ts`
+by default: what it exports, what a render function and `t` accept, answer and
+throw, and how they fit with the rest of your code. How to write the templates
+and catalogues it comes from is in [Templates](templates.md) and
+[Catalogues](catalogues.md); how to run the build, in [Building](building.md).
 
 ```ts
-import { t } from './generated/messages';
+import { mails, t } from './generated/mail';
+
+mails.verifyEmail({ locale: 'fr', name: 'Ada', link: 'https://example.com/verify?token=abc', hours: 24 });
+// { subject: 'Confirmez votre adresse e-mail', html: '<!DOCTYPE html>…', text: 'Plus qu\'une étape Bonjour Ada, …' }
 
 t('fr', 'verifyEmail.body', { name: 'Ada' });
 // 'Bonjour Ada, confirmez cette adresse pour terminer votre inscription.'
 ```
 
 The module is plain TypeScript: **it imports nothing**, and at run time it uses
-only `Intl.PluralRules`, `Intl.NumberFormat` and `Intl.DateTimeFormat`. The ICU
-parser stayed in the build; nothing of `@nxgt/mail-build` is needed where the
-module runs.
+only `Intl.PluralRules`, `Intl.NumberFormat` and `Intl.DateTimeFormat`. Maizzle,
+Vue, Tailwind and the ICU parser stayed in the build; nothing of
+`@nxgt/mail-build` is needed where the module runs.
+
+`compileMessages` alone writes the first half of it — everything down to `t`,
+without `mails` — for a project that has catalogues and no templates. Every
+section of this page about `t` applies to both.
 
 ## What it exports
 
-For catalogues in `en` and `fr`, with `en` as the fallback locale:
+For catalogues in `en` and `fr`, with `en` as the fallback locale, and one
+template, `emails/verify-email.vue`:
 
 ```ts
+// The messages
 export const locales: readonly ['en', 'fr'];
 export type Locale = 'en' | 'fr';
 export const fallbackLocale: Locale; // 'en'
@@ -51,12 +61,159 @@ type Rest<K extends MessageKey> = K extends MessageKey
 	: never;
 
 export function t<K extends MessageKey>(locale: Locale, key: K, ...rest: Rest<K>): string;
+
+// The e-mails — not written by compileMessages alone
+/** A rendered e-mail: `Rendered` in `@nxgt/mail`. */
+export interface RenderedMail {
+	readonly subject: string;
+	readonly html: string;
+	readonly text: string;
+}
+
+/** The arguments of each e-mail: its locale, a time zone for its dates, and its props, typed. */
+export interface MailArgs {
+	verifyEmail: {
+		readonly locale: Locale;
+		readonly timeZone?: string;
+		readonly hours: number;
+		readonly link: string;
+		readonly name: string;
+	};
+	// … one entry per template, sorted
+}
+
+export type MailName = keyof MailArgs;
+
+/** One render function per e-mail: `mails.verifyEmail({ locale, … })`. */
+export const mails: { readonly [M in MailName]: (args: MailArgs[M]) => RenderedMail };
 ```
 
-`Locale`, `MessageKey` and `MessageArgs` are literal types written from the
-catalogues: adding a key or a locale changes them on the next build.
+`Locale`, `MessageKey`, `MessageArgs`, `MailArgs` and `MailName` are literal
+types written from the catalogues and the templates: adding a key, a locale, a
+prop or a template changes them on the next build.
+
+## `mails.<email>(args)`
+
+One render function per template, named after its file: `verify-email.vue` is
+`mails.verifyEmail`. It takes one object:
+
+| Property | Type | Effect |
+| --- | --- | --- |
+| `locale` | `Locale` | Required. The locale every message is written in, and the `lang` of the HTML. Pick it with `pickLocale` (below) |
+| `timeZone` | `string` | Optional. The IANA time zone dates and times are written in. Default `'UTC'` |
+| each prop | `string`, `number` or `Date` | Required. Typed from how the template and its messages use it — see [Templates — how props are typed](templates.md#how-props-are-typed) |
+
+It answers a `RenderedMail`, `{ subject, html, text }` — the shape of
+`Rendered` in `@nxgt/mail`, so it spreads straight into a `MailMessage`:
+
+```ts
+import { createMemoryMailer } from '@nxgt/mail';
+import { mails } from './generated/mail';
+
+const mailer = createMemoryMailer();
+
+await mailer.send({
+	to: 'ada@example.com',
+	...mails.verifyEmail({ locale: 'en', name: 'Ada', link: 'https://example.com/verify?token=abc', hours: 24 }),
+});
+
+mailer.sent[0]?.subject; // 'Confirm your e-mail address'
+```
+
+- **`html`** is the whole document Maizzle built — CSS inlined — with every
+  value HTML-escaped: `&`, `<`, `>`, `"` and `'`.
+- **`text`** is the plain-text part, every value as is.
+- **`subject`** is the message `<email>.subject`, with every line break
+  replaced by a space.
+
+```ts
+import { mails } from './generated/mail';
+
+const { html, text } = mails.verifyEmail({
+	locale: 'en',
+	name: '<script>alert(1)</script>',
+	link: 'https://example.com/verify?token=abc',
+	hours: 24,
+});
+html.includes('Hello &lt;script&gt;alert(1)&lt;/script&gt;,'); // true
+text.includes('Hello <script>alert(1)</script>,'); // true
+```
+
+### What the compiler refuses
+
+```ts
+import { type Locale, mails } from './generated/mail';
+
+declare const locale: Locale;
+declare const fromRequest: string;
+const link = 'https://example.com/verify?token=abc';
+
+// @ts-expect-error — 'de' is not a locale of this build
+mails.verifyEmail({ locale: 'de', name: 'Ada', link, hours: 24 });
+// @ts-expect-error — a string is not a Locale: pick it with pickLocale
+mails.verifyEmail({ locale: fromRequest, name: 'Ada', link, hours: 24 });
+// @ts-expect-error — `nom` is not a prop of verifyEmail
+mails.verifyEmail({ locale, nom: 'Ada', link, hours: 24 });
+// @ts-expect-error — `hours` is required
+mails.verifyEmail({ locale, name: 'Ada', link });
+// @ts-expect-error — `{hours, plural}` is a number
+mails.verifyEmail({ locale, name: 'Ada', link, hours: '24' });
+// @ts-expect-error — a link is a string, checked when the e-mail is rendered
+mails.verifyEmail({ locale, name: 'Ada', link: new URL(link), hours: 24 });
+// @ts-expect-error — there is no emails/welcome.vue
+mails.welcome({ locale });
+```
+
+### What it throws
+
+A render function checks at run time what the compiler cannot: that a URL is
+one a mail client should follow.
+
+| Cause | Error |
+| --- | --- |
+| A prop bound to an `href` is not an `http:`, `https:` or `mailto:` URL — `javascript:…`, `/verify`, `' https://…'` with a leading space | `TypeError: mails.verifyEmail: link must be an http:, https: or mailto: URL` |
+| A prop bound to a `src` is not an `http:` or `https:` URL | `TypeError: mails.orderPlaced: logo must be an http: or https: URL` |
+| `timeZone` is not an IANA time zone, in an e-mail that writes a date | `RangeError`, from `Intl.DateTimeFormat` |
+| A `Date` prop is invalid (`new Date('nope')`) | `RangeError`, from `format()` |
+
+The URL is checked before anything is rendered, so a refused one never reaches
+a mailer.
+
+### `MailArgs` and `MailName` — typing your own helpers
+
+A function that forwards an e-mail's name and its arguments keeps the check
+when it is generic over `MailName`:
+
+```ts
+import type { Mailer, SentMail } from '@nxgt/mail';
+import { type MailArgs, type MailName, mails } from './generated/mail';
+
+export function sendMail<M extends MailName>(
+	mailer: Mailer,
+	to: string,
+	name: M,
+	args: MailArgs[M],
+): Promise<SentMail> {
+	return mailer.send({ to, ...mails[name](args) });
+}
+```
+
+```ts
+import { createMemoryMailer } from '@nxgt/mail';
+import { sendMail } from './send-mail';
+
+const mailer = createMemoryMailer();
+const link = 'https://example.com/verify?token=abc';
+
+await sendMail(mailer, 'ada@example.com', 'verifyEmail', { locale: 'en', name: 'Ada', link, hours: 24 });
+// @ts-expect-error — verifyEmail needs `hours`
+await sendMail(mailer, 'ada@example.com', 'verifyEmail', { locale: 'en', name: 'Ada', link });
+```
 
 ## `t(locale, key, args, options)`
+
+The messages on their own — for a line you write outside a template, or a
+project with no templates.
 
 | Parameter | Type | Effect |
 | --- | --- | --- |
@@ -69,7 +226,7 @@ It answers the message as a `string`, every argument substituted and formatted
 for the locale:
 
 ```ts
-import { t } from './generated/messages';
+import { t } from './generated/mail';
 
 t('en', 'verifyEmail.subject'); // 'Confirm your e-mail address'
 t('en', 'verifyEmail.subject', {}); // the same
@@ -79,7 +236,7 @@ t('en', 'verifyEmail.expires', { hours: 24 }); // 'This link expires in 24 hours
 ### What the compiler refuses
 
 ```ts
-import { t } from './generated/messages';
+import { t } from './generated/mail';
 
 // @ts-expect-error — `name` is required
 t('fr', 'verifyEmail.body', {});
@@ -110,7 +267,7 @@ otherwise. The right zone is the recipient's — a field of the user, like their
 locale — not the server's:
 
 ```ts
-import { t } from './generated/messages';
+import { t } from './generated/mail';
 
 const at = new Date('2026-09-25T21:30:00Z');
 
@@ -140,7 +297,7 @@ takes the build's locales as they are and answers a `Locale`:
 
 ```ts
 import { pickLocale } from '@nxgt/mail';
-import { fallbackLocale, locales, t } from './generated/messages';
+import { fallbackLocale, locales, t } from './generated/mail';
 
 const locale = pickLocale(['fr-CA', 'en'], locales, fallbackLocale); // 'fr', typed Locale
 
@@ -156,7 +313,7 @@ A function that forwards a key and its arguments keeps the check when it is
 generic over `MessageKey`:
 
 ```ts
-import type { MessageArgs, MessageKey } from './generated/messages';
+import type { MessageArgs, MessageKey } from './generated/mail';
 
 interface Line<K extends MessageKey = MessageKey> {
 	readonly key: K;
@@ -170,29 +327,15 @@ export function line<K extends MessageKey>(key: K, args: MessageArgs[K]): Line<K
 line('verifyEmail.expires', { hours: 24 }); // checked like t
 ```
 
-## A realistic case — an e-mail by hand, until templates are generated
+## A realistic case — sending, and testing it
 
-The render functions that answer `{ subject, html, text }` come with the
-templates, in the next part of this package. Until then — or for an e-mail you
-would rather write yourself — `t` fills a hand-written function that answers
-`Rendered` from `@nxgt/mail`, and any mailer sends it:
+The render function goes where the e-mail is sent; the locale is the
+recipient's, picked from the build's own:
 
 ```ts
-import { type Mailer, pickLocale, type Rendered, type SentMail } from '@nxgt/mail';
-import { fallbackLocale, type Locale, locales, t } from './generated/messages';
-
-const escape = (value: string) =>
-	value.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
-
-function verifyEmail(locale: Locale, name: string, link: string, hours: number): Rendered {
-	const body = t(locale, 'verifyEmail.body', { name });
-	const expires = t(locale, 'verifyEmail.expires', { hours });
-	return {
-		subject: t(locale, 'verifyEmail.subject'),
-		html: `<p>${escape(body)}</p><p><a href="${escape(link)}">${escape(link)}</a></p><p>${escape(expires)}</p>`,
-		text: `${body}\n\n${link}\n\n${expires}`,
-	};
-}
+// send-verification.ts
+import { type Mailer, pickLocale, type SentMail } from '@nxgt/mail';
+import { fallbackLocale, locales, mails } from './generated/mail';
 
 export function sendVerification(
 	mailer: Mailer,
@@ -200,15 +343,15 @@ export function sendVerification(
 	link: string,
 ): Promise<SentMail> {
 	const locale = pickLocale(user.locale, locales, fallbackLocale);
-	return mailer.send({ to: user.email, ...verifyEmail(locale, user.name, link, 24) });
+	return mailer.send({
+		to: user.email,
+		...mails.verifyEmail({ locale, name: user.name, link, hours: 24 }),
+	});
 }
 ```
 
-`t` answers text, not HTML: a name, and any `<` or `&` a message holds, must be
-escaped before it goes into `html` — which is what the generated render
-functions will do for you.
-
-And its test, with the memory mailer:
+And its test, with the memory mailer — the module needs no build tool at run
+time, so the test runs in microseconds:
 
 ```ts
 import { expect, it } from 'bun:test';
@@ -225,8 +368,41 @@ it('sends the verification e-mail in the locale of the recipient', async () => {
 	);
 
 	expect(mailer.sent[0]?.subject).toBe('Confirmez votre adresse e-mail');
+	expect(mailer.sent[0]?.html).toContain('href="https://example.com/verify?token=abc"');
 });
 ```
+
+A second example, with a date, a price and an image, is in
+[Templates — a realistic case](templates.md#a-realistic-case--an-order-confirmation).
+
+### An e-mail by hand
+
+An e-mail you would rather write yourself — or one from a project that
+compiles messages only — is a function answering `Rendered` from
+`@nxgt/mail`, filled with `t`. The escaping a render function does is then
+yours:
+
+```ts
+import type { Rendered } from '@nxgt/mail';
+import { type Locale, t } from './generated/mail';
+
+const escape = (value: string) =>
+	value.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+
+export function verifyEmail(locale: Locale, name: string, link: string, hours: number): Rendered {
+	const body = t(locale, 'verifyEmail.body', { name });
+	const expires = t(locale, 'verifyEmail.expires', { hours });
+	return {
+		subject: t(locale, 'verifyEmail.subject'),
+		html: `<p>${escape(body)}</p><p><a href="${escape(link)}">${escape(link)}</a></p><p>${escape(expires)}</p>`,
+		text: `${body}\n\n${link}\n\n${expires}`,
+	};
+}
+```
+
+`t` answers text, not HTML: a name, and any `<` or `&` a message holds, must be
+escaped before it goes into `html`, and a link checked before it goes into an
+`href`.
 
 ## What the module needs to run and to compile
 
@@ -237,6 +413,10 @@ it('sends the verification e-mail in the locale of the recipient', async () => {
   `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`, `noUnusedLocals`,
   `noUnusedParameters`, `noPropertyAccessFromIndexSignature`,
   `noImplicitReturns`, with `target` and `lib` as low as ES2020. It holds only
-  the `Intl` helpers its messages call.
+  the `Intl` helpers its messages call, and only the escaping and URL helpers
+  its templates need.
+- **Little room.** For two e-mails in two locales the module is 13.8 KB
+  (3.8 KB gzipped), each `html` about 2.5 KB and shared by every locale; a
+  render takes about 11 µs.
 - **Not edited by hand.** The first line says so; the next build replaces it.
   Exclude `generated/` from your linter and your coverage.
