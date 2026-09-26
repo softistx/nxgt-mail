@@ -41,6 +41,34 @@ const SEGMENT = /^[a-z][a-zA-Z0-9]*$/;
 const isObject = (value: unknown): value is Record<string, unknown> =>
 	typeof value === 'object' && value !== null && !Array.isArray(value);
 
+/** `over` merged into `under` key by key: an object is merged, anything else replaces. */
+function mergeCatalogue(under: Catalogue, over: Catalogue): Catalogue {
+	const out: Record<string, string | Catalogue> = { ...under };
+	for (const [key, value] of Object.entries(over)) {
+		const below = out[key];
+		out[key] =
+			isObject(below) && isObject(value) ? mergeCatalogue(below, value) : value;
+	}
+	return out;
+}
+
+/**
+ * Each of `project`'s locales, with `sources` merged under it in order: a
+ * source's locale the project does not have is left out.
+ */
+export function layerCatalogues(
+	sources: readonly Catalogues[],
+	project: Record<string, Catalogue>,
+): Record<string, Catalogue> {
+	const out: Record<string, Catalogue> = {};
+	for (const [locale, catalogue] of Object.entries(project)) {
+		out[locale] = [...sources.map((source) => source[locale]), catalogue]
+			.filter((layer): layer is Catalogue => layer !== undefined)
+			.reduce(mergeCatalogue, {});
+	}
+	return out;
+}
+
 function flatten(
 	catalogue: unknown,
 	locale: string,

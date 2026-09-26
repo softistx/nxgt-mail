@@ -201,24 +201,49 @@ a plugin for `defineMailConfig` (`fallbackLocale` defaults to the first locale):
 a plural and a date; each build failure has a spec with its exact message;
 `maizzle serve` lists both locales; the manifest matches a golden file.
 
-## Step 5 — `@nxgt/mail-ui`
+## Step 5 — `@nxgt/mail-ui` ✅
 
-`ui({ brand, theme })`, a plugin, from the old `@nxgt/mail-preset`:
+`ui({ brand, theme })`, a plugin for `defineMailConfig`. Steve's direction
+(2026-09-26): components faithful to `@nxgt/material-vue`'s styles, mirroring
+its components that make sense in an e-mail — its names with the `Nx` prefix,
+its `variant`/`color`/`size` props, its tokens — rendered with tables and
+inlined styles. No dependency on material-vue.
 
-- Components under the prefix `Nx`: `NxLayout`, `NxHeading`, `NxText`,
-  `NxButton`, `NxLink`, `NxDivider`, `NxSpacer`, `NxCode`. Each wraps
-  Maizzle's, which carries the Outlook fallbacks. A project's
+- **The first set:** `NxLayout` (brand header, card, footer; on Maizzle's
+  `Html`/`Head`/`Body`), `NxTypography`, `NxButton` (on Maizzle's `Button`,
+  which pads it for Outlook), `NxLink`, `NxSeparator`, `NxCard` with
+  `NxCardHeader`, `NxCardTitle`, `NxCardDescription`, `NxCardContent`,
+  `NxCardFooter`, `NxBadge`, `NxAlert`, `NxBanner`, `NxStatusIndicator`,
+  `NxSummaryData`, and `NxCode` (a one-time code, e-mail's own). Maizzle's
+  `Spacer` stands for the planned `NxSpacer`. A project's
   `components/NxButton.vue` replaces ours.
-- `theme.css` (`@theme` tokens, neutral brand), imported by `NxLayout` beside
-  the literal `@import "@maizzle/tailwindcss"`.
-- The shared messages `common.greeting`, `common.footer.why`,
-  `common.footer.ignore` in `en` and `fr`, given to `@nxgt/mail-i18n` as a
-  catalogue source the project overrides key by key.
+- **`theme.css`:** material-vue's light tokens, in oklch — Maizzle writes each
+  as hex with a `lab()` after it. material-vue's `bg-primary/15` is
+  `bg-primary-15`: a `color-mix` in sRGB over the background, flattened to
+  hex, because a client drops an alpha. `ui({ theme })` overrides a token by
+  name; the tints follow.
+- **The shared messages** `common.greeting`, `common.footer.why`,
+  `common.footer.ignore`, in `en` and `fr`: `uiCatalogues`, given to
+  `i18n({ catalogues: [uiCatalogues] })`, a new option of `@nxgt/mail-i18n`
+  that merges package catalogues under the project's, key by key.
 
 **Done when:** the fixture project renders with `ui()` and with one token and
-one message overridden; the rendered HTML is checked against caniemail data
-for Gmail, Outlook and Apple Mail, and — Steve's part — looked at in the real
-clients.
+one message overridden ✅; the rendered HTML is checked against caniemail data
+for Gmail, Outlook and Apple Mail ✅ (Maizzle's own check, in the build spec)
+— and Steve's part, still open: looked at in the real clients.
+
+## Step 5b — `@nxgt/mail-ui`, the second set
+
+The material-vue components that fit an e-mail and are not in the first set,
+each a table with inlined styles and material-vue's props: `NxTable` (and its
+parts), `NxTimeline`, `NxSteps`/`NxStepsItem`, `NxProgress`, `NxStatCard`,
+`NxAvatar`/`NxAvatarGroup`, `NxListTile`, `NxDescription`, `NxEntityHeader`,
+`NxSeeAlso`, `NxHero` (no blur, no gradient), `NxChip` (static), and the
+metrics cards that are bars and numbers (goal, ratio, compare, breakdown).
+Icons are images or characters: an e-mail has no icon font.
+
+**Done when:** each renders in the fixture, is checked by caniemail as in
+Step 5, and is documented with its props.
 
 ## Step 6 — The run-time renderer, in `@nxgt/mail`
 

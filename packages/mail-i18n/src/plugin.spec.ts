@@ -50,4 +50,12 @@ describe('i18n — wiring mistakes', () => {
 			"i18n: layout must be 'nested' or 'flat'",
 		);
 	});
+
+	test('refuses catalogues that are not a list of catalogues by locale', () => {
+		const message =
+			'i18n: catalogues must be a list of catalogues by locale, as [{ en: {...}, fr: {...} }]';
+		refuses({ locales: ['en'], catalogues: { en: {} } }, message);
+		refuses({ locales: ['en'], catalogues: [null] }, message);
+		refuses({ locales: ['en'], catalogues: [{ en: 'Hello' }] }, message);
+	});
 });

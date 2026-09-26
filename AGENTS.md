@@ -142,7 +142,7 @@ they are built.
 | `@nxgt/mail` | at run time | The `Mailer` port, the errors, locale selection, a memory mailer, `./conformance` for transports, and the renderer that fills built files. **No dependency** |
 | `@nxgt/mail-config` | in the Maizzle project | `defineMailConfig`: the base config, and the plugins merged with their hooks chained |
 | `@nxgt/mail-i18n` | in the Maizzle project | The i18n plugin: ICU catalogues, `t()` in templates, one output per locale, the manifest; `createTranslator` |
-| `@nxgt/mail-ui` | in the Maizzle project | The `Nx*` components, the theme, the shared messages |
+| `@nxgt/mail-ui` | in the Maizzle project | The `Nx*` components in the style of `@nxgt/material-vue`, its theme, the shared messages |
 | `@nxgt/mail-smtp`, `@nxgt/mail-resend`, … | at run time | One transport each, implementing the port, passing the conformance suite |
 
 `@nxgt/janus-mail` lives in `nxgt-janus`: a Maizzle project built with these

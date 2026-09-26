@@ -7,8 +7,9 @@ Keep a normal Maizzle project — `emails/`, `public/`, `maizzle serve`,
 `maizzle build` — and add:
 
 - a base config that plugins extend without dropping each other's hooks;
-- shared components and a theme (`<NxLayout>`, `<NxButton>`, `<NxCode>`…),
-  any of which your own `components/` replaces by name;
+- e-mail components in the style of `@nxgt/material-vue` (`<NxLayout>`,
+  `<NxButton>`, `<NxCard>`…) and its theme, any of which your own
+  `components/` replaces by name;
 - i18n: one template per e-mail, its text as keys into
   [ICU](https://unicode-org.github.io/icu/userguide/format_parse/messages/)
   catalogues, built once per locale — shaped like `@nxgt/i18n`, but a missing
@@ -18,10 +19,13 @@ Keep a normal Maizzle project — `emails/`, `public/`, `maizzle serve`,
 // maizzle.config.ts
 import { defineMailConfig } from '@nxgt/mail-config';
 import { i18n } from '@nxgt/mail-i18n';
-import { ui } from '@nxgt/mail-ui';
+import { ui, uiCatalogues } from '@nxgt/mail-ui';
 
 export default defineMailConfig({
-  plugins: [ui(), i18n({ locales: ['en', 'fr'], fallbackLocale: 'en' })],
+  plugins: [
+    ui({ brand: { name: 'Acme', url: 'https://acme.example' } }),
+    i18n({ locales: ['en', 'fr'], catalogues: [uiCatalogues] }),
+  ],
 });
 ```
 
@@ -45,7 +49,7 @@ await mailer.send({ to, ...mails.render('verify-email', { name, link }) });
 | [`@nxgt/mail`](./packages/mail) | The `Mailer` port, errors, locale selection, a memory mailer, the transport conformance suite, and the renderer |
 | [`@nxgt/mail-config`](./packages/mail-config) | `defineMailConfig`: the base config, plugins with their build hooks chained, and the production config |
 | [`@nxgt/mail-i18n`](./packages/mail-i18n) | The i18n plugin: ICU catalogues checked at build time, `t()` in templates, one output per locale, the manifest; and `createTranslator` |
-| `@nxgt/mail-ui` | Components, theme and shared messages |
+| [`@nxgt/mail-ui`](./packages/mail-ui) | E-mail components in the style of `@nxgt/material-vue`, its theme, and the shared messages |
 | `@nxgt/mail-smtp`, `@nxgt/mail-resend` | Transports |
 
 ## Contributing

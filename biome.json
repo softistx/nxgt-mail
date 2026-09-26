@@ -57,6 +57,11 @@
 			"quoteStyle": "single"
 		}
 	},
+	"css": {
+		"parser": {
+			"tailwindDirectives": true
+		}
+	},
 	"assist": {
 		"enabled": true,
 		"actions": {
@@ -66,6 +71,17 @@
 		}
 	},
 	"overrides": [
+		{
+			"includes": ["**/*.vue"],
+			"linter": {
+				"rules": {
+					"correctness": {
+						"noUnusedVariables": "off",
+						"noUnusedImports": "off"
+					}
+				}
+			}
+		},
 		{
 			"includes": ["**/test/types/**"],
 			"linter": {
