@@ -17,6 +17,7 @@ import {
 } from './sources';
 import { templateProperties } from './template';
 import { createFormatter } from './translator';
+import { TYPES_FILE, templateTypes, writeIfChanged } from './types';
 import {
 	type Layout,
 	parseEntry,
@@ -186,7 +187,13 @@ export function i18n(options: I18nOptions): MailPlugin {
 		});
 	// A parallel build loads the config again in each worker: only the main
 	// thread writes, so two workers never write the same file.
-	if (isMainThread) regenerate();
+	if (isMainThread) {
+		regenerate();
+		writeIfChanged(
+			resolve(cwd, TYPES_FILE),
+			templateTypes(reference, fallbackLocale),
+		);
+	}
 
 	return defineMailPlugin({
 		name: 'i18n',

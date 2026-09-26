@@ -136,6 +136,11 @@ As in `nxgt-janus`: **every refusal has a `@ts-expect-error` case in
 visible regression. It also holds the calls that **must keep compiling** — a
 refusal that refuses the correct call is a bug.
 
+What a plugin's generated types refuse **in a template** is measured the same
+way, by a `@vue-expect-error` in `test/fixture/types/refusals.vue`: it needs
+the fixture's `.maizzle/`, so it lives in the fixture, and
+`typecheck:templates` checks it with `vue-tsc` after `maizzle prepare`.
+
 ---
 
 ## Layout
@@ -202,8 +207,14 @@ the first package writes: *e-mail* (not "mail" in prose, not "email"),
 ```sh
 bun install
 bun run check        # biome, and the naming convention that holds the casing rule
-bun run typecheck    # includes test/types/, which is the type-safety measurement
-bun run build
+bun run build        # before typecheck: a package reaches its siblings, and its
+                     # templates reach the package itself, through dist/
+bun run typecheck    # includes test/types/ and the fixtures' templates, the type-safety measurement
 bun run test
 bun run verify:artifacts   # on the tarball actually packed
 ```
+
+`mail-ui`'s and `mail-presets`' `tsconfig.json` also include their fixture's
+`test/fixture/.maizzle/*.d.ts`, for the editor only, so their own templates and
+components see `t` and `brand` while you edit them; the measurement is the
+fixture's own `tsconfig.json`, which `typecheck:templates` uses.

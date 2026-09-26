@@ -66,6 +66,23 @@ workspaces, pnpm) it fails **silently** unless `@maizzle/tailwindcss` is in
 your own `package.json`, as the `bun add` above makes it: the build succeeds,
 and no style is generated.
 
+```jsonc
+// tsconfig.json — the official starter's include; keep .maizzle/*.d.ts in it
+{ "include": ["**/*.vue", ".maizzle/*.d.ts"] }
+```
+
+```jsonc
+// package.json — the starter's postinstall
+{ "scripts": { "postinstall": "maizzle prepare" } }
+```
+
+Each time the config loads (`maizzle prepare`, `serve`, `build`), `ui()`
+writes `.maizzle/nxgt-mail-ui.d.ts`, which loads the type of `brand` for the
+templates. The starter's `tsconfig.json` does not include
+`maizzle.config.ts`, so this file is how the editor learns it. `.maizzle/` is
+in the starter's `.gitignore`. See
+[Editor and type checking](#editor-and-type-checking).
+
 ## Exports
 
 | Export | What it is |
@@ -165,6 +182,32 @@ overrides any of them, key by key:
 
 See [Shared messages](docs/guide/messages.md).
 
+### Editor and type checking
+
+With the [Setup](#setup) above, Vue's language tools (the **Vue - Official**
+extension in the editor, `vue-tsc` in CI) know `brand` in every template, and
+Maizzle's `.maizzle/prefixed-components.d.ts` gives them the `Nx*` components
+and their props:
+
+```vue
+<!-- emails/welcome.vue -->
+<template>
+  <NxTypography>Welcome to {{ brand.nam }}</NxTypography>
+  <!-- Property 'nam' does not exist on type 'Brand'. Did you mean 'name'? -->
+</template>
+```
+
+```sh
+bun add -d vue-tsc
+bunx vue-tsc --noEmit   # after maizzle prepare, as in CI
+```
+
+`t`, `locale` and `placeholder` are typed by `@nxgt/mail-i18n`, which writes
+its own file beside this one. See
+[`brand` in templates](docs/guide/plugin.md#brand-in-templates), and
+[`Property 'brand' does not exist`](docs/troubleshooting.md#the-editor-says-property-brand-does-not-exist-in-a-template)
+if the editor does not know `brand`.
+
 ### Replacing a component
 
 ```vue
@@ -222,6 +265,14 @@ that fails the typecheck the moment it stops holding:
 
 The same file holds the calls that must keep compiling: a refusal that refuses
 the correct call is a bug.
+
+**2 template mistakes, 2 refused** by `.maizzle/nxgt-mail-ui.d.ts`, each
+measured by a `@vue-expect-error` in
+[`test/fixture/types/refusals.vue`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-ui/test/fixture/types/refusals.vue),
+checked by `vue-tsc` after `maizzle prepare` (`bun run typecheck:templates`):
+
+1. A field the brand does not have (`brand.nmae`).
+2. `brand.logo.src` without `?.`: the logo is optional.
 
 A theme token is a `string`: whether `theme.css` declares it is checked when
 `ui()` is called. A component's props are not in this count: Maizzle declares

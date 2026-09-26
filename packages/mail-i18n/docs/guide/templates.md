@@ -45,14 +45,17 @@ import:
 // what the package declares for Vue's template checker
 declare module 'vue' {
 	interface ComponentCustomProperties {
-		t(key: string, args?: MessageArgs): string;
+		t<K extends TemplateKey>(key: K, ...args: TemplateArgs<K>): string;
 		readonly locale: string;
 		placeholder(name: string): string;
 	}
 }
-
-type MessageArgs = Readonly<Record<string, string | number | Date>>;
 ```
+
+`TemplateKey` is a key of your catalogues, and `TemplateArgs<K>` its
+arguments, once the plugin has written their types — see
+[Editor and type checking](editor.md). Before that, the template checker does
+not know `t` at all; the build is not affected.
 
 A component used by the template sees them too: they are global, and they
 hold the locale being built.
@@ -397,27 +400,22 @@ manifest, so a missing subject is only reported by `maizzle build`.
 
 ## Typing templates
 
-```ts
-// env.d.ts, or any file your tsconfig includes
-import type {} from '@nxgt/mail-i18n';
-```
-
-With that (or a `maizzle.config.ts` in your tsconfig, which imports the
-package), Vue's language tools (Volar in the editor, `vue-tsc`) know `t`,
-`locale` and `placeholder` in every template:
+`i18n()` writes `.maizzle/nxgt-mail-i18n.d.ts` each time the config loads, so
+Vue's language tools complete a key of `t` and flag an unknown key or a wrong
+argument in the editor and in `vue-tsc`:
 
 ```vue
-<Text>{{ placeholder(1) }}</Text>   <!-- refused: a name is a string -->
-<Text>{{ t('any.key', { user: { first: 'Ada' } }) }}</Text>  <!-- refused: an argument is a string, a number or a Date -->
+<Text>{{ t('verifyEmail.titel') }}</Text>
+<!-- Argument of type '"verifyEmail.titel"' is not assignable to parameter of type 'keyof TemplateMessages'. -->
 ```
 
-A key is a `string`, so an unknown key compiles, and the build refuses it. The
-declaration lives in `@nxgt/mail-i18n`'s types, and needs `vue` resolvable
-from your project: Maizzle depends on it, and listing it in your own
-`package.json` makes that hold under an isolated install.
+The setup, what the file holds, and each kind of argument are in
+[Editor and type checking](editor.md).
 
 ## See also
 
 - [Catalogues](catalogues.md) — the messages `t` reads, and the kinds of
   argument.
+- [Editor and type checking](editor.md) — `t`'s keys and arguments, typed
+  from the catalogues.
 - [The manifest](manifest.md) — what the build records about placeholders.

@@ -29,3 +29,6 @@ coverage
 .env
 .env.local
 .env.*.local
+
+# Maizzle writes its types and our generated wrappers and types here
+.maizzle

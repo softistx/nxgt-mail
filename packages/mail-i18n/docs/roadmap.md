@@ -44,6 +44,10 @@ no dates here, and the version something shipped in is the only number.
   `@nxgt/mail/renderer`: the built `html` and `text` of a locale, the subject
   from the manifest, every placeholder filled and escaped at send time. Built,
   not yet published.
+- **Typed `t` in the editor** — the plugin writes
+  `.maizzle/nxgt-mail-i18n.d.ts` from the catalogues each time the config
+  loads, so an editor completes `t('…')` and flags an unknown key or a wrong
+  argument, and `vue-tsc` checks templates in CI. Built, not yet published.
 
 ## Next
 
@@ -55,11 +59,7 @@ no dates here, and the version something shipped in is the only number.
 
 ## Later
 
-- **Typed message keys** — `t('verifyEmail.titel')` a compile error in the
-  editor, not only a build failure, from a typing generated out of the
-  catalogues. An open question, not yet decided.
-
-A request is welcome as an
+Nothing yet. A request is welcome as an
 [issue](https://github.com/softistx/nxgt-mail/issues).
 
 ## Not planned

@@ -42,7 +42,8 @@
 	"scripts": {
 		"build": "bun run ../../build.ts",
 		"test": "bun test src",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "tsc --noEmit && bun run typecheck:templates",
+		"typecheck:templates": "cd test/fixture && maizzle prepare && vue-tsc -p tsconfig.json"
 	},
 	"dependencies": {
 		"@formatjs/icu-messageformat-parser": "3.5.20",
@@ -53,7 +54,8 @@
 		"@maizzle/tailwindcss": "1.5.6",
 		"@nxgt/mail-config": "workspace:*",
 		"@types/bun": "^1.4.2",
-		"vue": "3.5.43"
+		"vue": "3.5.43",
+		"vue-tsc": "^3.3.11"
 	},
 	"peerDependencies": {
 		"@maizzle/framework": "^6.1.7",

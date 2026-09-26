@@ -57,6 +57,12 @@ describe('a project built with the ui plugin', () => {
 		);
 	});
 
+	test('writes the types of brand for the editor, in .maizzle/ where the starter looks', async () => {
+		expect(await read('.maizzle/nxgt-mail-ui.d.ts')).toContain(
+			"import type {} from '@nxgt/mail-ui';",
+		);
+	});
+
 	test('mixes a tint over the background, where a client would drop an alpha', async () => {
 		const html = await read('dist/en/welcome.html');
 		// material-vue's bg-primary/15, and border-error/50.

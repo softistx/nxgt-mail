@@ -20,7 +20,9 @@ const props = withDefaults(
 );
 
 const { brand, css } = useUi('NxLayout');
-const globals = getCurrentInstance()?.appContext.config.globalProperties ?? {};
+// Read loosely: `t` and `locale` exist only when @nxgt/mail-i18n is listed.
+const globals: Record<string, unknown> =
+	getCurrentInstance()?.appContext.config.globalProperties ?? {};
 const lang =
 	props.lang ?? (typeof globals.locale === 'string' ? globals.locale : 'en');
 const style = `@import "@maizzle/tailwindcss";\n${css}`;

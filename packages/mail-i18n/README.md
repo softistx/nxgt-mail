@@ -43,7 +43,7 @@ Peers:
   is out of contract.
 - `vue` (`^3.5`), **optional** — Maizzle already brings it. List it in your
   own `package.json` when you want `t`, `locale` and `placeholder` typed in
-  templates ([Typing templates](#typing-templates)).
+  templates ([Editor and type checking](#editor-and-type-checking)).
 
 ## Setup
 
@@ -66,6 +66,22 @@ workspaces, pnpm), it fails **silently** unless `@maizzle/tailwindcss` is in
 your own `package.json`, as the `bun add` above makes it: the build succeeds,
 and no Tailwind utility is generated.
 
+```jsonc
+// tsconfig.json — the official starter's include; keep .maizzle/*.d.ts in it
+{ "include": ["**/*.vue", ".maizzle/*.d.ts"] }
+```
+
+```jsonc
+// package.json — the starter's postinstall
+{ "scripts": { "postinstall": "maizzle prepare" } }
+```
+
+Each time the config loads (`maizzle prepare`, `serve`, `build`), the plugin
+writes `.maizzle/nxgt-mail-i18n.d.ts`: the types of `t`, from your catalogues.
+The starter's `tsconfig.json` does not include `maizzle.config.ts`, so this
+file is how the editor learns them. See
+[Editor and type checking](#editor-and-type-checking).
+
 ## Exports
 
 | Export | What it is |
@@ -79,6 +95,7 @@ and no Tailwind utility is generated.
 | `Catalogue`, `Catalogues`, `ArgumentKind` | A catalogue as written, catalogues by locale, and `'string' \| 'number' \| 'date'` |
 | `Translate`, `LanguageProvider`, `MessageArgs` | What `createTranslator` answers and takes |
 | `Manifest`, `ManifestEmail` | The shape of `dist/mail-manifest.json` |
+| `TemplateMessages`, `TemplateKey`, `TemplateArgs` | The keys of `t` in templates and their arguments, filled from your catalogues by the generated `.maizzle/nxgt-mail-i18n.d.ts` |
 
 ## Usage
 
@@ -301,19 +318,35 @@ does not have, on a language with no catalogue, and on a message that does
 not format. An e-mail never goes out with `verifyEmail.title` or `{link}` in
 it. See [Translating outside templates](docs/guide/translator.md).
 
-### Typing templates
+### Editor and type checking
 
-```ts
-// env.d.ts, or any file your tsconfig includes
-import type {} from '@nxgt/mail-i18n';
+With the [Setup](#setup) above, Vue's language tools (the **Vue - Official**
+extension in the editor, `vue-tsc` in CI) complete the keys of `t` and flag a
+call the build would refuse:
+
+```vue
+<!-- emails/verify-email.vue, with the catalogue above -->
+<template>
+  <p>{{ t('verifyEmail.titel') }}</p>
+  <!-- Argument of type '"verifyEmail.titel"' is not assignable to parameter of type 'keyof TemplateMessages'. -->
+  <p>{{ t('verifyEmail.greeting') }}</p>
+  <!-- Expected 2 arguments, but got 1. -->
+  <p>{{ t('verifyEmail.expires', { minutes: placeholder('minutes') }) }}</p>
+  <!-- Type 'string' is not assignable to type 'number'. -->
+</template>
 ```
 
-The package declares `t`, `locale` and `placeholder` on Vue's
-`ComponentCustomProperties`. Vue's language tools (Volar in the editor,
-`vue-tsc`) then check them in every template. That declaration loads once
-something in your TypeScript program imports the package. A
-`maizzle.config.ts` in your tsconfig already does. Whether a key exists is
-not a type: the build checks it.
+```sh
+bun add -d vue-tsc vue
+bunx vue-tsc --noEmit   # after maizzle prepare, as in CI
+```
+
+The types come from the fallback locale's catalogue, merged with the
+`catalogues` option, and refresh on the next config load: saving a catalogue
+under `maizzle serve`, or running `maizzle prepare` or `maizzle build`.
+Without the generated file, the template checker does not know `t`,
+`locale` or `placeholder` at all (`Property 't' does not exist`); the build is
+not affected. See [Editor and type checking](docs/guide/editor.md).
 
 ## Traps
 
@@ -379,8 +412,23 @@ which fails the typecheck the moment it stops holding:
 The same file holds the calls that must keep compiling: a refusal that refuses
 the correct call is a bug.
 
-A message key is a `string`. Whether it exists, and whether its arguments are
-the right ones, is checked by the build, against the catalogues.
+**7 template mistakes, 7 refused** by the types generated from the
+catalogues, each measured by a `@vue-expect-error` in
+[`test/fixture/types/refusals.vue`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-i18n/test/fixture/types/refusals.vue),
+checked by `vue-tsc` after `maizzle prepare` (`bun run typecheck:templates`):
+
+1. A key the catalogues do not have (`t('verifyEmail.titel')`).
+2. A message's argument left out.
+3. An argument the message does not use.
+4. A plural's count given as a placeholder, which is text.
+5. A key written in `snake_case` (`t('verify_email.title')`).
+6. A key that may be a message without arguments or one with
+   (`t(ok ? 'verifyEmail.title' : 'verifyEmail.expires')`).
+7. The same, given the arguments of only one of them.
+
+The same file holds the template calls that must keep compiling. The build
+still checks every call against every locale's catalogue; the types report
+the same mistakes earlier.
 
 ## Documentation
 

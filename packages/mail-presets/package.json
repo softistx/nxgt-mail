@@ -43,7 +43,8 @@
 	"scripts": {
 		"build": "bun run ../../build.ts",
 		"test": "bun test src",
-		"typecheck": "tsc --noEmit",
+		"typecheck": "tsc --noEmit && bun run typecheck:templates",
+		"typecheck:templates": "cd test/fixture && maizzle prepare && vue-tsc -p tsconfig.json",
 		"samples": "bun run scripts/samples.ts"
 	},
 	"devDependencies": {
@@ -54,7 +55,8 @@
 		"@nxgt/mail-i18n": "workspace:*",
 		"@nxgt/mail-ui": "workspace:*",
 		"@types/bun": "^1.4.2",
-		"vue": "3.5.43"
+		"vue": "3.5.43",
+		"vue-tsc": "^3.3.11"
 	},
 	"peerDependencies": {
 		"@maizzle/framework": "^6.1.7",

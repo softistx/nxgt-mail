@@ -32,6 +32,10 @@ no dates here, and the version something shipped in is the only number.
   ours, and a package's templates such as `@nxgt/mail-presets`', render the
   same installed as in the workspace, with your `components/` still replacing
   ours by name. Built, not yet published.
+- **`brand` typed in the editor** — `ui()` writes
+  `.maizzle/nxgt-mail-ui.d.ts`, which a Maizzle project's `tsconfig.json`
+  includes, so templates see `brand` without importing anything. Built, not
+  yet published.
 
 ## Next
 
