@@ -10,12 +10,13 @@
  * The calls that **must keep compiling** are here too, unmarked: a refusal
  * that refuses the correct call is a bug.
  *
- * **Eight plausible mistakes, eight refused.**
+ * **Nine plausible mistakes, nine refused.**
  */
 
 import type { MailerHarness } from '../../src/conformance/index';
 import {
 	createMemoryMailer,
+	MailError,
 	type MailErrorCode,
 	type Mailer,
 	MailFailure,
@@ -90,3 +91,9 @@ void [
 	harness,
 ];
 void new MailFailure('x');
+
+// ── 9. A bare MailError ──────────────────────────────────────────────────────
+// It would pass a `code` check and fail `instanceof MailFailure`: a transport
+// throws one of the two subclasses.
+// @ts-expect-error — MailError is abstract.
+void new MailError('x');

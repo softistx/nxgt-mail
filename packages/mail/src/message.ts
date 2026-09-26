@@ -19,8 +19,8 @@ export function addressOf(address: Address): string {
 	return typeof address === 'string' ? address : address.address;
 }
 
+/** Refuses `address` unless it is an {@link Address}. `undefined` is refused too. */
 function checkAddress(address: Address | undefined, where: string): void {
-	if (address === undefined) return;
 	if (typeof address === 'string') {
 		if (!ADDRESS.test(address)) {
 			throw new MailRefused(`send: ${where} is not an e-mail address`);
@@ -58,6 +58,9 @@ export function checkMessage(message: MailMessage): void {
 	if (typeof message !== 'object' || message === null) {
 		throw new MailRefused('send: the message must be an object');
 	}
+	if (message.to === undefined || message.to === null) {
+		throw new MailRefused('send: to must hold at least one address');
+	}
 	const to = Array.isArray(message.to) ? message.to : [message.to];
 	if (to.length === 0) {
 		throw new MailRefused('send: to must hold at least one address');
@@ -65,8 +68,8 @@ export function checkMessage(message: MailMessage): void {
 	to.forEach((address, index) => {
 		checkAddress(address, Array.isArray(message.to) ? `to[${index}]` : 'to');
 	});
-	checkAddress(message.from, 'from');
-	checkAddress(message.replyTo, 'replyTo');
+	if (message.from !== undefined) checkAddress(message.from, 'from');
+	if (message.replyTo !== undefined) checkAddress(message.replyTo, 'replyTo');
 
 	for (const part of ['subject', 'html', 'text'] as const) {
 		if (typeof message[part] !== 'string') {

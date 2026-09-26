@@ -13,18 +13,14 @@
  * - `describeMailer`, which describes them all under bun:test, vitest or jest.
  */
 
-export {
-	allMailerCases,
-	failureCases,
-	sampleMessage,
-	sendCases,
-} from './cases';
+export { allMailerCases, failureCases, sendCases } from './cases/index';
 export {
 	describeMailer,
 	MAILER_SKIP_REASONS,
 	runMailerCase,
 } from './describe';
 export { referenceMailerHarness } from './reference';
+export { sampleMessage } from './sample';
 export type {
 	DeliveredMail,
 	MailerCase,

@@ -33,7 +33,8 @@ export interface MailErrorOptions {
 }
 
 /**
- * The base class of every error this package throws at call time.
+ * The base class of every error this package throws at call time. It is
+ * abstract: a transport throws {@link MailFailure} or {@link MailRefused}.
  *
  * **There is exactly one definition of this class.** A transport defines no
  * error class of its own and throws these, imported from its `@nxgt/mail`
@@ -43,9 +44,14 @@ export interface MailErrorOptions {
  * never a subject, never a link — the link in a verification e-mail is a
  * credential.
  */
-export class MailError extends Error {
+export abstract class MailError extends Error {
 	override name = 'MailError';
-	readonly code: MailErrorCode = 'MAIL_FAILED';
+	/**
+	 * Abstract, so a transport cannot throw a bare `MailError` that passes a
+	 * `code` check and fails `instanceof MailFailure`: it throws one of the two
+	 * subclasses.
+	 */
+	abstract readonly code: MailErrorCode;
 
 	constructor(message: string, options?: MailErrorOptions) {
 		super(message, { cause: options?.cause });

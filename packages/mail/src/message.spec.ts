@@ -43,6 +43,31 @@ describe('checkMessage', () => {
 			'send: to must hold at least one address',
 		],
 		[
+			'a missing to',
+			{ subject: 's', html: 'h', text: 't' },
+			'send: to must hold at least one address',
+		],
+		[
+			'an undefined recipient in the list',
+			{ ...message, to: [undefined] },
+			'send: to[0] is not an e-mail address',
+		],
+		[
+			'a message that is not an object',
+			null,
+			'send: the message must be an object',
+		],
+		[
+			'an address that is a number',
+			{ ...message, from: 42 },
+			'send: from is not an e-mail address',
+		],
+		[
+			'a name that is not a string',
+			{ ...message, to: { name: 1, address: 'a@b.c' } },
+			'send: to.name must be a string without a line break',
+		],
+		[
 			'a display name in a string',
 			{ ...message, to: 'Ada <ada@example.test>' },
 			'send: to is not an e-mail address',

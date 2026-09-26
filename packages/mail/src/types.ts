@@ -3,8 +3,10 @@
  * shows beside it.
  *
  * A string is **only** an address — `"Ada <ada@example.com>"` is refused — so a
- * transport never has to parse one, and a name can never smuggle a second
- * address into a header.
+ * transport never has to parse one. A name is free text (`Doe, John` is a
+ * name), refused only when it holds a line break; **quoting or encoding it
+ * is the transport's job**, and the conformance case `send.hostileName`
+ * fails a transport whose name lets a second recipient through.
  */
 export type Address =
 	| string

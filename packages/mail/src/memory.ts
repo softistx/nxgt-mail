@@ -50,7 +50,12 @@ export function createMemoryMailer(): MemoryMailer {
 		failNext(error) {
 			failures.push(
 				error ??
-					new MailFailure('send: the memory mailer was told to fail this send'),
+					new MailFailure(
+						'send: the memory mailer was told to fail this send',
+						{
+							cause: new Error('memory mailer: failNext'),
+						},
+					),
 			);
 		},
 		clear() {

@@ -1,4 +1,4 @@
-import { allMailerCases } from './cases';
+import { allMailerCases } from './cases/index';
 import type { MailerCase, MailerHarness, MailerRunner } from './types';
 
 /** Why a case did not run. A skip is always reported with its reason, never silent. */
@@ -87,7 +87,7 @@ export function describeMailer(options: {
 				const result = await runMailerCase(mailerCase, options.harness);
 				if ('skipped' in result) {
 					throw new Error(
-						`${mailerCase.id}: ${result.skipped} — pass faults: false to describeMailer to skip it on purpose`,
+						`conformance: ${mailerCase.id}: ${result.skipped} — pass faults: false to describeMailer to skip it on purpose`,
 					);
 				}
 			});

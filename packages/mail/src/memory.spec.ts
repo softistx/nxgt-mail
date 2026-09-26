@@ -49,6 +49,8 @@ describe('createMemoryMailer', () => {
 		);
 
 		expect(error).toBeInstanceOf(MailFailure);
+		// A cause, as the conformance suite demands of an outage.
+		expect((error as MailFailure).cause).toBeInstanceOf(Error);
 		expect(mailer.sent).toEqual([]);
 		expect(mailer.attempts).toBe(1);
 		// Only the next one: the one after goes through.
