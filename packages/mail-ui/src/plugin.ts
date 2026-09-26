@@ -1,0 +1,126 @@
+import { fileURLToPath } from 'node:url';
+import { defineMailPlugin, type MailPlugin } from '@nxgt/mail-config';
+import { themeCss } from './theme';
+
+/** Who sends the e-mail: the layout's header and footer. */
+export interface Brand {
+	/** The name the header shows without a logo, and the footer always. */
+	readonly name: string;
+	/** Where the header and the footer link to, as `https://acme.example`. */
+	readonly url?: string;
+	/** The header's image, by absolute URL: a mail client loads nothing relative. */
+	readonly logo?: {
+		readonly src: string;
+		/** In pixels. Default 120. */
+		readonly width?: number;
+		/** Default the brand's name. */
+		readonly alt?: string;
+	};
+}
+
+export interface UiOptions {
+	readonly brand: Brand;
+	/**
+	 * Tokens of `theme.css` to override, named without their `--`:
+	 * `{ 'color-primary': '#0f766e', 'radius-lg': '4px' }`. The tints of a
+	 * colour follow it.
+	 */
+	readonly theme?: Readonly<Record<string, string>>;
+}
+
+/** What `NxLayout` injects: the brand and the theme's CSS. */
+export interface UiContext {
+	readonly brand: Brand;
+	readonly css: string;
+}
+
+/** The `provide` key the components read the {@link UiContext} from. */
+export const UI_CONTEXT = 'nxgt:mail-ui';
+
+/** The components, beside `src/` and `dist/` in the package. */
+export const COMPONENTS_DIR = fileURLToPath(
+	new URL('../components', import.meta.url),
+);
+
+const isObject = (value: unknown): value is Record<string, unknown> =>
+	typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const isAbsoluteUrl = (value: unknown): value is string =>
+	typeof value === 'string' && /^https?:\/\/\S+$/.test(value);
+
+function checkBrand(brand: unknown): asserts brand is Brand {
+	if (!isObject(brand)) {
+		throw new TypeError(
+			"ui: brand must be an object, as { name: 'Acme', url: 'https://acme.example' }",
+		);
+	}
+	if (typeof brand.name !== 'string' || brand.name.trim() === '') {
+		throw new TypeError('ui: brand.name must be the name the e-mails show');
+	}
+	if (brand.url !== undefined && !isAbsoluteUrl(brand.url)) {
+		throw new TypeError('ui: brand.url must be an absolute http(s) URL');
+	}
+	const { logo } = brand;
+	if (logo === undefined) return;
+	if (!isObject(logo) || !isAbsoluteUrl(logo.src)) {
+		throw new TypeError(
+			'ui: brand.logo.src must be an absolute http(s) URL — a mail client loads nothing relative',
+		);
+	}
+	if (
+		logo.width !== undefined &&
+		(typeof logo.width !== 'number' ||
+			!Number.isInteger(logo.width) ||
+			logo.width <= 0)
+	) {
+		throw new TypeError('ui: brand.logo.width must be a width in pixels');
+	}
+	if (logo.alt !== undefined && typeof logo.alt !== 'string') {
+		throw new TypeError('ui: brand.logo.alt must be a string');
+	}
+}
+
+/**
+ * The components of `@nxgt/mail-ui`, for `defineMailConfig`:
+ *
+ * ```ts
+ * defineMailConfig({
+ *   plugins: [ui({ brand: { name: 'Acme' } }), i18n({ locales: ['en', 'fr'] })],
+ * });
+ * ```
+ *
+ * It registers `NxLayout`, `NxButton`, … — a project's own
+ * `components/NxButton.vue` replaces ours — gives every template `brand`,
+ * and themes the layout with `theme.css` and the `theme` overrides.
+ */
+export function ui(options: UiOptions): MailPlugin {
+	if (!isObject(options)) {
+		throw new TypeError(
+			"ui: options must be an object, as { brand: { name: 'Acme' } }",
+		);
+	}
+	checkBrand(options.brand);
+	if (options.theme !== undefined && !isObject(options.theme)) {
+		throw new TypeError(
+			"ui: theme must be an object of tokens, as { 'color-primary': '#0f766e' }",
+		);
+	}
+	const brand: Brand = Object.freeze({
+		...options.brand,
+		...(options.brand.logo && {
+			logo: Object.freeze({ ...options.brand.logo }),
+		}),
+	});
+	const context: UiContext = Object.freeze({
+		brand,
+		css: themeCss(options.theme ?? {}),
+	});
+	return defineMailPlugin({
+		name: 'ui',
+		components: { source: [{ path: COMPONENTS_DIR, prefix: 'Nx' }] },
+		vue: {
+			globalProperties: { brand },
+			plugins: [{ install: (app) => app.provide(UI_CONTEXT, context) }],
+		},
+	});
+}

@@ -41,6 +41,7 @@ template `emails/verify-email.vue`, and keys such as `verifyEmail.title`.
 - [`i18n: fallbackLocale must be one of locales`](#i18n-fallbacklocale-must-be-one-of-locales)
 - [`i18n: dir must be a folder of the project`](#i18n-dir-must-be-a-folder-of-the-project)
 - [`i18n: layout must be 'nested' or 'flat'`](#i18n-layout-must-be-nested-or-flat)
+- [`i18n: catalogues must be a list of catalogues by locale, as [{ en: {...}, fr: {...} }]`](#i18n-catalogues-must-be-a-list-of-catalogues-by-locale-as--en--fr--)
 - [`createTranslator: catalogues must be an object of catalogues by locale, as { en, fr }`](#createtranslator-catalogues-must-be-an-object-of-catalogues-by-locale-as--en-fr-)
 - [`createTranslator: getLanguage must be a locale or a function that answers one`](#createtranslator-getlanguage-must-be-a-locale-or-a-function-that-answers-one)
 
@@ -197,6 +198,32 @@ Leave them out for the defaults, `locales` and `emails`.
 
 ```ts
 i18n({ locales: ['en', 'fr'], layout: 'flat' });
+```
+
+### `i18n: catalogues must be a list of catalogues by locale, as [{ en: {...}, fr: {...} }]`
+
+**When:** loading `maizzle.config.ts`, when `catalogues` is one set of
+catalogues rather than a list of them — `catalogues: uiCatalogues` — or the
+list holds something else than an object of catalogues keyed by locale:
+`null`, or a locale whose catalogue is a string (`[{ en: 'Hello' }]`).
+**Why:** `catalogues` is a list, so that several packages can each ship
+their messages. Each entry is keyed by locale, like the project's
+`locales/<locale>.json`; each is merged key by key under the next, and the
+project's own catalogues over all of them.
+**Fix:** wrap it in a list, even when there is one:
+
+```ts
+// maizzle.config.ts
+import { defineMailConfig } from '@nxgt/mail-config';
+import { i18n } from '@nxgt/mail-i18n';
+import { ui, uiCatalogues } from '@nxgt/mail-ui';
+
+export default defineMailConfig({
+  plugins: [
+    ui({ brand: { name: 'Acme' } }),
+    i18n({ locales: ['en', 'fr'], catalogues: [uiCatalogues] }),   // not catalogues: uiCatalogues
+  ],
+});
 ```
 
 ### `createTranslator: catalogues must be an object of catalogues by locale, as { en, fr }`

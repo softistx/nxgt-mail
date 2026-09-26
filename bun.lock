@@ -63,6 +63,24 @@
         "vue",
       ],
     },
+    "packages/mail-ui": {
+      "name": "@nxgt/mail-ui",
+      "version": "0.0.0",
+      "devDependencies": {
+        "@maizzle/framework": "6.1.7",
+        "@maizzle/tailwindcss": "1.5.6",
+        "@nxgt/mail-config": "workspace:*",
+        "@nxgt/mail-i18n": "workspace:*",
+        "@types/bun": "^1.4.2",
+        "vue": "3.5.43",
+      },
+      "peerDependencies": {
+        "@maizzle/framework": "^6.1.7",
+        "@nxgt/mail-config": "workspace:^",
+        "typescript": "^6.0.3",
+        "vue": "^3.5.0",
+      },
+    },
   },
   "overrides": {
     "typescript": "~6.0.3",
@@ -189,6 +207,8 @@
     "@nxgt/mail-config": ["@nxgt/mail-config@workspace:packages/mail-config"],
 
     "@nxgt/mail-i18n": ["@nxgt/mail-i18n@workspace:packages/mail-i18n"],
+
+    "@nxgt/mail-ui": ["@nxgt/mail-ui@workspace:packages/mail-ui"],
 
     "@oxc-project/types": ["@oxc-project/types@0.151.0", "", {}, "sha512-J1yXrIlNDZVzE3ada310xeAw7nH8yCAyLPuUIsjKatFPmfn5bS1oW+cM+QsGOtVWd5nhSpbwZWx/rue+r5Z+PA=="],
 

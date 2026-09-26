@@ -1,0 +1,222 @@
+/*
+ * The @nxgt/material-vue light theme, as Tailwind tokens for an e-mail.
+ *
+ * The colours are material-vue's, in oklch: Maizzle writes each as a hex
+ * value (with a lab() one after it) and leaves no var() in the HTML.
+ *
+ * A mail client cannot be trusted with a colour's alpha, so material-vue's
+ * `bg-primary/15` is `bg-primary-15` here: the colour mixed at 15% over the
+ * background in sRGB — the colour a browser shows for the alpha — into a
+ * plain hex value. Each follows its colour when a project overrides it.
+ */
+@theme {
+	--radius-sm: 6px;
+	--radius-md: 8px;
+	--radius-lg: 10px;
+	--radius-xl: 14px;
+
+	--color-background: oklch(1 0 0);
+	--color-foreground: oklch(0.14 0.036 258.53);
+	--color-card: oklch(1 0 0);
+	--color-card-foreground: oklch(0.129 0.042 264.695);
+	--color-primary: oklch(46% 0.1135 276.35);
+	--color-primary-foreground: oklch(0.984 0.003 247.858);
+	--color-secondary: oklch(56.67% 0.1135 245.65);
+	--color-secondary-foreground: oklch(0.984 0.003 247.858);
+	--color-muted: oklch(0.968 0.007 247.896);
+	--color-muted-foreground: oklch(0.554 0.046 257.417);
+	--color-accent: oklch(0.9182 0.0077 228.86);
+	--color-accent-foreground: oklch(0.216 0.006 56.043);
+	--color-error: oklch(0.577 0.245 27.325);
+	--color-error-foreground: oklch(0.984 0.003 247.858);
+	--color-success: oklch(0.6 0.118 184.704);
+	--color-success-foreground: oklch(0.984 0.003 247.858);
+	--color-info: oklch(0.707 0.165 254.624);
+	--color-info-foreground: oklch(0.984 0.003 247.858);
+	--color-warning: oklch(0.646 0.222 41.116);
+	--color-warning-foreground: oklch(0.984 0.003 247.858);
+	--color-border: oklch(0.929 0.013 255.508);
+
+	/* The page around the card: material-vue's background-paper. */
+	--color-paper: color-mix(
+		in srgb,
+		var(--color-primary) 5%,
+		var(--color-background)
+	);
+
+	--color-primary-5: color-mix(
+		in srgb,
+		var(--color-primary) 5%,
+		var(--color-background)
+	);
+	--color-primary-10: color-mix(
+		in srgb,
+		var(--color-primary) 10%,
+		var(--color-background)
+	);
+	--color-primary-15: color-mix(
+		in srgb,
+		var(--color-primary) 15%,
+		var(--color-background)
+	);
+	--color-primary-40: color-mix(
+		in srgb,
+		var(--color-primary) 40%,
+		var(--color-background)
+	);
+	--color-primary-50: color-mix(
+		in srgb,
+		var(--color-primary) 50%,
+		var(--color-background)
+	);
+	--color-secondary-5: color-mix(
+		in srgb,
+		var(--color-secondary) 5%,
+		var(--color-background)
+	);
+	--color-secondary-10: color-mix(
+		in srgb,
+		var(--color-secondary) 10%,
+		var(--color-background)
+	);
+	--color-secondary-15: color-mix(
+		in srgb,
+		var(--color-secondary) 15%,
+		var(--color-background)
+	);
+	--color-secondary-40: color-mix(
+		in srgb,
+		var(--color-secondary) 40%,
+		var(--color-background)
+	);
+	--color-secondary-50: color-mix(
+		in srgb,
+		var(--color-secondary) 50%,
+		var(--color-background)
+	);
+	--color-info-5: color-mix(
+		in srgb,
+		var(--color-info) 5%,
+		var(--color-background)
+	);
+	--color-info-10: color-mix(
+		in srgb,
+		var(--color-info) 10%,
+		var(--color-background)
+	);
+	--color-info-15: color-mix(
+		in srgb,
+		var(--color-info) 15%,
+		var(--color-background)
+	);
+	--color-info-40: color-mix(
+		in srgb,
+		var(--color-info) 40%,
+		var(--color-background)
+	);
+	--color-info-50: color-mix(
+		in srgb,
+		var(--color-info) 50%,
+		var(--color-background)
+	);
+	--color-success-5: color-mix(
+		in srgb,
+		var(--color-success) 5%,
+		var(--color-background)
+	);
+	--color-success-10: color-mix(
+		in srgb,
+		var(--color-success) 10%,
+		var(--color-background)
+	);
+	--color-success-15: color-mix(
+		in srgb,
+		var(--color-success) 15%,
+		var(--color-background)
+	);
+	--color-success-40: color-mix(
+		in srgb,
+		var(--color-success) 40%,
+		var(--color-background)
+	);
+	--color-success-50: color-mix(
+		in srgb,
+		var(--color-success) 50%,
+		var(--color-background)
+	);
+	--color-warning-5: color-mix(
+		in srgb,
+		var(--color-warning) 5%,
+		var(--color-background)
+	);
+	--color-warning-10: color-mix(
+		in srgb,
+		var(--color-warning) 10%,
+		var(--color-background)
+	);
+	--color-warning-15: color-mix(
+		in srgb,
+		var(--color-warning) 15%,
+		var(--color-background)
+	);
+	--color-warning-40: color-mix(
+		in srgb,
+		var(--color-warning) 40%,
+		var(--color-background)
+	);
+	--color-warning-50: color-mix(
+		in srgb,
+		var(--color-warning) 50%,
+		var(--color-background)
+	);
+	--color-error-5: color-mix(
+		in srgb,
+		var(--color-error) 5%,
+		var(--color-background)
+	);
+	--color-error-10: color-mix(
+		in srgb,
+		var(--color-error) 10%,
+		var(--color-background)
+	);
+	--color-error-15: color-mix(
+		in srgb,
+		var(--color-error) 15%,
+		var(--color-background)
+	);
+	--color-error-40: color-mix(
+		in srgb,
+		var(--color-error) 40%,
+		var(--color-background)
+	);
+	--color-error-50: color-mix(
+		in srgb,
+		var(--color-error) 50%,
+		var(--color-background)
+	);
+	--color-foreground-5: color-mix(
+		in srgb,
+		var(--color-foreground) 5%,
+		var(--color-background)
+	);
+	--color-foreground-10: color-mix(
+		in srgb,
+		var(--color-foreground) 10%,
+		var(--color-background)
+	);
+	--color-foreground-15: color-mix(
+		in srgb,
+		var(--color-foreground) 15%,
+		var(--color-background)
+	);
+	--color-foreground-40: color-mix(
+		in srgb,
+		var(--color-foreground) 40%,
+		var(--color-background)
+	);
+	--color-foreground-50: color-mix(
+		in srgb,
+		var(--color-foreground) 50%,
+		var(--color-background)
+	);
+}

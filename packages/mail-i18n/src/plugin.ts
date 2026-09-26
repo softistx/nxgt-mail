@@ -2,7 +2,13 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, relative, resolve, sep } from 'node:path';
 import { isMainThread } from 'node:worker_threads';
 import { defineMailPlugin, type MailPlugin } from '@nxgt/mail-config';
-import { type Catalogue, checkCatalogues, type Messages } from './catalogues';
+import {
+	type Catalogue,
+	type Catalogues,
+	checkCatalogues,
+	layerCatalogues,
+	type Messages,
+} from './catalogues';
 import { buildManifest } from './manifest';
 import { templateProperties } from './template';
 import { createFormatter } from './translator';
@@ -24,6 +30,12 @@ export interface I18nOptions {
 	readonly emails?: string;
 	/** `nested` writes `dist/en/verify-email.html`; `flat` writes `dist/verify-email.en.html`. Default `nested`. */
 	readonly layout?: Layout;
+	/**
+	 * Catalogues under the project's own, as a package ships them —
+	 * `[uiCatalogues]` from `@nxgt/mail-ui`. Each is merged key by key under
+	 * the next, and the project's `<locale>.json` over all of them.
+	 */
+	readonly catalogues?: readonly Catalogues[];
 }
 
 /** Where the wrappers go, under the project. */
@@ -33,6 +45,9 @@ export const WRAPPERS_DIR = '.maizzle/i18n';
 export const MANIFEST_FILE = 'mail-manifest.json';
 
 const LOCALE = /^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$/;
+
+const isObject = (value: unknown): value is Record<string, unknown> =>
+	typeof value === 'object' && value !== null && !Array.isArray(value);
 
 function checkOptions(options: I18nOptions): void {
 	if (typeof options !== 'object' || options === null) {
@@ -74,6 +89,18 @@ function checkOptions(options: I18nOptions): void {
 		options.layout !== 'flat'
 	) {
 		throw new TypeError("i18n: layout must be 'nested' or 'flat'");
+	}
+	const { catalogues } = options;
+	if (
+		catalogues !== undefined &&
+		(!Array.isArray(catalogues) ||
+			!catalogues.every(
+				(source) => isObject(source) && Object.values(source).every(isObject),
+			))
+	) {
+		throw new TypeError(
+			'i18n: catalogues must be a list of catalogues by locale, as [{ en: {...}, fr: {...} }]',
+		);
 	}
 }
 
@@ -126,7 +153,10 @@ export function i18n(options: I18nOptions): MailPlugin {
 	const wrappersDir = resolve(cwd, WRAPPERS_DIR);
 
 	const messages = checkCatalogues(
-		readCatalogues(resolve(cwd, dirName), dirName, locales),
+		layerCatalogues(
+			options.catalogues ?? [],
+			readCatalogues(resolve(cwd, dirName), dirName, locales),
+		),
 		locales,
 		fallbackLocale,
 	);

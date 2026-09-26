@@ -1,0 +1,11 @@
+{
+	"common": {
+		"greeting": "Hi {name},"
+	},
+	"welcome": {
+		"subject": "Welcome to Acme, {name}",
+		"title": "Your account is ready",
+		"body": "You can sign in with the code below.",
+		"action": "Open my account"
+	}
+}
