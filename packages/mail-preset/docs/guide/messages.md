@@ -32,10 +32,10 @@ function.
 ## Overriding one key
 
 Write the same key in your own catalogue. It replaces the preset's in that
-locale only, and every other key is kept:
+locale only, and every other key is kept. In `messages/en.json` (a catalogue
+is strict JSON: no comment):
 
 ```json
-// messages/en.json
 {
 	"common": {
 		"footer": { "why": "You are receiving this e-mail because you have an Acme account." }
@@ -63,7 +63,6 @@ The preset holds `en` and `fr`. A config with `locales: ['en', 'fr', 'de']`
 needs every `common.*` key in `messages/de.json`, beside your own:
 
 ```json
-// messages/de.json
 {
 	"common": {
 		"greeting": "Hallo {name},",

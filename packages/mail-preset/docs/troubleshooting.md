@@ -200,5 +200,5 @@ troubleshooting page:
 - **A class that names no token** (`bg-primry`, `text-onPrimary`) —
   [dropped by Tailwind, and nothing fails](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-build/docs/troubleshooting.md#a-class-naming-a-token-that-does-not-exist-bg-primry-is-dropped-and-nothing-fails).
   The preset's classes are `bg-primary`, `text-on-primary`, `bg-canvas`,
-  `bg-surface`, `text-foreground`, `text-muted`, `border-border`, `bg-code`,
+  `bg-surface`, `text-foreground`, `text-muted`, `bg-border`, `text-primary`, `bg-code`,
   `font-sans`, `font-mono`, `rounded-button`, `rounded-card`.

@@ -96,7 +96,8 @@ The default brand is **neutral on purpose**: grey, and one accent
 (`#2563eb`), so an application that changes nothing sends something plain
 rather than something branded as someone else's. Every token, its default and
 its Tailwind class (`bg-primary`, `text-on-primary`, `rounded-button`,
-`font-mono`…) is in [Theme](docs/guide/theme.md).
+`font-mono`…) is in [Theme](docs/guide/theme.md). The options are typed
+`NxgtPresetOptions`, and the tokens `NxgtTheme` — both exported.
 
 ### The shared messages — `common.*`
 

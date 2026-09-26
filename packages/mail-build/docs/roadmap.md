@@ -4,9 +4,11 @@ Where `@nxgt/mail-build` is heading. A direction, not a commitment: there are
 no dates here, and the version something shipped in is the only number.
 
 `@nxgt/mail-build` is the build side of `@nxgt/mail`: a `devDependency` that
-runs at build time and is never shipped to a server. The run-time core, its
-transports and its presets have their own roadmap in
-[`@nxgt/mail`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/roadmap.md).
+runs at build time and is never shipped to a server. The run-time core and its
+transports have their own roadmap in
+[`@nxgt/mail`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/roadmap.md),
+and the default preset in
+[`@nxgt/mail-preset`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-preset/docs/roadmap.md).
 
 ## Now
 

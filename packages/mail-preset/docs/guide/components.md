@@ -189,7 +189,7 @@ Pass the code as a string prop — `'482913'` — so a leading zero survives.
 
 ## In a real project
 
-Two e-mails sharing the layout, sent from a route handler:
+One more e-mail on the layout, sent from a route handler:
 
 ```vue
 <!-- emails/order-placed.vue -->
