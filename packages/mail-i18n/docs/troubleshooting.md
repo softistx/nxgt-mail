@@ -95,6 +95,8 @@ template `emails/verify-email.vue`, and keys such as `verifyEmail.title`.
 - [A link's placeholder is prefixed with a domain](#a-links-placeholder-is-prefixed-with-a-domain)
 - [`.maizzle/` shows up in `git status`](#maizzle-shows-up-in-git-status)
 - [`No templates found`, or old templates, when Maizzle is built from a worker thread](#no-templates-found-or-old-templates-when-maizzle-is-built-from-a-worker-thread)
+- [The editor says `Property 't' does not exist` in a template, or completes no key](#the-editor-says-property-t-does-not-exist-in-a-template-or-completes-no-key)
+- [The editor flags a key you just added to a catalogue](#the-editor-flags-a-key-you-just-added-to-a-catalogue)
 - [A bug in `@nxgt/mail-i18n` itself](#a-bug-in-nxgtmail-i18n-itself)
 
 ---
@@ -980,6 +982,40 @@ or, under Vitest, run those tests in processes rather than threads:
 // vitest.config.ts
 export default { test: { pool: 'forks' } };
 ```
+
+### The editor says `Property 't' does not exist` in a template, or completes no key
+
+The same for `placeholder` or `locale`: `Property 'placeholder' does not exist
+on type 'ComponentPublicInstance<…>'`. The build is not affected.
+
+**When:** editing a template, in an editor with Vue's language tools, or in
+`vue-tsc`.
+**Why:** the types of `t` are in `.maizzle/nxgt-mail-i18n.d.ts`, which the
+plugin writes each time the config loads. Either it has not been written yet
+— a fresh clone, before any `maizzle prepare`, `serve` or `build` — or your
+`tsconfig.json` does not include `.maizzle/*.d.ts`.
+**Fix:** keep the starter's include and write the file once:
+
+```json
+{ "include": ["**/*.vue", ".maizzle/*.d.ts"] }
+```
+
+```sh
+bunx maizzle prepare
+```
+
+See [Editor and type checking](guide/editor.md).
+
+### The editor flags a key you just added to a catalogue
+
+`Argument of type '"welcome.footer"' is not assignable to parameter of type
+'keyof TemplateMessages'`, for a key that is in `locales/en.json`.
+
+**When:** right after adding a key, before the config loads again.
+**Why:** the file lists the keys of the catalogues as they were when the
+config last loaded.
+**Fix:** save the catalogue under `maizzle serve`, which reloads the config,
+or run `bunx maizzle prepare`.
 
 ### A bug in `@nxgt/mail-i18n` itself
 
