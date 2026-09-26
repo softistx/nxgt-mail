@@ -1,0 +1,142 @@
+import { MailRefused } from '../../errors';
+import { check, nothingDelivered, rejection, same } from '../assert';
+import { sampleMessage } from '../sample';
+import type { MailerCase } from '../types';
+
+/** What every send must do, with no fault injected. */
+export const sendCases: readonly MailerCase[] = [
+	{
+		id: 'send.answersSentMail',
+		title: 'a send answers SentMail, with a string id or null',
+		async run({ mailer }) {
+			const sent = await mailer.send(sampleMessage);
+			check(
+				typeof sent === 'object' && sent !== null && 'messageId' in sent,
+				'send did not answer an object with messageId',
+			);
+			check(
+				sent.messageId === null ||
+					(typeof sent.messageId === 'string' && sent.messageId !== ''),
+				'messageId must be a non-empty string or null',
+			);
+		},
+	},
+	{
+		id: 'send.deliversBytes',
+		title:
+			'a message is delivered byte for byte: accents, an emoji, a text part',
+		async run(context) {
+			await context.mailer.send(sampleMessage);
+			const delivered = await context.delivered();
+			check(
+				delivered.length === 1,
+				`expected 1 delivered message, got ${delivered.length}`,
+			);
+			const [mail] = delivered;
+			check(
+				mail?.subject === sampleMessage.subject,
+				'the subject was not delivered as sent',
+			);
+			check(
+				mail?.html === sampleMessage.html,
+				'the html part was not delivered as sent',
+			);
+			check(
+				mail?.text === sampleMessage.text,
+				'the text part was not delivered as sent',
+			);
+		},
+	},
+	{
+		id: 'send.recipients',
+		title:
+			'every recipient is delivered to, written as a string or with a name',
+		async run(context) {
+			await context.mailer.send({
+				...sampleMessage,
+				to: [
+					'ada@example.test',
+					{ name: 'Grace Hopper', address: 'grace@example.test' },
+				],
+			});
+			const [mail] = await context.delivered();
+			check(
+				same(mail?.to, ['ada@example.test', 'grace@example.test']),
+				'the recipients delivered are not the recipients sent',
+			);
+		},
+	},
+	{
+		id: 'send.hostileName',
+		title: 'a name holding an address and a comma reaches only its own address',
+		async run(context) {
+			// A name is free text, and quoting it is the transport's job. One that
+			// pastes it into a header unquoted hands mallory a copy.
+			await context.mailer.send({
+				...sampleMessage,
+				to: {
+					name: 'Ada <mallory@example.test>, "Eve" <eve@example.test>;',
+					address: 'ada@example.test',
+				},
+			});
+			const [mail] = await context.delivered();
+			check(
+				same(mail?.to, ['ada@example.test']),
+				'a name let a second recipient through',
+			);
+		},
+	},
+	{
+		id: 'send.refusesNoRecipient',
+		title:
+			'a message with no recipient is refused with MailRefused, and nothing is sent',
+		async run(context) {
+			const error = await rejection(
+				context.mailer.send({ ...sampleMessage, to: [] }),
+				'a send with no recipient',
+			);
+			check(
+				error instanceof MailRefused,
+				'a send with no recipient must throw MailRefused',
+			);
+			await nothingDelivered(context, 'the message was refused');
+		},
+	},
+	{
+		id: 'send.refusesLineBreakInSubject',
+		title:
+			'a line break in the subject is refused with MailRefused: it is a header injection',
+		async run(context) {
+			const error = await rejection(
+				context.mailer.send({
+					...sampleMessage,
+					subject: 'Hello\r\nBcc: eve@example.test',
+				}),
+				'a send with a line break in the subject',
+			);
+			check(
+				error instanceof MailRefused,
+				'a line break in the subject must throw MailRefused',
+			);
+			await nothingDelivered(context, 'the message was refused');
+		},
+	},
+	{
+		id: 'send.refusesWithoutTheValue',
+		title: 'a refusal names where the problem is, never the value',
+		async run({ mailer }) {
+			const error = await rejection(
+				mailer.send({ ...sampleMessage, to: 'not-an-address-7f3a' }),
+				'a send to something that is not an address',
+			);
+			check(
+				error instanceof MailRefused,
+				'a malformed address must throw MailRefused',
+			);
+			check(
+				!error.message.includes('not-an-address-7f3a'),
+				'the refusal message holds the refused value',
+			);
+		},
+	},
+];
