@@ -239,8 +239,9 @@ Then archive `nxgt-maizzle` — Steve decides when.
 
 ## Open questions — Steve's to answer
 
-- **Visibility.** The repository is created private. `nxgt-janus` went public
-  with its first release; the same is expected here, at step 6.
+- ~~**Visibility.**~~ Answered 2026-09-25: the repository is **public** from
+  step 0. GitHub would not run CI on it while private (a billing refusal), and
+  Steve chose to open it rather than pay for the minutes.
 - **Which transports first.** SMTP and Resend are proposed; say if another is
   needed before them.
 - **The default brand of `nxgtPreset`.** Neutral (grey and one accent) is

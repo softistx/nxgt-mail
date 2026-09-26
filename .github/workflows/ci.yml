@@ -30,9 +30,7 @@ on:
 jobs:
   ci:
     name: CI
-    # GitHub-hosted, the same runner as nxgt-janus. This repository is private
-    # until step 6, so these minutes are not free; the runner is unchanged
-    # because this file is the skeleton, not because the minutes are.
+    # GitHub-hosted. The repository is public, so these minutes are free.
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
