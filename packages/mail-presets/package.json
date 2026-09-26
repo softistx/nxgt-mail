@@ -47,6 +47,7 @@
 		"samples": "bun run scripts/samples.ts"
 	},
 	"devDependencies": {
+		"@nxgt/mail": "workspace:*",
 		"@maizzle/framework": "6.1.7",
 		"@maizzle/tailwindcss": "1.5.6",
 		"@nxgt/mail-config": "workspace:*",

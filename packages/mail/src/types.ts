@@ -15,7 +15,7 @@ export type Address =
 /**
  * The three parts of one e-mail, in one locale, with every value already
  * filled in and escaped: what the run-time renderer answers
- * (`mails.render(…)`, coming), or any hand-written function answering the
+ * (`createMailRenderer(…).render(…)`), or any hand-written function answering the
  * same shape — escaping is then that function's job.
  */
 export interface Rendered {

@@ -228,7 +228,7 @@ gives a test file `describe` and `it` as bare identifiers, not on `globalThis`.
 
 ## Type safety, counted
 
-**9 plausible mistakes, 9 refused** at compile time, each measured by a
+**12 plausible mistakes, 12 refused** at compile time, each measured by a
 `@ts-expect-error` in
 [`test/types/refusals.ts`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/test/types/refusals.ts)
 that fails the typecheck the moment it stops holding:
@@ -243,6 +243,9 @@ that fails the typecheck the moment it stops holding:
 8. A `MailErrorCode` the union does not declare.
 9. A bare `new MailError(…)` — it is abstract, so nothing throws an error that
    passes a `code` check and fails `instanceof MailFailure`.
+10. A `createMailRenderer` without `dir`, the build's output folder.
+11. A `getLanguage` given as a locale rather than a function answering one.
+12. A `render` variable that is neither a string nor a number (a `URL`).
 
 The same file holds the calls that must keep compiling: a refusal that refuses
 the correct call is a bug.
