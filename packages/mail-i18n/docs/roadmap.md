@@ -40,12 +40,13 @@ no dates here, and the version something shipped in is the only number.
 - **Typed templates** — `t`, `locale` and `placeholder` are known to Vue's
   template checker, so a template that calls them type-checks. Built, not yet
   published.
+- **A renderer that reads the manifest** — `createMailRenderer` from
+  `@nxgt/mail/renderer`: the built `html` and `text` of a locale, the subject
+  from the manifest, every placeholder filled and escaped at send time. Built,
+  not yet published.
 
 ## Next
 
-- **A renderer that reads the manifest** — `@nxgt/mail`'s
-  `createMailRenderer`: the built `html` and `text` of a locale, the subject
-  from the manifest, every placeholder filled and escaped at send time.
 - **A starter project** — the official Maizzle starter with
   `@nxgt/mail-config`, this plugin and the UI plugin wired in, built in CI, so
   the README's snippet is known to work.

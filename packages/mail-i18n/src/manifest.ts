@@ -29,6 +29,7 @@ export interface Manifest {
 	readonly emails: Readonly<Record<string, ManifestEmail>>;
 }
 
+// Copied in packages/mail/src/renderer.ts, which reads this manifest: change both.
 const PLACEHOLDER = /\{\{\s*([a-z][a-zA-Z0-9]*)\s*\}\}/g;
 /** An attribute that holds a URL, its value starting with a placeholder: that placeholder is the whole scheme. */
 const URL_ATTRIBUTE =

@@ -103,7 +103,7 @@ and `dist/mail-manifest.json` — each e-mail's variables, and its subject per
 locale. The application sends:
 
 ```ts
-import { createMailRenderer } from '@nxgt/mail';
+import { createMailRenderer } from '@nxgt/mail/renderer';
 
 const mails = createMailRenderer({ dir: 'dist', getLanguage: () => user.locale });
 await mailer.send({ to, ...mails.render('verify-email', { name, link }) });
@@ -270,8 +270,9 @@ templates.
 **Done when:** the fixture builds every preset in `en` and `fr` and matches
 `samples/` ✅; `only`, a project template and a project message override ✅;
 Maizzle's caniemail check reports only `html-align` for each preset ✅.
+Merged in PR #11.
 
-## Step 6 — The run-time renderer, in `@nxgt/mail`
+## Step 6 — The run-time renderer, in `@nxgt/mail` ✅
 
 `createMailRenderer({ dir, getLanguage, fallbackLocale })`, still with no
 dependency:
@@ -288,7 +289,18 @@ dependency:
 
 **Done when:** specs render the fixture's built output in both locales;
 injection specs (a `<script>` name, a `javascript:` link, a line break in a
-subject argument) pass.
+subject argument) pass. ✅ — `packages/mail/test/built` for the unit specs,
+and the presets' real build in `mail-presets`' build spec.
+
+As built: the manifest records which placeholders start a URL attribute, not
+which attribute, so `mailto:` is accepted in any URL variable. A value that is
+not a safe URL throws `MailRefused` (the message is refused, and would be
+again); a missing, unknown or non-text variable, an unknown e-mail or locale
+throws a plain `Error` or `TypeError` — a mistake in the calling code. The
+manifest and every file are read when the renderer is created, so a missing
+build fails at start-up rather than at the first send. The renderer is its own
+entry, `@nxgt/mail/renderer`, because it imports `node:fs`: `@nxgt/mail`,
+which every transport imports, stays free of Node built-ins.
 
 ## Step 7 — Transports
 

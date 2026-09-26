@@ -2,7 +2,7 @@
 	"name": "@nxgt/mail",
 	"version": "0.0.0",
 	"private": true,
-	"description": "The run-time port for transactional e-mail: the Mailer a transport implements, its errors, a memory transport and locale selection. No dependency.",
+	"description": "The run-time side of transactional e-mail: the renderer that fills a Maizzle build made with @nxgt/mail-i18n, the Mailer a transport implements, its errors, a memory transport and locale selection. No dependency.",
 	"license": "MIT",
 	"type": "module",
 	"main": "./dist/index.js",
@@ -19,6 +19,11 @@
 			"types": "./dist/index.d.ts",
 			"import": "./dist/index.js",
 			"default": "./dist/index.js"
+		},
+		"./renderer": {
+			"types": "./dist/renderer.d.ts",
+			"import": "./dist/renderer.js",
+			"default": "./dist/renderer.js"
 		},
 		"./conformance": {
 			"types": "./dist/conformance/index.d.ts",
@@ -51,6 +56,7 @@
 	"nxgt": {
 		"entrypoints": [
 			"src/index.ts",
+			"src/renderer.ts",
 			"src/conformance/index.ts"
 		]
 	},

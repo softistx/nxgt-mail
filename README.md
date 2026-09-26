@@ -33,7 +33,7 @@ At send time, fill the values only known then, escaped, and hand the e-mail to
 a transport:
 
 ```ts
-import { createMailRenderer } from '@nxgt/mail';
+import { createMailRenderer } from '@nxgt/mail/renderer';
 
 const mails = createMailRenderer({ dir: 'dist', getLanguage: () => user.locale });
 await mailer.send({ to, ...mails.render('verify-email', { name, link }) });

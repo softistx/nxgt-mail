@@ -14,9 +14,20 @@ manifest.emails['verify-email']?.variables; // ['link', 'name']
 manifest.emails['verify-email']?.subject.fr; // 'Confirmez votre adresse e-mail, {{ name }}'
 ```
 
-The run-time renderer planned in `@nxgt/mail` reads this file, so that
-sending takes one call. It is not released yet. Until then, and for checks of
-your own, the file is plain JSON, typed by `Manifest`.
+`createMailRenderer` from `@nxgt/mail/renderer` reads this file, and every file it
+lists, so that sending takes one call:
+
+```ts
+import { createMailRenderer } from '@nxgt/mail/renderer';
+
+const mails = createMailRenderer({ dir: 'dist' }); // reads dist/mail-manifest.json
+mails.render('verify-email', { name: 'Ada', link: 'https://app.example.com/verify?token=abc' });
+```
+
+It requires every variable in `variables`, refuses a value of a URL variable
+that is not an `http:`, `https:` or `mailto:` URL, and refuses a build whose
+`text` is `null`. See [Rendering](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/guide/rendering.md) in `@nxgt/mail`. For checks of your
+own, the file is plain JSON, typed by `Manifest`.
 
 ## An example
 
@@ -230,5 +241,6 @@ own, a folder of the repository, a build artefact.
 
 ## See also
 
+- [Rendering](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/guide/rendering.md) in `@nxgt/mail` — the renderer that reads the manifest at send time.
 - [Templates](templates.md) — where placeholders come from.
 - [Catalogues](catalogues.md#the-subject) — the subject of each e-mail.

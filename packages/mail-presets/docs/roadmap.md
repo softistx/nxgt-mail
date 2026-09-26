@@ -26,12 +26,13 @@ are no dates here, and the version something shipped in is the only number.
   [`samples/`](https://github.com/softistx/nxgt-mail/tree/develop/packages/mail-presets/samples),
   checked against a fresh build, so you can see an e-mail before installing
   anything. Built, not yet published.
+- **A renderer that sends them** — `createMailRenderer` from
+  `@nxgt/mail/renderer` renders the presets' build at send time, each value
+  filled and escaped; the build spec renders every preset with it. Built, not
+  yet published.
 
 ## Next
 
-- **A renderer that sends them** — `@nxgt/mail`'s `createMailRenderer`: the
-  built `html` and `text` of a preset in a locale, its subject from the
-  manifest, every placeholder filled and escaped at send time.
 - **The first release, 0.1.0** — `@nxgt/mail-presets` on npm, with
   `@nxgt/mail-config`, `@nxgt/mail-i18n` and `@nxgt/mail-ui`, building every
   preset in an empty Maizzle project with the README's own snippet.

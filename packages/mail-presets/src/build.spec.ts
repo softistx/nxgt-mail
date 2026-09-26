@@ -1,6 +1,8 @@
 import { beforeAll, describe, expect, test } from 'bun:test';
 import { cpSync, mkdirSync, readdirSync, rmSync, symlinkSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { MailRefused } from '@nxgt/mail';
+import { createMailRenderer } from '@nxgt/mail/renderer';
 import { PRESETS } from './presets';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
@@ -108,6 +110,38 @@ describe('the presets, built by a project', () => {
 		expect(await read('dist-override/fr/sign-in-code.html')).toContain(
 			'Votre code de connexion',
 		);
+	});
+
+	test('@nxgt/mail renders the build in both locales, filling and escaping each value', () => {
+		const mails = createMailRenderer({ dir: `${fixture}/dist` });
+		expect(mails.emails).toEqual([...PRESETS].sort());
+		const variables = {
+			inviter: 'Grace <script>',
+			organization: 'Analytical & Co',
+			link: 'https://acme.example/join?token=t0k&x=1',
+		};
+		const en = mails.render('invitation', variables);
+		expect(en.subject).toBe(
+			'Grace <script> invited you to join Analytical & Co',
+		);
+		expect(en.html).toContain('<html lang="en"');
+		expect(en.html).toContain('Grace &lt;script&gt;');
+		expect(en.html).toContain(
+			'href="https://acme.example/join?token=t0k&amp;x=1"',
+		);
+		expect(en.html).not.toContain('{{');
+		expect(en.text).toContain(
+			'Grace <script> invited you to join Analytical & Co',
+		);
+		const fr = mails.render('invitation', variables, { locale: 'fr' });
+		expect(fr.subject).toBe(
+			'Grace <script> vous invite à rejoindre Analytical & Co',
+		);
+		expect(fr.html).toContain('<html lang="fr"');
+		expect(fr.text).not.toContain('{{');
+		expect(() =>
+			mails.render('magic-link', { link: 'javascript:alert(1)' }),
+		).toThrow(MailRefused);
 	});
 
 	test('caniemail reports for Gmail, Outlook and Apple Mail only the known partial support', async () => {

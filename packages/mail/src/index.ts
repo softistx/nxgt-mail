@@ -1,7 +1,9 @@
 /**
  * `@nxgt/mail` — the run-time side of transactional e-mail: the `Mailer` port
  * a transport implements, the shapes it sends, the errors it throws, a memory
- * transport for tests, and locale selection. No dependency.
+ * transport for tests, and locale selection. No dependency, and no Node
+ * built-in: it runs anywhere. The renderer that fills a build of
+ * `@nxgt/mail-i18n` is `@nxgt/mail/renderer`, which reads files.
  *
  * ## The one rule this package is built around
  *

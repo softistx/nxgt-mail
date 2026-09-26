@@ -10,11 +10,16 @@ How the messages are shaped:
   verification e-mail is a credential, and it never reaches a log through an
   error.
 - **Every message starts with the call you wrote**: `send: …`,
-  `pickLocale: …`, `describeMailer: …`. A conformance case that fails starts
-  with `conformance: …`.
+  `createMailRenderer: …`, `render: …`, `pickLocale: …`, `describeMailer: …`.
+  A conformance case that fails starts with `conformance: …`.
 - **A `TypeError` is a wiring mistake**: it comes from how the application
-  was put together, never from a message being sent. Fix the code; no
-  handler should answer one.
+  was put together — or, from `render`, from how the call was written —
+  never from what a recipient did. Fix the code; no handler should answer
+  one.
+- **A plain `Error` from `createMailRenderer` or `render` is a build out of
+  step with the code**: a build missing, broken or older than the server, or
+  a name or variable the build does not have. It is fixed by rebuilding or
+  by fixing the call, never handled.
 - **A `MailError` is a refusal at call time.** It is a `MailFailure`
   (`code: 'MAIL_FAILED'`) or a `MailRefused` (`code: 'MAIL_REFUSED'`), and
   the codes are a union you can `switch` on exhaustively.
@@ -52,6 +57,29 @@ How the messages are shaped:
 **Locale**
 - [`pickLocale: supported must hold at least one locale`](#picklocale-supported-must-hold-at-least-one-locale)
 - [`pickLocale: fallback must be one of supported`](#picklocale-fallback-must-be-one-of-supported)
+
+**Creating the renderer**
+- [`createMailRenderer: options must be an object, as { dir: 'dist' }`](#createmailrenderer-options-must-be-an-object-as--dir-dist-)
+- [`createMailRenderer: dir must be the folder maizzle build wrote, as dist`](#createmailrenderer-dir-must-be-the-folder-maizzle-build-wrote-as-dist)
+- [`createMailRenderer: getLanguage must be a function that answers the wanted locales, as () => user.locale`](#createmailrenderer-getlanguage-must-be-a-function-that-answers-the-wanted-locales-as---userlocale)
+- [`createMailRenderer: fallbackLocale must be one of the build's locales, <locales>`](#createmailrenderer-fallbacklocale-must-be-one-of-the-builds-locales-locales)
+- [`createMailRenderer: <dir>/mail-manifest.json cannot be read — run maizzle build, and deploy its output folder`](#createmailrenderer-dirmail-manifestjson-cannot-be-read--run-maizzle-build-and-deploy-its-output-folder)
+- [`createMailRenderer: <dir>/<locale>/<email>.html cannot be read — run maizzle build, and deploy its output folder`](#createmailrenderer-dirlocaleemailhtml-cannot-be-read--run-maizzle-build-and-deploy-its-output-folder)
+- [`createMailRenderer: <dir>/mail-manifest.json is not valid JSON`](#createmailrenderer-dirmail-manifestjson-is-not-valid-json)
+- [`createMailRenderer: <dir>/mail-manifest.json is not a manifest of @nxgt/mail-i18n — build with its i18n() plugin`](#createmailrenderer-dirmail-manifestjson-is-not-a-manifest-of-nxgtmail-i18n--build-with-its-i18n-plugin)
+- [`createMailRenderer: mail-manifest.json describes <email> in a shape this version does not read — rebuild with the same version of @nxgt/mail-i18n`](#createmailrenderer-mail-manifestjson-describes-email-in-a-shape-this-version-does-not-read--rebuild-with-the-same-version-of-nxgtmail-i18n)
+- [`createMailRenderer: <email> has no text part in <locale> — keep Maizzle's plaintext on, as @nxgt/mail-config sets it`](#createmailrenderer-email-has-no-text-part-in-locale--keep-maizzles-plaintext-on-as-nxgtmail-config-sets-it)
+- [`Could not resolve "node:fs"`, or `No such module "node:fs"`, on an edge runtime](#could-not-resolve-nodefs-or-no-such-module-nodefs-on-an-edge-runtime)
+
+**Rendering**
+- [`render: <email> is not an e-mail of the build — one of <emails>`](#render-email-is-not-an-e-mail-of-the-build--one-of-emails)
+- [`render: the locale asked for is not one of the build's, <locales>`](#render-the-locale-asked-for-is-not-one-of-the-builds-locales)
+- [`render: the variables of <email> must be an object, as { name: 'Ada' }`](#render-the-variables-of-email-must-be-an-object-as--name-ada-)
+- [`render: <email> has no variable <key> — it takes <variables>`](#render-email-has-no-variable-key--it-takes-variables)
+- [`render: <email> needs the variable <key>`](#render-email-needs-the-variable-key)
+- [`render: <email>: <key> must be a string or a finite number`](#render-email-key-must-be-a-string-or-a-finite-number)
+- [`render: <email>: <key> must be an http:, https: or mailto: URL`](#render-email-key-must-be-an-http-https-or-mailto-url)
+- [A link breaks when its value holds `&`, `+`, `#` or `/`: `?token={{ token }}` is not percent-encoded](#a-link-breaks-when-its-value-holds----or--token-token--is-not-percent-encoded)
 
 **Conformance (transport authors)**
 - [A transport that translates its failures](#a-transport-that-translates-its-failures)
@@ -106,6 +134,14 @@ entry declaration's re-exports do not resolve, so everything they carry is
 missing.
 **Fix:** `"moduleResolution": "bundler"`, as in the entry above.
 
+The other cause: `createMailRenderer`, `MailRenderer`, `MailRendererOptions`,
+`RenderOptions` or `MailVariables` imported from `@nxgt/mail`. The renderer is
+its own entry, since it reads files with `node:fs`:
+
+```ts
+import { createMailRenderer } from '@nxgt/mail/renderer';
+```
+
 ### `TS2741: Property 'to' is missing in type '…' but required in type 'MailMessage'.`
 
 **When:** `tsc`, where you build the message you pass to `mailer.send`,
@@ -130,8 +166,8 @@ await mailer.send({ ...rendered, to: 'ada@example.com' });
 **Why:** every e-mail carries a plain-text part: some clients show nothing
 else, and spam filters score an e-mail without one. The port has no room for
 a message without it.
-**Fix:** write the text part. The run-time renderer (coming) always answers
-one, from the plain text Maizzle builds beside the HTML:
+**Fix:** write the text part. The run-time renderer (`@nxgt/mail/renderer`)
+always answers one, from the plain text Maizzle builds beside the HTML:
 
 ```ts
 import type { MailMessage } from '@nxgt/mail';
@@ -538,6 +574,385 @@ const supported = ['en', 'fr'] as const;
 
 pickLocale('de', supported, 'en'); // 'en'
 ```
+
+---
+
+## Creating the renderer
+
+`createMailRenderer` reads the manifest and every file it lists **once, when
+it is called**. A mistake in the options is a `TypeError`, and a missing or
+broken build is an `Error`. Both are thrown there, at start-up, never at the
+first send. Nothing about them can be handled: fix the wiring or the
+deployment, and restart.
+
+### `createMailRenderer: options must be an object, as { dir: 'dist' }`
+
+A `TypeError`.
+
+**When:** `createMailRenderer()` with no argument, or with a string:
+typically `createMailRenderer('dist')`.
+**Why:** the options are one object, and `dir` is required in it.
+**Fix:**
+
+```ts
+import { createMailRenderer } from '@nxgt/mail/renderer';
+
+const mails = createMailRenderer({ dir: 'dist' });
+```
+
+### `createMailRenderer: dir must be the folder maizzle build wrote, as dist`
+
+A `TypeError`.
+
+**When:** `createMailRenderer({})`, or `dir` set to `''`, to whitespace or
+to something that is not a string: typically an environment variable that is
+not set in this environment (`dir: process.env.MAIL_DIR`).
+**Why:** `dir` is where `mail-manifest.json` is. There is no default, so a
+deployment that forgot the variable does not silently read another folder.
+**Fix:** pass the output folder of `maizzle build`. When it comes from the
+environment, check that it is set before the call.
+
+### `createMailRenderer: getLanguage must be a function that answers the wanted locales, as () => user.locale`
+
+A `TypeError`.
+
+**When:** `createMailRenderer({ dir, getLanguage: user.locale })`: the locale
+passed as a value rather than a function that answers it.
+**Why:** the renderer is created once, at start-up, and asks `getLanguage` at
+each `render`, so the recipient of each send decides the locale.
+**Fix:**
+
+```ts
+import { createMailRenderer } from '@nxgt/mail/renderer';
+
+declare const currentUser: () => { locale: string | null };
+
+const mails = createMailRenderer({
+  dir: 'dist',
+  getLanguage: () => currentUser().locale,
+});
+```
+
+To render one e-mail in a locale you already hold, pass it to `render`
+instead: `mails.render('verify-email', variables, { locale: 'fr' })`.
+
+### `createMailRenderer: fallbackLocale must be one of the build's locales, <locales>`
+
+A `TypeError`. `<locales>` lists the locales the build wrote, as `en, fr`.
+
+**When:** `createMailRenderer({ dir, fallbackLocale: 'de' })`, when the build
+has no `de`: typically a fallback copied from another project, or a locale
+removed from `i18n({ locales })` without updating the server.
+**Why:** the fallback is what an e-mail is rendered in when no wanted locale
+was built, so it must be one of them.
+**Fix:** leave `fallbackLocale` out to use the one the build was made with
+(`i18n({ fallbackLocale })`), or name one of the locales in the message.
+
+### `createMailRenderer: <dir>/mail-manifest.json cannot be read — run maizzle build, and deploy its output folder`
+
+An `Error`, its `cause` the file system's error (`ENOENT`, `EACCES`).
+
+**When:** start-up, in three situations:
+
+- `maizzle build` has not run, or wrote to another folder
+  (`productionConfig(config, { output: { path: 'dist-production' } })`
+  writes to `dist-production`, not `dist`).
+- The server was deployed without the build: the image or the bundle holds
+  the server's code, but not the output folder.
+- `dir` is relative. It resolves against the folder the process was started
+  from, not against the file that calls `createMailRenderer`, so the same
+  code works from the project root and fails from anywhere else.
+
+**Why:** the renderer fills the files `maizzle build` wrote; it never builds
+them, so the build has to be where `dir` says, next to the running server.
+**Fix:** build before you deploy, ship the output folder with the server, and
+resolve `dir` from the calling file rather than from the working directory:
+
+```ts
+import { fileURLToPath } from 'node:url';
+import { createMailRenderer } from '@nxgt/mail/renderer';
+
+const mails = createMailRenderer({
+  // The folder `maizzle build` wrote, relative to this file.
+  dir: fileURLToPath(new URL('../emails/dist', import.meta.url)),
+});
+```
+
+```dockerfile
+# Next to the server's code, in the image that runs it.
+COPY emails/dist ./emails/dist
+```
+
+When the server is bundled, `new URL(…, import.meta.url)` is relative to the
+bundle's file: point it at where the output folder sits in the deployment.
+
+### `createMailRenderer: <dir>/<locale>/<email>.html cannot be read — run maizzle build, and deploy its output folder`
+
+The same message, for a file the manifest lists rather than the manifest
+itself: `<email>.html` or `<email>.txt`, under the path the build wrote.
+
+**When:** start-up, when the manifest was found but a file it lists was not:
+the output folder was copied only in part, cleaned after the build, or the
+manifest comes from a newer build than the files beside it.
+**Why:** the manifest and the files are one build; the renderer reads every
+file it lists at start-up, so a missing one fails there and not at the send
+that needs it.
+**Fix:** deploy the output folder whole, from a single `maizzle build`. Do
+not copy files out of it one by one.
+
+### `createMailRenderer: <dir>/mail-manifest.json is not valid JSON`
+
+An `Error`, its `cause` the `SyntaxError`.
+
+**When:** start-up, when `mail-manifest.json` was cut short or edited: a copy
+interrupted mid-way, a merge conflict in a committed build, a hand edit.
+**Why:** the file is written by `@nxgt/mail-i18n` at the end of a build, and
+never meant to be edited.
+**Fix:** run `maizzle build` again, and deploy its output.
+
+### `createMailRenderer: <dir>/mail-manifest.json is not a manifest of @nxgt/mail-i18n — build with its i18n() plugin`
+
+An `Error`.
+
+**When:** start-up, when `dir` points at a folder whose `mail-manifest.json`
+has no `locales` list (or an empty one), no `fallbackLocale` or no `emails`
+object: typically a `mail-manifest.json` written by something else.
+**Why:** the renderer reads only the manifest the `i18n()` plugin of
+`@nxgt/mail-i18n` writes. A Maizzle build without that plugin writes no
+manifest at all, and fails with
+[`cannot be read`](#createmailrenderer-dirmail-manifestjson-cannot-be-read--run-maizzle-build-and-deploy-its-output-folder)
+instead.
+**Fix:** build with the plugin:
+
+```ts
+// maizzle.config.ts
+import { defineMailConfig } from '@nxgt/mail-config';
+import { i18n } from '@nxgt/mail-i18n';
+
+export default defineMailConfig({
+  plugins: [i18n({ locales: ['en', 'fr'], fallbackLocale: 'en' })],
+});
+```
+
+### `createMailRenderer: mail-manifest.json describes <email> in a shape this version does not read — rebuild with the same version of @nxgt/mail-i18n`
+
+An `Error`.
+
+**When:** start-up, when an e-mail's entry in the manifest lacks
+`variables`, `urlVariables`, `subject` or `files`, or has no subject or HTML
+file for one of the build's locales.
+**Why:** the build and the server use versions of `@nxgt/mail-i18n` and
+`@nxgt/mail` that do not agree on the manifest: a build committed or cached
+from an older version, read by a newer server, or the reverse.
+**Fix:** upgrade `@nxgt/mail-i18n` and `@nxgt/mail` together, then run
+`maizzle build` again and deploy its output. If both are current and the
+build is fresh, it is a [bug in this package](#a-bug-in-nxgtmail-itself).
+
+### `createMailRenderer: <email> has no text part in <locale> — keep Maizzle's plaintext on, as @nxgt/mail-config sets it`
+
+An `Error`.
+
+**When:** start-up, after a build whose config turned Maizzle's plain-text
+output off: `plaintext: false`, in the project's config or in a plugin that
+comes after `@nxgt/mail-config`'s base.
+**Why:** every e-mail is sent with a text part — `Rendered` and `MailMessage`
+require one — and the renderer only fills it; it does not derive it from the
+HTML at send time.
+**Fix:** remove the `plaintext: false`. `defineMailConfig` sets
+`plaintext: true`; keep it, then run `maizzle build` again.
+
+### `Could not resolve "node:fs"`, or `No such module "node:fs"`, on an edge runtime
+
+The first as a bundler prints it (esbuild, and the tools built on it), the
+second as a Workers runtime does. Other edge runtimes word it their own way.
+
+**When:** bundling or starting code that imports `@nxgt/mail/renderer` for a
+runtime without Node's `node:fs`: an edge function, a worker without a Node
+compatibility mode. `@nxgt/mail` itself imports no Node built-in, so code
+that only uses the `Mailer` port, the errors or a transport is not affected.
+**Why:** `createMailRenderer` reads the build from a file system at start-up.
+A runtime without one has no files to read, so even with a compatibility
+flag that lets the import through, the renderer cannot find the build.
+**Fix:** render in a runtime with a file system — Node, Bun or Deno — and
+send from there. `render` is synchronous and cheap once the renderer is
+created, so it belongs in the server that owns the send, not at the edge.
+
+---
+
+## Rendering
+
+`render` refuses a call it cannot fill correctly, and **sends nothing wrong
+instead**. Every message below but the URL refusal names a mistake in the calling
+code or a server out of step with its build: an `Error` or a `TypeError`,
+with no `code`, to be fixed rather than handled. A URL that is refused is a
+`MailRefused`, `code: 'MAIL_REFUSED'`, because the URL may come from outside.
+No message holds a value: a link in a verification e-mail is a credential.
+
+### `render: <email> is not an e-mail of the build — one of <emails>`
+
+An `Error`. `<emails>` lists the e-mails the build wrote.
+
+**When:** `mails.render('welcome', …)` when the build has no `welcome`:
+a typo, an e-mail added to the code before its template was built, or a
+server deployed with an older build. An e-mail in a subfolder is named with
+its folder, as `auth/reset-password`.
+**Why:** the renderer only fills what `maizzle build` wrote; the list is in
+`mails.emails`.
+**Fix:** use a name from the message. To catch the mismatch at start-up
+rather than at a send, check the names your code uses against `mails.emails`:
+
+```ts
+import { createMailRenderer } from '@nxgt/mail/renderer';
+
+const mails = createMailRenderer({ dir: 'dist' });
+const used = ['verify-email', 'reset-password'];
+const missing = used.filter((name) => !mails.emails.includes(name));
+if (missing.length > 0) {
+  throw new Error(`e-mails missing from the build: ${missing.join(', ')}`);
+}
+```
+
+### `render: the locale asked for is not one of the build's, <locales>`
+
+An `Error`.
+
+**When:** `render(email, variables, { locale })`, with a `locale` the build
+did not write: typically a stored user locale passed as is (`'fr-CA'`,
+`'de'`). A locale from `getLanguage` never fails this way: it is picked with
+`pickLocale`, which falls back.
+**Why:** the `locale` option is taken as given — it says "this locale", not
+"prefer this one".
+**Fix:** let `getLanguage` answer the wanted locale, or pick one of the
+build's yourself:
+
+```ts
+import { pickLocale } from '@nxgt/mail';
+import { createMailRenderer } from '@nxgt/mail/renderer';
+
+declare const storedLocale: string | null;
+
+const mails = createMailRenderer({ dir: 'dist' });
+const locale = pickLocale(storedLocale, mails.locales, 'en');
+const rendered = mails.render('sign-in-code', { code: '123456' }, { locale });
+```
+
+### `render: the variables of <email> must be an object, as { name: 'Ada' }`
+
+A `TypeError`.
+
+**When:** `render(email, variables)` with `variables` that is `null`, an
+array or a string: typically the value itself passed where its object was
+expected, as `render('sign-in-code', code)`.
+**Why:** each placeholder is filled by name, from an object.
+**Fix:** `mails.render('sign-in-code', { code })`. An e-mail with no
+placeholder takes no second argument at all.
+
+### `render: <email> has no variable <key> — it takes <variables>`
+
+An `Error`. `<variables>` lists every placeholder of the e-mail, or `none`.
+
+**When:** `render`, with a key the e-mail does not have: a typo, a variable
+removed from the template, or a whole object spread into the call
+(`render('verify-email', { ...user, link })`).
+**Why:** an unknown key is refused rather than ignored: it is a typo, a
+template out of step with the code, or data you did not mean to put in an
+e-mail.
+**Fix:** pass exactly the placeholders the message lists:
+
+```ts
+declare const user: { name: string; email: string };
+declare const link: string;
+
+mails.render('verify-email', { name: user.name, link });
+```
+
+### `render: <email> needs the variable <key>`
+
+An `Error`.
+
+**When:** `render`, without a value for one of the e-mail's placeholders.
+The variables of an e-mail are those of **all its locales**, its subject and
+its text part included, so a placeholder only the `fr` message uses is
+still required when rendering in `en`.
+**Why:** a placeholder left unfilled would go out as `{{ link }}`.
+**Fix:** pass it. When a value is optional, decide what the e-mail says
+without it in the template, and pass an empty string where that is correct:
+`{ name: user.name ?? '' }`.
+
+### `render: <email>: <key> must be a string or a finite number`
+
+A `TypeError`.
+
+**When:** `render`, with a value that is `null`, `undefined`, `NaN`,
+`Infinity`, a boolean, an array, a `Date` or a `URL`: typically a field read
+from a database that may be missing.
+**Why:** a value is written as text. A number is written as `String(n)`;
+anything else would render as `null`, `undefined` or `[object Object]` in a
+sent e-mail.
+**Fix:** convert it yourself, in the format the recipient should read:
+
+```ts
+declare const inviteUrl: URL;
+declare const expiresAt: Date;
+
+mails.render('invitation', {
+  link: inviteUrl.href,
+  expires: expiresAt.toLocaleDateString('fr-FR'),
+});
+```
+
+### `render: <email>: <key> must be an http:, https: or mailto: URL`
+
+A `MailRefused`, `code: 'MAIL_REFUSED'`.
+
+**When:** `render`, for a placeholder that starts an `href`, `src`,
+`background`, `poster` or `action` attribute in the template
+(`href="{{ link }}"`), when its value is not an absolute `http:`, `https:`
+or `mailto:` URL: a relative link (`/verify`, `//host`), a `javascript:` or
+`data:` URL, or a URL holding whitespace, a quote, `<`, `>` or a backtick —
+typically an unencoded query value, as `?email=ada lovelace`.
+**Why:** that placeholder decides where the link leads, and a mail client
+follows it as written. The build records which placeholders sit there, in
+the manifest; escaping alone would not stop `javascript:`.
+**Fix:** pass an absolute URL, built with `URL` so every part is encoded:
+
+```ts
+declare const token: string;
+
+const link = new URL('/verify', 'https://app.example');
+link.searchParams.set('token', token);
+
+mails.render('verify-email', { name: 'Ada', link: link.href });
+```
+
+When the URL comes from outside your code, handle the refusal as any
+[`MAIL_REFUSED`](#mail_refused--mailrefused-the-message-was-refused-as-malformed):
+sending the same value again fails again.
+
+### A link breaks when its value holds `&`, `+`, `#` or `/`: `?token={{ token }}` is not percent-encoded
+
+No error: the e-mail is sent, and the link in it is wrong.
+
+**When:** a template writes a placeholder **after** the start of a URL
+attribute, as `href="https://app.example/verify?token={{ token }}"`, and the
+value holds a character that means something in a URL: a base64 token with
+`+` or `/`, a value with `&`, `#`, `?` or a space.
+**Why:** only a placeholder that **starts** the attribute is a URL variable,
+checked as a URL. One later in the value is filled like any other: escaped
+for HTML (`&` becomes `&amp;`, which a mail client reads back as `&`), never
+percent-encoded — the renderer cannot know which part of a URL it fills. The
+scheme is fixed by the template, so it is safe; the link is only wrong.
+**Fix:** encode the value yourself:
+
+```ts
+declare const token: string;
+
+mails.render('verify-email', { name: 'Ada', token: encodeURIComponent(token) });
+```
+
+Or make the whole URL the placeholder (`href="{{ link }}"`) and build it with
+`URL`, as in the entry above: it is then encoded by `URL` and checked by the
+renderer.
 
 ---
 

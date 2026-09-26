@@ -1,0 +1,30 @@
+{
+	"locales": ["en", "fr"],
+	"fallbackLocale": "en",
+	"emails": {
+		"verify-email": {
+			"variables": ["link", "name"],
+			"urlVariables": ["link"],
+			"subject": {
+				"en": "Confirm your address, {{ name }}",
+				"fr": "Confirmez votre adresse, {{ name }}"
+			},
+			"files": {
+				"en": { "html": "en/verify-email.html", "text": "en/verify-email.txt" },
+				"fr": { "html": "fr/verify-email.html", "text": "fr/verify-email.txt" }
+			}
+		},
+		"sign-in-code": {
+			"variables": ["code"],
+			"urlVariables": [],
+			"subject": {
+				"en": "Your sign-in code: {{ code }}",
+				"fr": "Votre code de connexion : {{ code }}"
+			},
+			"files": {
+				"en": { "html": "en/sign-in-code.html", "text": "en/sign-in-code.txt" },
+				"fr": { "html": "fr/sign-in-code.html", "text": "fr/sign-in-code.txt" }
+			}
+		}
+	}
+}

@@ -35,8 +35,8 @@ placeholders and subjects in `dist/mail-manifest.json`. See what they look
 like in the [built samples](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/README.md).
 
 > **Not published yet.** The package is `private` while the rest of the
-> repository — the run-time renderer and the transports — is written. It is
-> published with them; the surface below is the one that will ship.
+> repository — the transports and a starter — is written. It is published at
+> `0.1.0` with them; the surface below is the one that will ship.
 
 ## Install
 
