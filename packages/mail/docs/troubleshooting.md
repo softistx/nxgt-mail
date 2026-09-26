@@ -109,10 +109,10 @@ missing.
 ### `TS2741: Property 'to' is missing in type '…' but required in type 'MailMessage'.`
 
 **When:** `tsc`, where you build the message you pass to `mailer.send`,
-typically by spreading what a render function answered.
-**Why:** a render function answers a `Rendered` — `subject`, `html`, `text` —
-and knows nothing of who it is for. A `MailMessage` is a `Rendered` plus at
-least `to`.
+typically by spreading a `Rendered` — what the run-time renderer answers, or
+your own function.
+**Why:** a `Rendered` holds `subject`, `html` and `text`, and knows nothing of
+who it is for. A `MailMessage` is a `Rendered` plus at least `to`.
 **Fix:**
 
 ```ts
@@ -130,8 +130,8 @@ await mailer.send({ ...rendered, to: 'ada@example.com' });
 **Why:** every e-mail carries a plain-text part: some clients show nothing
 else, and spam filters score an e-mail without one. The port has no room for
 a message without it.
-**Fix:** write the text part, or use a render function, which always answers
-one:
+**Fix:** write the text part. The run-time renderer (coming) always answers
+one, from the plain text Maizzle builds beside the HTML:
 
 ```ts
 import type { MailMessage } from '@nxgt/mail';
@@ -426,11 +426,11 @@ An empty `name` is accepted; with no name, pass the bare address string.
 `<part>` is `subject`, `html` or `text`.
 
 **When:** `send`, with one of the three parts missing or not a string:
-typically a render function that answered `undefined` for its text part, or
-a message built from an untyped value.
+typically a hand-written function that answered `undefined` for its text
+part, or a message built from an untyped value.
 **Why:** every e-mail has a subject, an HTML part and a text part.
-**Fix:** pass what a render function answered, whole; a hand-written one must
-answer all three (see the `Rendered` type).
+**Fix:** pass the `Rendered` whole — what the renderer answered, or your own
+function's, which must answer all three (see the `Rendered` type).
 
 ### `send: subject must not hold a line break`
 

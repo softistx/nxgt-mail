@@ -33,8 +33,9 @@ function pickLocale<const L extends string>(
 | `fallback` | `L` | The answer when nothing wanted matches. Must be one of `supported`, which the compiler checks |
 
 It answers one of `supported`, **spelled as in `supported`**, typed as their
-union — `'en' | 'fr'` above — so it goes straight into a render function's
-`locale` argument.
+union — `'en' | 'fr'` above — so it goes straight into whatever renders the
+e-mail: your own function's `locale` argument, or the `locale` option of the
+run-time renderer (coming: `mails.render(email, variables, { locale })`).
 
 Pure: no request context, no global, no I/O.
 
@@ -111,7 +112,8 @@ import { type Mailer, parseAcceptLanguage, pickLocale, type Rendered } from '@nx
 const supported = ['en', 'fr'] as const;
 type Locale = (typeof supported)[number];
 
-// Yours: a render function, generated or hand-written.
+// Yours: any function answering Rendered — hand-written, or wrapping the
+// run-time renderer once it ships.
 declare function invitation(args: { locale: Locale; link: string }): Rendered;
 
 // The visitor is the recipient: their stored locale, then their browser's.

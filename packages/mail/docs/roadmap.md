@@ -27,20 +27,32 @@ the only number.
 
 ## Next
 
-- **Typed render functions from your templates** — `@nxgt/mail-build`, a
-  build-time dependency only: one Maizzle 6 template per e-mail, styled with
-  Tailwind CSS 4 and its CSS inlined for e-mail clients, and one ICU message
-  catalogue per locale, compiled into a TypeScript module where
-  `mails.verifyEmail({ locale: 'fr', name, link })` answers
-  `{ subject, html, text }`. A missing, misspelled or mistyped argument, an
-  unknown locale or an unknown e-mail is a compile error; a catalogue that
-  does not parse, or a key missing in one locale, fails the build. Every value
-  is escaped, and a link that is not `http:`, `https:` or `mailto:` is refused.
-  The generated module needs nothing but `Intl` at run time.
-- **Presets** — `@nxgt/mail-preset`: a neutral default theme, a transactional
-  layout, the components an e-mail needs (a button, a heading, a one-time code
-  easy to copy…) and shared messages in English and French. Change one token,
-  add one language or replace one e-mail, and keep the rest.
+- **A base Maizzle config** — `@nxgt/mail-config`: `defineMailConfig({ plugins,
+  ...project })` for the `maizzle.config.ts` of a normal Maizzle 6 project
+  (`maizzle serve`, `maizzle build`, unchanged): output to `dist`, CSS inlined
+  and purged, plain text on. Plugins merge in order and every build hook they
+  set is chained, so two plugins never drop each other's. Your own config keys
+  win.
+- **i18n with one build per locale** — `@nxgt/mail-i18n`: one template per
+  e-mail, its text as keys into ICU catalogues (`locales/en.json`,
+  `locales/fr.json`), `t()` in templates, and one output per locale from a
+  single `maizzle build` (`dist/en/verify-email.html`,
+  `dist/fr/verify-email.html`). A catalogue that does not parse, a key missing
+  in one locale or an argument declared differently fails the build.
+  `placeholder('name')` leaves a value only known at send time as
+  `{{ name }}`, and the build writes a manifest of each e-mail's variables and
+  its subject per locale. `maizzle serve` shows every e-mail in every locale
+  and reloads when a catalogue changes.
+- **UI components** — `@nxgt/mail-ui`: a neutral theme, a layout and the
+  components an e-mail needs (`<NxButton>`, `<NxHeading>`, `<NxText>`…), and
+  shared messages in English and French. Replace one component or one message
+  by name in your project, and keep the rest.
+- **The run-time renderer** — `createMailRenderer`, in `@nxgt/mail`, still with
+  no dependency: `mails.render('verify-email', { name, link })` answers
+  `Rendered` from the built files of the recipient's locale, every
+  `{{ placeholder }}` filled. Values are HTML-escaped in `html`; a link that is
+  not `http:`, `https:` or `mailto:` is refused; a missing variable, an unknown
+  e-mail or an unknown locale throws.
 - **An SMTP transport** — `@nxgt/mail-smtp`, on the `nodemailer` you install,
   passing the conformance suite.
 - **A Resend transport** — `@nxgt/mail-resend`, over `fetch` with no SDK,
@@ -53,22 +65,23 @@ the only number.
 
 - **More transports** — Amazon SES, Postmark and Mailgun, one package each,
   each passing the conformance suite and throwing `@nxgt/mail`'s errors.
-- **A preview server** — every e-mail in every locale, rendered live while you
-  edit a template or a catalogue.
 
 ## Not planned
 
+- **A preview server of our own** — `maizzle serve` is the preview: with the
+  i18n plugin it shows every e-mail in every locale, live. The packages add to
+  a Maizzle project; they never replace its commands.
 - **A template engine at run time** — no Handlebars, no MJML, no Maizzle in
-  your server. An engine is untyped and a run-time dependency for work the
-  build can finish; the render functions only substitute strings and call
-  `Intl`.
+  your server. An engine is a run-time dependency for work `maizzle build`
+  already finishes; the renderer only fills `{{ placeholder }}` values into
+  the built files.
 - **One HTML file per language** — a layout fix would be made once per
   language, or made once and forgotten. One template per e-mail holds keys
   into catalogues; a new language is one catalogue.
 - **Raw (unescaped) interpolation in v1** — every value is HTML-escaped in
   `html`. An escape hatch is where an injection gets in; if you need markup,
-  put it in the template or write that e-mail's render function yourself —
-  any function answering `Rendered` is accepted.
+  put it in the template, or write that e-mail by hand — any function
+  answering `Rendered` is accepted.
 - **Silent retries inside a transport** — a transport tries once and throws;
   the conformance suite fails one that retries in secret. Whether and when to
   retry is the caller's decision (a queue, a job runner), and a hidden retry
@@ -85,9 +98,9 @@ the only number.
   refused; write `{ name: 'Ada', address: 'ada@example.com' }`. A transport
   never parses an address, and a name cannot smuggle a second one into a
   header.
-- **`snake_case` keys** — options, render arguments, catalogue keys and preset
-  tokens are `camelCase`, held by a lint rule. Error codes are
-  `SCREAMING_SNAKE` because they are values, not keys.
+- **`snake_case` keys** — options, variables, catalogue keys and theme tokens
+  are `camelCase`, held by a lint rule. Error codes are `SCREAMING_SNAKE`
+  because they are values, not keys.
 - **`moduleResolution: "nodenext"`** — sources and emitted declarations import
   without extensions, and resolve as Bun and every bundler do. Use
   `"moduleResolution": "bundler"`.

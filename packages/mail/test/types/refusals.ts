@@ -48,7 +48,7 @@ void [ok, many, memory, locale, custom];
 const noTo: MailMessage = { ...rendered };
 
 // ── 2. A message without a text part ─────────────────────────────────────────
-// @ts-expect-error — every e-mail has a text part; a render function answers one.
+// @ts-expect-error — every e-mail has a text part; a Rendered always carries one.
 const noText: MailMessage = { to: 'a@b.c', subject: 's', html: 'h' };
 
 // ── 3. An address object without its address ────────────────────────────────

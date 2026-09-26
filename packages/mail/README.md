@@ -21,9 +21,9 @@ const { messageId } = await mailer.send(message); // 'memory-1' — or it throws
 ```
 
 > **Not published yet.** The package is `private` while the rest of the
-> repository — the build that generates render functions, the presets, the SMTP
-> and HTTP transports — is written. It is published at `0.1.0` with them; the
-> surface below is the one that will ship.
+> repository — the Maizzle plugins (base config, i18n, UI components), the
+> run-time renderer and the SMTP and HTTP transports — is written. It is
+> published at `0.1.0` with them; the surface below is the one that will ship.
 
 ## Install
 
@@ -47,8 +47,10 @@ import without extensions, so `nodenext` is not supported.
 ### Sending — the port and `MailMessage`
 
 A `MailMessage` is a rendered e-mail — `subject`, `html`, `text` — plus its
-addresses. Any function answering `Rendered` fits, so an e-mail can be written by
-hand until it is generated:
+addresses. `Rendered` is what the run-time renderer answers (coming:
+`mails.render('verify-email', { name, link })` fills a built Maizzle template),
+and any function answering the same shape fits, so an e-mail can be written by
+hand:
 
 ```ts
 import type { Mailer, Rendered, SentMail } from '@nxgt/mail';
