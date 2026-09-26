@@ -25,7 +25,7 @@ const NAME = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
 const posix = (path: string) => path.split(sep).join('/');
 
 /** Every `.vue` file under `dir`, as a slash-separated path without `.vue`. */
-function listEmails(dir: string, emailsDir: string): string[] {
+function listEmails(dir: string, label: string): string[] {
 	if (!existsSync(dir)) return [];
 	return readdirSync(dir, { recursive: true, encoding: 'utf8' })
 		.filter((file) => file.endsWith('.vue'))
@@ -34,7 +34,7 @@ function listEmails(dir: string, emailsDir: string): string[] {
 			for (const segment of email.split('/')) {
 				if (!NAME.test(segment)) {
 					throw new Error(
-						`i18n: ${emailsDir}/${email}.vue is not a kebab-case name — name a template as verify-email.vue`,
+						`i18n: ${label}/${email}.vue is not a kebab-case name — name a template as verify-email.vue`,
 					);
 				}
 			}
@@ -93,29 +93,91 @@ function listFiles(dir: string): string[] {
 }
 
 /**
- * Writes one wrapper per template of `emailsDir` and locale under
- * `wrappersDir`, each only when its text changed, and removes the wrappers
- * of templates that are gone — so a running dev server sees a change only
- * where there is one. Answers the e-mails, sorted.
+ * A folder of templates. `label` names it in an error: `emails`, or
+ * `templates[0]` for a package's. `only`, when given, keeps those e-mails of
+ * the folder and no other. A `packaged` folder — a package's — must hold
+ * templates, and shares no name with another package's.
+ */
+export interface TemplateFolder {
+	readonly dir: string;
+	readonly label: string;
+	readonly only?: readonly string[];
+	readonly packaged?: boolean;
+}
+
+/** The e-mails of `folder`, the ones it keeps, checked. */
+function folderEmails({
+	dir,
+	label,
+	only,
+	packaged,
+}: TemplateFolder): string[] {
+	const emails = listEmails(dir, label);
+	if (packaged && emails.length === 0) {
+		throw new Error(
+			`i18n: ${label} holds no template — is ${dir} the folder of a package's e-mails?`,
+		);
+	}
+	for (const email of only ?? []) {
+		if (!emails.includes(email)) {
+			throw new Error(
+				`i18n: ${label} has no template ${email}.vue — name one of its e-mails`,
+			);
+		}
+	}
+	return [...(only ?? emails)];
+}
+
+/**
+ * Each e-mail of `folders` and its file. The project's folder, first, wins
+ * over a package's; two packages with the same e-mail **throw**, since
+ * neither would be the obvious one.
+ */
+function collectTemplates(
+	folders: readonly TemplateFolder[],
+): Map<string, string> {
+	const templates = new Map<string, string>();
+	const owners = new Map<string, TemplateFolder>();
+	for (const folder of folders) {
+		for (const email of folderEmails(folder)) {
+			const owner = owners.get(email);
+			if (owner === undefined) {
+				owners.set(email, folder);
+				templates.set(email, join(folder.dir, `${email}.vue`));
+			} else if (owner.packaged) {
+				throw new Error(
+					`i18n: ${owner.label} and ${folder.label} both have ${email}.vue — keep one with emails: [...], or write the project's own in its folder`,
+				);
+			}
+		}
+	}
+	return templates;
+}
+
+/**
+ * Writes one wrapper per template of `folders` and locale under
+ * `wrappersDir` — the project's folder first, so its template replaces a
+ * package's of the same name — each only when its text changed, and removes
+ * the wrappers of templates that are gone, so a running dev server sees a
+ * change only where there is one. Answers the e-mails, sorted.
  */
 export function writeWrappers(options: {
-	readonly emailsDir: string;
-	readonly emailsName: string;
+	readonly folders: readonly TemplateFolder[];
 	readonly wrappersDir: string;
 	readonly locales: readonly string[];
 	readonly layout: Layout;
 }): string[] {
-	const { emailsDir, wrappersDir, locales, layout } = options;
-	const emails = listEmails(emailsDir, options.emailsName);
+	const { wrappersDir, locales, layout } = options;
+	const templates = collectTemplates(options.folders);
 	const wanted = new Set<string>();
-	for (const email of emails) {
+	for (const [email, template] of templates) {
 		for (const locale of locales) {
 			const wrapper = join(
 				wrappersDir,
 				`${entryPath({ email, locale }, layout)}.vue`,
 			);
 			wanted.add(wrapper);
-			const source = wrapperSource(wrapper, join(emailsDir, `${email}.vue`));
+			const source = wrapperSource(wrapper, template);
 			if (existsSync(wrapper) && readFileSync(wrapper, 'utf8') === source) {
 				continue;
 			}
@@ -126,7 +188,7 @@ export function writeWrappers(options: {
 	for (const file of listFiles(wrappersDir)) {
 		if (!wanted.has(file)) rmSync(file);
 	}
-	return emails;
+	return [...templates.keys()].sort();
 }
 
 /** The part of Vite's dev server the watcher uses. */

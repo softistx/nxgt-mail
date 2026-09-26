@@ -34,6 +34,7 @@ export {
 	MANIFEST_FILE,
 	WRAPPERS_DIR,
 } from './plugin';
+export type { TemplateSource } from './sources';
 export {
 	createTranslator,
 	type LanguageProvider,

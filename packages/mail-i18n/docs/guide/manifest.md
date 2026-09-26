@@ -188,6 +188,7 @@ catalogues, not a condition to catch:
 | `i18n: en: welcome.subject uses {count} as a number — a subject's arguments are placeholders, filled at send time as strings` | A subject with a `number`, `plural` or `date` argument |
 | `i18n: en: welcome.subject chooses on {kind} with a select — a subject's arguments are placeholders, which always choose other` | A subject with a `select` argument |
 | `i18n: welcome was not built in fr` | No HTML file (with `output.extension`) was written for that e-mail in that locale |
+| `i18n: fr/welcome.html is empty — a tag of its template resolved to no component; list the plugin that brings it, as ui()` | The file holds nothing but its doctype: a tag of the template matched no component, which Vue renders as nothing. See [Templates from a package](templates.md#templates-from-a-package) |
 | `i18n: ../text/welcome.en.txt was written outside the output folder — the i18n plugin lays out every e-mail; set no plaintext.destination and no output path in a template` | A `plaintext.destination`, or an output path set in a template, put a file outside `output.path` |
 | `i18n: custom/welcome.html is not where the i18n plugin puts an e-mail — set no output path in a template` | A file in the output folder that is not `<locale>/<email>` (or `<email>.<locale>` with the flat layout), usually from an output path set in a template |
 

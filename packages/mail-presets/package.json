@@ -1,0 +1,65 @@
+{
+	"name": "@nxgt/mail-presets",
+	"version": "0.0.0",
+	"private": true,
+	"description": "Ready transactional e-mails for a Maizzle project built with @nxgt/mail-ui and @nxgt/mail-i18n — verify-email, reset-password, sign-in-code, magic-link, new-sign-in, welcome, invitation… in en and fr — with their built HTML as samples.",
+	"license": "MIT",
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"files": [
+		"dist",
+		"emails",
+		"docs",
+		"README.md",
+		"package.json",
+		"LICENSE"
+	],
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
+			"default": "./dist/index.js"
+		},
+		"./package.json": "./package.json"
+	},
+	"keywords": [
+		"email",
+		"maizzle",
+		"templates",
+		"transactional",
+		"i18n",
+		"vue"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/softistx/nxgt-mail.git",
+		"directory": "packages/mail-presets"
+	},
+	"publishConfig": {
+		"registry": "https://registry.npmjs.org",
+		"access": "public"
+	},
+	"scripts": {
+		"build": "bun run ../../build.ts",
+		"test": "bun test src",
+		"typecheck": "tsc --noEmit",
+		"samples": "bun run scripts/samples.ts"
+	},
+	"devDependencies": {
+		"@maizzle/framework": "6.1.7",
+		"@maizzle/tailwindcss": "1.5.6",
+		"@nxgt/mail-config": "workspace:*",
+		"@nxgt/mail-i18n": "workspace:*",
+		"@nxgt/mail-ui": "workspace:*",
+		"@types/bun": "^1.4.2",
+		"vue": "3.5.43"
+	},
+	"peerDependencies": {
+		"@maizzle/framework": "^6.1.7",
+		"@nxgt/mail-i18n": "workspace:^",
+		"@nxgt/mail-ui": "workspace:^",
+		"typescript": "^6.0.3",
+		"vue": "^3.5.0"
+	}
+}

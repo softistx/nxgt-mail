@@ -10,6 +10,11 @@ import {
 	type Messages,
 } from './catalogues';
 import { buildManifest } from './manifest';
+import {
+	checkTemplates,
+	type TemplateSource,
+	templateFolders,
+} from './sources';
 import { templateProperties } from './template';
 import { createFormatter } from './translator';
 import {
@@ -36,6 +41,12 @@ export interface I18nOptions {
 	 * the next, and the project's `<locale>.json` over all of them.
 	 */
 	readonly catalogues?: readonly Catalogues[];
+	/**
+	 * Folders of templates under the project's own, as a package ships them —
+	 * `presets().templates` from `@nxgt/mail-presets`. A template in the
+	 * project's `emails/` replaces a package's of the same name.
+	 */
+	readonly templates?: readonly TemplateSource[];
 }
 
 /** Where the wrappers go, under the project. */
@@ -102,6 +113,7 @@ function checkOptions(options: I18nOptions): void {
 			'i18n: catalogues must be a list of catalogues by locale, as [{ en: {...}, fr: {...} }]',
 		);
 	}
+	checkTemplates(options.templates);
 }
 
 /** Reads `<dir>/<locale>.json` for each locale. A missing or broken file **throws**. */
@@ -163,7 +175,15 @@ export function i18n(options: I18nOptions): MailPlugin {
 	const reference = messages.get(fallbackLocale) as Messages;
 	const format = createFormatter('i18n');
 	const regenerate = () =>
-		writeWrappers({ emailsDir, emailsName, wrappersDir, locales, layout });
+		writeWrappers({
+			folders: templateFolders(
+				{ dir: emailsDir, name: emailsName },
+				options.templates ?? [],
+			),
+			wrappersDir,
+			locales,
+			layout,
+		});
 	// A parallel build loads the config again in each worker: only the main
 	// thread writes, so two workers never write the same file.
 	if (isMainThread) regenerate();

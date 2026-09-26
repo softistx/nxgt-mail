@@ -76,7 +76,7 @@ and no Tailwind utility is generated.
 | `emailKey(email)` | Where an e-mail's messages live: `auth/reset-password` → `auth.resetPassword` |
 | `MANIFEST_FILE` | `'mail-manifest.json'`, the manifest's name in the output folder |
 | `WRAPPERS_DIR` | `'.maizzle/i18n'`, where the generated files go |
-| `I18nOptions`, `Layout` | The plugin's options, and `'nested' \| 'flat'` |
+| `I18nOptions`, `Layout`, `TemplateSource` | The plugin's options, `'nested' \| 'flat'`, and a package's folder of templates for `templates` |
 | `Catalogue`, `Catalogues`, `ArgumentKind` | A catalogue as written, catalogues by locale, and `'string' \| 'number' \| 'date'` |
 | `Translate`, `LanguageProvider`, `MessageArgs` | What `createTranslator` answers and takes |
 | `Manifest`, `ManifestEmail` | The shape of `dist/mail-manifest.json` |
@@ -150,6 +150,7 @@ See [Templates](docs/guide/templates.md).
 | `emails` | `string` | `'emails'` | The folder of templates |
 | `layout` | `'nested' \| 'flat'` | `'nested'` | `nested` writes `dist/en/verify-email.html`; `flat` writes `dist/verify-email.en.html` |
 | `catalogues` | `readonly Catalogues[]` | `[]` | Catalogues a package ships, merged in order **under** your `<locale>.json`, key by key |
+| `templates` | `readonly TemplateSource[]` | `[]` | Folders of templates a package ships, built with yours; your template of the same name wins |
 
 ```ts
 // maizzle.config.ts — every file of one e-mail side by side
@@ -187,6 +188,40 @@ export default defineMailConfig({
 The merged catalogues are checked like your own. A source's locale your
 project does not build is left out. See
 [Catalogues](docs/guide/catalogues.md#catalogues-from-a-package).
+
+### Templates from a package
+
+A package can ship whole e-mails, such as `@nxgt/mail-presets`. List its
+folders in `templates`, and its messages in `catalogues`:
+
+```ts
+// maizzle.config.ts
+import { defineMailConfig } from '@nxgt/mail-config';
+import { i18n } from '@nxgt/mail-i18n';
+import { presets } from '@nxgt/mail-presets';
+import { ui, uiCatalogues } from '@nxgt/mail-ui';
+
+const mails = presets({ only: ['verify-email', 'reset-password'] });
+// mails.templates → { dir: '/…/node_modules/@nxgt/mail-presets/emails', emails: ['verify-email', 'reset-password'] }
+
+export default defineMailConfig({
+	plugins: [
+		ui({ brand: { name: 'Acme' } }),
+		i18n({
+			locales: ['en', 'fr'],
+			catalogues: [uiCatalogues, mails.catalogues],
+			templates: [mails.templates],
+		}),
+	],
+});
+```
+
+A `TemplateSource` is `{ dir, emails? }`: `dir` an absolute folder that holds
+templates, `emails` a non-empty list of the ones to build (every one when left
+out). Your `emails/` is read first: `emails/verify-email.vue` replaces the
+package's `verify-email`. Two packages that ship the same e-mail are refused
+when the config loads. See
+[Templates](docs/guide/templates.md#templates-from-a-package).
 
 ### The subject
 
@@ -303,13 +338,18 @@ exists: `v-if="link.startsWith('https:')"` would test the string `{{ link }}`.
 as strings at send time. `{count, number}` or a `select` in a subject fails
 the build.
 
+**List the plugin that brings a template's components.** A tag that
+resolves to no component renders nothing, and the build fails with
+`i18n: fr/welcome.html is empty — a tag of its template resolved to no
+component; list the plugin that brings it, as ui()`.
+
 **Leave the output paths to the plugin.** An `output.path` set in a
 template, or a `plaintext.destination`, moves a file out of the plugin's
 layout, and the build fails when the manifest is written.
 
 ## Type safety, counted
 
-**14 plausible mistakes, 14 refused** at compile time. Each one is measured by
+**17 plausible mistakes, 17 refused** at compile time. Each one is measured by
 a `@ts-expect-error` in
 [`test/types/refusals.ts`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-i18n/test/types/refusals.ts),
 which fails the typecheck the moment it stops holding:
@@ -330,6 +370,9 @@ which fails the typecheck the moment it stops holding:
     a locale nor a function that answers one.
 13. `catalogues` given one catalogue by locale rather than a list of them.
 14. `catalogues` holding a locale whose value is a message, not a catalogue.
+15. `templates` given one folder rather than a list of them.
+16. A template folder's `emails` given as one name rather than a list.
+17. A template folder's `emails` given as an empty list.
 
 The same file holds the calls that must keep compiling: a refusal that refuses
 the correct call is a bug.

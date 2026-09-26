@@ -13,7 +13,7 @@
  * A message key is a `string`: whether it exists is checked by the build,
  * against the catalogues, not by the compiler.
  *
- * **Fourteen plausible mistakes, fourteen refused.**
+ * **Seventeen plausible mistakes, seventeen refused.**
  */
 
 import type { MailPlugin } from '@nxgt/mail-config';
@@ -28,6 +28,7 @@ const plugin: MailPlugin = i18n({
 	emails: 'emails',
 	layout: 'flat',
 	catalogues: [{ en: { common: { greeting: 'Hello {name},' } } }],
+	templates: [{ dir: '/app/node_modules/pkg/emails', emails: ['welcome'] }],
 });
 const catalogue: Catalogue = { verifyEmail: { subject: 'Confirm, {name}' } };
 const t = createTranslator({ en: catalogue }, () => 'en');
@@ -92,5 +93,17 @@ i18n({ locales: ['en'], catalogues: { en: {} } });
 // 14. Package catalogues whose locale holds a message, not a catalogue.
 // @ts-expect-error — { en: { common: {...} } }.
 i18n({ locales: ['en'], catalogues: [{ en: 'Hello' }] });
+
+// 15. Package templates given as one folder, not a list.
+// @ts-expect-error — a list of template folders.
+i18n({ locales: ['en'], templates: { dir: '/pkg/emails' } });
+
+// 16. A package's e-mails given as one name, not a list.
+const pkg = '/pkg/emails';
+// @ts-expect-error — ['welcome'].
+i18n({ locales: ['en'], templates: [{ dir: pkg, emails: 'welcome' }] });
+
+// @ts-expect-error — emails names at least one; leave it out for every one.
+i18n({ locales: ['en'], templates: [{ dir: pkg, emails: [] }] });
 
 export { broken, plugin };

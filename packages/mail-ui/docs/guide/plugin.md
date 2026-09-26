@@ -51,18 +51,21 @@ interface UiOptions {
 function ui(options: UiOptions): MailPlugin;
 ```
 
-The plugin it answers, named `ui`, does three things:
+The plugin it answers, named `ui`, does four things:
 
 - registers every component of the package's `components/` folder under the
   prefix `Nx` (`NxButton.vue` is `<NxButton>`); Maizzle's own stay
   available (`<Button>`, `<Spacer>`);
 - gives every template `brand`, the brand as passed;
 - provides the brand and the theme's CSS to the components, under
-  [`UI_CONTEXT`](#your-own-layout--ui_context).
+  [`UI_CONTEXT`](#your-own-layout--ui_context);
+- resolves the tags of a `.vue` file installed in `node_modules` — its own
+  components, and a package's templates such as `@nxgt/mail-presets`' — see
+  [Components from a package](#components-from-a-package).
 
-It sets no build event, and no list but the two `defineMailConfig` joins
-(`components.source`, `vue.plugins`), so it drops nothing another plugin or
-your config sets. See
+It sets no build event, and no list but the three `defineMailConfig` joins
+(`components.source`, `vite.plugins`, `vue.plugins`), so it drops nothing
+another plugin or your config sets. See
 [`@nxgt/mail-config`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-config/docs/guide/config.md)
 for how plugins merge.
 
@@ -149,6 +152,63 @@ console.log(COMPONENTS_DIR); // /…/node_modules/@nxgt/mail-ui/components
 A copied component imports `./ui` for its shared types; copy `ui.ts` from the
 same folder beside it, or inline what it uses.
 
+## Components from a package
+
+Maizzle finds the component behind a tag (`<NxButton>`, `<Container>`) with
+`unplugin-vue-components`, which skips every file under `node_modules`. Left
+alone, our components — installed from npm — and a package's templates, as
+`@nxgt/mail-presets` ships them, would render as an empty document, and the
+build would pass.
+
+`ui()` adds its own resolver to Maizzle's Vite config for those files: a
+`.vue` file under `node_modules`, Maizzle's own excepted. It looks a tag up in
+this order:
+
+1. your project's `components/<Tag>.vue` — so a component you replace is
+   replaced in a package's templates too;
+2. ours, in `COMPONENTS_DIR`;
+3. Maizzle's built-ins (`Container`, `Spacer`, `Button`, …).
+
+Only the top level of your `components/` counts there: a component in a
+subfolder (`components/brand/Logo.vue`, `<BrandLogo>`) or in a
+`components.source` folder is found in your own templates, not inside an
+installed one. Put a component that replaces ours at the top of
+`components/`. Under `maizzle serve`, restart after adding one.
+
+Nothing to write for it: listing `ui()` is enough, and a package's templates
+need no import of their components.
+
+```ts
+// maizzle.config.ts
+import { defineMailConfig } from '@nxgt/mail-config';
+import { i18n } from '@nxgt/mail-i18n';
+import { presets } from '@nxgt/mail-presets';
+import { ui, uiCatalogues } from '@nxgt/mail-ui';
+
+const mails = presets();
+
+export default defineMailConfig({
+	plugins: [
+		ui({ brand: { name: 'Acme' } }), // resolves <NxLayout> in the installed templates
+		i18n({
+			locales: ['en', 'fr'],
+			catalogues: [uiCatalogues, mails.catalogues],
+			templates: [mails.templates],
+		}),
+	],
+});
+```
+
+`ui()` brings `unplugin-vue-components` as a dependency — the one Maizzle
+uses — and finds Maizzle's built-ins beside the package, up through each
+`node_modules`; without `@maizzle/framework` installed, the config fails to
+load with `ui: @maizzle/framework is not installed beside @nxgt/mail-ui`.
+
+With `@nxgt/mail-i18n`, an e-mail that still renders empty — a tag none of
+the three places has — fails the build:
+`i18n: en/welcome.html is empty — a tag of its template resolved to no
+component; list the plugin that brings it, as ui()`.
+
 ## Your own layout — `UI_CONTEXT`
 
 Replace `<NxLayout>` the same way, with `components/NxLayout.vue`. Read the
@@ -215,6 +275,13 @@ result.
 ```ts
 ui({ brand: { name: 'Acme', url: '/home' } });
 // TypeError: ui: brand.url must be an absolute http(s) URL
+```
+
+One plain `Error`, when `ui()` is called: `@maizzle/framework`, a required
+peer, could not be found up from the package.
+
+```text
+Error: ui: @maizzle/framework is not installed beside @nxgt/mail-ui
 ```
 
 A component rendered without the plugin fails the build instead, naming

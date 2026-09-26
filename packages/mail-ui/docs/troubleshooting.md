@@ -8,7 +8,9 @@ How the messages are shaped:
 
 - **A wiring mistake is a `TypeError` starting `ui:`**, thrown by the `ui()`
   call in `maizzle.config.ts` when the config loads, so `maizzle build` and
-  `maizzle serve` stop before any template is built. Fix the call.
+  `maizzle serve` stop before any template is built. Fix the call. One
+  failure at that moment is a plain `Error` instead, since no option causes
+  it: `ui: @maizzle/framework is not installed beside @nxgt/mail-ui`.
 - **A build failure is a plain `Error`**, thrown while `maizzle build` renders
   a template, and printed after Vue's own
   `[Vue warn]: Unhandled error during execution of setup function`. It names
@@ -33,8 +35,10 @@ The samples below use the locales `en` and `fr`, the template
 - [`ui: theme must be an object of tokens, as { 'color-primary': '#0f766e' }`](#ui-theme-must-be-an-object-of-tokens-as--color-primary-0f766e-)
 - [`ui: theme.--color-primary is not a token of the theme — name one of theme.css without its --, as color-primary`](#ui-theme--color-primary-is-not-a-token-of-the-theme--name-one-of-themecss-without-its----as-color-primary)
 - [`ui: theme.color-primary must be a CSS value, as #0f766e or 8px`](#ui-themecolor-primary-must-be-a-css-value-as-0f766e-or-8px)
+- [`ui: @maizzle/framework is not installed beside @nxgt/mail-ui`](#ui-maizzleframework-is-not-installed-beside-nxgtmail-ui)
 
 **Build** — while `maizzle build` renders
+- [`[Vue warn]: Failed to resolve component: NxLayout`](#vue-warn-failed-to-resolve-component-nxlayout)
 - [`NxLayout: ui() is not in the plugins of defineMailConfig`](#nxlayout-ui-is-not-in-the-plugins-of-definemailconfig)
 - [`i18n: en: welcome calls t('common.footer.why'), which is not a key of the catalogues`](#i18n-en-welcome-calls-tcommonfooterwhy-which-is-not-a-key-of-the-catalogues)
 
@@ -211,12 +215,68 @@ end it or open another is refused.
 theme: { 'color-primary': '#0f766e', 'radius-lg': '4px' }   // not 4
 ```
 
+### `ui: @maizzle/framework is not installed beside @nxgt/mail-ui`
+
+This one is a plain `Error`, not a `TypeError`: the call is right, the
+install is not.
+
+**When:** loading `maizzle.config.ts`, when `ui()` finds no
+`@maizzle/framework` in any `node_modules` folder above the one it is
+installed in. It happens when `@maizzle/framework` is not a dependency of the
+project, or when `@nxgt/mail-ui` is linked from a folder outside the project
+(`bun link`, a `file:` or `link:` dependency).
+**Why:** `ui()` resolves the tags of templates and components installed from
+npm itself, with Maizzle's built-in components (`<Container>`, `<Spacer>`,
+…) as the last choice. It finds them where Node would find the package, up
+from its own folder. `@maizzle/framework` is a required peer.
+**Fix:** install Maizzle in the project, beside `@nxgt/mail-ui`, and install
+the package from the registry rather than linking it:
+
+```sh
+bun add @nxgt/mail-ui @maizzle/framework
+```
+
 ---
 
 ## Build
 
 These fail while `maizzle build` renders a template: the build stops, and the
 line to read starts `Error:`, after Vue's warning and a stack trace.
+
+### `[Vue warn]: Failed to resolve component: NxLayout`
+
+One such warning for each tag that did not resolve: `NxTypography`,
+`NxButton`, …
+
+**When:** `maizzle build`, when `ui()` is not in the plugins. What follows
+depends on the template: `TypeError: Cannot read properties of undefined
+(reading 'name')` when it reads `brand.name`; with `@nxgt/mail-i18n`,
+`i18n: en/welcome.html is empty — a tag of its template resolved to no
+component; list the plugin that brings it, as ui()` after the build; without
+it, nothing. The build then succeeds, and the built e-mail holds its doctype
+and nothing else.
+**Why:** Vue renders a component it cannot resolve as nothing. Maizzle
+resolves the tags of the project's own templates from its `components`
+folders, but skips every file under `node_modules`: the package's components,
+and templates installed from npm such as `@nxgt/mail-presets`'s. `ui()`
+resolves the tags of those files: the project's `components/` first, then
+the `Nx*` components, then Maizzle's built-ins.
+**Fix:** list `ui()`, rather than registering `COMPONENTS_DIR` in
+`components.source`:
+
+```ts
+// maizzle.config.ts
+import { defineMailConfig } from '@nxgt/mail-config';
+import { ui } from '@nxgt/mail-ui';
+
+export default defineMailConfig({
+  plugins: [ui({ brand: { name: 'Acme' } })],
+});
+```
+
+A template installed from another package, which uses a component that is
+neither the project's, nor an `Nx*` component, nor one of Maizzle's, is left
+unresolved: that package's plugin must resolve it.
 
 ### `NxLayout: ui() is not in the plugins of defineMailConfig`
 

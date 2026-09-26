@@ -48,6 +48,12 @@ Peers, all required:
 `@nxgt/mail-i18n` is not a peer: add it (`bun add @nxgt/mail-i18n`) to
 translate your e-mails and to use `uiCatalogues`.
 
+One dependency comes with the package: `unplugin-vue-components`, which
+Maizzle already uses. Maizzle resolves no tag in a `.vue` file under
+`node_modules`, so `ui()` resolves them itself for the files a package ships —
+ours, and a package's templates such as `@nxgt/mail-presets`'. See
+[Components from a package](docs/guide/plugin.md#components-from-a-package).
+
 ## Setup
 
 ```css
@@ -168,7 +174,8 @@ See [Shared messages](docs/guide/messages.md).
 </template>
 ```
 
-A file in your `components/` with the name of one of ours wins over it. See
+A file in your `components/` with the name of one of ours wins over it — in
+your templates, in ours, and in a package's. See
 [The plugin](docs/guide/plugin.md#replacing-a-component).
 
 ## Traps

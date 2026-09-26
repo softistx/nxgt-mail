@@ -203,6 +203,8 @@ a plural and a date; each build failure has a spec with its exact message;
 
 ## Step 5 — `@nxgt/mail-ui` ✅
 
+Merged in PR #10.
+
 `ui({ brand, theme })`, a plugin for `defineMailConfig`. Steve's direction
 (2026-09-26): components faithful to `@nxgt/material-vue`'s styles, mirroring
 its components that make sense in an e-mail — its names with the `Nx` prefix,
@@ -244,6 +246,30 @@ Icons are images or characters: an e-mail has no icon font.
 
 **Done when:** each renders in the fixture, is checked by caniemail as in
 Step 5, and is documented with its props.
+
+## Step 5c — `@nxgt/mail-presets` ✅
+
+Steve's request (2026-09-26): « ajouter mail-presets avec des samples de
+templates built », and his choices: a source a project builds with its own
+brand and theme, plus the built HTML committed as samples; all four groups of
+templates.
+
+- **Nine presets**, each a template of `@nxgt/mail-ui` components and its
+  messages in `en` and `fr`: `verify-email`, `reset-password`,
+  `password-changed`, `email-changed` (accounts); `sign-in-code`,
+  `magic-link` (passwordless); `new-sign-in` (security); `welcome`,
+  `invitation` (lifecycle).
+- **`presets({ only })`** answers `{ templates, catalogues }` for
+  `i18n({ templates, catalogues })`. `@nxgt/mail-i18n` gains `templates`:
+  folders of templates under the project's `emails/`, whose template of the
+  same name replaces a package's.
+- **`samples/`**: every preset built in each locale with the brand `Acme`,
+  written by `bun run samples`; the build spec fails when they differ from a
+  fresh build.
+
+**Done when:** the fixture builds every preset in `en` and `fr` and matches
+`samples/` ✅; `only`, a project template and a project message override ✅;
+Maizzle's caniemail check reports only `html-align` for each preset ✅.
 
 ## Step 6 — The run-time renderer, in `@nxgt/mail`
 

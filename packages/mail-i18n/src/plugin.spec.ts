@@ -58,4 +58,23 @@ describe('i18n — wiring mistakes', () => {
 		refuses({ locales: ['en'], catalogues: [null] }, message);
 		refuses({ locales: ['en'], catalogues: [{ en: 'Hello' }] }, message);
 	});
+
+	test('refuses templates that are not a list of absolute folders', () => {
+		const message =
+			"i18n: templates must be a list of template folders, as [{ dir: '/abs/path/emails' }] — emails, when given, names at least one, each once";
+		refuses({ locales: ['en'], templates: { dir: '/x' } }, message);
+		refuses({ locales: ['en'], templates: [{ dir: 'presets' }] }, message);
+		refuses(
+			{ locales: ['en'], templates: [{ dir: '/x', emails: 'welcome' }] },
+			message,
+		);
+		refuses(
+			{ locales: ['en'], templates: [{ dir: '/x', emails: [1] }] },
+			message,
+		);
+		refuses(
+			{ locales: ['en'], templates: [{ dir: '/x', emails: [] }] },
+			message,
+		);
+	});
 });
