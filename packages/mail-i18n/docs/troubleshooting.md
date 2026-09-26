@@ -785,7 +785,7 @@ wrappers are already there, or none at all.
 **Fix:** run the build on the main thread. Spawn the command:
 
 ```ts
-const child = Bun.spawn(['maizzle', 'build'], { cwd: 'mails', stdout: 'inherit', stderr: 'inherit' });
+const child = Bun.spawn(['bunx', 'maizzle', 'build'], { cwd: 'mails', stdout: 'inherit', stderr: 'inherit' });
 if ((await child.exited) !== 0) throw new Error('maizzle build failed');
 ```
 

@@ -176,7 +176,7 @@ a plugin for `defineMailConfig` (`fallbackLocale` defaults to the first locale):
 - In `beforeRender`, gives the template `t`, `locale` and `placeholder`. `t`
   fails the build on an unknown key, an argument left out, one the message
   does not use, or one of the wrong kind — a placeholder where a number is
-  expected.
+  expected, or passed to a `select`, which would always choose `other`.
 - `placeholder('name')` writes `{{ name }}`, for a value only known at send
   time; it can be passed as an ICU argument of string kind.
 - In `afterBuild`, writes `dist/mail-manifest.json`: per e-mail, its

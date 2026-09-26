@@ -134,7 +134,8 @@ the message uses it:
 import type { ArgumentKind } from '@nxgt/mail-i18n'; // 'string' | 'number' | 'date'
 ```
 
-A placeholder is a string, so it can only fill a `string` argument. See
+A placeholder is a string, so it can only fill a `string` argument — and not
+one a `select` chooses on, which would always choose `other`. See
 [Templates](templates.md#a-placeholder-as-an-argument).
 
 An argument's name is `camelCase`, like a key. A message may use one name

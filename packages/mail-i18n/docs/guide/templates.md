@@ -130,7 +130,8 @@ variables.
 
 A placeholder is a string. It cannot fill a `number` or `date` argument,
 because the plural rule or the date format would have to be applied to a
-value that does not exist yet. Format those at build time, or write the value
+value that does not exist yet — nor an argument a `select` chooses on, which
+would always choose `other`. Format those at build time, or write the value
 outside the message.
 
 **Never write `{{ name }}` yourself.** Vue would evaluate `name` as an
