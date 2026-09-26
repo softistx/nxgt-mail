@@ -43,7 +43,8 @@
 		"build": "bun run ../../build.ts",
 		"test": "bun test src",
 		"typecheck": "tsc --noEmit && bun run typecheck:templates",
-		"typecheck:templates": "cd test/fixture && maizzle prepare && vue-tsc -p tsconfig.json"
+		"typecheck:templates": "bun run prepare:templates && cd test/fixture && vue-tsc -p tsconfig.json",
+		"prepare:templates": "cd test/fixture && maizzle prepare"
 	},
 	"dependencies": {
 		"@formatjs/icu-messageformat-parser": "3.5.20",

@@ -205,7 +205,8 @@ the first package writes: *e-mail* (not "mail" in prose, not "email"),
 ## Verifying
 
 ```sh
-bun install
+bun install          # postinstall: bun run editor — the build, then each fixture's
+                     # maizzle prepare, so an editor knows t and brand in templates
 bun run check        # biome, and the naming convention that holds the casing rule
 bun run build        # before typecheck: a package reaches its siblings, and its
                      # templates reach the package itself, through dist/
@@ -217,4 +218,7 @@ bun run verify:artifacts   # on the tarball actually packed
 `mail-ui`'s and `mail-presets`' `tsconfig.json` also include their fixture's
 `test/fixture/.maizzle/*.d.ts`, for the editor only, so their own templates and
 components see `t` and `brand` while you edit them; the measurement is the
-fixture's own `tsconfig.json`, which `typecheck:templates` uses.
+fixture's own `tsconfig.json`, which `typecheck:templates` uses. An editor
+reads the packages through `dist/` and the templates through those generated
+files: after changing a package's `src/` or a catalogue, run `bun run editor`
+(or `bun run build` and `bun run typecheck`) to refresh them.

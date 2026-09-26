@@ -107,13 +107,21 @@ interface TemplateMessages {} // filled by the generated file
 type TemplateKey = [keyof TemplateMessages] extends [never] ? string : keyof TemplateMessages;
 // simplified: the checks in capitals are spelled out in the package
 type TemplateArgs<K> = [K] extends [keyof TemplateMessages]
-	? SAME_ARGUMENT_NAMES<K> extends true // every message K may be
-		? NO_ARGUMENT<K> extends true
-			? [args?: Readonly<Record<string, never>>] // a message with no argument
-			: [args: Readonly<ALL_OF<TemplateMessages[K]>>] // required, exactly these
-		: [args: never] // messages with different arguments: no call fits
+	? EVERY_KEY<K> extends true
+		? [args?: MessageArgs] // any message: see below
+		: SAME_ARGUMENT_NAMES<K> extends true // every message K may be
+			? NO_ARGUMENT<K> extends true
+				? [args?: Readonly<Record<string, never>>] // a message with no argument
+				: [args: Readonly<ALL_OF<TemplateMessages[K]>>] // required, exactly these
+			: [args: never] // messages with different arguments: no call fits
 	: [args?: MessageArgs]; // while no key is declared
 ```
+
+TypeScript reads a key the catalogues do not have as *every* key, so a key
+that may be any message takes any arguments: the error it reports is then the
+key's, `Argument of type '"verifyEmail.titel"' is not assignable to parameter
+of type 'keyof TemplateMessages'`, rather than one about the arguments. A key
+typed as every key on purpose is checked by the build alone.
 
 A key that may be one of several messages, as
 `t(ok ? 'verifyEmail.greeting' : 'verifyEmail.subject', { name })`, compiles
