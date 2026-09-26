@@ -15,6 +15,9 @@
     "packages/mail": {
       "name": "@nxgt/mail",
       "version": "0.0.0",
+      "peerDependencies": {
+        "typescript": "^6.0.3",
+      },
     },
   },
   "overrides": {

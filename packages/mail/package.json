@@ -35,6 +35,9 @@
 		"test": "bun test src --pass-with-no-tests",
 		"typecheck": "tsc --noEmit"
 	},
+	"peerDependencies": {
+		"typescript": "^6.0.3"
+	},
 	"nxgt": {
 		"entrypoints": [
 			"src/index.ts"
