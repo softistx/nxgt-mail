@@ -187,9 +187,13 @@ export function emitMessagesModule(options: {
 		...tables,
 		'};',
 		'',
-		`type Rest<K extends MessageKey> = MessageArgs[K] extends ${NO_ARGUMENTS}`,
-		'\t? [args?: MessageArgs[K], options?: FormatOptions]',
-		'\t: [args: MessageArgs[K], options?: FormatOptions];',
+		// Distributive, so an unknown key widens `K` to every key — some taking
+		// no argument — and tsc names the key instead of counting arguments.
+		'type Rest<K extends MessageKey> = K extends MessageKey',
+		`\t? MessageArgs[K] extends ${NO_ARGUMENTS}`,
+		'\t\t? [args?: MessageArgs[K], options?: FormatOptions]',
+		'\t\t: [args: MessageArgs[K], options?: FormatOptions]',
+		'\t: never;',
 		'',
 		'/** The message `key` in `locale`, with its arguments. */',
 		'export function t<K extends MessageKey>(locale: Locale, key: K, ...rest: Rest<K>): string {',

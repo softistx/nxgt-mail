@@ -27,7 +27,7 @@ export type Locale = 'en' | 'fr';
 export const fallbackLocale: Locale; // 'en'
 
 export interface FormatOptions {
-	/** The time zone dates are written in, usually the recipient's. Defaults to UTC. */
+	/** The time zone dates are written in, usually the recipient's. Defaults to UTC; an unknown zone throws a RangeError. */
 	readonly timeZone?: string;
 }
 
@@ -36,7 +36,7 @@ export interface MessageArgs {
 	'verifyEmail.body': { readonly name: string };
 	'verifyEmail.expires': { readonly hours: number };
 	'verifyEmail.requestedAt': { readonly at: Date };
-	'verifyEmail.subject': Record<never, never>;
+	'verifyEmail.subject': { readonly [argument: string]: never }; // takes no argument
 	// … one entry per key, sorted
 }
 
@@ -45,7 +45,7 @@ export type MessageKey = keyof MessageArgs;
 export function t<K extends MessageKey>(
 	locale: Locale,
 	key: K,
-	...rest: keyof MessageArgs[K] extends never
+	...rest: MessageArgs[K] extends { readonly [argument: string]: never }
 		? [args?: MessageArgs[K], options?: FormatOptions]
 		: [args: MessageArgs[K], options?: FormatOptions]
 ): string;
@@ -93,7 +93,13 @@ t('en', 'verifyEmail.requestedAt', { at: '2026-09-25' });
 t('de', 'verifyEmail.subject');
 // @ts-expect-error — no such message
 t('en', 'verifyEmail.subjet');
+// @ts-expect-error — verifyEmail.subject takes no argument
+t('en', 'verifyEmail.subject', { name: 'Ada' });
 ```
+
+The last one is the call left behind when a message drops an argument: a
+message with none is typed `{ readonly [argument: string]: never }`, so `{}`
+passes and any property is refused.
 
 ### The time zone
 
@@ -224,8 +230,11 @@ it('sends the verification e-mail in the locale of the recipient', async () => {
 
 - **An `Intl` with data for your locales.** Bun and Node ship full ICU data; a
   runtime built with reduced ICU data may write other locales as English.
-- **ES2022 or later** in your tsconfig's `lib`: the module calls `Object.hasOwn`.
-- **`noUnusedParameters` off** in the tsconfig that checks it: every message
-  function takes `(a, o)`, used or not, and the option reports each one.
+- **Nothing from your tsconfig.** Your compiler checks the module like any
+  other file, and it compiles under the strictest options: `strict`,
+  `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`, `noUnusedLocals`,
+  `noUnusedParameters`, `noPropertyAccessFromIndexSignature`,
+  `noImplicitReturns`, with `target` and `lib` as low as ES2020. It holds only
+  the `Intl` helpers its messages call.
 - **Not edited by hand.** The first line says so; the next build replaces it.
   Exclude `generated/` from your linter and your coverage.

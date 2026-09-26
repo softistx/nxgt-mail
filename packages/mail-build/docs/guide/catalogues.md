@@ -50,6 +50,10 @@ exports is in [The generated module](generated-module.md).
 - **Every segment is `camelCase`**, starting with a lowercase letter:
   `verifyEmail`, `passwordReset2`. `verify_email`, `VerifyEmail` and
   `verify-email` fail the build. Arguments are `camelCase` too: `{firstName}`.
+- **A key never holds a dot.** `{ "verifyEmail.title": "…" }` fails the build:
+  nest it, one object per segment.
+- **A leaf is a string.** A number, a boolean, an array or `null` where a
+  message is expected fails the build.
 
 ```json
 {
@@ -86,7 +90,10 @@ Some French outputs hold a no-break space where a space is shown.
 t('en', 'verifyEmail.subject'); // 'Confirm your e-mail address'
 ```
 
-No argument: `t` takes none, and an empty `{}` is accepted.
+No argument: `t` takes none. An empty `{}` is accepted; any property is a
+compile error — `t('en', 'verifyEmail.subject', { name: 'Ada' })` is refused,
+which is the call a message leaves behind when a translator drops its
+`{name}`.
 
 ### An argument — `{name}`
 
@@ -224,7 +231,7 @@ t('fr', 'order.discount', { ratio: 0.25 }); // '25 % de remise'
 | `integer` | `{ maximumFractionDigits: 0 }` |
 | `percent` | `{ style: 'percent' }` — `0.25` is `25%` |
 | `::` skeleton | parsed at build time, below |
-| `currency`, or any other name | **fails the build**: write a skeleton |
+| `currency`, or any other name | **fails the build** (`MESSAGE_UNSUPPORTED`): write a skeleton |
 
 ### Number skeletons — `::currency/EUR`, `::compact-short`
 
@@ -249,6 +256,16 @@ t('fr', 'order.views', { views: 1234567 }); // '1,2 M vues'
 
 The currency is part of the message: a price in another currency is another
 message, or a `select` on the currency code.
+
+A skeleton is checked at build time, so a wrong one fails the build
+(`MESSAGE_UNSUPPORTED`) instead of every call:
+
+| Skeleton | Why it fails |
+| --- | --- |
+| `::percent scale/100` | `scale` is an option `Intl.NumberFormat` does not read: it would be ignored, and the wrong number written |
+| `::.00 rounding-mode-floor`, `::.00/w` | `roundingMode`, `trailingZeroDisplay` and the other rounding options are ES2023: a consumer compiling for an older `lib` refuses them, and an older run time ignores them |
+| `::currency` | no currency code: `Intl.NumberFormat` refuses the options, in every locale |
+| `::precision-unlimited`, or any skeleton that sets no option | nothing to format with: drop the skeleton |
 
 ### Dates and times — `{at, date}`, `{at, time}`
 
@@ -294,7 +311,9 @@ t('en', 'order.deliveryDay', { at }); // 'Friday, September 25'
 t('fr', 'order.deliveryDay', { at }); // 'vendredi 25 septembre'
 ```
 
-Any other style name fails the build.
+Any other style name (`{at, date, weekday}`) fails the build with
+`MESSAGE_UNSUPPORTED`, and so does a date skeleton whose options `Intl` does
+not read or refuses.
 
 ### Quoting — `'{…}'` and `''`
 
@@ -334,6 +353,7 @@ An argument's type comes from how the **fallback locale's** message uses it.
 | `{count, plural, …}`, `{position, selectordinal, …}` | `'number'` | `number` |
 | `{total, number}`, with any style or skeleton | `'number'` | `number` |
 | `{at, date}`, `{at, time}`, with any style or skeleton | `'date'` | `Date` |
+| no argument at all | — | `{ readonly [argument: string]: never }`: `{}` or nothing |
 
 - A plain `{n}` in a message that also uses `n` as a number or a date takes
   that type:
@@ -501,12 +521,19 @@ class MailBuildError extends Error {
 | --- | --- |
 | `CATALOGUE_INVALID` | `messages: en: messages/en.json is not valid JSON` |
 | `CATALOGUE_INVALID` | `messages: en: (root) in messages/ must be an object of messages` |
+| `CATALOGUE_INVALID` | `messages: en: a.b in messages/ must be a message (a string) or an object of messages` |
 | `MESSAGE_UNPARSABLE` | `messages: en: greeting.hello is not a valid ICU message (EXPECT_ARGUMENT_CLOSING_BRACE)` |
 | `MESSAGE_UNPARSABLE` | `messages: en: a is not a valid ICU message (MISSING_OTHER_CLAUSE)` |
-| `MESSAGE_UNPARSABLE` | `messages: en: a uses a number style currency, which is not supported` |
+| `MESSAGE_UNSUPPORTED` | `messages: en: a uses the number style currency, which is not supported` |
+| `MESSAGE_UNSUPPORTED` | `messages: en: a uses the date style weekday, which is not supported` |
+| `MESSAGE_UNSUPPORTED` | `messages: en: a uses a number skeleton option Intl does not read (scale), which is not supported` |
+| `MESSAGE_UNSUPPORTED` | `messages: en: a uses a number skeleton Intl refuses in en, which is not supported` |
+| `MESSAGE_UNSUPPORTED` | `messages: en: a uses a number skeleton that sets no option, which is not supported` |
 | `KEY_NOT_CAMEL_CASE` | `messages: en: verify_email in messages/ is not camelCase — every segment of a key is camelCase, as verifyEmail.title` |
+| `KEY_NOT_CAMEL_CASE` | `messages: en: verifyEmail.title in messages/ holds a dot — nest it instead, one object per segment` |
 | `KEY_NOT_CAMEL_CASE` | `messages: en: a uses {first_name}, which is not camelCase — an argument is a camelCase name, as {firstName}` |
-| `KEY_CONFLICT` | `messages: en: common is a namespace in one catalogue and a message in messages/ — a later catalogue overrides a message, never a namespace` |
+| `KEY_CONFLICT` | `messages: en: common is a namespace in preset and a message in messages/ — a later catalogue overrides a message, never a namespace` |
+| `KEY_CONFLICT` | `messages: en: common is a message in preset and a namespace in messages/ — a later catalogue overrides a message, never a namespace` |
 | `KEY_MISSING` | `messages: fr: greeting.hello is missing — en, the fallback locale, has it` |
 | `KEY_UNKNOWN` | `messages: fr: greeting.bye is not a key of en, the fallback locale` |
 | `ARGUMENT_UNDECLARED` | `messages: fr: greeting.hello uses {nom}, which en does not declare` |

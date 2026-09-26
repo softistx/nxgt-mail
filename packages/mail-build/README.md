@@ -42,7 +42,11 @@ so `nodenext` is not supported.
 
 The module is written to `src/generated/` and replaced on every build. Keep it
 out of your linter and your coverage; commit it or ignore it in git, as you
-prefer — the same catalogues always produce the same bytes.
+prefer — the same catalogues always produce the same bytes. Your compiler does
+check it, and it compiles under the strictest options — `strict`,
+`exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`, `noUnusedLocals`,
+`noUnusedParameters`, `noPropertyAccessFromIndexSignature`, down to an ES2020
+`lib`.
 
 ## Usage
 
@@ -127,7 +131,7 @@ From the way the **fallback locale's** message uses them:
 | `{total, number}`, `{total, number, ::currency/EUR}`, `{ratio, number, percent}` | `number` |
 | `{at, date, long}`, `{at, time, short}` | `Date` |
 | `{n}` in a message that also has `{n, plural, …}` | `number` — the plain use takes the other's type |
-| no argument | none: `t(locale, key)` |
+| no argument | none: `t(locale, key)` — passing one is a compile error |
 
 Every argument of a message is **required**, including the ones a translation
 leaves out.
@@ -195,9 +199,10 @@ try {
 
 | `code` | When |
 | --- | --- |
-| `CATALOGUE_INVALID` | A file is not JSON, or a catalogue is not an object of objects and strings |
-| `MESSAGE_UNPARSABLE` | A message is not valid ICU, or uses a style that is not supported (`{n, number, currency}`) |
-| `KEY_NOT_CAMEL_CASE` | A key segment or an argument is not `camelCase`: `verify_email`, `{first_name}` |
+| `CATALOGUE_INVALID` | A file is not JSON, or a catalogue is not an object of objects and strings (`{ "a": 42 }`) |
+| `MESSAGE_UNPARSABLE` | A message is not valid ICU — a missing `}`, a plural or select without `other` |
+| `MESSAGE_UNSUPPORTED` | A message parses but cannot become a correct `Intl` call: an unknown style (`{n, number, currency}`), a skeleton option `Intl` does not read (`::percent scale/100`), options `Intl` refuses (`::currency` with no currency code) |
+| `KEY_NOT_CAMEL_CASE` | A key segment or an argument is not `camelCase` — `verify_email`, `{first_name}` — or a JSON key holds a dot (`"verifyEmail.title"`: nest it) |
 | `KEY_CONFLICT` | A later source turns a namespace into a message, or the reverse |
 | `KEY_MISSING` | A key of the fallback locale is missing in another locale |
 | `KEY_UNKNOWN` | A locale holds a key the fallback locale does not |
@@ -229,20 +234,20 @@ every locale — `{n, number}` where a translation needs only the number.
 declares the arguments: `fr` may leave `{name}` out, but `{nom}` fails the
 build (`ARGUMENT_UNDECLARED`). Add an argument to the fallback locale first.
 
-**The generated module does not compile under `noUnusedParameters`.** Each of
-its functions takes `(a, o)` whether its message uses them or not; keep that
-option off in the tsconfig that checks `src/generated/`.
-
 ## Documentation
 
 - [The guides](docs/README.md) — one page per area, with every case and every
   error.
+- [Troubleshooting](docs/troubleshooting.md) — a build error or a compile
+  error, its cause and its fix.
+- [Roadmap](docs/roadmap.md) — what is next, and what is deliberately not
+  planned.
 - [Vocabulary](https://github.com/softistx/nxgt-mail/blob/develop/docs/vocabulary.md)
   — the words these pages use, defined once.
 
 ## Type safety, counted
 
-**7 plausible mistakes, 7 refused** at compile time, each measured by a
+**8 plausible mistakes, 8 refused** at compile time, each measured by a
 `@ts-expect-error` in
 [`test/types/messages.ts`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-build/test/types/messages.ts),
 checked against a module the compiler emitted from a fixture — not a
@@ -255,6 +260,9 @@ hand-written one:
 5. A string where a date expects a `Date`: `{ at: '2026-09-25' }`.
 6. A locale the build does not support: `t('de', …)`.
 7. A key that does not exist: `'verifyEmail.titel'`.
+8. An argument passed to a message that takes none:
+   `t('en', 'verifyEmail.title', { name: 'Ada' })` — the call left behind when
+   a message drops its `{name}`.
 
 The same file holds the calls that must keep compiling: a refusal that refuses
 the correct call is a bug.

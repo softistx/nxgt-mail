@@ -58,9 +58,11 @@ const catalogues: { readonly [L in Locale]: { readonly [K in MessageKey]: Format
 	},
 };
 
-type Rest<K extends MessageKey> = MessageArgs[K] extends { readonly [argument: string]: never }
-	? [args?: MessageArgs[K], options?: FormatOptions]
-	: [args: MessageArgs[K], options?: FormatOptions];
+type Rest<K extends MessageKey> = K extends MessageKey
+	? MessageArgs[K] extends { readonly [argument: string]: never }
+		? [args?: MessageArgs[K], options?: FormatOptions]
+		: [args: MessageArgs[K], options?: FormatOptions]
+	: never;
 
 /** The message `key` in `locale`, with its arguments. */
 export function t<K extends MessageKey>(locale: Locale, key: K, ...rest: Rest<K>): string {

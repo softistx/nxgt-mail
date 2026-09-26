@@ -41,10 +41,12 @@ const NUMBER_STYLES: Readonly<Record<string, Intl.NumberFormatOptions>> = {
 	percent: { style: 'percent' },
 };
 
-// The options `Intl` reads. A skeleton can produce others — `scale/100`
-// gives `scale` — which `Intl` would silently ignore, formatting the wrong
-// number; and the emitted `Intl.NumberFormatOptions` literal would not
-// typecheck in the consumer's project.
+// The options `Intl` reads, up to ES2020. A skeleton can produce others —
+// `scale/100` gives `scale` — which `Intl` would silently ignore, formatting
+// the wrong number; and the emitted `Intl.NumberFormatOptions` literal would
+// not typecheck in the consumer's project. The ES2023 rounding options
+// (`::rounding-mode-floor`, `::.00/w`) are left out for the same reasons: a
+// consumer's lib below ES2023 refuses them, an older run time ignores them.
 const NUMBER_KEYS = new Set([
 	'compactDisplay',
 	'currency',
@@ -57,12 +59,8 @@ const NUMBER_KEYS = new Set([
 	'minimumSignificantDigits',
 	'notation',
 	'numberingSystem',
-	'roundingIncrement',
-	'roundingMode',
-	'roundingPriority',
 	'signDisplay',
 	'style',
-	'trailingZeroDisplay',
 	'unit',
 	'unitDisplay',
 	'useGrouping',

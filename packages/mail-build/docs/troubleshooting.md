@@ -42,15 +42,20 @@ try {
 
 **Catalogues**
 - [`CATALOGUE_INVALID` — `messages: <locale>: <path> is not valid JSON`](#catalogue_invalid--messages-locale-path-is-not-valid-json)
-- [`CATALOGUE_INVALID` — `messages: <locale>: <key> in <source> must be an object of messages`](#catalogue_invalid--messages-locale-key-in-source-must-be-an-object-of-messages)
+- [`CATALOGUE_INVALID` — `messages: <locale>: (root) in <source> must be an object of messages`](#catalogue_invalid--messages-locale-root-in-source-must-be-an-object-of-messages)
+- [`CATALOGUE_INVALID` — `messages: <locale>: <key> in <source> must be a message (a string) or an object of messages`](#catalogue_invalid--messages-locale-key-in-source-must-be-a-message-a-string-or-an-object-of-messages)
+- [`KEY_NOT_CAMEL_CASE` — `messages: <locale>: <key> in <source> holds a dot — nest it instead, one object per segment`](#key_not_camel_case--messages-locale-key-in-source-holds-a-dot--nest-it-instead-one-object-per-segment)
 - [`KEY_NOT_CAMEL_CASE` — `messages: <locale>: <key> in <source> is not camelCase — every segment of a key is camelCase, as verifyEmail.title`](#key_not_camel_case--messages-locale-key-in-source-is-not-camelcase--every-segment-of-a-key-is-camelcase-as-verifyemailtitle)
-- [`KEY_CONFLICT` — `messages: <locale>: <key> is a <kind> in one catalogue and a <kind> in <source> — a later catalogue overrides a message, never a namespace`](#key_conflict--messages-locale-key-is-a-kind-in-one-catalogue-and-a-kind-in-source--a-later-catalogue-overrides-a-message-never-a-namespace)
+- [`KEY_CONFLICT` — `messages: <locale>: <key> is a <kind> in <source> and a <kind> in <source> — a later catalogue overrides a message, never a namespace`](#key_conflict--messages-locale-key-is-a-kind-in-source-and-a-kind-in-source--a-later-catalogue-overrides-a-message-never-a-namespace)
 - [`KEY_MISSING` — `messages: <locale>: <key> is missing — <fallback>, the fallback locale, has it`](#key_missing--messages-locale-key-is-missing--fallback-the-fallback-locale-has-it)
 - [`KEY_UNKNOWN` — `messages: <locale>: <key> is not a key of <fallback>, the fallback locale`](#key_unknown--messages-locale-key-is-not-a-key-of-fallback-the-fallback-locale)
 
 **Messages**
 - [`MESSAGE_UNPARSABLE` — `messages: <locale>: <key> is not a valid ICU message (<reason>)`](#message_unparsable--messages-locale-key-is-not-a-valid-icu-message-reason)
-- [`MESSAGE_UNPARSABLE` — `messages: <locale>: <key> uses a <number|date|time> style <style>, which is not supported`](#message_unparsable--messages-locale-key-uses-a-numberdatetime-style-style-which-is-not-supported)
+- [`MESSAGE_UNSUPPORTED` — `messages: <locale>: <key> uses the <number|date|time> style <style>, which is not supported`](#message_unsupported--messages-locale-key-uses-the-numberdatetime-style-style-which-is-not-supported)
+- [`MESSAGE_UNSUPPORTED` — `messages: <locale>: <key> uses a <number|date|time> skeleton Intl refuses in <locale>, which is not supported`](#message_unsupported--messages-locale-key-uses-a-numberdatetime-skeleton-intl-refuses-in-locale-which-is-not-supported)
+- [`MESSAGE_UNSUPPORTED` — `messages: <locale>: <key> uses a <number|date|time> skeleton option Intl does not read (<options>), which is not supported`](#message_unsupported--messages-locale-key-uses-a-numberdatetime-skeleton-option-intl-does-not-read-options-which-is-not-supported)
+- [`MESSAGE_UNSUPPORTED` — `messages: <locale>: <key> uses a number skeleton that sets no option, which is not supported`](#message_unsupported--messages-locale-key-uses-a-number-skeleton-that-sets-no-option-which-is-not-supported)
 - [`KEY_NOT_CAMEL_CASE` — `messages: <locale>: <key> uses {<argument>}, which is not camelCase — an argument is a camelCase name, as {firstName}`](#key_not_camel_case--messages-locale-key-uses-argument-which-is-not-camelcase--an-argument-is-a-camelcase-name-as-firstname)
 - [`ARGUMENT_UNDECLARED` — `messages: <locale>: <key> uses {<argument>}, which <fallback> does not declare`](#argument_undeclared--messages-locale-key-uses-argument-which-fallback-does-not-declare)
 - [`ARGUMENT_TYPE_MISMATCH` — `messages: <locale>: <key> uses {<argument>} as <kind> and as <kind>`](#argument_type_mismatch--messages-locale-key-uses-argument-as-kind-and-as-kind)
@@ -64,6 +69,7 @@ try {
 - [`TS2322: Type 'string' is not assignable to type 'Date'.`](#ts2322-type-string-is-not-assignable-to-type-date)
 - [`TS2345: Argument of type '"<locale>"' is not assignable to parameter of type '"en" | "fr"'.`](#ts2345-argument-of-type-locale-is-not-assignable-to-parameter-of-type-en--fr)
 - [`TS2345: Argument of type '"<key>"' is not assignable to parameter of type 'keyof MessageArgs'.`](#ts2345-argument-of-type-key-is-not-assignable-to-parameter-of-type-keyof-messageargs)
+- [`TS2322: Type '<type>' is not assignable to type 'never'.`](#ts2322-type-type-is-not-assignable-to-type-never)
 
 **In the rendered e-mail**
 - [A date or a time is off by some hours](#a-date-or-a-time-is-off-by-some-hours)
@@ -73,7 +79,6 @@ try {
 - [An argument shows as `{name}`, and an apostrophe is gone](#an-argument-shows-as-name-and-an-apostrophe-is-gone)
 - [`RangeError: Invalid time zone specified: <zone>`](#rangeerror-invalid-time-zone-specified-zone)
 - [`RangeError: Invalid time value`](#rangeerror-invalid-time-value)
-- [`TypeError: Currency code is required with currency style.`](#typeerror-currency-code-is-required-with-currency-style)
 - [A bug in `@nxgt/mail-build` itself](#a-bug-in-nxgtmail-build-itself)
 
 The examples below build from `messages/<locale>.json` and write the module
@@ -187,14 +192,31 @@ there are no comments or trailing commas:
 }
 ```
 
-### `CATALOGUE_INVALID` — `messages: <locale>: <key> in <source> must be an object of messages`
+### `CATALOGUE_INVALID` — `messages: <locale>: (root) in <source> must be an object of messages`
 
-`<key>` is `(root)` when the whole catalogue is the problem.
+**When:** `compileMessages`, on a catalogue that is not an object: a file
+holding `["…"]` or `"…"`, or a source that passed the file's text instead of
+its parsed JSON.
+**Why:** a catalogue is nested objects whose leaves are ICU messages.
+**Fix:** pass what `readCatalogues` answers, or `JSON.parse` of the file, as
+the source's `catalogues`, one entry per locale:
+
+```ts
+import { readFile } from 'node:fs/promises';
+import { type Catalogue, compileMessages } from '@nxgt/mail-build';
+
+const en = JSON.parse(await readFile('messages/en.json', 'utf8')) as Catalogue;
+compileMessages({
+  locales: ['en'],
+  fallbackLocale: 'en',
+  sources: [{ name: 'messages/', catalogues: { en } }],
+});
+```
+
+### `CATALOGUE_INVALID` — `messages: <locale>: <key> in <source> must be a message (a string) or an object of messages`
 
 **When:** `compileMessages`, on a value that is neither a message (a string)
-nor a namespace (an object): a number, `true`, `null`, an array. With
-`(root)`: a catalogue that is a string or an array, typically a file holding
-`["…"]`, or a source that passed the file's text instead of its parsed JSON.
+nor a namespace (an object): a number, `true`, `null`, an array.
 **Why:** a catalogue is nested objects whose leaves are ICU messages, and
 nothing else. A number is not a message: a message is text, even `"24"`.
 **Fix:**
@@ -207,20 +229,30 @@ nothing else. A number is not a message: a message is text, even `"24"`.
 }
 ```
 
-Pass `readCatalogues` output, or `JSON.parse` of the file, as the source's
-`catalogues`, one entry per locale.
+### `KEY_NOT_CAMEL_CASE` — `messages: <locale>: <key> in <source> holds a dot — nest it instead, one object per segment`
+
+**When:** `compileMessages`, on a key written with a dot in the JSON:
+`"verifyEmail.title": "…"`.
+**Why:** the dotted key is how the build *names* a nested key; a catalogue
+*writes* it as one object per segment, so that sources merge one message at
+a time.
+**Fix:**
+
+```json
+{
+  "verifyEmail": {
+    "title": "One step left"
+  }
+}
+```
 
 ### `KEY_NOT_CAMEL_CASE` — `messages: <locale>: <key> in <source> is not camelCase — every segment of a key is camelCase, as verifyEmail.title`
 
 **When:** `compileMessages`, on a key written `verify_email`, `VerifyEmail`,
 `verify-email` or `2fa`, in any source.
-**Also when:** a key written **with a dot** in the JSON, as
-`"verifyEmail.title": "…"`. The message then shows the key that looks right,
-because the dot is part of one segment.
 **Why:** every segment of a key starts with a lower-case letter and holds
-only letters and digits; the dotted key is how the build names a nested one.
-Keys become names in the generated module, and the casing rule holds across
-the repository.
+only letters and digits. Keys become names in the generated module, and the
+casing rule holds across the repository.
 **Fix:** one object per segment, each segment `camelCase`:
 
 ```json
@@ -234,9 +266,10 @@ the repository.
 }
 ```
 
-### `KEY_CONFLICT` — `messages: <locale>: <key> is a <kind> in one catalogue and a <kind> in <source> — a later catalogue overrides a message, never a namespace`
+### `KEY_CONFLICT` — `messages: <locale>: <key> is a <kind> in <source> and a <kind> in <source> — a later catalogue overrides a message, never a namespace`
 
-`<kind>` is `message` or `namespace`.
+`<kind>` is `message` or `namespace`. The first `<source>` is the earlier
+one, typically a preset; the second is the one that disagrees with it.
 
 **When:** `compileMessages`, with more than one source — a preset, then the
 application — when a later source writes a string where an earlier one has
@@ -306,8 +339,9 @@ never be called.
 
 ### `MESSAGE_UNPARSABLE` — `messages: <locale>: <key> is not a valid ICU message (<reason>)`
 
-**When:** `compileMessages`, on a message the ICU parser refuses. The
-parser's error is `error.cause`, with its position in the message.
+**When:** `compileMessages`, on a message the ICU parser refuses. The error
+has no `cause`: the parser's own error holds the text of the message, and a
+build error never does.
 **Why:** each message is parsed as ICU MessageFormat at build time; one that
 does not parse fails the build rather than reaching an e-mail as `{name`.
 **Fix:** the `<reason>` names the mistake:
@@ -332,10 +366,10 @@ what a value no other branch matches falls into.
 }
 ```
 
-### `MESSAGE_UNPARSABLE` — `messages: <locale>: <key> uses a <number|date|time> style <style>, which is not supported`
+### `MESSAGE_UNSUPPORTED` — `messages: <locale>: <key> uses the <number|date|time> style <style>, which is not supported`
 
 **When:** `compileMessages`, on `{total, number, currency}`,
-`{at, date, yyyy-MM-dd}` or another named style the build does not know.
+`{at, date, weekday}` or another named style the build does not know.
 **Why:** a named style must map to `Intl` options at build time. The
 supported names are:
 
@@ -356,8 +390,57 @@ supported names are:
 }
 ```
 
-A currency skeleton needs its code: see
-[`TypeError: Currency code is required with currency style.`](#typeerror-currency-code-is-required-with-currency-style).
+A skeleton is checked too, by the three entries below.
+
+### `MESSAGE_UNSUPPORTED` — `messages: <locale>: <key> uses a <number|date|time> skeleton Intl refuses in <locale>, which is not supported`
+
+**When:** `compileMessages`, on a skeleton whose options `Intl` will not
+build, most often `{total, number, ::currency}` — a currency with no code.
+**Why:** the build constructs the `Intl` formatter of every skeleton once,
+for its locale, so a skeleton that would throw on every call fails the build
+instead.
+**Fix:** complete the skeleton; a currency names its ISO code:
+
+```json
+{
+  "order": {
+    "total": "Total: {total, number, ::currency/EUR}"
+  }
+}
+```
+
+### `MESSAGE_UNSUPPORTED` — `messages: <locale>: <key> uses a <number|date|time> skeleton option Intl does not read (<options>), which is not supported`
+
+**When:** `compileMessages`, on a skeleton the parser turns into an option
+`Intl` ignores: `{n, number, ::scale/100}`, or `::percent scale/100` —
+`(scale)` in the message. Also on the ES2023 rounding options:
+`::.00 rounding-mode-floor` (`roundingMode`), `::.00/w`
+(`trailingZeroDisplay`), `roundingIncrement`, `roundingPriority`.
+**Why:** `Intl` would silently drop the option and format another number
+than the one the skeleton says. The rounding options are refused because the
+generated module compiles down to ES2020: an older `lib` rejects them, and an
+older run time drops them.
+**Fix:** do the arithmetic — or the rounding — before the call, and keep the
+skeleton to what `Intl` reads:
+
+```json
+{
+  "report": {
+    "share": "{share, number, ::percent}"
+  }
+}
+```
+
+`::percent` multiplies by 100 itself: pass `0.25` for `25%`.
+
+### `MESSAGE_UNSUPPORTED` — `messages: <locale>: <key> uses a number skeleton that sets no option, which is not supported`
+
+**When:** `compileMessages`, on a number skeleton made only of stems the
+parser does not know: `{n, number, ::foo}`, a typo such as `::precent`.
+**Why:** a skeleton that sets nothing is almost always a misspelled one,
+which would format the number plainly.
+**Fix:** spell the stem, as `::percent`, `::currency/EUR` or
+`::compact-short`, or drop the skeleton: `{n, number}`.
 
 ### `KEY_NOT_CAMEL_CASE` — `messages: <locale>: <key> uses {<argument>}, which is not camelCase — an argument is a camelCase name, as {firstName}`
 
@@ -440,8 +523,9 @@ the same arguments.
 ## Calling the generated `t()`
 
 The generated module exports `t(locale, key, args?, options?)`, with the
-keys, the arguments and their types taken from the catalogues. Every entry
-below is a call `tsc` refuses; the examples use a module built from:
+keys, the arguments and their types taken from the catalogues. The eight
+entries below are the calls `tsc` refuses; the examples use a module built
+from:
 
 ```json
 {
@@ -472,15 +556,16 @@ t('fr', 'verifyEmail.body', { name: 'Ada' });
 
 ### `TS2554: Expected 3-4 arguments, but got 2.`
 
-**When:** `tsc`, on `t('fr', 'verifyEmail.body')`: no arguments object, for
-a message that has arguments.
-**Why:** the arguments object is optional only for a message with none,
-such as `verifyEmail.title`.
-**Fix:** pass the arguments, as above; a message without any takes none:
+**When:** `tsc`, on a call with a locale and a key only, for a message that
+has arguments: `t('fr', 'verifyEmail.body')`.
+**Why:** the arguments object may be left out only for a message that takes
+none, such as `verifyEmail.title`.
+**Fix:** pass the arguments the message takes:
 
 ```ts
 import { t } from './generated/messages';
 
+t('fr', 'verifyEmail.body', { name: 'Ada' });
 t('en', 'verifyEmail.title');
 ```
 
@@ -554,9 +639,9 @@ To add the locale instead, add it to `locales` and write its catalogue.
 
 ### `TS2345: Argument of type '"<key>"' is not assignable to parameter of type 'keyof MessageArgs'.`
 
-**When:** `tsc`, on a key the catalogues do not hold: a typo
-(`verifyEmail.titel`), a key renamed in the catalogues, or a module not
-generated again since the key was added.
+**When:** `tsc`, on a key the catalogues do not hold, with or without an
+arguments object: a typo (`t('en', 'verifyEmail.titel')`), a key renamed in
+the catalogues, or a module not generated again since the key was added.
 **Why:** `MessageKey` is the keys of the fallback locale, at the time the
 module was generated.
 **Fix:** use a key of the catalogue, and build the module again after
@@ -566,6 +651,25 @@ changing a catalogue:
 import type { MessageKey } from './generated/messages';
 
 const key: MessageKey = 'verifyEmail.title';
+```
+
+### `TS2322: Type '<type>' is not assignable to type 'never'.`
+
+**When:** `tsc`, on an argument passed to a message that takes none:
+`t('en', 'verifyEmail.title', { name: 'Ada' })` — typically the call left
+behind after a message dropped its `{name}`. `<type>` is the type of the
+value you passed.
+**Why:** a message without arguments accepts an empty object, or nothing,
+and every property of it is typed `never`, so a stale argument is caught
+rather than silently ignored.
+**Fix:** drop the argument, or put the placeholder back in the fallback
+locale's message:
+
+```ts
+import { t } from './generated/messages';
+
+t('en', 'verifyEmail.title');
+t('en', 'verifyEmail.title', {}, { timeZone: 'Europe/Paris' });
 ```
 
 ---
@@ -691,29 +795,9 @@ const at = new Date('2026-09-25T21:30:00Z');
 if (Number.isNaN(at.getTime())) throw new TypeError('placedAt is not a date');
 ```
 
-### `TypeError: Currency code is required with currency style.`
-
-On Bun: `TypeError: currency must be a string`.
-
-**When:** a call to `t()` for a message holding `{total, number, ::currency}`
-— a currency skeleton **without its code**. The build passed; the call
-throws.
-**Why:** the skeleton says "a currency" but not which one, and
-`Intl.NumberFormat` refuses that. The build does not yet check a skeleton's
-options, so the mistake surfaces at the call.
-**Fix:** name the currency in the skeleton:
-
-```json
-{
-  "order": {
-    "total": "Total: {total, number, ::currency/EUR}"
-  }
-}
-```
-
 ### A bug in `@nxgt/mail-build` itself
 
-A `MESSAGE_UNPARSABLE` that says `uses a tag` or `uses a # outside a plural`,
+A `MESSAGE_UNSUPPORTED` that says `uses a tag` or `uses a # outside a plural`,
 a generated module that does not compile, or a message this page says is
 valid and the build refuses, is a bug in this package. Open an issue on
 [`softistx/nxgt-mail`](https://github.com/softistx/nxgt-mail/issues) with

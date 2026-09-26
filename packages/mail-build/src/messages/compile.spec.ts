@@ -164,6 +164,12 @@ describe('compileMessages — every build failure names the locale and the key',
 			'messages: en: a uses a number skeleton option Intl does not read (scale), which is not supported',
 		],
 		[
+			'an ES2023 rounding option',
+			{ en: { a: '{n, number, ::.00 rounding-mode-floor}' } },
+			'MESSAGE_UNSUPPORTED',
+			'messages: en: a uses a number skeleton option Intl does not read (roundingMode), which is not supported',
+		],
+		[
 			'a currency skeleton without a currency',
 			{ en: { a: '{n, number, ::currency}' } },
 			'MESSAGE_UNSUPPORTED',
