@@ -35,8 +35,9 @@ and ships with the first release, under **Next**.
 - **Build-time refusals for templates** — what one render at build time
   cannot reproduce fails the build instead of rendering wrong:
   - `v-if`, `v-for`, `v-html`, an expression, a name that is not a prop;
-  - `<script setup>` holding anything but `defineProps([...])` with the prop
-    names;
+  - `<script setup>` holding anything but the prop names, as
+    `defineProps(['name'])` or `defineProps<{ name: string }>()` — an object
+    with validators or defaults runs at build time, and is refused;
   - an unknown component (`<Buton>`), and a value a component drops or
     consumes at build time;
   - a value in an attribute outside the allow-list: only text attributes

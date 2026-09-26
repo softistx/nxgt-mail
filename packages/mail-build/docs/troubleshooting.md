@@ -90,7 +90,7 @@ try {
 - [`TEMPLATE_INVALID` — `templates: <file>: does not parse as a single-file component (<reason>)`](#template_invalid--templates-file-does-not-parse-as-a-single-file-component-reason)
 - [`TEMPLATE_INVALID` — `templates: <file>: has no <template>`](#template_invalid--templates-file-has-no-template)
 - [`TEMPLATE_INVALID` — `templates: <file>: has a <script> without setup — declare the props in <script setup>`](#template_invalid--templates-file-has-a-script-without-setup--declare-the-props-in-script-setup)
-- [`TEMPLATE_UNSUPPORTED` — `templates: <file>: holds code in <script setup> — a template declares its props with defineProps([...]), unassigned, and nothing else`](#template_unsupported--templates-file-holds-code-in-script-setup--a-template-declares-its-props-with-defineprops-unassigned-and-nothing-else)
+- [`TEMPLATE_UNSUPPORTED` — `templates: <file>: holds code in <script setup> — a template declares its props with defineProps([...]) or defineProps<{...}>(), unassigned, and nothing else`](#template_unsupported--templates-file-holds-code-in-script-setup--a-template-declares-its-props-with-defineprops-or-defineprops-unassigned-and-nothing-else)
 - [`TEMPLATE_INVALID` — `templates: <file>: does not declare its props in a form the build reads (<reason>)`](#template_invalid--templates-file-does-not-declare-its-props-in-a-form-the-build-reads-reason)
 - [`TEMPLATE_INVALID` — `templates: <file>: declares the prop <prop>, a name the render function uses itself`](#template_invalid--templates-file-declares-the-prop-prop-a-name-the-render-function-uses-itself)
 - [`TEMPLATE_INVALID` — `templates: <file>: declares the prop <prop>, which is not camelCase — name it as firstName`](#template_invalid--templates-file-declares-the-prop-prop-which-is-not-camelcase--name-it-as-firstname)
@@ -973,7 +973,7 @@ defineProps(['link', 'name', 'hours']);
 </script>
 ```
 
-### `TEMPLATE_UNSUPPORTED` — `templates: <file>: holds code in <script setup> — a template declares its props with defineProps([...]), unassigned, and nothing else`
+### `TEMPLATE_UNSUPPORTED` — `templates: <file>: holds code in <script setup> — a template declares its props with defineProps([...]) or defineProps<{...}>(), unassigned, and nothing else`
 
 **When:** the build, on a `<script setup>` that holds anything but one
 `defineProps(['a', 'b'])` or `defineProps<{ … }>()` call:
@@ -1006,16 +1006,18 @@ in the generated module from the way the template uses it.
 
 ### `TEMPLATE_INVALID` — `templates: <file>: does not declare its props in a form the build reads (<reason>)`
 
-**When:** the build, on a `defineProps<…>()` whose type Vue's compiler
-cannot resolve: a name declared nowhere in the script, as
-`defineProps<Missing>()`. `<reason>` is the compiler's first line, as
-`[@vue/compiler-sfc] Unresolvable type reference or unsupported built-in
-utility type`.
+**When:** the build, on a `defineProps<…>()` Vue's compiler cannot read:
+- most often, the type form in a `<script setup>` without `lang="ts"`:
+  `<reason>` is then `[vue/compiler-sfc] Unexpected token (…)`;
+- a type named but declared nowhere in the script, as
+  `defineProps<Missing>()`: `<reason>` is then `[@vue/compiler-sfc]
+  Unresolvable type reference or unsupported built-in utility type`.
 **Why:** the build takes the prop names from Vue's compiler. A type declared
 beside the call, or imported, would need a second statement in
 `<script setup>`, which the build refuses; a name alone leaves the compiler
 nothing to read.
-**Fix:** write the props as a list of names, or as an inline type:
+**Fix:** add `lang="ts"` to `<script setup>` for the type form, and write
+the type inline — or write the props as a list of names:
 
 ```vue
 <script setup>

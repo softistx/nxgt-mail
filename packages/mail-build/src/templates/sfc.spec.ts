@@ -88,21 +88,21 @@ describe('readTemplate', () => {
 			'a.vue',
 			'<script setup>\ndefineProps([])\nconst x = 1\n</script>\n<template><p>{{ x }}</p></template>',
 			'TEMPLATE_UNSUPPORTED',
-			'templates: a.vue: holds code in <script setup> — a template declares its props with defineProps([...]), unassigned, and nothing else',
+			'templates: a.vue: holds code in <script setup> — a template declares its props with defineProps([...]) or defineProps<{...}>(), unassigned, and nothing else',
 		],
 		[
 			'a statement run at build time',
 			'a.vue',
 			"<script setup>\ndefineProps([])\nconsole.log('built')\n</script>\n<template><p></p></template>",
 			'TEMPLATE_UNSUPPORTED',
-			'templates: a.vue: holds code in <script setup> — a template declares its props with defineProps([...]), unassigned, and nothing else',
+			'templates: a.vue: holds code in <script setup> — a template declares its props with defineProps([...]) or defineProps<{...}>(), unassigned, and nothing else',
 		],
 		[
 			'a validator in defineProps, which would run at build time',
 			'a.vue',
 			'<script setup>\ndefineProps({ name: { validator: () => true } })\n</script>\n<template><p>{{ name }}</p></template>',
 			'TEMPLATE_UNSUPPORTED',
-			'templates: a.vue: holds code in <script setup> — a template declares its props with defineProps([...]), unassigned, and nothing else',
+			'templates: a.vue: holds code in <script setup> — a template declares its props with defineProps([...]) or defineProps<{...}>(), unassigned, and nothing else',
 		],
 		[
 			'a props type the compiler cannot resolve',
@@ -116,7 +116,7 @@ describe('readTemplate', () => {
 			'a.vue',
 			"<script setup>\nconst props = defineProps(['name'])\n</script>\n<template><p>{{ name }}</p></template>",
 			'TEMPLATE_UNSUPPORTED',
-			'templates: a.vue: holds code in <script setup> — a template declares its props with defineProps([...]), unassigned, and nothing else',
+			'templates: a.vue: holds code in <script setup> — a template declares its props with defineProps([...]) or defineProps<{...}>(), unassigned, and nothing else',
 		],
 		[
 			'a reserved prop',

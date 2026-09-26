@@ -198,7 +198,7 @@ function checkScript(file: string, content: string): void {
 		throw templateError(
 			'TEMPLATE_UNSUPPORTED',
 			file,
-			'holds code in <script setup> — a template declares its props with defineProps([...]), unassigned, and nothing else',
+			'holds code in <script setup> — a template declares its props with defineProps([...]) or defineProps<{...}>(), unassigned, and nothing else',
 		);
 	}
 }
