@@ -210,7 +210,7 @@ result.
 | `ui: brand.logo.alt must be a string` | `alt: 1` |
 | `ui: theme must be an object of tokens, as { 'color-primary': '#0f766e' }` | `theme: ['#0f766e']` |
 | `ui: theme.color-primay is not a token of the theme — name one of theme.css without its --, as color-primary` | A misspelled token, or one written with its `--` |
-| `ui: theme.color-primary must be a CSS value, as #0f766e or 8px` | An empty value, a number, or one holding `;`, `{`, `}`, `<` or `>` |
+| `ui: theme.color-primary must be a CSS value, as #0f766e or 8px` | An empty value, a number, or one holding `;`, `{`, `}`, `<`, `>`, a quote, a backslash, a CSS comment (`/*`, `*/`) or a line break |
 
 ```ts
 ui({ brand: { name: 'Acme', url: '/home' } });

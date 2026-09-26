@@ -210,7 +210,7 @@ its `variant`/`color`/`size` props, its tokens — rendered with tables and
 inlined styles. No dependency on material-vue.
 
 - **The first set:** `NxLayout` (brand header, card, footer; on Maizzle's
-  `Html`/`Head`/`Body`), `NxTypography`, `NxButton` (on Maizzle's `Button`,
+  `Html`/`Head`/`Body`/`Container`, which holds its width in Outlook), `NxTypography`, `NxButton` (on Maizzle's `Button`,
   which pads it for Outlook), `NxLink`, `NxSeparator`, `NxCard` with
   `NxCardHeader`, `NxCardTitle`, `NxCardDescription`, `NxCardContent`,
   `NxCardFooter`, `NxBadge`, `NxAlert`, `NxBanner`, `NxStatusIndicator`,

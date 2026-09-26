@@ -42,6 +42,8 @@ The samples below use the locales `en` and `fr`, the template
 - [A tint written with an alpha (`bg-primary/15`) is missing in Outlook](#a-tint-written-with-an-alpha-bg-primary15-is-missing-in-outlook)
 - [A side border (`border-b`) is gone, and the style ends with `border: 0`](#a-side-border-border-b-is-gone-and-the-style-ends-with-border-0)
 - [A project's own component does not replace the package's](#a-projects-own-component-does-not-replace-the-packages)
+- [An element placed directly in `NxCard` breaks the card](#an-element-placed-directly-in-nxcard-breaks-the-card)
+- [`class="mb-0"` leaves the space under an `NxAlert`, `NxBanner`, `NxCard` or `NxCode`](#classmb-0-leaves-the-space-under-an-nxalert-nxbanner-nxcard-or-nxcode)
 - [A bug in `@nxgt/mail-ui` itself](#a-bug-in-nxgtmail-ui-itself)
 
 ---
@@ -190,16 +192,17 @@ theme: { 'color-primary': '#0f766e' }   // not '--color-primary'
 
 The tokens are the `--…` lines of `node_modules/@nxgt/mail-ui/theme.css`:
 colours (`color-primary`, `color-error`, …) and radii (`radius-sm` to
-`radius-xl`). A colour's tints (`color-primary-15`, …) follow it; override
-the colour, not its tints.
+`radius-xl`). A colour's tints (`color-primary-15`, …) follow it when you
+override the colour; a tint can also be overridden alone.
 
 ### `ui: theme.color-primary must be a CSS value, as #0f766e or 8px`
 
 The message names the token you passed.
 
 **When:** loading `maizzle.config.ts`, when a token's value is not a string
-(`'radius-lg': 4`), is empty, or holds a `;`, a brace or an angle bracket —
-`'#0f766e; color: red'`.
+(`'radius-lg': 4`), is empty, or holds a `;`, a brace, an angle bracket, a
+quote, a backslash, a CSS comment or a line break — `'#0f766e; color: red'`,
+`"'#0f766e' /* brand */"`.
 **Why:** each value is written into one CSS declaration; anything that could
 end it or open another is refused.
 **Fix:**
@@ -325,6 +328,31 @@ components/NxBadge.vue     → replaces <NxBadge> in every template
 
 The package's components carry the `Nx` prefix so that Maizzle's own
 (`<Button>`, …) stay available; the project's override keeps it.
+
+### An element placed directly in `NxCard` breaks the card
+
+**When:** `<NxCard>` holds something other than its parts —
+`<NxCard><p>Text</p></NxCard>`. The built HTML has the `<p>` straight inside
+a `<table>`, which clients render out of place or drop.
+**Why:** the card's body is a `<table>` of rows; each part (`NxCardHeader`,
+`NxCardContent`, `NxCardFooter`) is one `<tr>`.
+**Fix:** put the content in a part:
+
+```vue
+<NxCard>
+  <NxCardContent><NxTypography>Text</NxTypography></NxCardContent>
+</NxCard>
+```
+
+### `class="mb-0"` leaves the space under an `NxAlert`, `NxBanner`, `NxCard` or `NxCode`
+
+**When:** `<NxAlert class="mb-0">` still has 16px below it.
+**Why:** these components put their `class` on the box inside, where it
+styles the box; the space below is on the table around it.
+**Fix:** replace the component with your own, copied from the package's, and
+change its outer `mb-4` — see
+[Replacing a component](guide/plugin.md#replacing-a-component). On
+`NxTypography` and `NxSummaryData`, `class="mb-0"` works.
 
 ### A bug in `@nxgt/mail-ui` itself
 

@@ -125,7 +125,8 @@ ui({ brand: { name: 'Acme' }, theme: { 'color-primary': '#0f766e' } });
 - **Any CSS colour works**, `oklch()` included: Maizzle turns it into hex,
   as it does the theme's own.
 - **The value is trimmed**, and refused if it is empty or holds `;`, `{`,
-  `}`, `<` or `>`: it must stay one declaration.
+  `}`, `<`, `>`, a quote, a backslash, a CSS comment (`/*`, `*/`) or a line
+  break: it must stay one declaration.
 - **Only tokens of `theme.css`.** A name it does not declare is refused, so a
   misspelling fails when the config loads rather than being ignored.
 

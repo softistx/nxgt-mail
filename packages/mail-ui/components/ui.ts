@@ -27,7 +27,7 @@ export interface Brand {
 	};
 }
 
-interface UiContext {
+export interface UiContext {
 	readonly brand: Brand;
 	readonly css: string;
 }

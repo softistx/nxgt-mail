@@ -14,8 +14,11 @@
 import type { MailPlugin } from '@nxgt/mail-config';
 import type { Catalogues } from '@nxgt/mail-i18n';
 import type { ComponentCustomProperties } from 'vue';
-import type { Brand as ComponentsBrand } from '../../components/ui';
-import { type Brand, ui, uiCatalogues } from '../../src/index';
+import type {
+	Brand as ComponentsBrand,
+	UiContext as ComponentsContext,
+} from '../../components/ui';
+import { type Brand, type UiContext, ui, uiCatalogues } from '../../src/index';
 
 // Must keep compiling.
 const plugin: MailPlugin = ui({
@@ -29,11 +32,15 @@ const plugin: MailPlugin = ui({
 const catalogues: Catalogues = uiCatalogues;
 declare const template: ComponentCustomProperties;
 const name: string = template.brand.name;
-// The components keep their own copy of Brand (they ship as source): the two
-// must stay the same shape.
-declare const fromComponents: ComponentsBrand;
-declare const fromPlugin: Brand;
-const sameBrand: [Brand, ComponentsBrand] = [fromComponents, fromPlugin];
+// The components keep their own copy of Brand and UiContext (they ship as
+// source): each must stay exactly the plugin's, optional keys and readonly
+// included.
+type Equal<X, Y> =
+	(<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2
+		? true
+		: false;
+const sameBrand: Equal<Brand, ComponentsBrand> = true;
+const sameContext: Equal<UiContext, ComponentsContext> = true;
 
 // @ts-expect-error — a brand is required: the layout shows it.
 ui({});
@@ -60,4 +67,4 @@ ui({ brand: { name: 'Acme', logo: { width: 96 } } });
 // @ts-expect-error — a URL is a string.
 ui({ brand: { name: 'Acme', url: 1 } });
 
-export { catalogues, name, plugin, sameBrand };
+export { catalogues, name, plugin, sameBrand, sameContext };

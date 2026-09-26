@@ -232,7 +232,7 @@ import type { ArgumentKind } from '@nxgt/mail-i18n'; // 'string' | 'number' | 'd
 
 A placeholder is a string, so it can only fill a `string` argument — and not
 one a `select` chooses on, which would always choose `other`. See
-[Templates](templates.md#a-placeholder-as-an-argument).
+[Templates](templates.md#placeholdername).
 
 An argument's name is `camelCase`, like a key. A message may use one name
 twice, as long as it keeps one kind: a plain `{n}` beside `{n, number}` takes

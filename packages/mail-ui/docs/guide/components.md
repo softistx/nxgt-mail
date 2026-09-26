@@ -27,8 +27,11 @@ reads. They need no JavaScript and no web font.
   `<NxButton class="rounded-md">` replaces its `rounded-full`. Other
   attributes (`style`, `id`, `data-*`) go to the same element as `class`.
 - **Block components end with space below.** `NxTypography`, `NxAlert`,
-  `NxBanner`, `NxCard`, `NxCode` and `NxSummaryData` carry `mb-4`; pass
-  `class="mb-0"` to remove it.
+  `NxBanner`, `NxCard`, `NxCode` and `NxSummaryData` carry `mb-4`. On
+  `NxTypography` and `NxSummaryData`, `class="mb-0"` removes it. `NxAlert`,
+  `NxBanner`, `NxCard` and `NxCode` put their `class` on the box inside, and
+  keep their 16px below: to change it, replace the component with your own
+  (see [Replacing a component](plugin.md#replacing-a-component)).
 - **Vertical space is Maizzle's `<Spacer>`**, which Outlook respects:
 
   ```vue
@@ -82,7 +85,7 @@ in its `<style>`.
 | --- | --- | --- | --- |
 | `lang` | `string` | the template's `locale` with `@nxgt/mail-i18n`, else `'en'` | `<html lang>` |
 | `preheader` | `string` | none | The text a client shows beside the subject, before the e-mail is opened (Maizzle's `<Preheader>`) |
-| `width` | `number` | `600` | The card's maximum width, in pixels |
+| `width` | `number` | `600` | The card's maximum width, in pixels — and the fixed width of the table Outlook on Windows draws, since it ignores a maximum width |
 
 | Slot | Default content |
 | --- | --- |
@@ -97,8 +100,10 @@ background), the card `card` with a `border` line and `rounded-xl` corners.
 The layout declares `<meta name="color-scheme" content="light">`: there is no
 dark version — see [The theme](theme.md#light-only).
 
-It is built on Maizzle's `<Html>`, `<Head>`, `<Body>` and `<Preheader>`, so
-Maizzle's Outlook and client resets apply.
+It is built on Maizzle's `<Html>`, `<Head>`, `<Body>`, `<Preheader>` and
+`<Container>`, so Maizzle's Outlook and client resets apply, and the
+`<Container>` writes the fixed-width table that holds the card at `width` in
+Outlook.
 
 ## NxTypography
 
@@ -289,7 +294,7 @@ the colour on its left.
 
 | Slot | Replaces |
 | --- | --- |
-| `icon` | Nothing: a 24px column on the left, shown only when given |
+| `icon` | Nothing: a 24px column on the left, shown only when given, in the variant's colour (`text-<variant>`), so a character icon takes it |
 | `title`, `description` | The prop of the same name |
 | default | — written under the description |
 
