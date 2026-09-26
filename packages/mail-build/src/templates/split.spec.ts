@@ -77,6 +77,43 @@ describe('splitHtml', () => {
 		).toEqual({ kind: 'prop', prop: 'name', context: 'text' });
 	});
 
+	test('a > inside an earlier attribute value does not end the tag', () => {
+		const segments = splitHtml(
+			'a.vue',
+			rendered(`<a title="Next > Confirm" alt='a>b' href="${P0}">${P1}</a>`),
+		);
+		expect(segments[1]).toEqual({
+			kind: 'prop',
+			prop: 'link',
+			context: 'link',
+		});
+		expect(segments[3]).toEqual({
+			kind: 'prop',
+			prop: 'name',
+			context: 'text',
+		});
+	});
+
+	test('text attributes take a value: aria-*, data-*, class', () => {
+		const segments = splitHtml(
+			'a.vue',
+			rendered(`<p aria-label="${P1}" data-x="${P1}" class="${P1}">x</p>`),
+		);
+		expect(
+			segments
+				.filter((s) => s.kind === 'prop')
+				.map((s) => 'context' in s && s.context),
+		).toEqual(['attribute', 'attribute', 'attribute']);
+	});
+
+	test('a value in a plain comment is escaped text', () => {
+		expect(splitHtml('a.vue', rendered(`<!-- ${P1} --><p>x</p>`))[1]).toEqual({
+			kind: 'prop',
+			prop: 'name',
+			context: 'text',
+		});
+	});
+
 	const cases: readonly [string, string, string][] = [
 		[
 			'a value in a <style> element',
@@ -101,27 +138,67 @@ describe('splitHtml', () => {
 		[
 			'a value in a style attribute',
 			`<p style="color: ${P1}">x</p>`,
-			'templates: a.vue: the prop name lands in the style attribute — a value there is code, not text',
+			'templates: a.vue: the prop name lands in the style attribute — only text attributes (alt, title, aria-*…) and URLs (href, src) take a value',
 		],
 		[
 			'a value in an event handler',
 			`<p onclick="${P1}">x</p>`,
-			'templates: a.vue: the prop name lands in the onclick attribute — a value there is code, not text',
+			'templates: a.vue: the prop name lands in the onclick attribute — only text attributes (alt, title, aria-*…) and URLs (href, src) take a value',
 		],
 		[
 			'a link whose fixed start is not http(s)',
 			`<a href="javascript:${P1}">x</a>`,
-			'templates: a.vue: the prop name lands in a href whose fixed start is not http:, https: or mailto:',
+			'templates: a.vue: the prop name lands in an href whose fixed start is not http:, https: or mailto:',
 		],
 		[
 			'a message starting a link',
 			`<a href="${M0}">x</a>`,
-			'templates: a.vue: a message starts a href — a URL is a prop, checked when the e-mail is rendered',
+			'templates: a.vue: a message starts an href — a URL is a prop, checked when the e-mail is rendered',
 		],
 		[
 			'lang starting an image source',
 			`<img src="${LANG}">`,
 			'templates: a.vue: lang starts a src — a URL is a prop, checked when the e-mail is rendered',
+		],
+		[
+			'an event handler after a > in an earlier value',
+			`<p title=">" onclick="${P1}">x</p>`,
+			'templates: a.vue: the prop name lands in the onclick attribute — only text attributes (alt, title, aria-*…) and URLs (href, src) take a value',
+		],
+		[
+			'a style after a > in an earlier value',
+			`<p title=">" style="color: ${P1}">x</p>`,
+			'templates: a.vue: the prop name lands in the style attribute — only text attributes (alt, title, aria-*…) and URLs (href, src) take a value',
+		],
+		[
+			'a message starting a link after a > in an earlier value',
+			`<a alt="1 > 2" href="${M0}">x</a>`,
+			'templates: a.vue: a message starts an href — a URL is a prop, checked when the e-mail is rendered',
+		],
+		[
+			'srcdoc, which is parsed as HTML',
+			`<iframe srcdoc="${P1}"></iframe>`,
+			'templates: a.vue: the prop name lands in the srcdoc attribute — only text attributes (alt, title, aria-*…) and URLs (href, src) take a value',
+		],
+		[
+			'srcset, a list of URLs',
+			`<img srcset="${P0} 2x">`,
+			'templates: a.vue: the prop link lands in the srcset attribute — only text attributes (alt, title, aria-*…) and URLs (href, src) take a value',
+		],
+		[
+			'a meta refresh',
+			`<meta http-equiv="refresh" content="0;url=${P0}">`,
+			'templates: a.vue: the prop link lands in the content attribute — only text attributes (alt, title, aria-*…) and URLs (href, src) take a value',
+		],
+		[
+			'a value as an attribute name after a > in an earlier value',
+			`<p title=">" ${P1}="x">x</p>`,
+			'templates: a.vue: the prop name lands in a tag outside a quoted attribute value',
+		],
+		[
+			'a value in a <style> inside an Outlook conditional comment',
+			`<!--[if mso]><style>p { color: ${P1} }</style><![endif]-->`,
+			'templates: a.vue: the prop name lands in a <style> element',
 		],
 	];
 	for (const [name, html, message] of cases) {

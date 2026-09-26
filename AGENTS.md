@@ -70,7 +70,11 @@ What it means here:
 
 A refusal at **wiring** time (a bad option passed to a factory) is a bare
 `TypeError`. A refusal at **call** time is a class with a `code`, the codes a
-union of `SCREAMING_SNAKE` literals so a `switch` is exhaustive.
+union of `SCREAMING_SNAKE` literals so a `switch` is exhaustive. One deliberate
+exception: a generated render function refuses a URL that is not `http:`,
+`https:` or `mailto:` with a bare `TypeError` — the module imports nothing, so
+it has no error class to throw, and a bad link is the caller's bug to fix, not
+a condition to handle.
 
 A message reports **a shape, never a value**: never a recipient address, never
 a subject, never a link — a link in a verification e-mail is a credential.

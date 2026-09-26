@@ -2,7 +2,9 @@ import { randomUUID } from 'node:crypto';
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { render } from '@maizzle/framework';
+import type { App } from 'vue';
 import { MailBuildError } from '../errors';
+import { templateError } from './error';
 import type { TemplateSource } from './sfc';
 
 /** A `t()` call of a template: its key, and the prop behind each argument. */
@@ -29,12 +31,160 @@ export interface RenderedTemplate {
 	token(match: RegExpExecArray): Token;
 }
 
-function unsupported(template: TemplateSource, what: string): MailBuildError {
-	return new MailBuildError(
-		'TEMPLATE_UNSUPPORTED',
-		`templates: ${template.file}: ${what}`,
-		{ template: template.file },
+/** Placeholders of one render: letters and digits, with a nonce. */
+class Placeholders {
+	private readonly nonce = randomUUID().replace(/-/g, '').slice(0, 12);
+	readonly pattern = new RegExp(`Q${this.nonce}([PML])(\\d+)Q`, 'g');
+
+	mark(kind: 'P' | 'M' | 'L', index: number): string {
+		return `Q${this.nonce}${kind}${index}Q`;
+	}
+
+	/** How many placeholders `output` holds whole, and how many were started. */
+	integrity(output: string): {
+		readonly whole: number;
+		readonly started: number;
+	} {
+		return {
+			whole: output.match(this.pattern)?.length ?? 0,
+			started: output.split(`Q${this.nonce}`).length - 1,
+		};
+	}
+}
+
+/**
+ * Records each `t()` call a render makes, and answers a placeholder for it.
+ * An argument must be a prop's placeholder: anything else is a value the
+ * build would freeze into every e-mail.
+ */
+function messageRecorder(template: TemplateSource, marks: Placeholders) {
+	const byPlaceholder = new Map(
+		template.props.map((prop, index) => [marks.mark('P', index), prop]),
 	);
+	const calls: MessageCall[] = [];
+	const t = (key: unknown, args?: unknown): string => {
+		if (typeof key !== 'string') {
+			throw templateError(
+				'TEMPLATE_UNSUPPORTED',
+				template.file,
+				't() takes a string key',
+			);
+		}
+		const bound = new Map<string, string>();
+		for (const [name, value] of Object.entries(
+			(args ?? {}) as Record<string, unknown>,
+		)) {
+			const prop =
+				typeof value === 'string' ? byPlaceholder.get(value) : undefined;
+			if (prop === undefined) {
+				throw templateError(
+					'TEMPLATE_ARGUMENT_MISSING',
+					template.file,
+					`t('${key}') passes {${name}} a value that is not a prop`,
+					key,
+				);
+			}
+			bound.set(name, prop);
+		}
+		calls.push({ key, args: bound });
+		return marks.mark('M', calls.length - 1);
+	};
+	return { t, calls };
+}
+
+// Vue warns, and renders on, where the build must stop: an element the
+// template names that no component answers disappears from the e-mail.
+const UNRESOLVED = /Failed to resolve component: (\S+)/;
+
+/** Runs Maizzle on the template file, from the render workspace. */
+async function runMaizzle(
+	template: TemplateSource,
+	workspace: string,
+	props: Record<string, string>,
+	globals: Record<string, unknown>,
+): Promise<{ readonly html: string; readonly text: string }> {
+	const warnings: string[] = [];
+	const capture = {
+		install(app: App) {
+			app.config.warnHandler = (message) => {
+				warnings.push(message);
+			};
+		},
+	};
+	let rendered: { readonly html: string; readonly plaintext?: string };
+	try {
+		// Rendered from a file, so Tailwind scans that file alone for classes;
+		// `root` is the workspace, so a `components/` folder in the working
+		// directory never replaces Maizzle's components.
+		const path = join(workspace, template.file);
+		await writeFile(path, template.source);
+		rendered = await render(path, {
+			root: workspace,
+			props,
+			vue: { globalProperties: globals, plugins: [capture] },
+			plaintext: true,
+		});
+	} catch (cause) {
+		if (cause instanceof MailBuildError) throw cause;
+		throw new MailBuildError(
+			'TEMPLATE_INVALID',
+			`templates: ${template.file}: Maizzle could not render it (${cause instanceof Error ? cause.message : String(cause)})`,
+			{ template: template.file, cause },
+		);
+	}
+	for (const warning of warnings) {
+		const component = UNRESOLVED.exec(warning);
+		if (component !== null) {
+			throw templateError(
+				'TEMPLATE_INVALID',
+				template.file,
+				`uses <${component[1]}>, which is not a component — check its name`,
+			);
+		}
+	}
+	return { html: rendered.html, text: rendered.plaintext ?? '' };
+}
+
+/** Checks that Maizzle kept every value, whole, and compiled the CSS. */
+function checkOutput(
+	template: TemplateSource,
+	marks: Placeholders,
+	calls: readonly MessageCall[],
+	output: { readonly html: string; readonly text: string },
+): void {
+	const fail = (what: string) =>
+		templateError('TEMPLATE_UNSUPPORTED', template.file, what);
+	// Maizzle swallows a Tailwind failure and leaves the CSS as written.
+	if (/@import\s+["']@maizzle\/tailwindcss|@apply\s/.test(output.html)) {
+		throw templateError(
+			'TEMPLATE_INVALID',
+			template.file,
+			'Tailwind did not compile its CSS — @import or @apply left in the output',
+		);
+	}
+	for (const part of [output.html, output.text]) {
+		const { whole, started } = marks.integrity(part);
+		if (whole !== started) {
+			throw fail(
+				'a value was changed while rendering — a component or a transformer rewrote it',
+			);
+		}
+	}
+	calls.forEach((call, index) => {
+		if (!output.html.includes(marks.mark('M', index))) {
+			throw fail(
+				`t('${call.key}') is not in the output — a component dropped it, or used it at build time`,
+			);
+		}
+	});
+	template.props.forEach((prop, index) => {
+		const written = template.written.get(prop) ?? 0;
+		if (output.html.split(marks.mark('P', index)).length - 1 < written) {
+			throw fail(
+				`the prop ${prop} is not in the output — a component dropped it, or used it at build time (as a QR code does)`,
+			);
+		}
+	});
 }
 
 /**
@@ -47,86 +197,22 @@ export async function renderTemplate(
 	template: TemplateSource,
 	workspace: string,
 ): Promise<RenderedTemplate> {
-	const nonce = randomUUID().replace(/-/g, '').slice(0, 12);
-	const mark = (kind: 'P' | 'M' | 'L', index: number) =>
-		`Q${nonce}${kind}${index}Q`;
-	const byPlaceholder = new Map(
-		template.props.map((prop, index) => [mark('P', index), prop]),
+	const marks = new Placeholders();
+	const { t, calls } = messageRecorder(template, marks);
+	const output = await runMaizzle(
+		template,
+		workspace,
+		Object.fromEntries(
+			template.props.map((prop, index) => [prop, marks.mark('P', index)]),
+		),
+		{ t, lang: marks.mark('L', 0) },
 	);
-
-	const calls: MessageCall[] = [];
-	const t = (key: unknown, args?: unknown): string => {
-		if (typeof key !== 'string') {
-			throw unsupported(template, 't() takes a string key');
-		}
-		const bound = new Map<string, string>();
-		for (const [name, value] of Object.entries(
-			(args ?? {}) as Record<string, unknown>,
-		)) {
-			const prop =
-				typeof value === 'string' ? byPlaceholder.get(value) : undefined;
-			if (prop === undefined) {
-				throw new MailBuildError(
-					'TEMPLATE_ARGUMENT_MISSING',
-					`templates: ${template.file}: t('${key}') passes {${name}} a value that is not a prop`,
-					{ template: template.file, key },
-				);
-			}
-			bound.set(name, prop);
-		}
-		calls.push({ key, args: bound });
-		return mark('M', calls.length - 1);
-	};
-
-	let rendered: { readonly html: string; readonly plaintext?: string };
-	try {
-		// Rendered from a file, so Tailwind scans that file alone for classes.
-		const path = join(workspace, template.file);
-		await writeFile(path, template.source);
-		rendered = await render(path, {
-			props: Object.fromEntries(
-				template.props.map((prop, index) => [prop, mark('P', index)]),
-			),
-			vue: { globalProperties: { t, lang: mark('L', 0) } },
-			plaintext: true,
-		} as Parameters<typeof render>[1]);
-	} catch (cause) {
-		if (cause instanceof MailBuildError) throw cause;
-		throw new MailBuildError(
-			'TEMPLATE_INVALID',
-			`templates: ${template.file}: Maizzle could not render it (${cause instanceof Error ? cause.message : String(cause)})`,
-			{ template: template.file, cause },
-		);
-	}
-
-	const html = rendered.html;
-	const text = rendered.plaintext ?? '';
-	// Maizzle swallows a Tailwind failure and leaves the CSS as written.
-	if (/@import\s+["']@maizzle\/tailwindcss|@apply\s/.test(html)) {
-		throw new MailBuildError(
-			'TEMPLATE_INVALID',
-			`templates: ${template.file}: Tailwind did not compile its CSS — @import or @apply left in the output`,
-			{ template: template.file },
-		);
-	}
-	const placeholder = new RegExp(`Q${nonce}([PML])(\\d+)Q`, 'g');
-	// A placeholder the pipeline cut or changed would drop a value silently.
-	for (const output of [html, text]) {
-		const whole = output.match(placeholder)?.length ?? 0;
-		const started = output.split(`Q${nonce}`).length - 1;
-		if (whole !== started) {
-			throw unsupported(
-				template,
-				'a value was changed while rendering — a component or a transformer rewrote it',
-			);
-		}
-	}
+	checkOutput(template, marks, calls, output);
 
 	return {
-		html,
-		text,
+		...output,
 		calls,
-		placeholder,
+		placeholder: marks.pattern,
 		token(match) {
 			const index = Number(match[2]);
 			if (match[1] === 'M') return { kind: 'message', call: index };

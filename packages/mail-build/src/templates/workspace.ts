@@ -32,7 +32,12 @@ export async function openWorkspace(): Promise<RenderWorkspace> {
 	try {
 		const scope = join(dir, 'node_modules', '@maizzle');
 		await mkdir(scope, { recursive: true });
-		await symlink(await maizzleTailwind(), join(scope, 'tailwindcss'), 'dir');
+		await symlink(
+			await maizzleTailwind(),
+			join(scope, 'tailwindcss'),
+			// A junction needs no privilege on Windows; elsewhere it is ignored.
+			process.platform === 'win32' ? 'junction' : 'dir',
+		);
 	} catch (error) {
 		await rm(dir, { recursive: true, force: true });
 		throw error;

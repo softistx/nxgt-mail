@@ -7,6 +7,7 @@ import { type EmailPlan, type MailProp, planEmail } from './plan';
 
 export type { MailProp } from './plan';
 
+import { templateError } from './error';
 import { renderTemplate } from './render';
 import { readTemplate } from './sfc';
 import { openWorkspace } from './workspace';
@@ -57,6 +58,18 @@ export async function compileMail(
 	const templates = [...options.templates]
 		.sort((a, b) => a.file.localeCompare(b.file))
 		.map(({ file, source }) => readTemplate(file, source));
+	const byEmail = new Map<string, string>();
+	for (const template of templates) {
+		const other = byEmail.get(template.email);
+		if (other !== undefined) {
+			throw templateError(
+				'TEMPLATE_INVALID',
+				template.file,
+				`is the e-mail ${template.email}, as ${other} is — rename one of them`,
+			);
+		}
+		byEmail.set(template.email, template.file);
+	}
 
 	const plans: EmailPlan[] = [];
 	const workspace = await openWorkspace();

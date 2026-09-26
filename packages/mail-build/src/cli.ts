@@ -32,23 +32,29 @@ function shown(root: string, path: string): string {
 	return inside === '' ? '.' : inside.startsWith('..') ? path : inside;
 }
 
+const exists = (path: string) =>
+	access(path).then(
+		() => true,
+		() => false,
+	);
+
 async function findConfig(explicit: string | undefined): Promise<string> {
-	if (explicit !== undefined) return resolve(explicit);
+	if (explicit !== undefined) {
+		const path = resolve(explicit);
+		if (await exists(path)) return path;
+		throw new TypeError(`nxgt-mail: ${explicit} does not exist`);
+	}
 	for (const name of CONFIG_FILES) {
 		const path = resolve(name);
-		const found = await access(path).then(
-			() => true,
-			() => false,
-		);
-		if (found) return path;
+		if (await exists(path)) return path;
 	}
 	throw new TypeError(
 		`nxgt-mail: no config — write mail.config.ts, or pass --config <file>`,
 	);
 }
 
-async function main(argv: readonly string[]): Promise<number> {
-	const { positionals, values } = parseArgs({
+const parseCommandLine = (argv: readonly string[]) =>
+	parseArgs({
 		args: [...argv],
 		allowPositionals: true,
 		options: {
@@ -57,6 +63,18 @@ async function main(argv: readonly string[]): Promise<number> {
 			help: { type: 'boolean', short: 'h' },
 		},
 	});
+
+async function main(argv: readonly string[]): Promise<number> {
+	let parsed: ReturnType<typeof parseCommandLine>;
+	try {
+		parsed = parseCommandLine(argv);
+	} catch (error) {
+		// Node's own errors for an unknown option or a missing value.
+		const message = error instanceof Error ? error.message : String(error);
+		process.stderr.write(`nxgt-mail: ${message}\n\n${HELP}`);
+		return 1;
+	}
+	const { positionals, values } = parsed;
 	const [command] = positionals;
 	if (values.help === true || command === undefined) {
 		process.stdout.write(HELP);
@@ -64,6 +82,12 @@ async function main(argv: readonly string[]): Promise<number> {
 	}
 	if (command !== 'build' && command !== 'dev') {
 		process.stderr.write(`nxgt-mail: unknown command ${command}\n\n${HELP}`);
+		return 1;
+	}
+	if (command === 'build' && values.out !== undefined) {
+		process.stderr.write(
+			`nxgt-mail: --out is for dev — build writes where the config's out says\n\n${HELP}`,
+		);
 		return 1;
 	}
 

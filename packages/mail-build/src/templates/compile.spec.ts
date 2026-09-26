@@ -1,4 +1,7 @@
 import { describe, expect, test } from 'bun:test';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { MailBuildError } from '../errors';
 import type { Catalogue } from '../messages/catalogue';
 import { compileMail } from './compile';
@@ -149,21 +152,21 @@ describe('compileMail', () => {
 				'a.vue',
 				sfc('<a :href="t(\'a.title\')">x</a>', []),
 				'TEMPLATE_UNSUPPORTED',
-				'templates: a.vue: a message starts a href — a URL is a prop, checked when the e-mail is rendered',
+				'templates: a.vue: a message starts an href — a URL is a prop, checked when the e-mail is rendered',
 			],
 			[
 				'a prop in a style attribute',
 				'a.vue',
 				sfc('<p :style="name">x</p>', ['name']),
 				'TEMPLATE_UNSUPPORTED',
-				'templates: a.vue: the prop name lands in the style attribute — a value there is code, not text',
+				'templates: a.vue: the prop name lands in the style attribute — only text attributes (alt, title, aria-*…) and URLs (href, src) take a value',
 			],
 			[
 				'a prop in an event attribute',
 				'a.vue',
 				sfc('<p :onclick="name">x</p>', ['name']),
 				'TEMPLATE_UNSUPPORTED',
-				'templates: a.vue: the prop name lands in the onclick attribute — a value there is code, not text',
+				'templates: a.vue: the prop name lands in the onclick attribute — only text attributes (alt, title, aria-*…) and URLs (href, src) take a value',
 			],
 		];
 	for (const [name, file, source, code, message, en] of cases) {
@@ -184,12 +187,86 @@ describe('compileMail', () => {
 		async () => {
 			const error = await refusal(
 				'a.vue',
-				"<script setup>\ndefineProps([])\nthrow new Error('boom')\n</script>\n<template><p>{{ t('a.title') }}</p></template>",
+				"<script setup>\ndefineProps(notDefined)\n</script>\n<template><p>{{ t('a.title') }}</p></template>",
 			);
 			expect(error.code).toBe('TEMPLATE_INVALID');
 			expect(error.message).toStartWith(
 				'templates: a.vue: Maizzle could not render it (',
 			);
+		},
+		TIMEOUT,
+	);
+
+	test(
+		'refuses a misspelled component, which Vue would drop with a warning',
+		async () => {
+			const error = await refusal(
+				'a.vue',
+				sfc("<Buton>{{ t('a.title') }}</Buton>", []),
+			);
+			expect(error.code).toBe('TEMPLATE_INVALID');
+			expect(error.message).toBe(
+				'templates: a.vue: uses <Buton>, which is not a component — check its name',
+			);
+		},
+		TIMEOUT,
+	);
+
+	test(
+		'refuses a prop a component drops',
+		async () => {
+			const error = await refusal(
+				'a.vue',
+				sfc('<p :class="name">{{ t(\'a.body\', { name }) }}</p>', ['name']),
+			);
+			expect(error.code).toBe('TEMPLATE_UNSUPPORTED');
+			expect(error.message).toBe(
+				'templates: a.vue: the prop name is not in the output — a component dropped it, or used it at build time (as a QR code does)',
+			);
+		},
+		TIMEOUT,
+	);
+
+	test('refuses two files that are the same e-mail', async () => {
+		const error = await compileMail({
+			locales: ['en'],
+			fallbackLocale: 'en',
+			sources: [{ name: 'messages/', catalogues: { en: EN } }],
+			templates: [
+				{ file: 'a1b.vue', source: sfc('<p></p>', []) },
+				{ file: 'a-1b.vue', source: sfc('<p></p>', []) },
+			],
+		}).then(
+			() => null,
+			(caught: unknown) => caught,
+		);
+		expect(error).toBeInstanceOf(MailBuildError);
+		expect((error as MailBuildError).message).toBe(
+			'templates: a1b.vue: is the e-mail a1b, as a-1b.vue is — rename one of them',
+		);
+	});
+
+	test(
+		"ignores a components/ folder in the working directory: Maizzle's own components render",
+		async () => {
+			const dir = await mkdtemp(join(tmpdir(), 'mail-build-cwd-'));
+			await mkdir(join(dir, 'components'));
+			await writeFile(
+				join(dir, 'components', 'Text.vue'),
+				'<template><p>FROM THE APP</p></template>',
+			);
+			const cwd = process.cwd();
+			process.chdir(dir);
+			try {
+				const { module } = await compile(
+					'a.vue',
+					sfc("<Text>{{ t('a.title') }}</Text>", []),
+				);
+				expect(module).not.toContain('FROM THE APP');
+			} finally {
+				process.chdir(cwd);
+				await rm(dir, { recursive: true, force: true });
+			}
 		},
 		TIMEOUT,
 	);

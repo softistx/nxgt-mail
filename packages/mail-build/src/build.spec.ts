@@ -47,6 +47,45 @@ describe('build', () => {
 	});
 });
 
+describe('build refuses a wiring mistake', () => {
+	test('no catalogue in the messages folder', async () => {
+		await expect(
+			build({ ...config, messages: 'nowhere' }, { root }),
+		).rejects.toThrow(
+			new TypeError(
+				`build: ${join(root, 'nowhere')} holds no catalogue — write one <locale>.json per locale there, or set messages in the config`,
+			),
+		);
+	});
+
+	test('no template in the emails folder', async () => {
+		await expect(
+			build({ ...config, emails: 'messages' }, { root }),
+		).rejects.toThrow(
+			new TypeError(
+				`build: ${join(root, 'messages')} holds no .vue template — put one per e-mail there`,
+			),
+		);
+	});
+
+	test('a config that is not one', async () => {
+		await expect(
+			build({ fallbackLocale: 'en' } as unknown as MailConfig, { root }),
+		).rejects.toThrow(
+			new TypeError(
+				"build: locales must be a list of locales, as ['en', 'fr']",
+			),
+		);
+		await expect(
+			build(undefined as unknown as MailConfig, { root }),
+		).rejects.toThrow(
+			new TypeError(
+				'build: the config must be an object — export default defineMailConfig({ … })',
+			),
+		);
+	});
+});
+
 describe('dev', () => {
 	test('renders every e-mail in every locale, with an index', async () => {
 		const result = await dev(config, { root });

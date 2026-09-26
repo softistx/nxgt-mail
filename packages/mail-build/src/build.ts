@@ -54,6 +54,11 @@ async function readTemplates(dir: string): Promise<TemplateFile[]> {
 		);
 	}
 	const files = entries.filter((name) => name.endsWith('.vue')).sort();
+	if (files.length === 0) {
+		throw new TypeError(
+			`build: ${dir} holds no .vue template — put one per e-mail there`,
+		);
+	}
 	return Promise.all(
 		files.map(async (file) => ({
 			file,
@@ -62,16 +67,51 @@ async function readTemplates(dir: string): Promise<TemplateFile[]> {
 	);
 }
 
+const isStringArray = (value: unknown): value is readonly string[] =>
+	Array.isArray(value) && value.every((item) => typeof item === 'string');
+
+/** A config is data a user wrote: checked before it is used. */
+function checkConfig(config: unknown): asserts config is MailConfig {
+	if (typeof config !== 'object' || config === null) {
+		throw new TypeError(
+			'build: the config must be an object — export default defineMailConfig({ … })',
+		);
+	}
+	const { locales, fallbackLocale, emails, messages, out } = config as Record<
+		string,
+		unknown
+	>;
+	if (!isStringArray(locales)) {
+		throw new TypeError(
+			"build: locales must be a list of locales, as ['en', 'fr']",
+		);
+	}
+	if (typeof fallbackLocale !== 'string') {
+		throw new TypeError(
+			"build: fallbackLocale must be one of locales, as 'en'",
+		);
+	}
+	for (const [name, value] of Object.entries({ emails, messages, out })) {
+		if (value !== undefined && typeof value !== 'string') {
+			throw new TypeError(`build: ${name} must be a path, or left out`);
+		}
+	}
+}
+
 /** Reads the templates and catalogues a config names, and compiles them. */
 export async function compileProject(
 	config: MailConfig,
 	options: BuildOptions = {},
 ): Promise<CompiledMail> {
+	checkConfig(config);
 	const root = resolve(options.root ?? process.cwd());
-	const catalogues = await readCatalogues(
-		resolve(root, config.messages ?? 'messages'),
-		config.locales,
-	);
+	const messagesDir = resolve(root, config.messages ?? 'messages');
+	const catalogues = await readCatalogues(messagesDir, config.locales);
+	if (Object.values(catalogues).every((catalogue) => catalogue === null)) {
+		throw new TypeError(
+			`build: ${messagesDir} holds no catalogue — write one <locale>.json per locale there, or set messages in the config`,
+		);
+	}
 	return compileMail({
 		locales: config.locales,
 		fallbackLocale: config.fallbackLocale,
@@ -90,6 +130,7 @@ export async function build(
 	config: MailConfig,
 	options: BuildOptions = {},
 ): Promise<BuildResult> {
+	checkConfig(config);
 	const root = resolve(options.root ?? process.cwd());
 	const out = resolve(root, config.out ?? 'src/generated/mail.ts');
 	const compiled = await compileProject(config, { root });

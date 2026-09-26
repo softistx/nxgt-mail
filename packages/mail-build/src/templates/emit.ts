@@ -33,7 +33,7 @@ function checkUrl(mail: string, prop: string, value: string, link: boolean): voi
 }`,
 	oneLine: `// A line break in a subject is a header injection.
 function oneLine(value: string): string {
-	return value.replace(/[\\r\\n]+/g, ' ');
+	return value.replace(/[\\r\\n\\u0085\\u2028\\u2029]+/g, ' ');
 }`,
 };
 
@@ -63,13 +63,14 @@ function join(
 ): string {
 	const parts = segments.map((segment) => {
 		if (segment.kind === 'static') return literal(segment.text);
-		if (segment.kind === 'lang') return 'a.locale';
 		const value =
-			segment.kind === 'message'
-				? `m${segment.call}`
-				: plan.props.get(segment.prop)?.kind === 'string'
-					? `a.${segment.prop}`
-					: `String(a.${segment.prop})`;
+			segment.kind === 'lang'
+				? 'a.locale'
+				: segment.kind === 'message'
+					? `m${segment.call}`
+					: plan.props.get(segment.prop)?.kind === 'string'
+						? `a.${segment.prop}`
+						: `String(a.${segment.prop})`;
 		if (!html) return value;
 		needs.add('escapeHtml');
 		return `escapeHtml(${value})`;

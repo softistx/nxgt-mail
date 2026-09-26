@@ -1,6 +1,6 @@
-import { compileScript, parse } from '@vue/compiler-sfc';
 import ts from 'typescript';
-import { MailBuildError } from '../errors';
+import { compileScript, parse } from 'vue/compiler-sfc';
+import { templateError } from './error';
 
 /** A template, read and checked: its e-mail name and its props. */
 export interface TemplateSource {
@@ -12,6 +12,11 @@ export interface TemplateSource {
 	readonly source: string;
 	/** The props it declares, in order. */
 	readonly props: readonly string[];
+	/**
+	 * How many times the template writes each prop itself — `{{ name }}`,
+	 * `:href="link"` — so the build can tell when a component dropped one.
+	 */
+	readonly written: ReadonlyMap<string, number>;
 }
 
 // The raw template AST's node types (`@vue/compiler-core`'s `NodeTypes`).
@@ -28,25 +33,25 @@ const RESERVED = new Set(['t', 'lang', 'locale', 'timeZone']);
 /** The directives a render function reproduces: a bound attribute, a slot. */
 const DIRECTIVES = new Set(['bind', 'slot']);
 
-function invalid(file: string, what: string): MailBuildError {
-	return new MailBuildError('TEMPLATE_INVALID', `templates: ${file}: ${what}`, {
-		template: file,
-	});
-}
-
-function unsupported(file: string, what: string): MailBuildError {
-	return new MailBuildError(
-		'TEMPLATE_UNSUPPORTED',
-		`templates: ${file}: ${what}`,
-		{ template: file },
-	);
-}
-
 /** `verify-email.vue` → `verifyEmail`. */
 export function emailName(file: string): string {
 	return file
 		.slice(0, -'.vue'.length)
 		.replace(/-([a-z0-9])/g, (_, c: string) => c.toUpperCase());
+}
+
+function parseExpression(expression: string): ts.Expression | null {
+	const file = ts.createSourceFile(
+		'expression.ts',
+		`(${expression})`,
+		ts.ScriptTarget.ES2020,
+	);
+	const [statement, ...rest] = file.statements;
+	if (statement === undefined || rest.length > 0) return null;
+	if (!ts.isExpressionStatement(statement)) return null;
+	let node = statement.expression;
+	while (ts.isParenthesizedExpression(node)) node = node.expression;
+	return node;
 }
 
 /**
@@ -57,17 +62,8 @@ function isMessageCall(
 	expression: string,
 	props: ReadonlySet<string>,
 ): boolean {
-	const file = ts.createSourceFile(
-		'expression.ts',
-		`(${expression})`,
-		ts.ScriptTarget.ES2020,
-	);
-	const statement = file.statements[0];
-	if (file.statements.length !== 1 || statement === undefined) return false;
-	if (!ts.isExpressionStatement(statement)) return false;
-	let call = statement.expression;
-	while (ts.isParenthesizedExpression(call)) call = call.expression;
-	if (!ts.isCallExpression(call)) return false;
+	const call = parseExpression(expression);
+	if (call === null || !ts.isCallExpression(call)) return false;
 	if (!ts.isIdentifier(call.expression) || call.expression.text !== 't')
 		return false;
 	const [key, args, ...rest] = call.arguments;
@@ -88,27 +84,6 @@ function isMessageCall(
 	});
 }
 
-function checkExpression(
-	file: string,
-	expression: string,
-	props: ReadonlySet<string>,
-	where: string,
-): void {
-	const trimmed = expression.trim();
-	if (IDENTIFIER.test(trimmed)) {
-		if (props.has(trimmed) || trimmed === 'lang') return;
-		throw unsupported(
-			file,
-			`${where} uses ${trimmed}, which is not a prop — declare it with defineProps`,
-		);
-	}
-	if (isMessageCall(trimmed, props)) return;
-	throw unsupported(
-		file,
-		`${where} holds an expression — write a prop, or t('key', { prop }), and nothing else`,
-	);
-}
-
 interface AstNode {
 	readonly type: number;
 	readonly tag?: string;
@@ -122,40 +97,123 @@ interface AstNode {
 	readonly children?: readonly AstNode[];
 }
 
-function checkNode(
-	file: string,
-	node: AstNode,
-	props: ReadonlySet<string>,
-): void {
-	if (node.type === INTERPOLATION) {
-		checkExpression(file, node.content?.content ?? '', props, '{{ }}');
+/** Walks a template, checking each expression and counting the props written. */
+class TemplateChecker {
+	readonly written = new Map<string, number>();
+
+	constructor(
+		private readonly file: string,
+		private readonly props: ReadonlySet<string>,
+	) {}
+
+	private expression(expression: string, where: string): void {
+		const trimmed = expression.trim();
+		if (IDENTIFIER.test(trimmed)) {
+			if (trimmed === 'lang') return;
+			if (this.props.has(trimmed)) {
+				this.written.set(trimmed, (this.written.get(trimmed) ?? 0) + 1);
+				return;
+			}
+			throw templateError(
+				'TEMPLATE_UNSUPPORTED',
+				this.file,
+				`${where} uses ${trimmed}, which is not a prop — declare it with defineProps`,
+			);
+		}
+		if (isMessageCall(trimmed, this.props)) return;
+		throw templateError(
+			'TEMPLATE_UNSUPPORTED',
+			this.file,
+			`${where} holds an expression — write a prop, or t('key', { prop }), and nothing else`,
+		);
 	}
-	if (node.type === ELEMENT) {
+
+	private element(node: AstNode): void {
 		for (const prop of node.props ?? []) {
 			if (prop.type !== DIRECTIVE) continue;
 			if (!DIRECTIVES.has(prop.name)) {
-				throw unsupported(
-					file,
+				throw templateError(
+					'TEMPLATE_UNSUPPORTED',
+					this.file,
 					`<${node.tag}> uses v-${prop.name} — a template renders once, at build time, so it has no condition, no loop and no event`,
 				);
 			}
 			if (prop.name !== 'bind') continue;
 			const name = prop.arg?.content;
 			if (name === undefined) {
-				throw unsupported(
-					file,
+				throw templateError(
+					'TEMPLATE_UNSUPPORTED',
+					this.file,
 					`<${node.tag}> binds an object with v-bind — bind each attribute by name`,
 				);
 			}
-			checkExpression(
-				file,
-				prop.exp?.content ?? name,
-				props,
-				`<${node.tag}> :${name}`,
-			);
+			this.expression(prop.exp?.content ?? name, `<${node.tag}> :${name}`);
 		}
 	}
-	for (const child of node.children ?? []) checkNode(file, child, props);
+
+	walk(node: AstNode): void {
+		if (node.type === INTERPOLATION) {
+			this.expression(node.content?.content ?? '', '{{ }}');
+		}
+		if (node.type === ELEMENT) this.element(node);
+		for (const child of node.children ?? []) this.walk(child);
+	}
+}
+
+/**
+ * `<script setup>` holds one statement, `defineProps([...])`, or nothing:
+ * the code of a template runs at build time, once, and its result would be
+ * frozen into every e-mail.
+ */
+function checkScript(file: string, content: string): void {
+	const source = ts.createSourceFile(
+		'setup.ts',
+		content,
+		ts.ScriptTarget.ES2020,
+	);
+	const [first, ...rest] = source.statements;
+	const onlyDefineProps =
+		first === undefined ||
+		(rest.length === 0 &&
+			ts.isExpressionStatement(first) &&
+			ts.isCallExpression(first.expression) &&
+			ts.isIdentifier(first.expression.expression) &&
+			first.expression.expression.text === 'defineProps');
+	if (!onlyDefineProps) {
+		throw templateError(
+			'TEMPLATE_UNSUPPORTED',
+			file,
+			'holds code in <script setup> — a template declares its props with defineProps([...]), unassigned, and nothing else',
+		);
+	}
+}
+
+function readProps(
+	file: string,
+	descriptor: ReturnType<typeof parse>['descriptor'],
+): string[] {
+	if (descriptor.scriptSetup === null) return [];
+	checkScript(file, descriptor.scriptSetup.content);
+	const { bindings } = compileScript(descriptor, { id: file });
+	const props: string[] = [];
+	for (const name of Object.keys(bindings ?? {})) {
+		if (RESERVED.has(name)) {
+			throw templateError(
+				'TEMPLATE_INVALID',
+				file,
+				`declares the prop ${name}, a name the render function uses itself`,
+			);
+		}
+		if (!PROP.test(name)) {
+			throw templateError(
+				'TEMPLATE_INVALID',
+				file,
+				`declares the prop ${name}, which is not camelCase — name it as firstName`,
+			);
+		}
+		props.push(name);
+	}
+	return props;
 }
 
 /**
@@ -166,7 +224,8 @@ function checkNode(
  */
 export function readTemplate(file: string, source: string): TemplateSource {
 	if (!FILE.test(file)) {
-		throw invalid(
+		throw templateError(
+			'TEMPLATE_INVALID',
 			file,
 			'is not a kebab-case .vue file name — name it as verify-email.vue',
 		);
@@ -174,48 +233,32 @@ export function readTemplate(file: string, source: string): TemplateSource {
 	const { descriptor, errors } = parse(source, { filename: file });
 	const [error] = errors;
 	if (error !== undefined) {
-		throw invalid(
+		throw templateError(
+			'TEMPLATE_INVALID',
 			file,
 			`does not parse as a single-file component (${error instanceof Error ? error.message : String(error)})`,
 		);
 	}
 	const ast = descriptor.template?.ast;
 	if (ast === undefined || ast === null) {
-		throw invalid(file, 'has no <template>');
+		throw templateError('TEMPLATE_INVALID', file, 'has no <template>');
 	}
 	if (descriptor.script !== null) {
-		throw invalid(
+		throw templateError(
+			'TEMPLATE_INVALID',
 			file,
 			'has a <script> without setup — declare the props in <script setup>',
 		);
 	}
 
-	const props: string[] = [];
-	if (descriptor.scriptSetup !== null) {
-		const { bindings } = compileScript(descriptor, { id: file });
-		for (const [name, binding] of Object.entries(bindings ?? {})) {
-			if (binding !== 'props') {
-				throw unsupported(
-					file,
-					`declares ${name} in <script setup> — a template declares its props, and nothing else`,
-				);
-			}
-			if (RESERVED.has(name)) {
-				throw invalid(
-					file,
-					`declares the prop ${name}, a name the render function uses itself`,
-				);
-			}
-			if (!PROP.test(name)) {
-				throw invalid(
-					file,
-					`declares the prop ${name}, which is not camelCase — name it as firstName`,
-				);
-			}
-			props.push(name);
-		}
-	}
-
-	checkNode(file, ast as AstNode, new Set(props));
-	return { file, email: emailName(file), source, props };
+	const props = readProps(file, descriptor);
+	const checker = new TemplateChecker(file, new Set(props));
+	checker.walk(ast as AstNode);
+	return {
+		file,
+		email: emailName(file),
+		source,
+		props,
+		written: checker.written,
+	};
 }

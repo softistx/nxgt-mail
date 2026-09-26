@@ -1,5 +1,5 @@
-import { MailBuildError } from '../errors';
 import type { ArgumentKind } from '../messages/analyse';
+import { templateError } from './error';
 import type { MessageCall, RenderedTemplate } from './render';
 import type { TemplateSource } from './sfc';
 import { type Segment, splitHtml, splitText } from './split';
@@ -38,24 +38,6 @@ const KIND_NAME: Readonly<Record<Use['kind'], string>> = {
 	resource: 'a resource URL',
 };
 
-function error(
-	code:
-		| 'TEMPLATE_KEY_UNKNOWN'
-		| 'TEMPLATE_ARGUMENT_MISSING'
-		| 'TEMPLATE_ARGUMENT_UNKNOWN'
-		| 'SUBJECT_MISSING'
-		| 'ARGUMENT_TYPE_MISMATCH'
-		| 'TEMPLATE_UNSUPPORTED',
-	template: TemplateSource,
-	what: string,
-	key?: string,
-): MailBuildError {
-	return new MailBuildError(code, `templates: ${template.file}: ${what}`, {
-		template: template.file,
-		...(key === undefined ? {} : { key }),
-	});
-}
-
 function checkCall(
 	template: TemplateSource,
 	call: MessageCall,
@@ -64,18 +46,18 @@ function checkCall(
 	uses: Map<string, Use[]>,
 ): void {
 	if (declared === undefined) {
-		throw error(
+		throw templateError(
 			'TEMPLATE_KEY_UNKNOWN',
-			template,
+			template.file,
 			`t('${call.key}') is not a key of ${fallbackLocale}, the fallback locale`,
 			call.key,
 		);
 	}
 	for (const name of [...declared.keys()].sort()) {
 		if (!call.args.has(name)) {
-			throw error(
+			throw templateError(
 				'TEMPLATE_ARGUMENT_MISSING',
-				template,
+				template.file,
 				`t('${call.key}') leaves out {${name}}, which ${fallbackLocale} declares — pass it a prop`,
 				call.key,
 			);
@@ -84,9 +66,9 @@ function checkCall(
 	for (const [name, prop] of call.args) {
 		const kind = declared.get(name);
 		if (kind === undefined) {
-			throw error(
+			throw templateError(
 				'TEMPLATE_ARGUMENT_UNKNOWN',
-				template,
+				template.file,
 				`t('${call.key}') passes {${name}}, which ${fallbackLocale} does not declare`,
 				call.key,
 			);
@@ -127,9 +109,9 @@ function planProp(
 	uses: readonly Use[],
 ): MailProp {
 	const mismatch = (a: Use, b: Use) =>
-		error(
+		templateError(
 			'ARGUMENT_TYPE_MISMATCH',
-			template,
+			template.file,
 			`the prop ${prop} is ${KIND_NAME[a.kind]} ${a.where}, and ${KIND_NAME[b.kind]} ${b.where}`,
 		);
 	const typed = uses.filter((use) => kindOf(use) !== null);
@@ -172,18 +154,18 @@ export function planEmail(options: {
 	const subjectKey = `${template.email}.subject`;
 	const subjectArgs = args.get(subjectKey);
 	if (subjectArgs === undefined) {
-		throw error(
+		throw templateError(
 			'SUBJECT_MISSING',
-			template,
+			template.file,
 			`the e-mail ${template.email} has no subject — add ${subjectKey} to ${fallbackLocale}, the fallback locale`,
 			subjectKey,
 		);
 	}
 	for (const name of subjectArgs.keys()) {
 		if (!template.props.includes(name)) {
-			throw error(
+			throw templateError(
 				'TEMPLATE_ARGUMENT_MISSING',
-				template,
+				template.file,
 				`${subjectKey} uses {${name}}, which is not a prop of the template — declare it with defineProps`,
 				subjectKey,
 			);
@@ -204,9 +186,9 @@ export function planEmail(options: {
 	for (const prop of [...template.props].sort()) {
 		const list = uses.get(prop);
 		if (list === undefined) {
-			throw error(
+			throw templateError(
 				'TEMPLATE_UNSUPPORTED',
-				template,
+				template.file,
 				`declares the prop ${prop} and never uses it — remove it, or write it in the template`,
 			);
 		}

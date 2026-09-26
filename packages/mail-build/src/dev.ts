@@ -65,7 +65,9 @@ export async function dev(
 	const rows: string[] = [];
 	for (const email of compiled.emails) {
 		const render = mails[email.name];
-		if (render === undefined) continue;
+		if (render === undefined) {
+			throw new Error(`dev: the module has no mails.${email.name}`);
+		}
 		const args = Object.fromEntries(
 			[...email.props].map(([name, prop]) => [name, sample(name, prop)]),
 		);

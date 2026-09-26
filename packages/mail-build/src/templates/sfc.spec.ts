@@ -79,7 +79,21 @@ describe('readTemplate', () => {
 			'a.vue',
 			'<script setup>\ndefineProps([])\nconst x = 1\n</script>\n<template><p>{{ x }}</p></template>',
 			'TEMPLATE_UNSUPPORTED',
-			'templates: a.vue: declares x in <script setup> — a template declares its props, and nothing else',
+			'templates: a.vue: holds code in <script setup> — a template declares its props with defineProps([...]), unassigned, and nothing else',
+		],
+		[
+			'a statement run at build time',
+			'a.vue',
+			"<script setup>\ndefineProps([])\nconsole.log('built')\n</script>\n<template><p></p></template>",
+			'TEMPLATE_UNSUPPORTED',
+			'templates: a.vue: holds code in <script setup> — a template declares its props with defineProps([...]), unassigned, and nothing else',
+		],
+		[
+			'assigned props',
+			'a.vue',
+			"<script setup>\nconst props = defineProps(['name'])\n</script>\n<template><p>{{ name }}</p></template>",
+			'TEMPLATE_UNSUPPORTED',
+			'templates: a.vue: holds code in <script setup> — a template declares its props with defineProps([...]), unassigned, and nothing else',
 		],
 		[
 			'a reserved prop',
