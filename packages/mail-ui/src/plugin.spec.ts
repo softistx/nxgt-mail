@@ -62,7 +62,16 @@ describe('ui — wiring mistakes', () => {
 			{ brand, theme: { '--color-primary': '#0f766e' } },
 			'ui: theme.--color-primary is not a token of the theme — name one of theme.css without its --, as color-primary',
 		);
-		for (const value of ['', 'red; } body { color: red', 1]) {
+		for (const value of [
+			'',
+			'red; } body { color: red',
+			'red /*',
+			'"x',
+			"url('x')",
+			'a\n b',
+			'a\\62',
+			1,
+		]) {
 			refuses(
 				{ brand, theme: { 'color-primary': value } },
 				'ui: theme.color-primary must be a CSS value, as #0f766e or 8px',

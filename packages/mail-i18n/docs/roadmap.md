@@ -25,6 +25,10 @@ no dates here, and the version something shipped in is the only number.
   the ones a URL attribute starts with (so they decide the scheme), its subject per locale (the
   required `<email>.subject` message) and its files per locale — what a
   renderer needs to send the built files. Built, not yet published.
+- **Catalogues from a package** — `i18n({ catalogues: [uiCatalogues] })`:
+  catalogues a package ships, as `@nxgt/mail-ui`'s shared messages, merged key
+  by key under your project's `locales/<locale>.json`, which overrides any of
+  them, and checked with it. Built, not yet published.
 - **`createTranslator` outside templates** — `createTranslator(catalogues,
   getLanguage)` and `t(key, args, language?)`, shaped like `@nxgt/i18n`, for a
   message an application formats itself. Built, not yet published.
@@ -37,9 +41,6 @@ no dates here, and the version something shipped in is the only number.
 - **A renderer that reads the manifest** — `@nxgt/mail`'s
   `createMailRenderer`: the built `html` and `text` of a locale, the subject
   from the manifest, every placeholder filled and escaped at send time.
-- **Shared messages from the UI plugin** — `@nxgt/mail-ui` brings
-  `common.greeting`, `common.footer.why` and `common.footer.ignore` in `en` and
-  `fr` as a catalogue source, which your project overrides key by key.
 - **A starter project** — the official Maizzle starter with
   `@nxgt/mail-config`, this plugin and the UI plugin wired in, built in CI, so
   the README's snippet is known to work.

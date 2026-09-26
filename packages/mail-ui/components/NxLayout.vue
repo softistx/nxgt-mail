@@ -43,7 +43,8 @@ const why =
       <table class="w-full bg-paper font-sans" role="presentation" cellpadding="0" cellspacing="0">
         <tr>
           <td align="center" class="px-4 py-8">
-            <table class="w-full" :style="`max-width: ${width}px`" role="presentation" cellpadding="0" cellspacing="0">
+            <Container :width="width">
+            <table class="w-full" role="presentation" cellpadding="0" cellspacing="0">
               <tr>
                 <td class="pb-6 text-center">
                   <a v-if="brand.url" :href="brand.url" class="text-lg font-semibold text-foreground no-underline">
@@ -73,6 +74,7 @@ const why =
                 </td>
               </tr>
             </table>
+            </Container>
           </td>
         </tr>
       </table>

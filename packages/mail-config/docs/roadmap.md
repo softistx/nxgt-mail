@@ -30,8 +30,9 @@ no dates here, and the version something shipped in is the only number.
   listed in `plugins`: built, not yet published — see
   [its roadmap](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-i18n/docs/roadmap.md).
 - **UI components as a plugin** — `@nxgt/mail-ui`'s `ui({ brand, theme })`,
-  listed in `plugins`: a neutral theme, a layout and the `Nx*` components,
-  each replaceable by name in your project.
+  listed in `plugins`: e-mail components in the style of `@nxgt/material-vue`,
+  each replaceable by name in your project; built, not yet published — see
+  [its roadmap](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-ui/docs/roadmap.md).
 - **A starter project** — the official Maizzle starter with
   `defineMailConfig`, the i18n and the UI plugins wired in, built in CI, so the
   README's snippet is known to work.

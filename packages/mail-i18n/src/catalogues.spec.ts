@@ -169,4 +169,13 @@ describe('layerCatalogues', () => {
 			}).en,
 		).toEqual({ a: { d: 'D' }, b: 'B' });
 	});
+
+	test('keeps a __proto__ key a key, for the check to refuse', () => {
+		const project = JSON.parse('{"en":{"__proto__":{"x":"y"}}}');
+		const merged = layerCatalogues([{ en: { a: 'A' } }], project);
+		expect(Object.keys(merged.en as object)).toEqual(['a', '__proto__']);
+		expect(() => checkCatalogues(merged, ['en'], 'en')).toThrow(
+			'i18n: en: __proto__ is not camelCase',
+		);
+	});
 });

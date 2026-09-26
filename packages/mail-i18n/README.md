@@ -149,6 +149,7 @@ See [Templates](docs/guide/templates.md).
 | `dir` | `string` | `'locales'` | The folder of `<locale>.json` catalogues, relative to where `maizzle` runs |
 | `emails` | `string` | `'emails'` | The folder of templates |
 | `layout` | `'nested' \| 'flat'` | `'nested'` | `nested` writes `dist/en/verify-email.html`; `flat` writes `dist/verify-email.en.html` |
+| `catalogues` | `readonly Catalogues[]` | `[]` | Catalogues a package ships, merged in order **under** your `<locale>.json`, key by key |
 
 ```ts
 // maizzle.config.ts — every file of one e-mail side by side
@@ -159,6 +160,33 @@ export default defineMailConfig({
 
 A wrong option is a bare `TypeError` when the config loads:
 `i18n: fallbackLocale must be one of locales`.
+
+### Catalogues from a package
+
+A package can ship messages your templates share, such as `@nxgt/mail-ui`'s
+`common.greeting`. List them in `catalogues`. Your own
+`locales/<locale>.json` is still required for every locale, and wins key by
+key:
+
+```ts
+// maizzle.config.ts
+import { defineMailConfig } from '@nxgt/mail-config';
+import { i18n } from '@nxgt/mail-i18n';
+import { uiCatalogues } from '@nxgt/mail-ui';
+
+export default defineMailConfig({
+	plugins: [i18n({ locales: ['en', 'fr'], catalogues: [uiCatalogues] })],
+});
+```
+
+```json
+// locales/en.json — common.footer.why and common.footer.ignore stay the package's
+{ "common": { "greeting": "Hi {name}," } }
+```
+
+The merged catalogues are checked like your own. A source's locale your
+project does not build is left out. See
+[Catalogues](docs/guide/catalogues.md#catalogues-from-a-package).
 
 ### The subject
 
@@ -281,7 +309,7 @@ layout, and the build fails when the manifest is written.
 
 ## Type safety, counted
 
-**12 plausible mistakes, 12 refused** at compile time. Each one is measured by
+**14 plausible mistakes, 14 refused** at compile time. Each one is measured by
 a `@ts-expect-error` in
 [`test/types/refusals.ts`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-i18n/test/types/refusals.ts),
 which fails the typecheck the moment it stops holding:
@@ -300,6 +328,8 @@ which fails the typecheck the moment it stops holding:
 11. `t` called in a template with a key that is not a string.
 12. `createTranslator`'s `t` given a language, for one call, that is neither
     a locale nor a function that answers one.
+13. `catalogues` given one catalogue by locale rather than a list of them.
+14. `catalogues` holding a locale whose value is a message, not a catalogue.
 
 The same file holds the calls that must keep compiling: a refusal that refuses
 the correct call is a bug.

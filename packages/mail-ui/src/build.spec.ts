@@ -120,6 +120,18 @@ describe('a project built with the ui plugin', () => {
 		);
 	});
 
+	test('shows the name, unlinked, for a brand without a URL or logo', async () => {
+		const html = await read('dist-override/en/welcome.html');
+		expect(html).toMatch(/<span style="[^"]*">Acme<\/span>/);
+		expect(html).not.toContain('<a href="https://acme.example"');
+	});
+
+	test('holds the card at its width in Outlook, which ignores max-width', async () => {
+		expect(await read('dist/en/welcome.html')).toContain(
+			'<!--[if mso]><table role="none" cellpadding="0" cellspacing="0" style="width: 600px" align="center">',
+		);
+	});
+
 	test("a project's own NxBadge replaces the ui's", async () => {
 		expect(await read('dist-override/en/welcome.html')).toContain(
 			'<span data-badge="project"',
@@ -127,7 +139,7 @@ describe('a project built with the ui plugin', () => {
 		expect(await read('dist/en/welcome.html')).not.toContain('data-badge');
 	});
 
-	test('caniemail finds nothing Gmail, Outlook or Apple Mail cannot show', async () => {
+	test('caniemail reports for Gmail, Outlook and Apple Mail only the known partial support', async () => {
 		const port = 39_000 + Math.floor(Math.random() * 900);
 		const child = Bun.spawn([maizzle, 'serve', '--port', String(port)], {
 			cwd: fixture,
@@ -149,8 +161,12 @@ describe('a project built with the ui plugin', () => {
 					.then((response) => (response.ok ? response.json() : null))
 					.catch(() => Bun.sleep(500).then(() => null));
 			}
-			// The data loaded: the align attribute is known as mitigated.
-			expect(issues?.map((issue) => issue.slug)).toContain('html-align');
+			// Everything reported is partial support with a fallback, and known:
+			// a new finding shows up here as a diff.
+			expect(issues?.map((issue) => issue.slug).sort()).toEqual([
+				'html-align',
+				'html-aria-hidden',
+			]);
 			expect(
 				issues?.filter(
 					(issue) =>

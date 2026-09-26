@@ -33,6 +33,17 @@ const VARIANT: Record<Variant, string> = {
 	foreground: 'border-foreground bg-muted',
 };
 
+/** material-vue colours the icon with the variant: `[&_svg]:text-<variant>`. */
+const ICON: Record<Variant, string> = {
+	primary: 'text-primary',
+	secondary: 'text-secondary',
+	error: 'text-error',
+	success: 'text-success',
+	info: 'text-info',
+	warning: 'text-warning',
+	foreground: 'text-foreground',
+};
+
 const attrs = useAttrs();
 const slots = useSlots();
 const classes = computed(() =>
@@ -50,7 +61,7 @@ const classes = computed(() =>
       <td v-bind="{ ...attrs, class: undefined }" :class="classes">
         <table class="w-full" role="presentation" cellpadding="0" cellspacing="0">
           <tr>
-            <td v-if="slots.icon" class="w-6 pr-2 align-top"><slot name="icon" /></td>
+            <td v-if="slots.icon" :class="`w-6 pr-2 align-top ${ICON[props.variant]}`"><slot name="icon" /></td>
             <td class="align-top">
               <p v-if="title || slots.title" class="m-0 mb-1 text-base font-bold text-foreground"><slot name="title">{{ title }}</slot></p>
               <p v-if="description || slots.description" class="m-0 text-sm text-muted-foreground"><slot name="description">{{ description }}</slot></p>

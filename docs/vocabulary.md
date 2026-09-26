@@ -23,6 +23,9 @@ either finds it.
 | **component** | A Vue single-file component a template uses as a tag, with no import: one of Maizzle's (`<Button>`), one of `@nxgt/mail-ui`'s (`<NxButton>`), or the project's own in `components/`. The project's replaces a package's of the same name | "partial", "widget", "block"; "template" |
 | **layout** | The component a template is placed in, which draws the page around it and imports Tailwind and the theme: `<NxLayout>` | "template"; "wrapper" (a wrapper is what the i18n plugin generates) |
 | **theme token** | One named CSS value of the theme, by Tailwind namespace — `color.primary` — written as `--color-primary` in `@theme` and used as a class, `bg-primary` | "variable", "design token" alone |
+| **tint** | A theme token that is a colour mixed over the background at a fixed share, flattened to hex: `--color-primary-15`, used as `bg-primary-15`. It stands for `@nxgt/material-vue`'s alpha class `bg-primary/15`, which a mail client would drop, and follows its colour when a project overrides it | "alpha", "opacity", "shade" |
+| **brand** | Who sends the e-mails, given to `ui({ brand })`: a name, a URL, a logo. The layout's header and footer show it, and a template reads it as `brand` | "company", "tenant", "sender" (the sender is the `from` address) |
+| **shared message** | A message a package ships for every project, under `common.` — `common.footer.why` — given to `i18n({ catalogues })` and overridden by the project's catalogue key by key | "default message", "built-in translation" |
 
 ## Building — in the project
 

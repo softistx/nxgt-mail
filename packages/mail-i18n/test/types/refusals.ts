@@ -13,7 +13,7 @@
  * A message key is a `string`: whether it exists is checked by the build,
  * against the catalogues, not by the compiler.
  *
- * **Twelve plausible mistakes, twelve refused.**
+ * **Fourteen plausible mistakes, fourteen refused.**
  */
 
 import type { MailPlugin } from '@nxgt/mail-config';
@@ -27,6 +27,7 @@ const plugin: MailPlugin = i18n({
 	dir: 'locales',
 	emails: 'emails',
 	layout: 'flat',
+	catalogues: [{ en: { common: { greeting: 'Hello {name},' } } }],
 });
 const catalogue: Catalogue = { verifyEmail: { subject: 'Confirm, {name}' } };
 const t = createTranslator({ en: catalogue }, () => 'en');
@@ -83,5 +84,13 @@ template.t(1);
 // 12. A language that is not a locale, per call.
 // @ts-expect-error — a locale, or a function that answers one.
 t('verifyEmail.subject', {}, 1);
+
+// 13. Package catalogues given as one, not a list.
+// @ts-expect-error — a list of catalogues by locale.
+i18n({ locales: ['en'], catalogues: { en: {} } });
+
+// 14. Package catalogues whose locale holds a message, not a catalogue.
+// @ts-expect-error — { en: { common: {...} } }.
+i18n({ locales: ['en'], catalogues: [{ en: 'Hello' }] });
 
 export { broken, plugin };

@@ -9,8 +9,11 @@ export const THEME_FILE = fileURLToPath(
 /** A token as `theme` names it: `color-primary`, `radius-lg`. */
 const TOKEN = /^[a-z][a-z0-9-]*$/;
 
-/** A value that stays inside its declaration: no `;`, brace or angle bracket. */
-const VALUE = /^[^;{}<>]+$/;
+/**
+ * A value that stays inside its declaration: no `;`, brace, angle bracket,
+ * quote, backslash, comment or line break.
+ */
+const VALUE = /^(?!.*(?:\/\*|\*\/))[^;{}<>"'\\\r\n]+$/;
 
 /** The tokens `css` declares, without their `--`: `color-primary`, … */
 export function declaredTokens(css: string): ReadonlySet<string> {

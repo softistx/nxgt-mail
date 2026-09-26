@@ -79,6 +79,102 @@ Every locale needs its file, and the file must be valid JSON:
 that folder to Maizzle's `server.watch`. Either way, saving a catalogue reloads
 the config, which checks the catalogues again.
 
+## Catalogues from a package
+
+A package can ship messages its components or your templates share —
+`@nxgt/mail-ui`'s `uiCatalogues` holds `common.greeting` and
+`common.footer.*` in `en` and `fr`. Give them to the plugin with
+`catalogues`, and your `<locale>.json` goes over them, key by key:
+
+```ts
+// maizzle.config.ts
+import { defineMailConfig } from '@nxgt/mail-config';
+import { i18n } from '@nxgt/mail-i18n';
+import { ui, uiCatalogues } from '@nxgt/mail-ui';
+
+export default defineMailConfig({
+	plugins: [
+		ui({ brand: { name: 'Acme' } }),
+		i18n({ locales: ['en', 'fr'], catalogues: [uiCatalogues] }),
+	],
+});
+```
+
+```ts
+interface I18nOptions {
+	// …
+	readonly catalogues?: readonly Catalogues[]; // default []
+}
+```
+
+A source is a `Catalogues`: catalogues by locale, `{ en: {...}, fr: {...} }`,
+as `createTranslator` takes them. A package's own is typed with it:
+
+```ts
+import type { Catalogues } from '@nxgt/mail-i18n';
+
+export const shared = {
+	en: { common: { greeting: 'Hello {name},' } },
+	fr: { common: { greeting: 'Bonjour {name},' } },
+} as const satisfies Catalogues;
+```
+
+### How they merge
+
+For each locale in `locales`, the plugin layers every source in the order
+listed, then your `<dir>/<locale>.json` on top:
+
+- **An object merges** key by key: a key only a lower layer has stays.
+- **Anything else replaces**: a message over a message, a message over a
+  group, a group over a message.
+- **A later source wins over an earlier one**, and your catalogue over all.
+
+With the sources and your file below, the `en` catalogue checked and used is
+the last block:
+
+```ts
+const ui = { en: { common: { greeting: 'Hello {name},', footer: { why: 'Why' } } } };
+const brand = { en: { common: { greeting: 'Hey {name},' } } };
+
+i18n({ locales: ['en'], catalogues: [ui, brand] });
+```
+
+```json
+// locales/en.json
+{ "welcome": { "title": "Welcome" } }
+```
+
+```json
+{
+	"common": { "greeting": "Hey {name},", "footer": { "why": "Why" } },
+	"welcome": { "title": "Welcome" }
+}
+```
+
+A message replaces a group whole: `{ "common": "Hi" }` in your file would drop
+every `common.*` key the sources bring.
+
+### What stays the same
+
+- **Your file is still required** for every locale, even when the sources
+  cover everything you need: `{}` is a valid catalogue.
+- **A source's locale you do not build is left out.** `uiCatalogues` has
+  `fr`; with `locales: ['en']`, it is ignored.
+- **A locale no source has** gets nothing from them. With
+  `locales: ['en', 'de']` and `uiCatalogues`, `locales/de.json` writes the
+  `common` keys itself, or the build fails on the first one missing.
+- **The merged catalogues are checked**, as described on this page: the
+  format, the fallback locale's keys and arguments, the subjects. An error
+  names the locale and the key, not the source it came from.
+
+| Failure | Cause |
+| --- | --- |
+| `TypeError: i18n: catalogues must be a list of catalogues by locale, as [{ en: {...}, fr: {...} }]` | `catalogues` is not an array (`catalogues: uiCatalogues`, without the brackets), or holds something other than an object of catalogues by locale (`[null]`, `[{ en: 'Hello' }]`) |
+| `i18n: de: common.footer.ignore is missing — en, the fallback locale, has it` | A source brings the key in the fallback locale, and nothing brings it in `de` |
+
+The first is a wiring mistake, thrown when the config loads; the second is a
+build failure, as any other on this page.
+
 ## The format
 
 A catalogue is an object. A leaf is an ICU message (a string), and anything

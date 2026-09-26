@@ -45,9 +45,18 @@ const isObject = (value: unknown): value is Record<string, unknown> =>
 function mergeCatalogue(under: Catalogue, over: Catalogue): Catalogue {
 	const out: Record<string, string | Catalogue> = { ...under };
 	for (const [key, value] of Object.entries(over)) {
-		const below = out[key];
-		out[key] =
-			isObject(below) && isObject(value) ? mergeCatalogue(below, value) : value;
+		const below = Object.hasOwn(out, key) ? out[key] : undefined;
+		// Defined, not assigned: `out.__proto__ = …` would set the prototype and
+		// hide the key from the check that refuses it.
+		Object.defineProperty(out, key, {
+			value:
+				isObject(below) && isObject(value)
+					? mergeCatalogue(below, value)
+					: value,
+			enumerable: true,
+			writable: true,
+			configurable: true,
+		});
 	}
 	return out;
 }

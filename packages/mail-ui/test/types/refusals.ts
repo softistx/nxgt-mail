@@ -8,12 +8,13 @@
  * A theme token is a `string`: whether `theme.css` declares it is checked
  * when `ui()` is called, not by the compiler.
  *
- * **Six plausible mistakes, six refused.**
+ * **Eight plausible mistakes, eight refused.**
  */
 
 import type { MailPlugin } from '@nxgt/mail-config';
 import type { Catalogues } from '@nxgt/mail-i18n';
 import type { ComponentCustomProperties } from 'vue';
+import type { Brand as ComponentsBrand } from '../../components/ui';
 import { type Brand, ui, uiCatalogues } from '../../src/index';
 
 // Must keep compiling.
@@ -28,6 +29,11 @@ const plugin: MailPlugin = ui({
 const catalogues: Catalogues = uiCatalogues;
 declare const template: ComponentCustomProperties;
 const name: string = template.brand.name;
+// The components keep their own copy of Brand (they ship as source): the two
+// must stay the same shape.
+declare const fromComponents: ComponentsBrand;
+declare const fromPlugin: Brand;
+const sameBrand: [Brand, ComponentsBrand] = [fromComponents, fromPlugin];
 
 // @ts-expect-error — a brand is required: the layout shows it.
 ui({});
@@ -48,4 +54,10 @@ ui({ brand: { name: 'Acme' }, theme: { 'radius-lg': 4 } });
 // @ts-expect-error — the brand a template reads is read-only.
 template.brand = { name: 'Other' } satisfies Brand;
 
-export { catalogues, name, plugin };
+// @ts-expect-error — a logo needs its src.
+ui({ brand: { name: 'Acme', logo: { width: 96 } } });
+
+// @ts-expect-error — a URL is a string.
+ui({ brand: { name: 'Acme', url: 1 } });
+
+export { catalogues, name, plugin, sameBrand };
