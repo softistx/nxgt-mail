@@ -208,7 +208,7 @@ the first package writes: *e-mail* (not "mail" in prose, not "email"),
 bun install          # postinstall: bun run editor — the build, then maizzle prepare in
                      # the fixtures of mail-i18n, mail-ui and mail-presets, so an editor
                      # knows t and brand in templates; a package that does not build
-                     # fails the install
+                     # only warns, and CI skips it (scripts/postinstall.ts)
 bun run check        # biome, and the naming convention that holds the casing rule
 bun run build        # before typecheck: a package reaches its siblings, and its
                      # templates reach the package itself, through dist/

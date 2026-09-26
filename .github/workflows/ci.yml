@@ -47,7 +47,8 @@ jobs:
       # and typecheck reports phantom TS2307s. A developer's tree always has a
       # stale `dist/` lying around, which hides this locally — it only ever
       # shows up in CI. `bun run --filter` builds in dependency order, so
-      # building from nothing works.
+      # building from nothing works. The root postinstall, which builds for
+      # the editor, skips itself when CI is set: this step is the build.
       - name: Build packages
         run: bun run build
       - name: Type checking

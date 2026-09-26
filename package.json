@@ -7,7 +7,7 @@
 	],
 	"scripts": {
 		"build": "bun run --filter './packages/*' build",
-		"postinstall": "bun run editor",
+		"postinstall": "bun run scripts/postinstall.ts",
 		"editor": "bun run build && bun run --filter './packages/*' prepare:templates",
 		"typecheck": "bun run typecheck:scripts && bun run --filter './packages/*' typecheck",
 		"typecheck:scripts": "tsc --noEmit -p scripts/tsconfig.json",
