@@ -1,0 +1,113 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`the generated module renders verifyEmail in en 1`] = `"Confirm your e-mail address"`;
+
+exports[`the generated module renders verifyEmail in en 2`] = `
+"One step left Hello Ada, confirm this address to finish signing up. Confirm my address
+
+https://example.com/verify?token=abc&next=%2F
+
+This link expires in 24 hours."
+`;
+
+exports[`the generated module renders verifyEmail in en 3`] = `
+"<!DOCTYPE html>
+<html lang="en" dir="ltr" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"> <head><meta charset="utf-8"> <meta name="x-apple-disable-message-reformatting"> <meta name="viewport" content="width=device-width, initial-scale=1"> <meta name="format-detection" content="telephone=no, date=no, address=no, email=no, url=no"> <meta name="color-scheme" content="light dark"> <meta name="supported-color-schemes" content="light dark"> <!--[if mso]>
+    <style>
+      td,th,div,p,a,h1,h2,h3,h4,h5,h6 {font-family: "Segoe UI", sans-serif; mso-line-height-rule: exactly;}
+    </style>
+  <![endif]--> <link rel="preconnect" href="https://fonts.googleapis.com"> <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"> <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" media="screen">
+</head> <body xml:lang="en" style="margin: 0; width: 100%; height: 100%; padding: 0; word-break: break-word;"><span style="display:none;"><!--[if mso]>
+  <xml>
+    <o:OfficeDocumentSettings>
+      <o:PixelsPerInch>96</o:PixelsPerInch>
+    </o:OfficeDocumentSettings>
+    <w:WordDocument>
+      <w:DontUseAdvancedTypographyReadingMail />
+    </w:WordDocument>
+  </xml>
+<![endif]--></span> <div role="article" aria-roledescription="email" lang="en" dir="ltr" style="font-size: medium; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', Ubuntu, Cantarell, 'Helvetica Neue', sans-serif; font-size: max(16px, 1rem);"><!--[if mso]><table role="none" cellpadding="0" cellspacing="0" style="width: 600px" align="center"><tr><td style="background-color: #fffffe; padding: 24px"><![endif]--> <div style="margin: 0 auto; max-width: 600px; background-color: #fffffe; padding: 24px;"><h1 style="margin: 0; font-size: 24px; line-height: 32px; color: #4f46e5;">One step left</h1> <p style="margin-top: 16px; font-size: 16px; line-height: 24px;">Hello Ada, confirm this address to finish signing up.</p> <div><a style="display: inline-block; border-radius: 4px; background-color: #4f46e5; padding: 16px 24px; font-size: 16px; line-height: 1; color: #fffffe; text-decoration: none;" href="https://example.com/verify?token=abc&amp;next=%2F"><!--[if mso]><i style="mso-font-width: 150%; mso-text-raise: 31px;" hidden>&emsp;</i><![endif]--> <span style="mso-text-raise: 16px;">Confirm my address</span> <!--[if mso]><i style="mso-font-width: 150%;" hidden>&emsp;&#8203;</i><![endif]--></a></div> <p style="margin-top: 16px; font-size: 16px; line-height: 24px;">This link expires in 24 hours.</p></div> <!--[if mso]></td></tr></table><![endif]--></div></body></html>"
+`;
+
+exports[`the generated module renders orderPlaced in en 1`] = `"Order A-1042 confirmed"`;
+
+exports[`the generated module renders orderPlaced in en 2`] = `
+"Thank you, Ada A-1042 Placed on September 25, 2026 at 11:30 PM. Total: €42.50 A-1042
+
+https://example.com/orders/A-1042"
+`;
+
+exports[`the generated module renders orderPlaced in en 3`] = `
+"<!DOCTYPE html>
+<html lang="en" dir="ltr" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"> <head><meta charset="utf-8"> <meta name="x-apple-disable-message-reformatting"> <meta name="viewport" content="width=device-width, initial-scale=1"> <meta name="format-detection" content="telephone=no, date=no, address=no, email=no, url=no"> <meta name="color-scheme" content="light dark"> <meta name="supported-color-schemes" content="light dark"> <!--[if mso]>
+    <style>
+      td,th,div,p,a,h1,h2,h3,h4,h5,h6 {font-family: "Segoe UI", sans-serif; mso-line-height-rule: exactly;}
+    </style>
+  <![endif]--> <link rel="preconnect" href="https://fonts.googleapis.com"> <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"> <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" media="screen">
+</head> <body xml:lang="en" style="margin: 0; width: 100%; height: 100%; padding: 0; word-break: break-word;"><span style="display:none;"><!--[if mso]>
+  <xml>
+    <o:OfficeDocumentSettings>
+      <o:PixelsPerInch>96</o:PixelsPerInch>
+    </o:OfficeDocumentSettings>
+    <w:WordDocument>
+      <w:DontUseAdvancedTypographyReadingMail />
+    </w:WordDocument>
+  </xml>
+<![endif]--></span> <div role="article" aria-roledescription="email" lang="en" dir="ltr" style="font-size: medium; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', Ubuntu, Cantarell, 'Helvetica Neue', sans-serif; font-size: max(16px, 1rem);"><!--[if mso]><table role="none" cellpadding="0" cellspacing="0" style="width: 600px" align="center"><tr><td style="background-color: #fffffe; padding: 24px"><![endif]--> <div style="margin: 0 auto; max-width: 600px; background-color: #fffffe; padding: 24px;"><img src="https://cdn.example.com/logo.png" alt="Our logo" width="120" style="vertical-align: middle; max-width: 100%;"> <h1 style="margin: 0; font-size: 24px; line-height: 32px;">Thank you, Ada</h1> <p style="margin-top: 16px; font-size: 16px; line-height: 24px;">A-1042</p> <p style="margin-top: 16px; font-size: 16px; line-height: 24px;">Placed on September 25, 2026 at 11:30 PM.</p> <p style="margin-top: 16px; font-size: 16px; line-height: 24px;">Total: €42.50</p> <a href="https://example.com/orders/A-1042">A-1042</a></div> <!--[if mso]></td></tr></table><![endif]--></div></body></html>"
+`;
+
+exports[`the generated module renders verifyEmail in fr 1`] = `"Confirmez votre adresse e-mail"`;
+
+exports[`the generated module renders verifyEmail in fr 2`] = `
+"Plus qu'une étape Bonjour Ada, confirmez cette adresse pour terminer votre inscription. Confirmer mon adresse
+
+https://example.com/verify?token=abc&next=%2F
+
+Ce lien expire dans 24 heures."
+`;
+
+exports[`the generated module renders verifyEmail in fr 3`] = `
+"<!DOCTYPE html>
+<html lang="fr" dir="ltr" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"> <head><meta charset="utf-8"> <meta name="x-apple-disable-message-reformatting"> <meta name="viewport" content="width=device-width, initial-scale=1"> <meta name="format-detection" content="telephone=no, date=no, address=no, email=no, url=no"> <meta name="color-scheme" content="light dark"> <meta name="supported-color-schemes" content="light dark"> <!--[if mso]>
+    <style>
+      td,th,div,p,a,h1,h2,h3,h4,h5,h6 {font-family: "Segoe UI", sans-serif; mso-line-height-rule: exactly;}
+    </style>
+  <![endif]--> <link rel="preconnect" href="https://fonts.googleapis.com"> <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"> <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" media="screen">
+</head> <body xml:lang="fr" style="margin: 0; width: 100%; height: 100%; padding: 0; word-break: break-word;"><span style="display:none;"><!--[if mso]>
+  <xml>
+    <o:OfficeDocumentSettings>
+      <o:PixelsPerInch>96</o:PixelsPerInch>
+    </o:OfficeDocumentSettings>
+    <w:WordDocument>
+      <w:DontUseAdvancedTypographyReadingMail />
+    </w:WordDocument>
+  </xml>
+<![endif]--></span> <div role="article" aria-roledescription="email" lang="fr" dir="ltr" style="font-size: medium; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', Ubuntu, Cantarell, 'Helvetica Neue', sans-serif; font-size: max(16px, 1rem);"><!--[if mso]><table role="none" cellpadding="0" cellspacing="0" style="width: 600px" align="center"><tr><td style="background-color: #fffffe; padding: 24px"><![endif]--> <div style="margin: 0 auto; max-width: 600px; background-color: #fffffe; padding: 24px;"><h1 style="margin: 0; font-size: 24px; line-height: 32px; color: #4f46e5;">Plus qu&#39;une étape</h1> <p style="margin-top: 16px; font-size: 16px; line-height: 24px;">Bonjour Ada, confirmez cette adresse pour terminer votre inscription.</p> <div><a style="display: inline-block; border-radius: 4px; background-color: #4f46e5; padding: 16px 24px; font-size: 16px; line-height: 1; color: #fffffe; text-decoration: none;" href="https://example.com/verify?token=abc&amp;next=%2F"><!--[if mso]><i style="mso-font-width: 150%; mso-text-raise: 31px;" hidden>&emsp;</i><![endif]--> <span style="mso-text-raise: 16px;">Confirmer mon adresse</span> <!--[if mso]><i style="mso-font-width: 150%;" hidden>&emsp;&#8203;</i><![endif]--></a></div> <p style="margin-top: 16px; font-size: 16px; line-height: 24px;">Ce lien expire dans 24 heures.</p></div> <!--[if mso]></td></tr></table><![endif]--></div></body></html>"
+`;
+
+exports[`the generated module renders orderPlaced in fr 1`] = `"Commande A-1042 confirmée"`;
+
+exports[`the generated module renders orderPlaced in fr 2`] = `
+"Merci, Ada A-1042 Passée le 25 septembre 2026 à 23:30. Total : 42,50 € A-1042
+
+https://example.com/orders/A-1042"
+`;
+
+exports[`the generated module renders orderPlaced in fr 3`] = `
+"<!DOCTYPE html>
+<html lang="fr" dir="ltr" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"> <head><meta charset="utf-8"> <meta name="x-apple-disable-message-reformatting"> <meta name="viewport" content="width=device-width, initial-scale=1"> <meta name="format-detection" content="telephone=no, date=no, address=no, email=no, url=no"> <meta name="color-scheme" content="light dark"> <meta name="supported-color-schemes" content="light dark"> <!--[if mso]>
+    <style>
+      td,th,div,p,a,h1,h2,h3,h4,h5,h6 {font-family: "Segoe UI", sans-serif; mso-line-height-rule: exactly;}
+    </style>
+  <![endif]--> <link rel="preconnect" href="https://fonts.googleapis.com"> <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"> <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" media="screen">
+</head> <body xml:lang="fr" style="margin: 0; width: 100%; height: 100%; padding: 0; word-break: break-word;"><span style="display:none;"><!--[if mso]>
+  <xml>
+    <o:OfficeDocumentSettings>
+      <o:PixelsPerInch>96</o:PixelsPerInch>
+    </o:OfficeDocumentSettings>
+    <w:WordDocument>
+      <w:DontUseAdvancedTypographyReadingMail />
+    </w:WordDocument>
+  </xml>
+<![endif]--></span> <div role="article" aria-roledescription="email" lang="fr" dir="ltr" style="font-size: medium; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans', Ubuntu, Cantarell, 'Helvetica Neue', sans-serif; font-size: max(16px, 1rem);"><!--[if mso]><table role="none" cellpadding="0" cellspacing="0" style="width: 600px" align="center"><tr><td style="background-color: #fffffe; padding: 24px"><![endif]--> <div style="margin: 0 auto; max-width: 600px; background-color: #fffffe; padding: 24px;"><img src="https://cdn.example.com/logo.png" alt="Notre logo" width="120" style="vertical-align: middle; max-width: 100%;"> <h1 style="margin: 0; font-size: 24px; line-height: 32px;">Merci, Ada</h1> <p style="margin-top: 16px; font-size: 16px; line-height: 24px;">A-1042</p> <p style="margin-top: 16px; font-size: 16px; line-height: 24px;">Passée le 25 septembre 2026 à 23:30.</p> <p style="margin-top: 16px; font-size: 16px; line-height: 24px;">Total : 42,50 €</p> <a href="https://example.com/orders/A-1042">A-1042</a></div> <!--[if mso]></td></tr></table><![endif]--></div></body></html>"
+`;

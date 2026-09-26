@@ -5,6 +5,8 @@ import { join } from 'node:path';
 import { compileMessages } from './compile';
 
 const GOLDEN = join(import.meta.dir, '../../test/types/generated/messages.ts');
+// The module a whole build writes: the messages, and `mails`.
+const GOLDEN_MAIL = join(import.meta.dir, '../../test/types/generated/mail.ts');
 const TSC = Bun.resolveSync('typescript/bin/tsc', import.meta.dir);
 
 /** Compiles one catalogue and writes the module to a temporary folder. */
@@ -28,6 +30,7 @@ describe('the emitted module, as a consumer compiles it', () => {
 		const dir = await mkdtemp(join(tmpdir(), 'mail-build-strict-'));
 		const files = [
 			GOLDEN,
+			GOLDEN_MAIL,
 			await emit(dir, 'plain', { a: 'Hello', b: 'Hi {name}' }),
 			await emit(dir, 'dates', { a: '{at, date, short}' }),
 		];

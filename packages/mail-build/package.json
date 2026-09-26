@@ -2,7 +2,7 @@
 	"name": "@nxgt/mail-build",
 	"version": "0.0.0",
 	"private": true,
-	"description": "The build side of @nxgt/mail: compiles ICU message catalogues (and, next, Maizzle templates) into typed render functions. A devDependency; never shipped to a server.",
+	"description": "The build side of @nxgt/mail: compiles ICU message catalogues and Maizzle templates into typed render functions that import nothing. A devDependency; never shipped to a server.",
 	"license": "MIT",
 	"type": "module",
 	"main": "./dist/index.js",
@@ -22,13 +22,18 @@
 		},
 		"./package.json": "./package.json"
 	},
+	"bin": {
+		"nxgt-mail": "./dist/cli.js"
+	},
 	"keywords": [
 		"email",
 		"transactional",
 		"icu",
 		"i18n",
 		"codegen",
-		"typescript"
+		"typescript",
+		"maizzle",
+		"tailwindcss"
 	],
 	"repository": {
 		"type": "git",
@@ -46,7 +51,8 @@
 	},
 	"nxgt": {
 		"entrypoints": [
-			"src/index.ts"
+			"src/index.ts",
+			"src/cli.ts"
 		]
 	},
 	"dependencies": {

@@ -2,7 +2,8 @@
 
 `nxgt-mail` builds **transactional e-mails that are typed, translated and
 rendered with no engine at run time**. A developer writes one template per
-e-mail — Maizzle, Tailwind CSS 4 — and one ICU message catalogue per language;
+e-mail — Maizzle 6, a Vue single-file component, Tailwind CSS 4 — and one ICU
+message catalogue per language;
 a build step compiles both into a TypeScript module of render functions:
 
 ```ts
@@ -86,6 +87,11 @@ a subject, never a link — a link in a verification e-mail is a credential.
   one variable an attacker controls most often.
 - The subject is a message like any other, translated, typed, and stripped of
   line breaks — a header injection is a line break in a subject.
+- A template renders **once, at build time**, so it holds nothing the render
+  function would have to decide: no `v-if`, no `v-for`, no expression — a
+  prop, `lang` or a `t()` call on a string key. A value that would land in a
+  `style` or an `on*` attribute, a `<style>` or a `<script>`, or a message
+  that would start a link, **fails the build**: there, escaping is not enough.
 
 ## No `snake_case`, anywhere
 
