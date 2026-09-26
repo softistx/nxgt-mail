@@ -15,22 +15,28 @@ What a consumer writes:
 
 ```text
 emails/
-  verify-email.html        one template per e-mail, text as keys
-  reset-password.html
+  verify-email.vue         one template per e-mail, text as keys
+  reset-password.vue
 messages/
   en.json                  one ICU catalogue per locale
   fr.json
 mail.config.ts             defineMailConfig({ … })
 ```
 
-```html
-<!-- emails/verify-email.html -->
-<x-layout>
-  <x-heading>{{ t('verifyEmail.title') }}</x-heading>
-  <x-text>{{ t('verifyEmail.body', { name }) }}</x-text>
-  <x-button href="{{ link }}">{{ t('verifyEmail.action') }}</x-button>
-  <x-text>{{ t('verifyEmail.expires', { hours }) }}</x-text>
-</x-layout>
+```vue
+<!-- emails/verify-email.vue — Maizzle 6 templates are Vue single-file components -->
+<script setup>
+defineProps(['link', 'name', 'hours'])
+</script>
+
+<template>
+  <Layout :lang="lang">
+    <Heading>{{ t('verifyEmail.title') }}</Heading>
+    <Text>{{ t('verifyEmail.body', { name }) }}</Text>
+    <Button :href="link">{{ t('verifyEmail.action') }}</Button>
+    <Text>{{ t('verifyEmail.expires', { hours }) }}</Text>
+  </Layout>
+</template>
 ```
 
 ```json
@@ -152,14 +158,19 @@ of `fr` (`0` is singular) and `en` are both exercised.
 Maizzle 6 with Tailwind CSS 4, driven programmatically (not a Maizzle project
 checked into the consumer's repository).
 
-- A template calls `t('key', { … })` for text and interpolates `{{ variable }}`
-  for values (links, mostly). The compiler collects the keys and variables of
-  each template: an unknown key fails the build.
-- For each template and locale, Maizzle renders **once, at build time**, with
-  every message and variable replaced by a unique placeholder; CSS is inlined,
-  and the result is split at the placeholders into static chunks. The emitted
-  render function joins the chunks with the escaped values. The `text` part is
-  produced the same way from Maizzle's plain-text output.
+- A template is a Vue single-file component (Maizzle 6): it declares its
+  props with `defineProps`, calls `t('key', { prop })` for text and
+  interpolates `{{ prop }}` or binds `:href="prop"` for values (links,
+  mostly). Nothing else — no `v-if`, no `v-for`, no expression: a template
+  renders once, so a condition would be decided at build time. The compiler
+  collects the keys and props of each template: an unknown key fails the
+  build.
+- For each template, Maizzle renders **once, at build time** — not once per
+  locale: `lang` is a placeholder too — with every message and prop replaced
+  by a unique placeholder; CSS is inlined, and the result is split at the
+  placeholders into static chunks. The emitted render function joins the
+  chunks with the escaped values. The `text` part is produced the same way
+  from Maizzle's plain-text output.
 - `href`/`src` placeholders are marked, so the render function checks the URL
   scheme there and only there.
 - The subject is the message `<email>.subject`, required in every locale.
@@ -250,12 +261,14 @@ Then archive `nxgt-maizzle` — Steve decides when.
 
 ## Risks to check early
 
-- **Maizzle 6 driven programmatically.** Its API renders a string; confirm in
-  step 3 that it can be driven without a project folder, and that Tailwind 4's
-  CSS-first configuration (`@theme`) can be fed from a preset object. If not,
-  generate a temporary project folder per build and say so in AGENTS.md.
-- **Plain text from Maizzle.** Confirm its output keeps the placeholders
-  intact; if not, the `text` part is rendered from the same messages by the
-  compiler instead.
-- **The size of the generated module.** One HTML string per e-mail and locale:
-  measure it on the fixture project, and write the number in the README.
+- **Maizzle 6 driven programmatically.** Confirmed in step 3: `render()` needs
+  no project folder. One catch, handled: Tailwind resolves Maizzle's
+  `@import "@maizzle/tailwindcss"` from the template's folder, before Maizzle
+  rewrites it, and fails silently where the package is not hoisted (Bun,
+  pnpm). The build renders from a temporary folder that links it, and fails
+  if CSS is left uncompiled. Feeding Tailwind 4's `@theme` from a preset
+  object is step 4's to confirm.
+- **Plain text from Maizzle.** Confirmed: its output keeps the placeholders.
+- **The size of the generated module.** One HTML string per e-mail, shared by
+  every locale: the fixture's two e-mails in two locales make a 13.8 KB module
+  (3.8 KB gzipped), each `html` about 2.5 KB; a render takes about 11 µs.

@@ -2,7 +2,8 @@
 
 `nxgt-mail` builds **transactional e-mails that are typed, translated and
 rendered with no engine at run time**. A developer writes one template per
-e-mail — Maizzle, Tailwind CSS 4 — and one ICU message catalogue per language;
+e-mail — Maizzle 6, a Vue single-file component, Tailwind CSS 4 — and one ICU
+message catalogue per language;
 a build step compiles both into a TypeScript module of render functions:
 
 ```ts
@@ -69,7 +70,11 @@ What it means here:
 
 A refusal at **wiring** time (a bad option passed to a factory) is a bare
 `TypeError`. A refusal at **call** time is a class with a `code`, the codes a
-union of `SCREAMING_SNAKE` literals so a `switch` is exhaustive.
+union of `SCREAMING_SNAKE` literals so a `switch` is exhaustive. One deliberate
+exception: a generated render function refuses a URL that is not `http:`,
+`https:` or `mailto:` with a bare `TypeError` — the module imports nothing, so
+it has no error class to throw, and a bad link is the caller's bug to fix, not
+a condition to handle.
 
 A message reports **a shape, never a value**: never a recipient address, never
 a subject, never a link — a link in a verification e-mail is a credential.
@@ -86,6 +91,13 @@ a subject, never a link — a link in a verification e-mail is a credential.
   one variable an attacker controls most often.
 - The subject is a message like any other, translated, typed, and stripped of
   line breaks — a header injection is a line break in a subject.
+- A template renders **once, at build time**, so it holds nothing the render
+  function would have to decide: no `v-if`, no `v-for`, no expression — a
+  prop, `lang` or a `t()` call on a string key. A value lands only in text
+  (escaped), in a text attribute (`alt`, `title`, `aria-*`, `data-*`…) or at
+  the start of an `href`/`src` (a URL checked at call time). Anywhere else —
+  `style`, `on*`, `srcdoc`, a `<style>` or a `<script>`, a message starting a
+  link — **the build fails**: there, escaping is not enough.
 
 ## No `snake_case`, anywhere
 

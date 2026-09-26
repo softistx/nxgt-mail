@@ -29,11 +29,32 @@ export type MailBuildErrorCode =
 	/** A locale uses an argument the fallback locale's message does not declare. */
 	| 'ARGUMENT_UNDECLARED'
 	/** An argument is a number in one place and a string or a date in another. */
-	| 'ARGUMENT_TYPE_MISMATCH';
+	| 'ARGUMENT_TYPE_MISMATCH'
+	/**
+	 * A template the build cannot read: not a kebab-case `.vue` name, no
+	 * `<template>`, a prop that is reserved or not camelCase, a component that
+	 * does not exist, two files for one e-mail, or Maizzle failing to render it.
+	 */
+	| 'TEMPLATE_INVALID'
+	/**
+	 * A template uses something a render function cannot reproduce safely:
+	 * code in `<script setup>`, a `v-if`, an expression that is not a prop or a
+	 * `t()` call, a value in an attribute that is not text (`style`, `on*`…) or
+	 * in a `<style>`, a message starting a link, a value a component dropped.
+	 */
+	| 'TEMPLATE_UNSUPPORTED'
+	/** A template calls `t()` with a key the fallback locale does not hold. */
+	| 'TEMPLATE_KEY_UNKNOWN'
+	/** A `t()` call leaves out an argument its message declares, or passes something that is not a prop. */
+	| 'TEMPLATE_ARGUMENT_MISSING'
+	/** A `t()` call passes an argument its message does not declare. */
+	| 'TEMPLATE_ARGUMENT_UNKNOWN'
+	/** An e-mail has no `<email>.subject` message in the fallback locale. */
+	| 'SUBJECT_MISSING';
 
 /**
- * A build that failed. The message names the locale and the key — and the
- * argument when there is one — never the text of the message.
+ * A build that failed. The message names the template, the locale and the key
+ * — and the argument when there is one — never the text of the message.
  */
 export class MailBuildError extends Error {
 	override name = 'MailBuildError';
@@ -42,6 +63,8 @@ export class MailBuildError extends Error {
 	readonly locale: string | undefined;
 	/** The dotted key the problem is at, when there is one. */
 	readonly key: string | undefined;
+	/** The template file the problem is in, as `verify-email.vue`, when it is in one. */
+	readonly template: string | undefined;
 
 	constructor(
 		code: MailBuildErrorCode,
@@ -49,6 +72,7 @@ export class MailBuildError extends Error {
 		options?: {
 			readonly locale?: string;
 			readonly key?: string;
+			readonly template?: string;
 			readonly cause?: unknown;
 		},
 	) {
@@ -56,5 +80,6 @@ export class MailBuildError extends Error {
 		this.code = code;
 		this.locale = options?.locale;
 		this.key = options?.key;
+		this.template = options?.template;
 	}
 }

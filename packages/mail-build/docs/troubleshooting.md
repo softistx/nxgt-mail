@@ -1,36 +1,43 @@
 # Troubleshooting `@nxgt/mail-build`
 
 Each entry is headed by the text you see: a build error, a compiler error on
-the generated module, or a symptom in a rendered e-mail. Search this page for
-the words of your message; `<locale>`, `<key>` and the like stand for the
-names in yours.
+the generated module, an error thrown when an e-mail is rendered, or a
+symptom in a rendered e-mail. Search this page for the words of your message;
+`<locale>`, `<key>`, `<file>`, `<prop>` and the like stand for the names in
+yours.
 
 How the messages are shaped:
 
 - **A build error starts with where the problem is**: `messages: <locale>:
-  <key> …`. It names the locale, the dotted key and, when there is one, the
-  argument — **never the text of the message**.
+  <key> …` for a catalogue, `templates: <file>: …` for a template. It names
+  the locale, the template, the dotted key and, when there is one, the
+  argument or the prop — **never the text of the message**.
 - **A `MailBuildError` is a build that cannot be right.** Its `code` is one of
-  the `MailBuildErrorCode` literals below, and it carries `locale` and `key`.
-  Nothing is caught and nothing falls back to the raw message: the build
-  stops, and no module is written.
-- **A `TypeError` starting with `compileMessages:` is a wiring mistake**: the
-  options you passed, not a catalogue. Fix the build script.
-- **A mistake in a call to the generated `t()` is a compile error**, not a
-  run-time one: the module types every key and every argument from the ICU.
+  the `MailBuildErrorCode` literals below, and it carries `locale`, `key` and
+  `template` when they apply. Nothing is caught and nothing falls back to the
+  raw message: the build stops, and no module is written.
+- **A `TypeError` starting with `compileMessages:`, `build:` or `nxgt-mail:`
+  is a wiring mistake**: the options, the config or the command, not a
+  catalogue or a template. Fix the build script.
+- **A mistake in a call to the generated `t()` or `mails.<email>()` is a
+  compile error**, not a run-time one: the module types every key, every
+  argument and every prop. The one check left for run time is a URL prop.
 
 ```ts
 import { MailBuildError } from '@nxgt/mail-build';
 
 try {
-  // compileMessages({ … })
+  // build(config), compileMail({ … }) or compileMessages({ … })
 } catch (error) {
   if (error instanceof MailBuildError) {
-    console.error(error.code, error.locale, error.key, error.message);
+    console.error(error.code, error.template, error.locale, error.key, error.message);
   }
   throw error;
 }
 ```
+
+`nxgt-mail build` prints the message of a `MailBuildError` or of a wiring
+`TypeError` alone, without a stack, and exits with 1.
 
 ## Index
 
@@ -39,6 +46,22 @@ try {
 - [`compileMessages: <locale> is not a locale — write it as a BCP 47 tag, as en or pt-BR`](#compilemessages-locale-is-not-a-locale--write-it-as-a-bcp-47-tag-as-en-or-pt-br)
 - [`compileMessages: locales holds the same locale twice`](#compilemessages-locales-holds-the-same-locale-twice)
 - [`compileMessages: fallbackLocale must be one of locales`](#compilemessages-fallbacklocale-must-be-one-of-locales)
+
+**Running `nxgt-mail`**
+- [`nxgt-mail: unknown command <command>`](#nxgt-mail-unknown-command-command)
+- [`nxgt-mail: Unknown option '<option>'`](#nxgt-mail-unknown-option-option)
+- [`nxgt-mail: Option '-c, --config <value>' argument missing`](#nxgt-mail-option--c---config-value-argument-missing)
+- [`nxgt-mail: --out is for dev — build writes where the config's out says`](#nxgt-mail---out-is-for-dev--build-writes-where-the-configs-out-says)
+- [`nxgt-mail: no config — write mail.config.ts, or pass --config <file>`](#nxgt-mail-no-config--write-mailconfigts-or-pass---config-file)
+- [`nxgt-mail: <file> does not exist`](#nxgt-mail-file-does-not-exist)
+- [`build: the config must be an object — export default defineMailConfig({ … })`](#build-the-config-must-be-an-object--export-default-definemailconfig--)
+- [`build: the config has no locales — is it the default export? export default defineMailConfig({ … })`](#build-the-config-has-no-locales--is-it-the-default-export-export-default-definemailconfig--)
+- [`build: locales must be a list of locales, as ['en', 'fr']`](#build-locales-must-be-a-list-of-locales-as-en-fr)
+- [`build: fallbackLocale must be one of locales, as 'en'`](#build-fallbacklocale-must-be-one-of-locales-as-en)
+- [`build: <name> must be a path, or left out`](#build-name-must-be-a-path-or-left-out)
+- [`build: <dir> holds no catalogue — write one <locale>.json per locale there, or set messages in the config`](#build-dir-holds-no-catalogue--write-one-localejson-per-locale-there-or-set-messages-in-the-config)
+- [`build: <dir> does not exist — put one .vue template per e-mail there, or set emails in the config`](#build-dir-does-not-exist--put-one-vue-template-per-e-mail-there-or-set-emails-in-the-config)
+- [`build: <dir> holds no .vue template — put one per e-mail there`](#build-dir-holds-no-vue-template--put-one-per-e-mail-there)
 
 **Catalogues**
 - [`CATALOGUE_INVALID` — `messages: <locale>: <path> is not valid JSON`](#catalogue_invalid--messages-locale-path-is-not-valid-json)
@@ -61,6 +84,46 @@ try {
 - [`ARGUMENT_TYPE_MISMATCH` — `messages: <locale>: <key> uses {<argument>} as <kind> and as <kind>`](#argument_type_mismatch--messages-locale-key-uses-argument-as-kind-and-as-kind)
 - [`ARGUMENT_TYPE_MISMATCH` — `messages: <locale>: <key> uses {<argument>} as <kind>, and <fallback> declares it as <kind>`](#argument_type_mismatch--messages-locale-key-uses-argument-as-kind-and-fallback-declares-it-as-kind)
 
+**Templates: what a template may hold**
+- [`TEMPLATE_INVALID` — `templates: <file>: is not a kebab-case .vue file name — name it as verify-email.vue`](#template_invalid--templates-file-is-not-a-kebab-case-vue-file-name--name-it-as-verify-emailvue)
+- [`TEMPLATE_INVALID` — `templates: <file>: is the e-mail <email>, as <other>.vue is — rename one of them`](#template_invalid--templates-file-is-the-e-mail-email-as-othervue-is--rename-one-of-them)
+- [`TEMPLATE_INVALID` — `templates: <file>: does not parse as a single-file component (<reason>)`](#template_invalid--templates-file-does-not-parse-as-a-single-file-component-reason)
+- [`TEMPLATE_INVALID` — `templates: <file>: has no <template>`](#template_invalid--templates-file-has-no-template)
+- [`TEMPLATE_INVALID` — `templates: <file>: has a <script> without setup — declare the props in <script setup>`](#template_invalid--templates-file-has-a-script-without-setup--declare-the-props-in-script-setup)
+- [`TEMPLATE_UNSUPPORTED` — `templates: <file>: holds code in <script setup> — a template declares its props with defineProps([...]) or defineProps<{...}>(), unassigned, and nothing else`](#template_unsupported--templates-file-holds-code-in-script-setup--a-template-declares-its-props-with-defineprops-or-defineprops-unassigned-and-nothing-else)
+- [`TEMPLATE_INVALID` — `templates: <file>: does not declare its props in a form the build reads (<reason>)`](#template_invalid--templates-file-does-not-declare-its-props-in-a-form-the-build-reads-reason)
+- [`TEMPLATE_INVALID` — `templates: <file>: declares the prop <prop>, a name the render function uses itself`](#template_invalid--templates-file-declares-the-prop-prop-a-name-the-render-function-uses-itself)
+- [`TEMPLATE_INVALID` — `templates: <file>: declares the prop <prop>, which is not camelCase — name it as firstName`](#template_invalid--templates-file-declares-the-prop-prop-which-is-not-camelcase--name-it-as-firstname)
+- [`TEMPLATE_UNSUPPORTED` — `templates: <file>: <<tag>> uses v-<directive> — a template renders once, at build time, so it has no condition, no loop and no event`](#template_unsupported--templates-file-tag-uses-v-directive--a-template-renders-once-at-build-time-so-it-has-no-condition-no-loop-and-no-event)
+- [`TEMPLATE_UNSUPPORTED` — `templates: <file>: <<tag>> binds an object with v-bind — bind each attribute by name`](#template_unsupported--templates-file-tag-binds-an-object-with-v-bind--bind-each-attribute-by-name)
+- [`TEMPLATE_UNSUPPORTED` — `templates: <file>: <where> holds an expression — write a prop, or t('key', { prop }), and nothing else`](#template_unsupported--templates-file-where-holds-an-expression--write-a-prop-or-tkey--prop--and-nothing-else)
+- [`TEMPLATE_UNSUPPORTED` — `templates: <file>: <where> uses <name>, which is not a prop — declare it with defineProps`](#template_unsupported--templates-file-where-uses-name-which-is-not-a-prop--declare-it-with-defineprops)
+
+**Templates: where a value lands**
+- [`TEMPLATE_UNSUPPORTED` — `templates: <file>: <value> lands in a <<element>> element`](#template_unsupported--templates-file-value-lands-in-a-element-element)
+- [`TEMPLATE_UNSUPPORTED` — `templates: <file>: <value> lands in a tag outside a quoted attribute value`](#template_unsupported--templates-file-value-lands-in-a-tag-outside-a-quoted-attribute-value)
+- [`TEMPLATE_UNSUPPORTED` — `templates: <file>: <value> lands in the <attribute> attribute — only text attributes (alt, title, aria-*…) and URLs (href, src) take a value`](#template_unsupported--templates-file-value-lands-in-the-attribute-attribute--only-text-attributes-alt-title-aria--and-urls-href-src-take-a-value)
+- [`TEMPLATE_UNSUPPORTED` — `templates: <file>: <value> starts an href — a URL is a prop, checked when the e-mail is rendered`](#template_unsupported--templates-file-value-starts-an-href--a-url-is-a-prop-checked-when-the-e-mail-is-rendered)
+- [`TEMPLATE_UNSUPPORTED` — `templates: <file>: <value> lands in an href whose fixed start is not http:, https: or mailto:`](#template_unsupported--templates-file-value-lands-in-an-href-whose-fixed-start-is-not-http-https-or-mailto)
+
+**Templates: against the catalogues**
+- [`TEMPLATE_KEY_UNKNOWN` — `templates: <file>: t('<key>') is not a key of <fallback>, the fallback locale`](#template_key_unknown--templates-file-tkey-is-not-a-key-of-fallback-the-fallback-locale)
+- [`TEMPLATE_ARGUMENT_MISSING` — `templates: <file>: t('<key>') leaves out {<argument>}, which <fallback> declares — pass it a prop`](#template_argument_missing--templates-file-tkey-leaves-out-argument-which-fallback-declares--pass-it-a-prop)
+- [`TEMPLATE_ARGUMENT_MISSING` — `templates: <file>: t('<key>') passes {<argument>} a value that is not a prop`](#template_argument_missing--templates-file-tkey-passes-argument-a-value-that-is-not-a-prop)
+- [`TEMPLATE_ARGUMENT_UNKNOWN` — `templates: <file>: t('<key>') passes {<argument>}, which <fallback> does not declare`](#template_argument_unknown--templates-file-tkey-passes-argument-which-fallback-does-not-declare)
+- [`SUBJECT_MISSING` — `templates: <file>: the e-mail <email> has no subject — add <email>.subject to <fallback>, the fallback locale`](#subject_missing--templates-file-the-e-mail-email-has-no-subject--add-emailsubject-to-fallback-the-fallback-locale)
+- [`TEMPLATE_ARGUMENT_MISSING` — `templates: <file>: <email>.subject uses {<argument>}, which is not a prop of the template — declare it with defineProps`](#template_argument_missing--templates-file-emailsubject-uses-argument-which-is-not-a-prop-of-the-template--declare-it-with-defineprops)
+- [`ARGUMENT_TYPE_MISMATCH` — `templates: <file>: the prop <prop> is <kind> <where>, and <kind> <where>`](#argument_type_mismatch--templates-file-the-prop-prop-is-kind-where-and-kind-where)
+- [`TEMPLATE_UNSUPPORTED` — `templates: <file>: declares the prop <prop> and never uses it — remove it, or write it in the template`](#template_unsupported--templates-file-declares-the-prop-prop-and-never-uses-it--remove-it-or-write-it-in-the-template)
+
+**Templates: rendering**
+- [`TEMPLATE_INVALID` — `templates: <file>: Maizzle could not render it (<reason>)`](#template_invalid--templates-file-maizzle-could-not-render-it-reason)
+- [`TEMPLATE_INVALID` — `templates: <file>: uses <<Name>>, which is not a component — check its name`](#template_invalid--templates-file-uses-name-which-is-not-a-component--check-its-name)
+- [`TEMPLATE_UNSUPPORTED` — `templates: <file>: t('<key>') is not in the output — a component dropped it, or used it at build time`](#template_unsupported--templates-file-tkey-is-not-in-the-output--a-component-dropped-it-or-used-it-at-build-time)
+- [`TEMPLATE_UNSUPPORTED` — `templates: <file>: the prop <prop> is not in the output — a component dropped it, or used it at build time (as a QR code does)`](#template_unsupported--templates-file-the-prop-prop-is-not-in-the-output--a-component-dropped-it-or-used-it-at-build-time-as-a-qr-code-does)
+- [`TEMPLATE_INVALID` — `templates: <file>: Tailwind did not compile its CSS — @import or @apply left in the output`](#template_invalid--templates-file-tailwind-did-not-compile-its-css--import-or-apply-left-in-the-output)
+- [`TEMPLATE_UNSUPPORTED` — `templates: <file>: a value was changed while rendering — a component or a transformer rewrote it`](#template_unsupported--templates-file-a-value-was-changed-while-rendering--a-component-or-a-transformer-rewrote-it)
+
 **Calling the generated `t()`**
 - [`TS2345: Argument of type '{}' is not assignable to parameter of type '{ readonly <argument>: <type>; }'.`](#ts2345-argument-of-type--is-not-assignable-to-parameter-of-type--readonly-argument-type-)
 - [`TS2554: Expected 3-4 arguments, but got 2.`](#ts2554-expected-3-4-arguments-but-got-2)
@@ -71,6 +134,15 @@ try {
 - [`TS2345: Argument of type '"<key>"' is not assignable to parameter of type 'keyof MessageArgs'.`](#ts2345-argument-of-type-key-is-not-assignable-to-parameter-of-type-keyof-messageargs)
 - [`TS2322: Type '<type>' is not assignable to type 'never'.`](#ts2322-type-type-is-not-assignable-to-type-never)
 
+**Calling `mails`**
+- [`TS2322: Type '"<locale>"' is not assignable to type '"en" | "fr"'.`](#ts2322-type-locale-is-not-assignable-to-type-en--fr)
+- [`TS2353: Object literal may only specify known properties, and '<prop>' does not exist in type '{ readonly locale: "en" | "fr"; readonly timeZone?: string; … }'.`](#ts2353-object-literal-may-only-specify-known-properties-and-prop-does-not-exist-in-type--readonly-locale-en--fr-readonly-timezone-string--)
+- [`TS2345: Argument of type '{ locale: …; … }' is not assignable to parameter of type '{ readonly locale: "en" | "fr"; readonly timeZone?: string; … }'.`](#ts2345-argument-of-type--locale----is-not-assignable-to-parameter-of-type--readonly-locale-en--fr-readonly-timezone-string--)
+- [`TS2322: Type 'URL' is not assignable to type 'string'.`](#ts2322-type-url-is-not-assignable-to-type-string)
+- [`TS2339: Property '<email>' does not exist on type '{ readonly <email>: (args: …) => RenderedMail; … }'.`](#ts2339-property-email-does-not-exist-on-type--readonly-email-args---renderedmail--)
+- [`TypeError: mails.<email>: <prop> must be an http:, https: or mailto: URL`](#typeerror-mailsemail-prop-must-be-an-http-https-or-mailto-url)
+- [`TypeError: mails.<email>: <prop> must be an http: or https: URL`](#typeerror-mailsemail-prop-must-be-an-http-or-https-url)
+
 **In the rendered e-mail**
 - [A date or a time is off by some hours](#a-date-or-a-time-is-off-by-some-hours)
 - [`<b>` shows in the e-mail as text](#b-shows-in-the-e-mail-as-text)
@@ -79,6 +151,7 @@ try {
 - [An argument shows as `{name}`, and an apostrophe is gone](#an-argument-shows-as-name-and-an-apostrophe-is-gone)
 - [`RangeError: Invalid time zone specified: <zone>`](#rangeerror-invalid-time-zone-specified-zone)
 - [`RangeError: Invalid time value`](#rangeerror-invalid-time-value)
+- [A line break in a subject argument shows as a space](#a-line-break-in-a-subject-argument-shows-as-a-space)
 - [A bug in `@nxgt/mail-build` itself](#a-bug-in-nxgtmail-build-itself)
 
 The examples below build from `messages/<locale>.json` and write the module
@@ -98,12 +171,22 @@ const { module } = compileMessages({
 await writeFile('src/generated/messages.ts', module);
 ```
 
+The template and `mails` examples use `nxgt-mail build`, which writes one
+module, `src/generated/mail.ts` by default, holding `t` as well as `mails`.
+
 ---
 
 ## Wiring the build
 
 Each of these is a bare `TypeError`, thrown by `compileMessages` before any
-catalogue is read.
+catalogue is read. You meet them when you call `compileMessages` or
+`compileMail` yourself. Through `nxgt-mail build` or `dev`, `build()` or
+`dev()`, the config is checked first, and the same mistakes answer with the
+`build:` messages of [Running `nxgt-mail`](#running-nxgt-mail): an empty
+`locales` or a `fallbackLocale` outside it gives
+[`build: fallbackLocale must be one of locales, as 'en'`](#build-fallbacklocale-must-be-one-of-locales-as-en).
+A locale written twice, or one that is not a BCP 47 tag but has its
+`<locale>.json`, still reaches `compileMessages` and gets the message below.
 
 ### `compileMessages: locales must hold at least one locale`
 
@@ -166,6 +249,269 @@ against, so it must be built too.
 import { compileMessages } from '@nxgt/mail-build';
 
 compileMessages({ locales: ['en-US', 'fr'], fallbackLocale: 'en-US', sources: [] });
+```
+
+---
+
+## Running `nxgt-mail`
+
+The CLI prints each of these alone, without a stack, and exits with 1; a
+mistake on the command line is followed by the usage. `build()`, `dev()` and
+`compileProject()` throw the `build:` ones as a `TypeError`, before any
+template is rendered.
+
+### `nxgt-mail: unknown command <command>`
+
+**When:** `nxgt-mail <command>` with a command other than `build` or `dev`,
+as `nxgt-mail buld`. The usage follows the message.
+**Why:** the CLI has two commands. Run with no command at all, it prints the
+usage and exits with 1 too.
+**Fix:**
+
+```sh
+nxgt-mail build   # writes the generated module
+nxgt-mail dev     # renders every e-mail in every locale to .nxgt-mail/
+```
+
+### `nxgt-mail: Unknown option '<option>'`
+
+The message goes on: `To specify a positional argument starting with a '-',
+place it at the end of the command after '--', …`
+
+**When:** `nxgt-mail build` or `dev`, with an option it does not know:
+`--bogus`, `--watch`. The usage follows the message, and the exit code is 1.
+**Why:** the CLI takes `--config` (`-c`), `--out` (`-o`) and `--help` (`-h`),
+and nothing else.
+**Fix:**
+
+```sh
+nxgt-mail build --config mail.config.ts
+nxgt-mail dev --out .nxgt-mail
+```
+
+### `nxgt-mail: Option '-c, --config <value>' argument missing`
+
+With `--out` last: `nxgt-mail: Option '-o, --out <value>' argument missing`.
+
+**When:** `nxgt-mail build --config` or `dev --out` with nothing after the
+option, typically a script whose variable came back empty:
+`nxgt-mail build --config $MAIL_CONFIG`. The usage follows the message, and
+the exit code is 1.
+**Why:** `--config` and `--out` each take a path; with none, the command
+line cannot be read.
+**Fix:** give the path, or leave the option out to use the default:
+
+```sh
+nxgt-mail build --config mail.config.ts
+nxgt-mail build
+```
+
+### `nxgt-mail: --out is for dev — build writes where the config's out says`
+
+**When:** `nxgt-mail build --out <dir>` or `build -o <dir>`. The usage
+follows the message.
+**Why:** `--out` is the preview folder of `nxgt-mail dev`. Where `build`
+writes the module is part of the config, so every run writes it to the same
+place.
+**Fix:** set `out` in the config:
+
+```ts
+import { defineMailConfig } from '@nxgt/mail-build';
+
+export default defineMailConfig({
+  locales: ['en', 'fr'],
+  fallbackLocale: 'en',
+  out: 'src/generated/mail.ts',
+});
+```
+
+### `nxgt-mail: no config — write mail.config.ts, or pass --config <file>`
+
+**When:** `nxgt-mail build` or `dev`, run from a folder that holds no
+`mail.config.ts`, `.mts`, `.js` or `.mjs` — typically the root of a
+workspace, when the config lives in one of its packages.
+**Why:** the CLI looks for the config in the working directory only, not in
+its parents.
+**Fix:** write the config beside the `emails/` and `messages/` folders, and
+run the command from there:
+
+```ts
+// mail.config.ts
+import { defineMailConfig } from '@nxgt/mail-build';
+
+export default defineMailConfig({
+  locales: ['en', 'fr'],
+  fallbackLocale: 'en',
+});
+```
+
+Or name it from where you are: `nxgt-mail build --config packages/mailer/mail.config.ts`.
+The paths inside the config stay relative to the config's own folder.
+
+### `nxgt-mail: <file> does not exist`
+
+**When:** `nxgt-mail build --config <file>` or `dev --config <file>`, with a
+file that is not there. `<file>` is the path as you wrote it.
+**Why:** `--config` is resolved from the working directory, not from the
+workspace root or the package.
+**Fix:** pass the config relative to where the command runs:
+
+```sh
+cd packages/mailer && nxgt-mail build --config mail.config.ts
+```
+
+### `build: the config must be an object — export default defineMailConfig({ … })`
+
+**When:** `nxgt-mail build` or `dev`, on a config whose default export is not
+an object — `undefined`, `null`, a function — or `build()` called without
+one. A config with no default export at all gets the next entry.
+**Why:** the config is read as data, and checked before it is used.
+**Fix:**
+
+```ts
+// mail.config.ts
+import { defineMailConfig } from '@nxgt/mail-build';
+
+export default defineMailConfig({
+  locales: ['en', 'fr'],
+  fallbackLocale: 'en',
+});
+```
+
+### `build: the config has no locales — is it the default export? export default defineMailConfig({ … })`
+
+**When:** `nxgt-mail build` or `dev`, on a config file that exports its config
+under a name (`export const config = …`) instead of `export default`, or
+`build({})`: neither `locales` nor `fallbackLocale` is there.
+**Why:** the CLI reads the default export; without one it finds an empty
+module.
+**Fix:**
+
+```ts
+// mail.config.ts
+import { defineMailConfig } from '@nxgt/mail-build';
+
+export default defineMailConfig({
+  locales: ['en', 'fr'],
+  fallbackLocale: 'en',
+});
+```
+
+### `build: locales must be a list of locales, as ['en', 'fr']`
+
+**When:** `nxgt-mail build` or `dev`, or `build()`, on a config whose
+`locales` is missing or is not an array of strings: `locales: 'en'`, a list
+read from an environment variable and not split.
+**Why:** `locales` is every locale the build compiles, in order.
+**Fix:**
+
+```ts
+import { defineMailConfig } from '@nxgt/mail-build';
+
+export default defineMailConfig({
+  locales: ['en', 'fr'],
+  fallbackLocale: 'en',
+});
+```
+
+### `build: fallbackLocale must be one of locales, as 'en'`
+
+**When:** `nxgt-mail build` or `dev`, or `build()`, on a config whose
+`fallbackLocale` is missing, is not a string (`['en']`), or is not one of
+`locales` (`locales: ['en'], fallbackLocale: 'fr'`). Calling
+`compileMessages` directly gives the same mistake as
+[`compileMessages: fallbackLocale must be one of locales`](#compilemessages-fallbacklocale-must-be-one-of-locales).
+**Why:** the fallback locale is the reference every other locale and every
+template is checked against.
+**Fix:** one locale, as a string, that `locales` holds:
+
+```ts
+import { defineMailConfig } from '@nxgt/mail-build';
+
+export default defineMailConfig({
+  locales: ['en', 'fr'],
+  fallbackLocale: 'en',
+});
+```
+
+### `build: <name> must be a path, or left out`
+
+**When:** `nxgt-mail build` or `dev`, or `build()`, on a config whose
+`emails`, `messages` or `out` is not a string: `emails: ['emails']`,
+`out: null`.
+**Why:** each is one path, relative to the config's folder; left out, it is
+`emails`, `messages` and `src/generated/mail.ts`.
+**Fix:**
+
+```ts
+import { defineMailConfig } from '@nxgt/mail-build';
+
+export default defineMailConfig({
+  locales: ['en', 'fr'],
+  fallbackLocale: 'en',
+  emails: 'src/emails',
+});
+```
+
+### `build: <dir> holds no catalogue — write one <locale>.json per locale there, or set messages in the config`
+
+**When:** `nxgt-mail build` or `dev`, or `build()`, when the messages folder
+is missing, or holds no `<locale>.json` for any locale of the config.
+`<dir>` is the absolute path the build looked in: `messages/` beside the
+config, unless the config says otherwise.
+**Why:** with no catalogue at all, the folder is almost surely the wrong one.
+A catalogue missing for one locale only is not reported here: the build
+reports each key that locale lacks, with
+[`KEY_MISSING`](#key_missing--messages-locale-key-is-missing--fallback-the-fallback-locale-has-it).
+**Fix:** write `messages/en.json` and one file per other locale, or point
+`messages` at the folder that holds them:
+
+```ts
+import { defineMailConfig } from '@nxgt/mail-build';
+
+export default defineMailConfig({
+  locales: ['en', 'fr'],
+  fallbackLocale: 'en',
+  messages: 'src/messages',
+});
+```
+
+### `build: <dir> does not exist — put one .vue template per e-mail there, or set emails in the config`
+
+**When:** `nxgt-mail build` or `dev`, `build()`, `dev()` or
+`compileProject()`, when the templates folder is missing. `<dir>` is the
+absolute path the build looked in: `emails/` beside the config (or under
+`root`), unless the config says otherwise.
+**Why:** a templates folder that is absent is a wrong path far more often
+than a project with no e-mail.
+**Fix:** name the folder where it is, relative to the config:
+
+```ts
+import { defineMailConfig } from '@nxgt/mail-build';
+
+export default defineMailConfig({
+  locales: ['en', 'fr'],
+  fallbackLocale: 'en',
+  emails: 'src/emails',
+});
+```
+
+### `build: <dir> holds no .vue template — put one per e-mail there`
+
+**When:** `nxgt-mail build` or `dev`, or `build()`, when the templates folder
+exists but holds no file ending in `.vue` — an empty folder, templates in a
+subfolder, or `emails` pointing at another folder.
+**Why:** a module with no e-mail is never what a build is for. Subfolders are
+not read: each template is one file directly in the folder.
+**Fix:** one `.vue` per e-mail, directly in the folder:
+
+```vue
+<!-- emails/verify-email.vue -->
+<template>
+  <Layout :lang="lang">
+    <Text>{{ t('verifyEmail.title') }}</Text>
+  </Layout>
+</template>
 ```
 
 ---
@@ -520,6 +866,634 @@ the same arguments.
 
 ---
 
+## Templates: what a template may hold
+
+A template is rendered **once, at build time**, with every prop and every
+message replaced by a marker; the generated render function then puts the
+values back. So a template holds props, `lang`, and `t()` calls — nothing
+that would depend on a value. The examples below use this catalogue and this
+template:
+
+```json
+{
+  "verifyEmail": {
+    "subject": "Confirm your e-mail address",
+    "title": "One step left",
+    "body": "Hello {name}, confirm this address to finish signing up.",
+    "action": "Confirm my address",
+    "expires": "This link expires in {hours, plural, one {# hour} other {# hours}}."
+  }
+}
+```
+
+```vue
+<!-- emails/verify-email.vue -->
+<script setup>
+defineProps(['link', 'name', 'hours']);
+</script>
+
+<template>
+  <Layout :lang="lang">
+    <Container class="bg-white p-6">
+      <Heading class="text-2xl">{{ t('verifyEmail.title') }}</Heading>
+      <Text>{{ t('verifyEmail.body', { name }) }}</Text>
+      <Button :href="link">{{ t('verifyEmail.action') }}</Button>
+      <Text>{{ t('verifyEmail.expires', { hours }) }}</Text>
+    </Container>
+  </Layout>
+</template>
+```
+
+### `TEMPLATE_INVALID` — `templates: <file>: is not a kebab-case .vue file name — name it as verify-email.vue`
+
+**When:** the build, on a template named `VerifyEmail.vue`,
+`verify_email.vue` or `Verify-Email.vue`.
+**Why:** the file name is the e-mail's name: `verify-email.vue` becomes
+`mails.verifyEmail`, and its subject is the message `verifyEmail.subject`.
+Only files ending in `.vue` are read; anything else in the folder is ignored.
+**Fix:** rename the file:
+
+```sh
+git mv emails/VerifyEmail.vue emails/verify-email.vue
+```
+
+### `TEMPLATE_INVALID` — `templates: <file>: is the e-mail <email>, as <other>.vue is — rename one of them`
+
+**When:** the build, on two template files whose names give the same e-mail
+name: `a1b.vue` and `a-1b.vue` are both `a1b`.
+**Why:** the e-mail name is the `camelCase` of the file name, and a hyphen
+before a digit leaves nothing to capitalise. Two templates for one
+`mails.<email>` would leave one of them out.
+**Fix:** rename one of them, so that each file gives its own name:
+
+```sh
+git mv emails/a-1b.vue emails/a-1-b.vue
+```
+
+### `TEMPLATE_INVALID` — `templates: <file>: does not parse as a single-file component (<reason>)`
+
+**When:** the build, on a template Vue cannot parse: an unclosed `{{`, an
+unclosed tag, two `<template>` blocks. `<reason>` is Vue's own, as
+`Interpolation end sign was not found.` or `Element is missing end tag.`
+**Why:** a template is a Vue single-file component, read by Vue's compiler.
+**Fix:** close what the reason names:
+
+```vue
+<Text>{{ t('verifyEmail.body', { name }) }}</Text>
+```
+
+### `TEMPLATE_INVALID` — `templates: <file>: has no <template>`
+
+**When:** the build, on a `.vue` file with a `<script setup>` and nothing
+else. An empty file fails to parse instead: `At least one <template> or
+<script> is required in a single file component.`
+**Why:** the `<template>` block is the e-mail; without it there is nothing to
+render.
+**Fix:**
+
+```vue
+<template>
+  <Layout :lang="lang">
+    <Text>{{ t('verifyEmail.title') }}</Text>
+  </Layout>
+</template>
+```
+
+### `TEMPLATE_INVALID` — `templates: <file>: has a <script> without setup — declare the props in <script setup>`
+
+**When:** the build, on a template with `<script>` and `export default {
+props: … }`, the Options API.
+**Why:** the build reads the props from `defineProps` in `<script setup>`,
+and nothing else.
+**Fix:**
+
+```vue
+<script setup>
+defineProps(['link', 'name', 'hours']);
+</script>
+```
+
+### `TEMPLATE_UNSUPPORTED` — `templates: <file>: holds code in <script setup> — a template declares its props with defineProps([...]) or defineProps<{...}>(), unassigned, and nothing else`
+
+**When:** the build, on a `<script setup>` that holds anything but one
+`defineProps(['a', 'b'])` or `defineProps<{ … }>()` call:
+- a `const`, a function, an `import`, a `computed`, a `console.log`;
+- the props assigned, as `const props = defineProps([…])`;
+- the object form, `defineProps({ name: String })`, and so a prop with a
+  `validator`, a `default` or `required`;
+- a list holding anything but quoted names, as `defineProps(names)`.
+**Why:** the script runs once, at build time, on markers rather than values:
+a value computed there, a default or a validator, would run on a marker and
+be frozen into every e-mail. Whatever the e-mail needs is a prop, computed
+by the caller — and every prop is required, so a default has nothing to do.
+**Fix:** declare the props by name, unassigned, as a list or as a type, and
+compute a value or a default where you call the e-mail:
+
+```vue
+<script setup>
+defineProps(['link', 'name', 'hours']);
+</script>
+```
+
+```vue
+<script setup lang="ts">
+defineProps<{ link: string; name: string; hours: number }>();
+</script>
+```
+
+The types written in `defineProps<{ … }>()` are not read: each prop is typed
+in the generated module from the way the template uses it.
+
+### `TEMPLATE_INVALID` — `templates: <file>: does not declare its props in a form the build reads (<reason>)`
+
+**When:** the build, on a `defineProps<…>()` Vue's compiler cannot read:
+- most often, the type form in a `<script setup>` without `lang="ts"`:
+  `<reason>` is then `[vue/compiler-sfc] Unexpected token (…)`;
+- a type named but declared nowhere in the script, as
+  `defineProps<Missing>()`: `<reason>` is then `[@vue/compiler-sfc]
+  Unresolvable type reference or unsupported built-in utility type`.
+**Why:** the build takes the prop names from Vue's compiler. A type declared
+beside the call, or imported, would need a second statement in
+`<script setup>`, which the build refuses; a name alone leaves the compiler
+nothing to read.
+**Fix:** add `lang="ts"` to `<script setup>` for the type form, and write
+the type inline — or write the props as a list of names:
+
+```vue
+<script setup>
+defineProps(['link', 'name', 'hours']);
+</script>
+```
+
+```vue
+<script setup lang="ts">
+defineProps<{ link: string; name: string; hours: number }>();
+</script>
+```
+
+### `TEMPLATE_INVALID` — `templates: <file>: declares the prop <prop>, a name the render function uses itself`
+
+**When:** the build, on a prop named `t`, `lang`, `locale` or `timeZone`.
+**Why:** the render function takes `locale` and `timeZone` itself, and the
+template already has `t()` and `lang`; a prop of the same name would be
+ambiguous.
+**Fix:** use `lang` for the language the e-mail is rendered in, and rename a
+prop of your own:
+
+```vue
+<script setup>
+defineProps(['userLocale']);
+</script>
+
+<template>
+  <Layout :lang="lang">
+    <Text>{{ userLocale }}</Text>
+  </Layout>
+</template>
+```
+
+### `TEMPLATE_INVALID` — `templates: <file>: declares the prop <prop>, which is not camelCase — name it as firstName`
+
+**When:** the build, on a prop named `first_name`, `FirstName` or
+`first-name`.
+**Why:** a prop is an argument of the generated render function, and names
+there are `camelCase`. It starts with a lower-case letter and holds only
+letters and digits.
+**Fix:**
+
+```vue
+<script setup>
+defineProps(['firstName']);
+</script>
+```
+
+### `TEMPLATE_UNSUPPORTED` — `templates: <file>: <<tag>> uses v-<directive> — a template renders once, at build time, so it has no condition, no loop and no event`
+
+**When:** the build, on `v-if`, `v-else`, `v-show`, `v-for`, `v-html`,
+`v-text`, `v-on` (`@click`) or `v-model` anywhere in the template.
+**Why:** the template is rendered once, with markers instead of values, so a
+condition would be decided on a marker and a loop would run over one. Only a
+bound attribute (`:href`) and a slot are reproduced.
+**Fix:** a text that varies with a value is a message: write the branches in
+the catalogue, with `select` or `plural`, and pass the value as a prop:
+
+```json
+{
+  "verifyEmail": {
+    "plan": "{plan, select, pro {Your Pro account is ready.} other {Your account is ready.}}"
+  }
+}
+```
+
+```vue
+<Text>{{ t('verifyEmail.plan', { plan }) }}</Text>
+```
+
+Two layouts that differ by more than a text are two templates. A list of
+variable length has no equivalent. Markup from `v-html` belongs in the
+template itself: see [`<b>` shows in the e-mail as text](#b-shows-in-the-e-mail-as-text).
+
+### `TEMPLATE_UNSUPPORTED` — `templates: <file>: <<tag>> binds an object with v-bind — bind each attribute by name`
+
+**When:** the build, on `v-bind="attrs"` with no attribute name.
+**Why:** the build must know which attribute each value lands in, to escape
+it for that attribute and to check a URL.
+**Fix:**
+
+```vue
+<Button :href="link">{{ t('verifyEmail.action') }}</Button>
+```
+
+### `TEMPLATE_UNSUPPORTED` — `templates: <file>: <where> holds an expression — write a prop, or t('key', { prop }), and nothing else`
+
+`<where>` is `{{ }}`, or a tag and a bound attribute, as `<img> :src`.
+
+**When:** the build, on anything in `{{ }}` or a bound attribute other than
+a prop, `lang`, or a `t()` call on a quoted key whose arguments are props:
+`name.toUpperCase()`, `` `${first} ${last}` ``, `t('verifyEmail.' + kind)`,
+`t('verifyEmail.body', { name: 'Ada' })`, a third argument to `t()`, or a
+constant bound with a colon, as `:src="'https://…'"`.
+**Why:** the build follows each value from the template to the render
+function; an expression would be computed once, on a marker.
+**Fix:** a prop, or a message with props as its arguments — renamed if the
+names differ — and a constant attribute without the colon:
+
+```vue
+<Text>{{ t('verifyEmail.body', { name: fullName }) }}</Text>
+<img src="https://cdn.example.com/logo.png" :alt="t('verifyEmail.title')">
+```
+
+Formatting belongs in the message (`{total, number, ::currency/EUR}`), and
+anything else in the caller, which passes the result as a prop.
+
+### `TEMPLATE_UNSUPPORTED` — `templates: <file>: <where> uses <name>, which is not a prop — declare it with defineProps`
+
+**When:** the build, on a name in `{{ }}` or a bound attribute that
+`defineProps` does not list: a typo (`{{ nme }}`), or a prop forgotten in the
+list (`<a> :href uses url`).
+**Why:** a template sees its props, `lang` and `t`, and nothing else.
+**Fix:** declare it, or correct the name:
+
+```vue
+<script setup>
+defineProps(['link', 'name', 'hours', 'url']);
+</script>
+```
+
+---
+
+## Templates: where a value lands
+
+After the render, the build looks at where each prop, message and `lang`
+landed in the HTML, and escapes it for that place. A place where escaping is
+not enough fails the build. In these messages, `<value>` is `the prop
+<prop>`, `a message` or `lang`.
+
+### `TEMPLATE_UNSUPPORTED` — `templates: <file>: <value> lands in a <<element>> element`
+
+`<element>` is one of `style`, `script`, `textarea`, `title`, `xmp`,
+`noembed`, `noframes`, `iframe` and `plaintext`.
+
+**When:** the build, on a value written inside one of those elements:
+`<Head><title>{{ t('verifyEmail.subject') }}</title></Head>`,
+`<textarea>{{ name }}</textarea>`, `<svg><script>{{ name }}</script></svg>`.
+**Why:** a browser reads the content of those elements as raw text or as
+code, not as markup: HTML escaping means nothing there, and a value could
+close the element and write markup of its own. Most mail clients strip
+scripts and frames anyway.
+**Fix:** write the value as text, in an ordinary element. A `<title>` is
+fixed text, or left out — the subject is the e-mail's title in every client:
+
+```vue
+<Text>{{ t('verifyEmail.body', { name }) }}</Text>
+```
+
+A `<style>` or `<script>` written straight in the `<template>` is dropped by
+Vue; a prop used only there fails with
+[`declares the prop <prop> and never uses it`](#template_unsupported--templates-file-declares-the-prop-prop-and-never-uses-it--remove-it-or-write-it-in-the-template).
+
+### `TEMPLATE_UNSUPPORTED` — `templates: <file>: <value> lands in a tag outside a quoted attribute value`
+
+**When:** the build, rarely: a value that ends up inside a tag's own syntax —
+as a tag name, as an attribute name, in an attribute value without quotes,
+or in a `<!DOCTYPE>` or a conditional comment's opening. A template cannot
+write this with Vue alone, which always quotes a bound attribute; it comes
+from a component that writes its HTML as a string with the value in it.
+**Why:** outside a quoted value, a value is markup: a space or a `>` in it
+would add attributes or close the tag.
+**Fix:** take the value out of that component, and bind it as an ordinary
+quoted attribute or write it as text:
+
+```vue
+<img :src="logo" :alt="t('verifyEmail.title')">
+```
+
+With only Maizzle's own components around it, it is
+[a bug in `@nxgt/mail-build`](#a-bug-in-nxgtmail-build-itself).
+
+### `TEMPLATE_UNSUPPORTED` — `templates: <file>: <value> lands in the <attribute> attribute — only text attributes (alt, title, aria-*…) and URLs (href, src) take a value`
+
+**When:** the build, on a value bound to an attribute that is neither text
+nor a single URL: `:style="color"`, `:onclick="name"`, `:srcset="image"`,
+`:action="link"`, a `srcdoc`, the `content` of a `<meta>`.
+**Why:** a value is escaped as text, and escaping makes it safe only where
+the attribute holds text. In `style` it would be CSS, in `on*` JavaScript,
+in `srcset` a list of URLs no check reads. The attributes that take a value
+are `alt`, `title`, `lang`, `xml:lang`, `dir`, `id`, `name`, `class`,
+`role`, `width`, `height`, `label`, `summary`, `abbr`, every `aria-*` and
+`data-*`, and the URLs `href`, `xlink:href`, `src`, `background` and
+`poster`.
+**Fix:** style with fixed Tailwind classes, and put a value in a text
+attribute or in a URL. A look that depends on a value is a second template:
+
+```vue
+<Text class="text-indigo-600">{{ t('verifyEmail.title') }}</Text>
+<img :src="logo" :alt="t('verifyEmail.title')">
+```
+
+A class bound to a prop is not a way around it: Tailwind compiles the classes
+it finds in the template at build time, and Maizzle drops a class it has no
+CSS for — see
+[`the prop <prop> is not in the output`](#template_unsupported--templates-file-the-prop-prop-is-not-in-the-output--a-component-dropped-it-or-used-it-at-build-time-as-a-qr-code-does).
+
+### `TEMPLATE_UNSUPPORTED` — `templates: <file>: <value> starts an href — a URL is a prop, checked when the e-mail is rendered`
+
+With `src`, `background` or `poster`: `<value> starts a src — …`.
+
+**When:** the build, on a message or `lang` bound to a URL attribute:
+`:href="t('verifyEmail.link', { token })"`, `:src="lang"`.
+**Why:** a URL is checked when the e-mail is rendered, to refuse
+`javascript:` and its kind, and only a prop is checked. A message is text a
+translator writes; it never decides where a link goes.
+**Fix:** build the URL in the caller and pass it as a prop:
+
+```vue
+<Button :href="link">{{ t('verifyEmail.action') }}</Button>
+```
+
+A value after a fixed start that is `http://`, `https://` or `mailto:` is
+accepted, as part of that URL; after any other start, see the next entry.
+
+### `TEMPLATE_UNSUPPORTED` — `templates: <file>: <value> lands in an href whose fixed start is not http:, https: or mailto:`
+
+With `src`, `background` or `poster`: `<value> lands in a src whose fixed
+start is not http:, https: or mailto:`.
+
+**When:** the build, rarely: a value lands in the middle of a URL attribute
+whose beginning the template or a component wrote, and that beginning is not
+`http://`, `https://` or `mailto:` — `javascript:`, a relative path such as
+`/verify?token=`, a `cid:`. Vue binds a whole attribute, so this comes from a
+component that builds the URL as a string around the value.
+**Why:** the build checks a URL when the e-mail is rendered only when the
+prop is the whole URL. After a fixed start, the start decides where the link
+goes, so only a safe, absolute one is accepted.
+**Fix:** build the whole URL in the caller, and bind it as one prop:
+
+```vue
+<Button :href="link">{{ t('verifyEmail.action') }}</Button>
+```
+
+---
+
+## Templates: against the catalogues
+
+Each `t()` in a template, and each e-mail's subject, is checked against the
+**fallback locale**: its keys and the arguments its messages declare. The
+other locales are checked against the fallback, as in
+[Catalogues](#catalogues).
+
+### `TEMPLATE_KEY_UNKNOWN` — `templates: <file>: t('<key>') is not a key of <fallback>, the fallback locale`
+
+**When:** the build, on a `t()` whose key the fallback locale does not hold:
+a typo, a key renamed in the catalogue, or a `messages/` folder the config
+does not point to.
+**Why:** a message missing from the fallback locale would render as nothing.
+**Fix:** add the key to the fallback locale, then to the others, or correct
+the call:
+
+```json
+{
+  "verifyEmail": {
+    "title": "One step left"
+  }
+}
+```
+
+### `TEMPLATE_ARGUMENT_MISSING` — `templates: <file>: t('<key>') leaves out {<argument>}, which <fallback> declares — pass it a prop`
+
+**When:** the build, on `t('verifyEmail.body')` when the message is
+`Hello {name}, …`.
+**Why:** the message would render with a hole. Every argument the fallback
+locale's message declares is passed.
+**Fix:**
+
+```vue
+<Text>{{ t('verifyEmail.body', { name }) }}</Text>
+```
+
+### `TEMPLATE_ARGUMENT_MISSING` — `templates: <file>: t('<key>') passes {<argument>} a value that is not a prop`
+
+**When:** the build, on a `t()` inside a slot whose slot props shadow a prop
+of the template: `<Button v-slot="{ name }">{{ t('verifyEmail.body', { name })
+}}</Button>`. Vue also prints `[Vue warn]: Unhandled error during execution
+of render function`.
+**Why:** inside the slot, `name` is the slot's, not the template's prop, so
+the build cannot tell which prop the message gets.
+**Fix:** drop the `v-slot`, or rename what it destructures:
+
+```vue
+<Button :href="link">{{ t('verifyEmail.body', { name }) }}</Button>
+```
+
+### `TEMPLATE_ARGUMENT_UNKNOWN` — `templates: <file>: t('<key>') passes {<argument>}, which <fallback> does not declare`
+
+**When:** the build, on `t('verifyEmail.title', { name })` when the message
+is `One step left` — typically an argument left behind after the message
+dropped it, or a misspelled name.
+**Why:** an argument no message uses is a mistake, and a misspelled one would
+leave the real one out.
+**Fix:** drop it, or add `{name}` to the fallback locale's message:
+
+```vue
+<Heading>{{ t('verifyEmail.title') }}</Heading>
+```
+
+### `SUBJECT_MISSING` — `templates: <file>: the e-mail <email> has no subject — add <email>.subject to <fallback>, the fallback locale`
+
+**When:** the build, on a template whose e-mail has no `subject` message: an
+`order-placed.vue` with no `orderPlaced.subject`.
+**Why:** every e-mail has a subject, and it is always the message
+`<email>.subject`, where `<email>` is the `camelCase` of the file name. The
+template does not call it: the render function does.
+**Fix:**
+
+```json
+{
+  "orderPlaced": {
+    "subject": "Order {reference} confirmed"
+  }
+}
+```
+
+### `TEMPLATE_ARGUMENT_MISSING` — `templates: <file>: <email>.subject uses {<argument>}, which is not a prop of the template — declare it with defineProps`
+
+**When:** the build, on a subject with an argument, `Order {reference}
+confirmed`, for a template that declares no `reference` prop.
+**Why:** the subject's arguments are the template's props **of the same
+name**: there is no `t()` call in which to rename them.
+**Fix:** declare the prop. A prop the subject uses counts as used, even if
+the body never shows it:
+
+```vue
+<script setup>
+defineProps(['reference']);
+</script>
+```
+
+### `ARGUMENT_TYPE_MISMATCH` — `templates: <file>: the prop <prop> is <kind> <where>, and <kind> <where>`
+
+`<kind>` is `a string`, `a number`, `a date`, `a link`, `a resource URL` or
+`written as is`; `<where>` is `in t('<key>')` or `in the template`.
+
+**When:** the build, on a prop used two ways that cannot both hold: a date in
+`{at, date, long}` also written as `{{ placedAt }}`, a number in `{hours,
+plural, …}` also bound to `:href`, or two messages that disagree.
+**Why:** a prop has one type in the render function. A string and a number
+may be written as is; a `Date` may not, as its text depends on the locale and
+the time zone.
+**Fix:** write a date through a message, as many times as it takes:
+
+```json
+{
+  "orderPlaced": {
+    "placedAt": "Placed on {at, date, long} at {at, time, short}.",
+    "placedOn": "Placed on {at, date, short}."
+  }
+}
+```
+
+```vue
+<Text>{{ t('orderPlaced.placedAt', { at: placedAt }) }}</Text>
+<Text>{{ t('orderPlaced.placedOn', { at: placedAt }) }}</Text>
+```
+
+### `TEMPLATE_UNSUPPORTED` — `templates: <file>: declares the prop <prop> and never uses it — remove it, or write it in the template`
+
+**When:** the build, on a prop in `defineProps` that no `{{ }}`, bound
+attribute, `t()` argument or subject uses. Two common causes: `{{ }}` in a
+plain attribute, `href="mailto:{{ address }}"`, which Vue keeps as the text
+`{{ address }}`; and a `<style>` or `<script>` written in the `<template>`,
+which Vue drops.
+**Why:** it would be an argument every caller must pass for nothing.
+**Fix:** remove it, or bind it — a whole attribute is a prop:
+
+```vue
+<a :href="mailtoLink">{{ t('verifyEmail.action') }}</a>
+```
+
+---
+
+## Templates: rendering
+
+### `TEMPLATE_INVALID` — `templates: <file>: Maizzle could not render it (<reason>)`
+
+**When:** the build, on a template that parses and passes the checks above,
+but throws while Maizzle and Vue render it. `<reason>` is their own message,
+and the original error is `error.cause`: a `<style lang="scss">` with no
+Sass installed (`Preprocessor dependency "sass-embedded" not found. Did you
+install it? …`), a `v-slot` that shadows `t` (`t is not a function`), a
+component used with the wrong slots.
+**Why:** the template is rendered once at build time; an error there stops
+the build rather than writing a module without that e-mail.
+**Fix:** follow the reason — for the Sass one, write the `<style>` in plain
+CSS, or style with Tailwind classes — and look at the rendering with
+`nxgt-mail dev`, which renders every e-mail in every locale to
+`.nxgt-mail/`:
+
+```vue
+<Text class="text-indigo-600">{{ t('verifyEmail.title') }}</Text>
+```
+
+### `TEMPLATE_INVALID` — `templates: <file>: uses <<Name>>, which is not a component — check its name`
+
+**When:** the build, on a tag that looks like a component and that no
+component answers — typically a misspelled Maizzle component, `<Buton>` for
+`<Button>`.
+**Why:** Vue renders an unknown component as nothing, with only a warning:
+the element and everything inside it — a button, its text, its link — would
+be missing from the e-mail. The build stops instead.
+**Fix:** use the component's exact name:
+
+```vue
+<Button :href="link">{{ t('verifyEmail.action') }}</Button>
+```
+
+### `TEMPLATE_UNSUPPORTED` — `templates: <file>: t('<key>') is not in the output — a component dropped it, or used it at build time`
+
+**When:** the build, on a `t()` whose text does not reach the HTML: bound to
+`:class`, which Maizzle drops when no CSS matches it; passed to a component
+prop the component does not render; or inside `<Plaintext>`, which writes to
+the plain text only.
+**Why:** the render function puts each message back where it landed in the
+HTML. A message the HTML does not hold would be translated and then thrown
+away, or worse, would have been used at build time in its marker form.
+**Fix:** write the message as text, or in a text attribute:
+
+```vue
+<Text>{{ t('verifyEmail.title') }}</Text>
+```
+
+### `TEMPLATE_UNSUPPORTED` — `templates: <file>: the prop <prop> is not in the output — a component dropped it, or used it at build time (as a QR code does)`
+
+**When:** the build, on a prop the template writes that does not reach the
+HTML as many times as it is written: given to `<QrCode :value="link">`, which
+encodes it at build time; bound to `:class`, which Maizzle drops when no CSS
+matches it; written inside an `<svg><style>`; passed to a component that
+does not render it.
+**Why:** the render function puts each prop back where it landed. A QR code
+built at build time would encode the marker, not the link, and the same QR
+code would go to every recipient.
+**Fix:** write the prop as text, in a text attribute or in a URL. A QR code
+per recipient is an image your server renders, passed as a URL prop:
+
+```vue
+<img :src="qrCodeUrl" :alt="t('verifyEmail.action')" width="160">
+```
+
+### `TEMPLATE_INVALID` — `templates: <file>: Tailwind did not compile its CSS — @import or @apply left in the output`
+
+**When:** the build, when the HTML Maizzle answers still holds
+`@import "@maizzle/tailwindcss"` or an `@apply`.
+**Why:** Maizzle does not report a Tailwind failure; it leaves the CSS as
+written, and the e-mail would ship unstyled. The build resolves Maizzle's
+Tailwind itself, so this points to an install where
+`@maizzle/framework` or `@maizzle/tailwindcss` is missing or broken.
+**Fix:** reinstall, then build again:
+
+```sh
+rm -rf node_modules && bun install && nxgt-mail build
+```
+
+If it persists, it is [a bug in `@nxgt/mail-build`](#a-bug-in-nxgtmail-build-itself).
+
+### `TEMPLATE_UNSUPPORTED` — `templates: <file>: a value was changed while rendering — a component or a transformer rewrote it`
+
+**When:** the build, when a marker put in place of a prop or a message came
+out of the render cut or altered.
+**Why:** a value the build cannot find again would be dropped from the
+e-mail without a word, so the build stops instead.
+**Fix:** find the component around the value that changes it — truncates it,
+changes its case, encodes it — and move the value out of it:
+
+```vue
+<Text>{{ t('verifyEmail.body', { name }) }}</Text>
+```
+
+With only Maizzle's own components around it, it is
+[a bug in `@nxgt/mail-build`](#a-bug-in-nxgtmail-build-itself).
+
+---
+
 ## Calling the generated `t()`
 
 The generated module exports `t(locale, key, args?, options?)`, with the
@@ -587,7 +1561,8 @@ t('fr', 'verifyEmail.body', { name: 'Ada' });
 
 **When:** `tsc`, on a string passed to a `plural`, `selectordinal` or
 `{n, number}` argument: `t('fr', 'verifyEmail.expires', { hours: '24' })`,
-typically a value read from a query string or an environment variable.
+typically a value read from a query string or an environment variable. The
+same on a number prop of `mails`: `mails.verifyEmail({ …, hours: '24' })`.
 **Why:** a plural rule and a number format need a number; `"24"` would pick
 the wrong branch or format as text.
 **Fix:** convert where the value enters, and check it there:
@@ -603,7 +1578,8 @@ t('fr', 'verifyEmail.expires', { hours });
 
 **When:** `tsc`, on an ISO string passed to a `date` or `time` argument:
 `t('en', 'order.placedAt', { at: '2026-09-25' })`, typically a date read
-from JSON or a database driver that answers strings.
+from JSON or a database driver that answers strings. The same on a date
+prop of `mails`: `mails.orderPlaced({ …, placedAt: '2026-09-25' })`.
 **Why:** a `{at, date}` argument is a `Date`, formatted by
 `Intl.DateTimeFormat`.
 **Fix:**
@@ -671,6 +1647,156 @@ import { t } from './generated/messages';
 
 t('en', 'verifyEmail.title');
 t('en', 'verifyEmail.title', {}, { timeZone: 'Europe/Paris' });
+```
+
+---
+
+## Calling `mails`
+
+The generated module exports `mails`, one render function per template:
+`mails.<email>({ locale, timeZone?, ...props })` answers
+`{ subject, html, text }`. Each prop is typed from its uses — a `string`, a
+`number` or a `Date` — and every prop is required. The examples use the
+module built from the `verify-email.vue` above and an `order-placed.vue`:
+
+```ts
+import { mails } from './generated/mail';
+
+const { subject, html, text } = mails.verifyEmail({
+  locale: 'fr',
+  name: 'Ada',
+  link: 'https://example.com/verify?token=abc',
+  hours: 24,
+});
+```
+
+A string passed to a number prop, or an ISO string to a date prop, gives
+the same errors as with `t()`:
+[`Type 'string' is not assignable to type 'number'.`](#ts2322-type-string-is-not-assignable-to-type-number)
+and [`Type 'string' is not assignable to type 'Date'.`](#ts2322-type-string-is-not-assignable-to-type-date).
+
+### `TS2322: Type '"<locale>"' is not assignable to type '"en" | "fr"'.`
+
+`"en" | "fr"` is the list of your build's locales.
+
+**When:** `tsc`, on `mails.verifyEmail({ locale: 'de', … })`. With a
+`string` from a request or a user profile, the same mistake reads
+`Type 'string' is not assignable to type '"en" | "fr"'.`
+**Why:** the module has messages for each locale in `locales`, and none for
+any other.
+**Fix:** choose one of them first, with `pickLocale` from `@nxgt/mail`:
+
+```ts
+import { pickLocale } from '@nxgt/mail';
+import { fallbackLocale, locales, mails } from './generated/mail';
+
+declare const acceptLanguage: string | null;
+
+const locale = pickLocale(acceptLanguage, locales, fallbackLocale);
+mails.verifyEmail({ locale, name: 'Ada', link: 'https://example.com/verify', hours: 24 });
+```
+
+### `TS2353: Object literal may only specify known properties, and '<prop>' does not exist in type '{ readonly locale: "en" | "fr"; readonly timeZone?: string; … }'.`
+
+**When:** `tsc`, on a misspelled or translated prop:
+`mails.verifyEmail({ locale, nom: 'Ada', … })`.
+**Why:** the props are the ones the template declares, under their names in
+`defineProps`.
+**Fix:**
+
+```ts
+import { mails } from './generated/mail';
+
+mails.verifyEmail({ locale: 'en', name: 'Ada', link: 'https://example.com/verify', hours: 24 });
+```
+
+### `TS2345: Argument of type '{ locale: …; … }' is not assignable to parameter of type '{ readonly locale: "en" | "fr"; readonly timeZone?: string; … }'.`
+
+Followed by `Property '<prop>' is missing in type '{ … }' but required in
+type '{ … }'.`
+
+**When:** `tsc`, on a call that leaves a prop out:
+`mails.verifyEmail({ locale, name: 'Ada', link })` without `hours`, or a
+call written before the template gained a prop.
+**Why:** every prop is required: the template writes it, or a message needs
+it. There is no default, as a missing value would render as a hole.
+**Fix:** pass it:
+
+```ts
+import { mails } from './generated/mail';
+
+mails.verifyEmail({ locale: 'en', name: 'Ada', link: 'https://example.com/verify', hours: 24 });
+```
+
+### `TS2322: Type 'URL' is not assignable to type 'string'.`
+
+**When:** `tsc`, on a `URL` object passed to a link or image prop:
+`mails.verifyEmail({ …, link: new URL(…) })`.
+**Why:** a URL prop is a string, checked when the e-mail is rendered.
+**Fix:** pass its `href`:
+
+```ts
+import { mails } from './generated/mail';
+
+const link = new URL('/verify?token=abc', 'https://example.com');
+mails.verifyEmail({ locale: 'en', name: 'Ada', link: link.href, hours: 24 });
+```
+
+### `TS2339: Property '<email>' does not exist on type '{ readonly <email>: (args: …) => RenderedMail; … }'.`
+
+**When:** `tsc`, on `mails.welcome(…)` when there is no
+`emails/welcome.vue`, or when the module was not built again after the
+template was added or renamed.
+**Why:** `mails` has one function per template, named after its file:
+`welcome.vue` is `mails.welcome`, `verify-email.vue` is `mails.verifyEmail`.
+**Fix:** add the template, then build the module again:
+
+```sh
+nxgt-mail build
+```
+
+### `TypeError: mails.<email>: <prop> must be an http:, https: or mailto: URL`
+
+**When:** at run time, a call to `mails.<email>()` whose link prop — one
+bound to `href` — does not start with `http://`, `https://` or `mailto:`:
+`javascript:…`, a relative path such as `/verify`, a URL with a leading
+space.
+**Why:** a link in an e-mail goes where its prop says, so the render
+function refuses any other scheme rather than escaping it. The check is at
+the first character: a leading space is refused, not trimmed. An e-mail has
+no base URL, so a relative link would lead nowhere.
+**Fix:** pass an absolute URL, built where the value enters:
+
+```ts
+import { mails } from './generated/mail';
+
+declare const token: string;
+
+const link = new URL(`/verify?token=${encodeURIComponent(token)}`, 'https://example.com').href;
+mails.verifyEmail({ locale: 'en', name: 'Ada', link, hours: 24 });
+```
+
+### `TypeError: mails.<email>: <prop> must be an http: or https: URL`
+
+**When:** at run time, a call whose image or resource prop — one bound to
+`src`, `background` and the like — does not start with `http://` or
+`https://`: a `mailto:`, a relative path, a `data:` or a `cid:` URI.
+**Why:** a resource is fetched by the mail client, and only from the web. A
+prop used both in an `href` and in a `src` is held to this stricter check.
+**Fix:** host the image, and pass its absolute URL:
+
+```ts
+import { mails } from './generated/mail';
+
+mails.orderPlaced({
+  locale: 'en',
+  name: 'Ada',
+  reference: 'A-1042',
+  placedAt: new Date(),
+  total: 42.5,
+  logo: 'https://cdn.example.com/logo.png',
+  orderLink: 'mailto:orders@example.com',
+});
 ```
 
 ---
@@ -796,11 +1922,30 @@ const at = new Date('2026-09-25T21:30:00Z');
 if (Number.isNaN(at.getTime())) throw new TypeError('placedAt is not a date');
 ```
 
+### A line break in a subject argument shows as a space
+
+**When:** at run time, a prop used in `<email>.subject` holds a line break
+(`\r`, `\n`, U+0085, U+2028 or U+2029): the subject shows a space there,
+while the plain text keeps the break.
+**Why:** **by design.** A line break in a subject header would let a value
+add headers of its own (`Bcc:`), so the render function replaces each run of
+them with one space, in the subject only.
+**Fix:** nothing to fix. To keep the text on one line on purpose, clean it
+where it enters:
+
+```ts
+declare const input: string;
+
+const reference = input.trim().replace(/\s+/g, ' ');
+```
+
 ### A bug in `@nxgt/mail-build` itself
 
 A `MESSAGE_UNSUPPORTED` that says `uses a tag` or `uses a # outside a plural`,
-a generated module that does not compile, or a message this page says is
+a `TEMPLATE_UNSUPPORTED` that says `t() takes a string key`, a generated
+module that does not compile, or a catalogue or a template this page says is
 valid and the build refuses, is a bug in this package. Open an issue on
 [`softistx/nxgt-mail`](https://github.com/softistx/nxgt-mail/issues) with
-the error, the package version and the smallest catalogue that reproduces
-it, with its text replaced by placeholders when it is not yours to share.
+the error, the package version and the smallest catalogue and template that
+reproduce it, with their text replaced by placeholders when it is not yours
+to share.
