@@ -79,20 +79,22 @@ interface MailMessage extends Rendered {
 | Field | Type | Required | Effect |
 | --- | --- | --- | --- |
 | `subject` | `string` | yes | The subject line. No line break: a line break in a subject is a header injection |
-| `html` | `string` | yes | The HTML part, sent as is — escaping is the render function's job |
+| `html` | `string` | yes | The HTML part, sent as is — escaping is the renderer's job |
 | `text` | `string` | yes | The plain-text part. Every e-mail has one |
 | `to` | `Address \| readonly Address[]` | yes | One recipient or several, at least one |
 | `from` | `Address` | no | The sender. `checkMessage` does not require one: a transport is usually wired with a default sender, and one without a default may refuse a message without `from` — see its documentation |
 | `replyTo` | `Address` | no | Where replies go |
 | `headers` | `Record<string, string>` | no | Extra headers, such as `List-Unsubscribe` |
 
-`Rendered` is what a render function answers, so a rendered e-mail is spread
-into the message and addressed:
+`Rendered` is what the run-time renderer answers — coming:
+`mails.render('verify-email', { name, link })` fills the values only known at
+send time into a built Maizzle template — and a rendered e-mail is spread into
+the message and addressed. Any function answering the same shape fits:
 
 ```ts
 import type { Mailer, Rendered } from '@nxgt/mail';
 
-// Any function answering Rendered is accepted where a generated one is.
+// Hand-written: any function answering Rendered is accepted.
 function welcome(): Rendered {
 	return {
 		subject: 'Welcome aboard',
@@ -106,8 +108,9 @@ export async function sendWelcome(mailer: Mailer, email: string): Promise<void> 
 }
 ```
 
-A hand-written render function that interpolates a value must escape it in
-`html` itself; a generated one does it for you.
+Escaping is the renderer's job: the run-time renderer HTML-escapes every value
+it fills into `html`. A hand-written function that interpolates a value must
+escape it in `html` itself.
 
 ## Addresses
 
@@ -265,7 +268,7 @@ depends on whether the e-mail left:
 ```ts
 import { MailError, type Mailer, type Rendered } from '@nxgt/mail';
 
-// Yours: your user store, your token issuer, your render function.
+// Yours: your user store, your token issuer, whatever renders the e-mail.
 declare function createUser(email: string): Promise<{ id: string; email: string }>;
 declare function issueVerificationToken(userId: string): Promise<string>;
 declare function verificationEmail(link: string): Rendered;

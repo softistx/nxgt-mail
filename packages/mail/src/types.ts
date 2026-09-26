@@ -13,11 +13,10 @@ export type Address =
 	| { readonly name: string; readonly address: string };
 
 /**
- * What a render function answers: the three parts of one e-mail, in one
- * locale, with every value already substituted and escaped.
- *
- * Any function answering this shape is accepted where a generated one is, so
- * an e-mail can always be written by hand.
+ * The three parts of one e-mail, in one locale, with every value already
+ * filled in and escaped: what the run-time renderer answers
+ * (`mails.render(…)`, coming), or any hand-written function answering the
+ * same shape — escaping is then that function's job.
  */
 export interface Rendered {
 	readonly subject: string;

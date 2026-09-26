@@ -208,8 +208,8 @@ dependency:
   `html` and `text` of that locale, the subject from the manifest, every
   `{{ variable }}` filled.
 - Values are HTML-escaped in `html`, left as is in `text`; a variable in an
-  `href` or a `src` must be an `http:`/`https:` URL (`mailto:` for `href`); a
-  line break in the subject is removed; a missing variable, an unknown e-mail
+  `href` or a `src` must be an `http:`/`https:` URL (`mailto:` for `href`); each
+  run of line breaks in the subject becomes a space; a missing variable, an unknown e-mail
   or an unknown locale **throws**.
 - The language comes from `getLanguage`, as in `@nxgt/i18n` (a Hono handler
   passes `() => c.get('language')`), through `pickLocale`.
