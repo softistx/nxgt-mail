@@ -43,6 +43,17 @@
         "typescript": "^6.0.3",
       },
     },
+    "packages/mail-preset": {
+      "name": "@nxgt/mail-preset",
+      "version": "0.0.0",
+      "devDependencies": {
+        "@nxgt/mail-build": "workspace:^",
+        "@types/bun": "^1.4.2",
+      },
+      "peerDependencies": {
+        "@nxgt/mail-build": "workspace:^",
+      },
+    },
   },
   "overrides": {
     "typescript": "~6.0.3",
@@ -165,6 +176,8 @@
     "@nxgt/mail": ["@nxgt/mail@workspace:packages/mail"],
 
     "@nxgt/mail-build": ["@nxgt/mail-build@workspace:packages/mail-build"],
+
+    "@nxgt/mail-preset": ["@nxgt/mail-preset@workspace:packages/mail-preset"],
 
     "@oxc-project/types": ["@oxc-project/types@0.151.0", "", {}, "sha512-J1yXrIlNDZVzE3ada310xeAw7nH8yCAyLPuUIsjKatFPmfn5bS1oW+cM+QsGOtVWd5nhSpbwZWx/rue+r5Z+PA=="],
 

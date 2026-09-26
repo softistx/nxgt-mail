@@ -20,10 +20,9 @@ mails.verifyEmail({ locale: 'fr', name: 'Ada', link, hours: '24' });
 //                                                   ~~~~~ Type 'string' is not assignable to type 'number'
 ```
 
-> **Not published yet.** The package is `private`. Templates, catalogues, the
-> `nxgt-mail` CLI and `defineMailConfig` are here; presets — a theme, layouts
-> and shared messages applied before your own files — come next. See the
-> [roadmap](docs/roadmap.md).
+> **Not published yet.** The package is `private`. Templates, catalogues,
+> presets, the `nxgt-mail` CLI and `defineMailConfig` are here, and ship with
+> the first release. See the [roadmap](docs/roadmap.md).
 
 ## Install
 
@@ -46,7 +45,8 @@ import { defineMailConfig } from '@nxgt/mail-build';
 export default defineMailConfig({
 	locales: ['en', 'fr'],
 	fallbackLocale: 'en', // the reference every other catalogue is checked against
-	// emails: 'emails', messages: 'messages', out: 'src/generated/mail.ts' — the defaults
+	// presets: [nxgtPreset()] — a layout, components and shared messages, see Presets below
+	// emails: 'emails', messages: 'messages', components: 'components', out: 'src/generated/mail.ts' — the defaults
 });
 ```
 
@@ -159,6 +159,50 @@ functions, `build(config)` and `dev(config)`; `compileProject(config)` and
 writing a file, for a test or a CI check. See
 [Building](docs/guide/building.md).
 
+### Presets — a layout, components, a theme and shared messages
+
+A preset is data — Tailwind tokens, components, messages — applied before
+your own files. [`@nxgt/mail-preset`](https://github.com/softistx/nxgt-mail/tree/develop/packages/mail-preset)
+is the default one; `definePreset` writes another, which overrides it one
+token or one message at a time:
+
+```ts
+// mail.config.ts
+import { defineMailConfig, definePreset } from '@nxgt/mail-build';
+import { nxgtPreset } from '@nxgt/mail-preset';
+
+const acme = definePreset({
+	name: 'acme',
+	theme: { color: { primary: '#e11d48' } },
+	messages: { en: { common: { footer: { why: 'Acme sent you this e-mail.' } } } },
+});
+
+export default defineMailConfig({
+	locales: ['en', 'fr'],
+	fallbackLocale: 'en',
+	presets: [nxgtPreset(), acme], // in order; your components/ and messages/ come last
+});
+```
+
+A template then uses the presets' components — `<TransactionalLayout>`,
+`<MailButton>` — and their tokens as classes (`bg-primary`). A `components/`
+folder beside the config holds your own, one PascalCase `.vue` each; a file
+named like a preset's component replaces it. The folder is optional, unless
+the config names it with `components`.
+
+A layout imports the tokens from `theme.css`, which the build writes beside
+each template, **in the same `<style>`** as Maizzle's Tailwind:
+
+```vue
+<style>
+  @import "@maizzle/tailwindcss";
+  @import "./theme.css";
+</style>
+```
+
+The `Preset` shape, `resolvePresets`, `themeCss` and every refusal are in
+[Presets](docs/guide/presets.md).
+
 ### Sending — `mails`
 
 ```ts
@@ -240,8 +284,9 @@ try {
 
 A mistake in how the build is **wired** — no config, a config that is not an
 object, a templates folder that is missing or holds no `.vue`, a messages
-folder with no catalogue, no locale, a `fallbackLocale` that is not in
-`locales`, `en_US` for `en-US` — is a bare `TypeError`. Every message, with its fix, is in
+folder with no catalogue, a `components` folder the config names but that is
+missing, no locale, a `fallbackLocale` that is not in `locales`, `en_US` for
+`en-US`, a preset that is not one — is a bare `TypeError`. Every message, with its fix, is in
 [Troubleshooting](docs/troubleshooting.md).
 
 ### Only the messages — `compileMessages` and `t`
@@ -288,9 +333,13 @@ recipient's: `mails.orderPlaced({ locale, timeZone: user.timeZone, … })`.
 `v-for` fail the build. Send another e-mail, or let the message decide with
 `select` or `plural`.
 
-**Only Maizzle's own components exist.** A `components/` folder in your
-project is not read — each template renders from a temporary folder — and
-`<Buton>` fails the build. Components of your own come with presets.
+**A component comes from Maizzle, a preset or your `components/` folder.**
+Nothing else is read, and `<Buton>` fails the build. None of them may take a
+name Maizzle ships (`Button.vue`, `Text.vue`…): prefix yours, as `MailButton`.
+
+**Tokens imported in another `<style>` do nothing.** Write
+`@import "./theme.css";` in the block that imports `@maizzle/tailwindcss`, or
+`bg-primary` compiles to nothing, silently.
 
 **A value goes in text, a text attribute (`alt`, `title`, `aria-*`…) or a URL
 (`href`, `src`).** `:style`, `:onclick`, `:srcset` or a bound `:class` fail
@@ -316,13 +365,14 @@ build (`ARGUMENT_UNDECLARED`). Add an argument to the fallback locale first.
 
 ## Type safety, counted
 
-**16 plausible mistakes, 16 refused** at compile time, each measured by a
+**19 plausible mistakes, 19 refused** at compile time, each measured by a
 `@ts-expect-error` in
-[`test/types/mail.ts`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-build/test/types/mail.ts)
+[`test/types/mail.ts`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-build/test/types/mail.ts),
+[`test/types/messages.ts`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-build/test/types/messages.ts)
 and
-[`test/types/messages.ts`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-build/test/types/messages.ts),
-checked against modules the build emitted from fixtures — not hand-written
-ones.
+[`test/types/presets.ts`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-build/test/types/presets.ts),
+the first two checked against modules the build emitted from fixtures — not
+hand-written ones.
 
 A render function, `mails.<email>(args)`:
 
@@ -348,6 +398,14 @@ A message, `t(locale, key, args)`:
 16. An argument passed to a message that takes none:
     `t('en', 'verifyEmail.title', { name: 'Ada' })` — the call left behind when
     a message drops its `{name}`.
+
+A preset, in `defineMailConfig` and `definePreset`:
+
+17. A preset function passed uncalled: `presets: [acmePreset]` for
+    `presets: [acmePreset()]`.
+18. A preset without a `name`.
+19. A token that is not a string: `{ radius: { card: 8 } }` — a token is a CSS
+    value.
 
 The same files hold the calls that must keep compiling: a refusal that refuses
 the correct call is a bug.

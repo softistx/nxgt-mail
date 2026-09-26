@@ -1,6 +1,7 @@
 import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { readCatalogues } from './messages/catalogue';
+import { type Preset, resolvePresets } from './presets';
 import {
 	type CompiledEmail,
 	type CompiledMail,
@@ -18,6 +19,18 @@ export interface MailConfig {
 	readonly emails?: string;
 	/** The folder of the catalogues, one `<locale>.json` per locale. Default `messages`. */
 	readonly messages?: string;
+	/**
+	 * The folder of the application's own components, one PascalCase `.vue`
+	 * each: they override the presets' of the same name. Default
+	 * `components`, which may not exist.
+	 */
+	readonly components?: string;
+	/**
+	 * Theme tokens, components and messages, applied in order before the
+	 * application's own files: `[nxgtPreset({ brand: { primary: '#4f46e5' } })]`.
+	 * A preset function passed uncalled (`[nxgtPreset]`) is refused.
+	 */
+	readonly presets?: readonly (Preset & { readonly call?: never })[];
 	/** The generated module. Default `src/generated/mail.ts`. */
 	readonly out?: string;
 }
@@ -40,14 +53,18 @@ export interface BuildResult {
 	readonly emails: readonly CompiledEmail[];
 }
 
-async function readTemplates(dir: string): Promise<TemplateFile[]> {
-	const entries = await readdir(dir).then(
+/** The names in `dir`, or `null` when it does not exist. */
+const listDir = (dir: string): Promise<string[] | null> =>
+	readdir(dir).then(
 		(names) => names,
 		(error: NodeJS.ErrnoException) => {
 			if (error.code === 'ENOENT') return null;
 			throw error;
 		},
 	);
+
+async function readTemplates(dir: string): Promise<TemplateFile[]> {
+	const entries = await listDir(dir);
 	if (entries === null) {
 		throw new TypeError(
 			`build: ${dir} does not exist — put one .vue template per e-mail there, or set emails in the config`,
@@ -67,6 +84,32 @@ async function readTemplates(dir: string): Promise<TemplateFile[]> {
 	);
 }
 
+/** The application's components, by file name; none when the default folder is absent. */
+async function readComponents(
+	dir: string,
+	required: boolean,
+): Promise<Record<string, string>> {
+	const entries = await listDir(dir);
+	if (entries === null) {
+		if (!required) return {};
+		throw new TypeError(
+			`build: ${dir} does not exist — put the application's components there, or leave components out of the config`,
+		);
+	}
+	const components: Record<string, string> = {};
+	for (const entry of await readdir(dir, { withFileTypes: true })) {
+		if (entry.isDirectory()) {
+			throw new TypeError(
+				`build: ${join(dir, entry.name)} is a folder — put each component directly in ${dir}`,
+			);
+		}
+	}
+	for (const file of entries.filter((name) => name.endsWith('.vue')).sort()) {
+		components[file] = await readFile(join(dir, file), 'utf8');
+	}
+	return components;
+}
+
 const isStringArray = (value: unknown): value is readonly string[] =>
 	Array.isArray(value) && value.every((item) => typeof item === 'string');
 
@@ -77,10 +120,15 @@ function checkConfig(config: unknown): asserts config is MailConfig {
 			'build: the config must be an object — export default defineMailConfig({ … })',
 		);
 	}
-	const { locales, fallbackLocale, emails, messages, out } = config as Record<
-		string,
-		unknown
-	>;
+	const {
+		locales,
+		fallbackLocale,
+		emails,
+		messages,
+		components,
+		out,
+		presets,
+	} = config as Record<string, unknown>;
 	if (locales === undefined && fallbackLocale === undefined) {
 		throw new TypeError(
 			'build: the config has no locales — is it the default export? export default defineMailConfig({ … })',
@@ -96,7 +144,17 @@ function checkConfig(config: unknown): asserts config is MailConfig {
 			"build: fallbackLocale must be one of locales, as 'en'",
 		);
 	}
-	for (const [name, value] of Object.entries({ emails, messages, out })) {
+	if (presets !== undefined && !Array.isArray(presets)) {
+		throw new TypeError(
+			'build: presets must be a list, as [nxgtPreset()], or left out',
+		);
+	}
+	for (const [name, value] of Object.entries({
+		emails,
+		messages,
+		components,
+		out,
+	})) {
 		if (value !== undefined && typeof value !== 'string') {
 			throw new TypeError(`build: ${name} must be a path, or left out`);
 		}
@@ -112,7 +170,18 @@ export async function compileProject(
 	const root = resolve(options.root ?? process.cwd());
 	const messagesDir = resolve(root, config.messages ?? 'messages');
 	const catalogues = await readCatalogues(messagesDir, config.locales);
-	if (Object.values(catalogues).every((catalogue) => catalogue === null)) {
+	const presets = await resolvePresets(
+		config.presets ?? [],
+		await readComponents(
+			resolve(root, config.components ?? 'components'),
+			config.components !== undefined,
+		),
+		`${config.components ?? 'components'}/`,
+	);
+	if (
+		presets.messageSources.length === 0 &&
+		Object.values(catalogues).every((catalogue) => catalogue === null)
+	) {
 		throw new TypeError(
 			`build: ${messagesDir} holds no catalogue — write one <locale>.json per locale there, or set messages in the config`,
 		);
@@ -120,8 +189,13 @@ export async function compileProject(
 	return compileMail({
 		locales: config.locales,
 		fallbackLocale: config.fallbackLocale,
-		sources: [{ name: `${config.messages ?? 'messages'}/`, catalogues }],
+		sources: [
+			...presets.messageSources,
+			{ name: `${config.messages ?? 'messages'}/`, catalogues },
+		],
 		templates: await readTemplates(resolve(root, config.emails ?? 'emails')),
+		components: presets.components,
+		theme: presets.theme,
 	});
 }
 

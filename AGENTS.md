@@ -144,6 +144,20 @@ adds a language with one catalogue, or replaces one e-mail with one file — and
 keeps the rest. Replacing an e-mail entirely is always possible: any function
 answering `Rendered` is accepted where a generated one is.
 
+A component — a preset's or the application's — is code its author wrote,
+run at build time; it is not held to a template's rules (`v-if`, a default, a
+computed class are fine **on its own static props**). What it renders is: the
+scanner and the output checks run on the whole rendered e-mail, so a value it
+moves into `style` still fails the build, and a value it drops fails it too.
+**What the build cannot see is a component computing on a value a template
+passes** — `v-if="href.startsWith('https:')"`, `encodeURIComponent(href)`:
+at build time the value is a placeholder, so the branch or the transform is
+decided on it and frozen into every e-mail. A component passes such a value
+through untouched, or it is a bug the build does not catch. A component never takes a name Maizzle ships
+(`Button.vue`), which would replace Maizzle's everywhere; and the theme
+reaches Tailwind only through `theme.css`, imported in the layout's own
+Tailwind `<style>`.
+
 ### Rules carried over from nxgt-janus, without discussion
 
 - **Factoring across packages is forbidden**; a transport depends on

@@ -33,7 +33,8 @@ import { mails } from './generated/mail';
 ```
 
 Writing the templates is in [Templates](templates.md), the catalogues in
-[Catalogues](catalogues.md), and what the module exports in
+[Catalogues](catalogues.md), the presets and your own components in
+[Presets](presets.md), and what the module exports in
 [The generated module](generated-module.md).
 
 ## The config — `defineMailConfig`
@@ -48,6 +49,8 @@ interface MailConfig {
 	readonly fallbackLocale: string;
 	readonly emails?: string;
 	readonly messages?: string;
+	readonly components?: string;
+	readonly presets?: readonly (Preset & { readonly call?: never })[];
 	readonly out?: string;
 }
 ```
@@ -58,6 +61,8 @@ interface MailConfig {
 | `fallbackLocale` | `string` | required | One of `locales`: the reference every other catalogue is checked against, and the source of every argument's type |
 | `emails` | `string` | `'emails'` | The folder of the templates, one `.vue` per e-mail |
 | `messages` | `string` | `'messages'` | The folder of the catalogues, one `<locale>.json` per locale |
+| `components` | `string` | `'components'` | The folder of the application's own components, one PascalCase `.vue` each, overriding a preset's of the same name. The default folder may be absent; a folder named here must exist |
+| `presets` | `readonly Preset[]` | `[]` | Theme tokens, components and messages, applied in order before the application's own files — see [Presets](presets.md) |
 | `out` | `string` | `'src/generated/mail.ts'` | The generated module |
 
 The paths are relative to **the config's folder**, wherever the command runs
@@ -89,7 +94,8 @@ it is data you wrote, possibly in JavaScript:
 | The config is not the default export: no `locales`, no `fallbackLocale` | `build: the config has no locales — is it the default export? export default defineMailConfig({ … })` |
 | `locales` is not a list of strings | `build: locales must be a list of locales, as ['en', 'fr']` |
 | `fallbackLocale` is not one of `locales` | `build: fallbackLocale must be one of locales, as 'en'` |
-| `emails`, `messages` or `out` is not a string | `build: out must be a path, or left out` |
+| `emails`, `messages`, `components` or `out` is not a string | `build: out must be a path, or left out` |
+| `presets` is not a list | `build: presets must be a list, as [nxgtPreset()], or left out` |
 
 ## The CLI — `nxgt-mail`
 
@@ -316,6 +322,10 @@ function compileMail(options: CompileMailOptions): Promise<CompiledMail>;
 interface CompileMailOptions extends CompileMessagesOptions {
 	/** One single-file component per e-mail. */
 	readonly templates: readonly TemplateFile[];
+	/** The components the templates may use beside Maizzle's, by file name. */
+	readonly components?: Readonly<Record<string, string>>;
+	/** The Tailwind tokens written to `theme.css`, which a layout imports. */
+	readonly theme?: Theme;
 }
 
 /** A template file: its name, as `verify-email.vue`, and its source. */
@@ -331,6 +341,44 @@ interface TemplateFile {
 | `fallbackLocale` | `string` | required | As in the config |
 | `sources` | `readonly MessageSource[]` | required | Catalogues by locale, earliest first; `name` appears in the errors |
 | `templates` | `readonly TemplateFile[]` | required | The templates; `file` names the e-mail and appears in the errors |
+| `components` | `Readonly<Record<string, string>>` | `{}` | Component sources by file name, `{ 'Brand.vue': source }`, usable as `<Brand>` |
+| `theme` | `Theme` | `{}` | The tokens written to `theme.css` beside each template |
+
+`compileMail` checks `components` and `theme` itself, as the build checks a
+preset's — they may come from somewhere else than `resolvePresets`. A mistake
+is a bare `TypeError` prefixed `build: compileMail:`, and a file name that is
+not a PascalCase `.vue` — a path such as `'../../x.vue'` — is refused:
+
+| Mistake | `TypeError` message |
+| --- | --- |
+| A component name that is not a PascalCase `.vue` file name | `build: compileMail: the component ../../x.vue is not a PascalCase .vue file name, as Transactional.vue` |
+| A component named like Maizzle's | `build: compileMail: the component Button.vue would replace Maizzle's <Button> — give it a name of its own` |
+| A token that is not one CSS value | `build: compileMail: the theme token color.primary holds what one CSS value never needs — ;, a brace, a backslash, <, >, @, a double quote, url(), a comment, a line break or an unbalanced quote` |
+
+Every other refusal of a component or a theme reads as in
+[Presets](presets.md#what-the-build-refuses), with `compileMail` in place of
+`preset a`.
+
+`compileMail` does not merge presets: hand it what
+[`resolvePresets`](presets.md#resolvepresets--the-merge-alone) answers, its
+`messageSources` first in `sources`:
+
+```ts
+import { readFile } from 'node:fs/promises';
+import { compileMail, definePreset, readCatalogues, resolvePresets } from '@nxgt/mail-build';
+
+const acme = definePreset({ name: 'acme', theme: { color: { brand: '#e11d48' } } });
+const { theme, components, messageSources } = await resolvePresets([acme]);
+
+const { module } = await compileMail({
+	locales: ['en'],
+	fallbackLocale: 'en',
+	sources: [...messageSources, { name: 'messages/', catalogues: await readCatalogues('messages', ['en']) }],
+	templates: [{ file: 'welcome.vue', source: await readFile('emails/welcome.vue', 'utf8') }],
+	components,
+	theme,
+});
+```
 
 The module is deterministic: the same catalogues and templates give the same
 string.
@@ -431,7 +479,10 @@ The codes of the catalogues are listed in
 | The config is malformed | `build: the config must be an object …`, `build: the config has no locales …`, `build: locales must be …`, `build: fallbackLocale must be …`, `build: <name> must be a path, or left out` — see [The config](#the-config--definemailconfig) |
 | The templates folder does not exist | `build: /home/ada/shop/emails does not exist — put one .vue template per e-mail there, or set emails in the config` |
 | The templates folder holds no `.vue` file | `build: /home/ada/shop/emails holds no .vue template — put one per e-mail there` |
-| The messages folder holds no `<locale>.json` for any locale, or does not exist | `build: /home/ada/shop/messages holds no catalogue — write one <locale>.json per locale there, or set messages in the config` |
+| The messages folder holds no `<locale>.json` for any locale, or does not exist, and no preset brings messages | `build: /home/ada/shop/messages holds no catalogue — write one <locale>.json per locale there, or set messages in the config` |
+| The components folder holds a sub-folder | `build: /home/ada/shop/components/buttons is a folder — put each component directly in /home/ada/shop/components` |
+| The config names a `components` folder that does not exist | `build: /home/ada/shop/parts does not exist — put the application's components there, or leave components out of the config` |
+| A preset, or a component of the application, is malformed | `build: presets[0] is not a preset — …`, `build: preset acme: the component Button.vue would replace Maizzle's <Button> — …` — see [Presets](presets.md#what-the-build-refuses) |
 | No config file found (CLI) | `nxgt-mail: no config — write mail.config.ts, or pass --config <file>` |
 | `--config` names a missing file (CLI) | `nxgt-mail: missing.ts does not exist` |
 | `locales: ['en', 'en']` | `compileMessages: locales holds the same locale twice` |

@@ -402,7 +402,9 @@ follow.
 
 `sources` is a list of catalogues by locale, **earliest first**: presets, then
 the application's own `messages/`. For each locale, the sources are merged key
-by key before anything is checked.
+by key before anything is checked. The build makes this list itself from the
+config's `presets` — see [Presets](presets.md); `compileMessages` and
+`compileMail` take it as given.
 
 ```ts
 import { compileMessages, readCatalogues } from '@nxgt/mail-build';

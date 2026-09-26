@@ -17,8 +17,8 @@ How the messages are shaped:
   `template` when they apply. Nothing is caught and nothing falls back to the
   raw message: the build stops, and no module is written.
 - **A `TypeError` starting with `compileMessages:`, `build:` or `nxgt-mail:`
-  is a wiring mistake**: the options, the config or the command, not a
-  catalogue or a template. Fix the build script.
+  is a wiring mistake**: the options, the config, a preset or the command,
+  not a catalogue or a template. Fix the build script, or the preset.
 - **A mistake in a call to the generated `t()` or `mails.<email>()` is a
   compile error**, not a run-time one: the module types every key, every
   argument and every prop. The one check left for run time is a URL prop.
@@ -62,6 +62,28 @@ try {
 - [`build: <dir> holds no catalogue — write one <locale>.json per locale there, or set messages in the config`](#build-dir-holds-no-catalogue--write-one-localejson-per-locale-there-or-set-messages-in-the-config)
 - [`build: <dir> does not exist — put one .vue template per e-mail there, or set emails in the config`](#build-dir-does-not-exist--put-one-vue-template-per-e-mail-there-or-set-emails-in-the-config)
 - [`build: <dir> holds no .vue template — put one per e-mail there`](#build-dir-holds-no-vue-template--put-one-per-e-mail-there)
+- [`build: presets must be a list, as [nxgtPreset()], or left out`](#build-presets-must-be-a-list-as-nxgtpreset-or-left-out)
+- [`build: <dir> does not exist — put the application's components there, or leave components out of the config`](#build-dir-does-not-exist--put-the-applications-components-there-or-leave-components-out-of-the-config)
+- [`build: <dir>/<sub> is a folder — put each component directly in <dir>`](#build-dirsub-is-a-folder--put-each-component-directly-in-dir)
+
+**Presets**
+- [`build: presets[<i>] is not a preset — pass what a preset function returns, as nxgtPreset()`](#build-presetsi-is-not-a-preset--pass-what-a-preset-function-returns-as-nxgtpreset)
+- [`build: presets[<i>] has no camelCase name — name it, as definePreset({ name: 'acme', … })`](#build-presetsi-has-no-camelcase-name--name-it-as-definepreset-name-acme--)
+- [`build: two presets are named <name> — a preset is listed once`](#build-two-presets-are-named-name--a-preset-is-listed-once)
+- [`build: <where>: the component <file> is not a PascalCase .vue file name, as Transactional.vue`](#build-where-the-component-file-is-not-a-pascalcase-vue-file-name-as-transactionalvue)
+- [`build: <where>: the component <file> would replace Maizzle's <<Name>> — give it a name of its own`](#build-where-the-component-file-would-replace-maizzles-name--give-it-a-name-of-its-own)
+- [`build: preset <name>: the component <file> must be the source of a single-file component`](#build-preset-name-the-component-file-must-be-the-source-of-a-single-file-component)
+- [`build: preset <name>: components must be an object of sources by file name, as { 'Transactional.vue': '<template>…</template>' }`](#build-preset-name-components-must-be-an-object-of-sources-by-file-name-as--transactionalvue-templatetemplate-)
+- [`build: preset <name>: theme must be an object of namespaces, as { color: { primary: '#2563eb' } }`](#build-preset-name-theme-must-be-an-object-of-namespaces-as--color--primary-2563eb--)
+- [`build: preset <name>: the theme namespace <namespace> is not camelCase, as color or fontWeight`](#build-preset-name-the-theme-namespace-namespace-is-not-camelcase-as-color-or-fontweight)
+- [`build: preset <name>: theme.<namespace> must be an object of tokens, as { primary: '#2563eb' }`](#build-preset-name-themenamespace-must-be-an-object-of-tokens-as--primary-2563eb-)
+- [`build: preset <name>: the theme token <namespace>.<token> is not camelCase, as textMuted`](#build-preset-name-the-theme-token-namespacetoken-is-not-camelcase-as-textmuted)
+- [`build: preset <name>: the theme token <namespace>.<token> must be a CSS value, as '#2563eb'`](#build-preset-name-the-theme-token-namespacetoken-must-be-a-css-value-as-2563eb)
+- [`build: preset <name>: the theme token <namespace>.<token> holds what one CSS value never needs — ;, a brace, a backslash, <, >, @, a double quote, url(), a comment, a line break or an unbalanced quote`](#build-preset-name-the-theme-token-namespacetoken-holds-what-one-css-value-never-needs---a-brace-a-backslash----a-double-quote-url-a-comment-a-line-break-or-an-unbalanced-quote)
+- [A token class (`bg-brand`) has no effect: `theme.css` is imported in its own `<style>`](#a-token-class-bg-brand-has-no-effect-themecss-is-imported-in-its-own-style)
+- [A class naming a token that does not exist (`bg-primry`) is dropped, and nothing fails](#a-class-naming-a-token-that-does-not-exist-bg-primry-is-dropped-and-nothing-fails)
+- [A component's `v-if` or computed URL on a template's value is the same in every e-mail](#a-components-v-if-or-computed-url-on-a-templates-value-is-the-same-in-every-e-mail)
+- [`KEY_MISSING` — `messages: <locale>: common.footer.ignore is missing — <fallback>, the fallback locale, has it`](#key_missing--messages-locale-commonfooterignore-is-missing--fallback-the-fallback-locale-has-it)
 
 **Catalogues**
 - [`CATALOGUE_INVALID` — `messages: <locale>: <path> is not valid JSON`](#catalogue_invalid--messages-locale-path-is-not-valid-json)
@@ -437,10 +459,10 @@ export default defineMailConfig({
 ### `build: <name> must be a path, or left out`
 
 **When:** `nxgt-mail build` or `dev`, or `build()`, on a config whose
-`emails`, `messages` or `out` is not a string: `emails: ['emails']`,
-`out: null`.
+`emails`, `messages`, `components` or `out` is not a string:
+`emails: ['emails']`, `out: null`.
 **Why:** each is one path, relative to the config's folder; left out, it is
-`emails`, `messages` and `src/generated/mail.ts`.
+`emails`, `messages`, `components` and `src/generated/mail.ts`.
 **Fix:**
 
 ```ts
@@ -456,8 +478,8 @@ export default defineMailConfig({
 ### `build: <dir> holds no catalogue — write one <locale>.json per locale there, or set messages in the config`
 
 **When:** `nxgt-mail build` or `dev`, or `build()`, when the messages folder
-is missing, or holds no `<locale>.json` for any locale of the config.
-`<dir>` is the absolute path the build looked in: `messages/` beside the
+is missing, or holds no `<locale>.json` for any locale of the config,
+and no preset brings messages. `<dir>` is the absolute path the build looked in: `messages/` beside the
 config, unless the config says otherwise.
 **Why:** with no catalogue at all, the folder is almost surely the wrong one.
 A catalogue missing for one locale only is not reported here: the build
@@ -513,6 +535,433 @@ not read: each template is one file directly in the folder.
   </Layout>
 </template>
 ```
+
+### `build: presets must be a list, as [nxgtPreset()], or left out`
+
+**When:** `nxgt-mail build` or `dev`, `build()`, `dev()` or
+`compileProject()`, on a config whose `presets` is not an array: one preset
+on its own (`presets: nxgtPreset()`), or an object of presets.
+**Why:** presets apply in order, earliest first, and the application's own
+files last; an order needs a list, even of one.
+**Fix:**
+
+```ts
+import { defineMailConfig } from '@nxgt/mail-build';
+import { nxgtPreset } from '@nxgt/mail-preset';
+
+export default defineMailConfig({
+  locales: ['en', 'fr'],
+  fallbackLocale: 'en',
+  presets: [nxgtPreset()],
+});
+```
+
+### `build: <dir> does not exist — put the application's components there, or leave components out of the config`
+
+**When:** `nxgt-mail build` or `dev`, `build()`, `dev()` or
+`compileProject()`, on a config that names a `components` folder the build
+cannot find. `<dir>` is the absolute path it looked in. Left out of the
+config, `components/` beside the config may be absent: that is no error.
+**Why:** a folder you named and that is not there is a wrong path. Built
+anyway, the e-mails would use the presets' components instead of yours,
+without a word.
+**Fix:** name the folder where it is, relative to the config, or leave
+`components` out:
+
+```ts
+import { defineMailConfig } from '@nxgt/mail-build';
+
+export default defineMailConfig({
+  locales: ['en', 'fr'],
+  fallbackLocale: 'en',
+  components: 'src/components',
+});
+```
+
+### `build: <dir>/<sub> is a folder — put each component directly in <dir>`
+
+**When:** `nxgt-mail build` or `dev`, `build()`, `dev()` or
+`compileProject()`, when the components folder — `components/` beside the
+config, or the one the config names — holds a subfolder. `<dir>` is the
+absolute path of the folder, `<sub>` the subfolder's name.
+**Why:** a component is used by its file name alone (`<MailCard>`), so
+subfolders are not read; the components in one would be missing from every
+e-mail, without a word.
+**Fix:** move each component directly into the folder, with a name of its
+own:
+
+```sh
+mv components/cards/Card.vue components/MailCard.vue && rmdir components/cards
+```
+
+---
+
+## Presets
+
+A preset is data a package wrote — theme tokens, components, messages —
+checked before any template is rendered. A preset that is not well formed
+is a bare `TypeError` that says where the mistake is: `presets[<i>]` for a
+position in the config's list (from 0), `preset <name>` for a preset, and the
+application's components folder as the config names it (`components/`,
+`src/components/`) for a component of yours. `compileMail` checks the
+`components` and `theme` it is given the same way, so calling it yourself
+gives the same messages as `build: compileMail: …`. A mistake
+in the options of `nxgtPreset()` is caught before this, by `nxgtPreset`
+itself: see the
+[`@nxgt/mail-preset` troubleshooting](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-preset/docs/troubleshooting.md).
+
+The last four entries are what a well-formed preset can still lead to: a
+style that does not apply, a value frozen by a component, and a key a locale
+lacks.
+
+The examples below write a preset of their own:
+
+```ts
+// acme-preset.ts
+import { definePreset } from '@nxgt/mail-build';
+
+export const acmePreset = definePreset({
+  name: 'acme',
+  theme: { color: { brand: '#e11d48', textMuted: '#71717a' } },
+  components: { 'AcmeCard.vue': '<template><div class="bg-brand"><slot /></div></template>' },
+  messages: { en: { common: { signature: 'The Acme team' } } },
+});
+```
+
+### `build: presets[<i>] is not a preset — pass what a preset function returns, as nxgtPreset()`
+
+**When:** the build, when an item of `presets` is not an object: the preset
+function itself, not called (`presets: [nxgtPreset]`), or `undefined` or
+`null`. In a TypeScript config, `defineMailConfig` refuses these at compile
+time; you meet this error from a config in JavaScript, or a list built at run
+time.
+**Why:** a preset is the object a preset function returns, not the function.
+**Fix:** call it:
+
+```ts
+import { defineMailConfig } from '@nxgt/mail-build';
+import { nxgtPreset } from '@nxgt/mail-preset';
+
+export default defineMailConfig({
+  locales: ['en', 'fr'],
+  fallbackLocale: 'en',
+  presets: [nxgtPreset()],
+});
+```
+
+### `build: presets[<i>] has no camelCase name — name it, as definePreset({ name: 'acme', … })`
+
+**When:** the build, on a preset of your own with no `name`, or with a name
+that is not camelCase: `'Acme'`, `'acme-mail'`, `''`.
+**Why:** the name is how every other error points at the preset, and how two
+presets are told apart.
+**Fix:**
+
+```ts
+import { definePreset } from '@nxgt/mail-build';
+
+export const acmePreset = definePreset({
+  name: 'acmeMail',
+  theme: { color: { brand: '#e11d48' } },
+});
+```
+
+### `build: two presets are named <name> — a preset is listed once`
+
+**When:** the build, when two items of `presets` have the same name: the
+same preset listed twice — `nxgtPreset()` once for the brand and once for the
+theme — or two presets of your own that share a name.
+**Why:** a preset's options are given in one call; listed twice, the second
+would silently replace every token, component and message of the first.
+**Fix:** one call, with every option:
+
+```ts
+import { defineMailConfig } from '@nxgt/mail-build';
+import { nxgtPreset } from '@nxgt/mail-preset';
+
+export default defineMailConfig({
+  locales: ['en', 'fr'],
+  fallbackLocale: 'en',
+  presets: [
+    nxgtPreset({
+      brand: { primary: '#4f46e5' },
+      theme: { radius: { button: '0' } },
+    }),
+  ],
+});
+```
+
+### `build: <where>: the component <file> is not a PascalCase .vue file name, as Transactional.vue`
+
+**When:** the build, on a key of a preset's `components`, or a `.vue` file
+in your components folder, whose name does not start with a capital letter or
+holds anything but letters and digits: `card.vue`, `mail-card.vue`,
+`Mail_Card.vue`, or a preset key without `.vue` (`'Card'`). Files that do not
+end in `.vue` in your components folder are not read; a subfolder is
+[refused](#build-dirsub-is-a-folder--put-each-component-directly-in-dir).
+**Why:** a component is used in a template by its file name, as a tag:
+`MailCard.vue` is `<MailCard>`.
+**Fix:**
+
+```sh
+mv components/mail-card.vue components/MailCard.vue
+```
+
+### `build: <where>: the component <file> would replace Maizzle's <<Name>> — give it a name of its own`
+
+**When:** the build, on a preset's component or a file in your components
+folder named like a component Maizzle ships: `Button.vue`, `Container.vue`,
+`Text.vue`…
+**Why:** Maizzle would use it everywhere in place of its own, including
+inside the components that wrap Maizzle's — and a replacement can no longer
+wrap the original, which carries the fallbacks for Outlook.
+**Fix:** give it a name of its own, and wrap Maizzle's inside it:
+
+```vue
+<!-- components/AcmeButton.vue -->
+<script setup>
+defineProps({ href: { type: String, required: true } });
+</script>
+
+<template>
+  <Button :href="href" class="bg-brand text-white"><slot /></Button>
+</template>
+```
+
+### `build: preset <name>: the component <file> must be the source of a single-file component`
+
+**When:** the build, on a preset whose `components` maps a file name to
+something other than a string: the component imported as a module
+(`import AcmeCard from './AcmeCard.vue'`), or a `Buffer` from `readFileSync`
+without an encoding.
+**Why:** the build writes each component to Maizzle's components folder as
+text: it needs the `.vue` source, not what a bundler makes of it.
+**Fix:** read the file as text:
+
+```ts
+import { readFileSync } from 'node:fs';
+import { definePreset } from '@nxgt/mail-build';
+
+export const acmePreset = definePreset({
+  name: 'acme',
+  components: {
+    'AcmeCard.vue': readFileSync(new URL('./AcmeCard.vue', import.meta.url), 'utf8'),
+  },
+});
+```
+
+### `build: preset <name>: components must be an object of sources by file name, as { 'Transactional.vue': '<template>…</template>' }`
+
+**When:** the build, on a preset whose `components` is not a plain object:
+an array of file names, a `Map`, `null`.
+**Why:** the file name is the component's name, and the value its source;
+a list of names has no source to render.
+**Fix:**
+
+```ts
+import { definePreset } from '@nxgt/mail-build';
+
+export const acmePreset = definePreset({
+  name: 'acme',
+  components: {
+    'AcmeCard.vue': '<template><div class="bg-brand"><slot /></div></template>',
+  },
+});
+```
+
+### `build: preset <name>: theme must be an object of namespaces, as { color: { primary: '#2563eb' } }`
+
+**When:** the build, on a preset whose `theme` is not a plain object: an
+array, a string of CSS, `null`.
+**Why:** the build writes the `theme.css` itself, from tokens it can check;
+it takes no CSS.
+**Fix:** one object per Tailwind namespace, one token per key:
+
+```ts
+import { definePreset } from '@nxgt/mail-build';
+
+export const acmePreset = definePreset({
+  name: 'acme',
+  theme: { color: { brand: '#e11d48' }, radius: { card: '8px' } },
+});
+```
+
+### `build: preset <name>: the theme namespace <namespace> is not camelCase, as color or fontWeight`
+
+**When:** the build, on a namespace of a preset's `theme` written as in CSS:
+`'Color'`, `'font-weight'`, `'--color'`.
+**Why:** a namespace is written camelCase and turned kebab-case in the CSS:
+`fontWeight` is `--font-weight-*`, which Tailwind reads as `font-*`.
+**Fix:**
+
+```ts
+theme: { fontWeight: { heavy: '800' } } // --font-weight-heavy, class font-heavy
+```
+
+### `build: preset <name>: theme.<namespace> must be an object of tokens, as { primary: '#2563eb' }`
+
+**When:** the build, on a namespace whose value is not an object of tokens —
+most often tokens written flat, without their namespace:
+`theme: { primary: '#2563eb' }`.
+**Why:** each token belongs to a Tailwind namespace (`color`, `radius`,
+`font`…), which decides the classes it makes.
+**Fix:** nest it:
+
+```ts
+theme: { color: { primary: '#2563eb' } } // --color-primary, classes bg-primary, text-primary
+```
+
+### `build: preset <name>: the theme token <namespace>.<token> is not camelCase, as textMuted`
+
+**When:** the build, on a token written as in CSS or starting with a digit:
+`'text-muted'`, `'TextMuted'`, `'500'`.
+**Why:** a token is written camelCase and turned kebab-case in the CSS:
+`color.textMuted` is `--color-text-muted`, the class `text-text-muted`.
+**Fix:**
+
+```ts
+theme: { color: { textMuted: '#71717a', brand500: '#e11d48' } }
+```
+
+### `build: preset <name>: the theme token <namespace>.<token> must be a CSS value, as '#2563eb'`
+
+**When:** the build, on a token whose value is not a string, or is empty:
+`radius: { card: 8 }`, a colour read from an environment variable that is not
+set.
+**Why:** a token is written into `theme.css` as it is; a number has no unit,
+and an empty value would declare nothing.
+**Fix:**
+
+```ts
+theme: { radius: { card: '8px' }, color: { brand: process.env.BRAND_COLOR ?? '#e11d48' } }
+```
+
+### `build: preset <name>: the theme token <namespace>.<token> holds what one CSS value never needs — ;, a brace, a backslash, <, >, @, a double quote, url(), a comment, a line break or an unbalanced quote`
+
+**When:** the build, on a token whose value holds `;`, `{`, `}`, `\`, `<`,
+`>`, `@`, `"`, `url(`, `/*`, a line break, or an odd number of `'`:
+`'#fff; color: red'`, `'@import …'`, `'url(https://…/bg.png)'`, a font name
+in double quotes (`'"Segoe UI", sans-serif'`), a CSS escape (`\30`), a font
+stack written over several lines in a template literal.
+**Why:** each token is one declaration in `theme.css`, inside the layout's
+`<style>`. These characters would end the declaration, the `@theme` block or
+the `<style>`, escape a character, or fetch something — and a colour, a
+length or a font stack never needs them.
+**Fix:** one value, on one line, font names in single quotes:
+
+```ts
+theme: { font: { sans: "-apple-system, 'Segoe UI', Roboto, Arial, sans-serif" } }
+```
+
+### A token class (`bg-brand`) has no effect: `theme.css` is imported in its own `<style>`
+
+**When:** the build succeeds, and a layout of your own renders without the
+presets' colours, fonts or radii: the element carries no style where its
+class names a token.
+**Why:** Tailwind compiles each `<style>` on its own. Tokens imported in a
+second block are unknown to the block that makes the utilities, so
+`bg-brand` makes no rule and is dropped. Nothing fails. `nxgtPreset()`'s
+`TransactionalLayout` already imports both in one block.
+**Fix:** import `theme.css` in the same `<style>` as Maizzle's Tailwind:
+
+```vue
+<Head>
+  <style>
+    @import "@maizzle/tailwindcss";
+    @import "./theme.css";
+  </style>
+</Head>
+```
+
+### A class naming a token that does not exist (`bg-primry`) is dropped, and nothing fails
+
+**When:** the build succeeds, and an element renders unstyled: its class
+names a token no preset has — a typo (`bg-primry`), a token of another
+preset, or the token's camelCase name (`text-onPrimary` for
+`text-on-primary`).
+**Why:** Tailwind makes CSS only for the classes it recognises and drops the
+others without a word; the build does not know which classes you meant. The
+options of `nxgtPreset()` are type-checked, the classes in a template are
+not.
+**Fix:** write the class from the token's kebab-case name —
+`color.onPrimary` is `text-on-primary`, `radius.button` is
+`rounded-button` — and look at the e-mail `nxgt-mail dev` renders:
+
+```vue
+<Text class="bg-primary text-on-primary">{{ t('verifyEmail.action') }}</Text>
+```
+
+### A component's `v-if` or computed URL on a template's value is the same in every e-mail
+
+**When:** the build succeeds, and a component — a preset's or yours —
+branches on or transforms a value a template passes it:
+`v-if="href.startsWith('https:')"`, or
+`:href="'https://t.example/?u=' + encodeURIComponent(href)"`. Every e-mail
+then takes the same branch, or carries the same computed value, whatever the
+value sent.
+**Why:** a template is rendered once, at build time, with every prop and
+message replaced by a placeholder. A component that computes on the value
+computes on the placeholder, and the result is frozen into the module: the
+`https:` test is always false, so the "insecure" branch is always shown, and
+the tracker URL receives the raw link, not its encoded form. A component is
+code, not held to a template's rules, so the build cannot refuse it; it
+catches a placeholder that comes out changed
+([`a value was changed while rendering`](#template_unsupported--templates-file-a-value-was-changed-while-rendering--a-component-or-a-transformer-rewrote-it)),
+not one that is only tested, or passed through an encoding that leaves it as
+it was.
+**Fix:** a component passes a template's value through untouched; compute it
+where it is sent, and pass the result as a prop:
+
+```vue
+<!-- components/TrackedButton.vue -->
+<script setup>
+defineProps({ href: { type: String, required: true } });
+</script>
+
+<template>
+  <Button :href="href"><slot /></Button>
+</template>
+```
+
+```ts
+import { mails } from './generated/mail';
+
+const tracked = `https://t.example/?u=${encodeURIComponent(verifyUrl)}`;
+const { subject, html, text } = mails.verifyEmail({
+  locale: 'en',
+  name: 'Ada',
+  link: tracked,
+  hours: 24,
+});
+```
+
+### `KEY_MISSING` — `messages: <locale>: common.footer.ignore is missing — <fallback>, the fallback locale, has it`
+
+**When:** the build, with `nxgtPreset()` and a locale it does not translate —
+it translates `en` and `fr` — as `locales: ['en', 'de']`. `common.footer.ignore`
+comes first because keys are checked in alphabetical order; any other key of
+a preset's messages behaves the same. When the fallback locale is the one
+the preset does not translate, the same gap is reported the other way round,
+as [`KEY_UNKNOWN`](#key_unknown--messages-locale-key-is-not-a-key-of-fallback-the-fallback-locale)
+for the locales it does.
+**Why:** a preset's messages are merged before yours, and every locale holds
+every key of the fallback locale. The preset has none in `de`.
+**Fix:** write the preset's keys in your own catalogue for that locale:
+
+```json
+{
+  "common": {
+    "greeting": "Hallo {name},",
+    "footer": {
+      "why": "Sie erhalten diese E-Mail aufgrund einer Aktion in Ihrem Konto.",
+      "ignore": "Wenn Sie dies nicht angefordert haben, können Sie diese E-Mail ignorieren."
+    }
+  }
+}
+```
+
+This is `messages/de.json`; the same keys in `messages/en.json` would
+override the preset's English.
 
 ---
 
@@ -657,7 +1106,8 @@ language, or a raw key, to a reader of another.
 ```
 
 A preset that ships the key in that locale also satisfies it; the check runs
-after the merge.
+after the merge. A key a preset brings, in a locale it does not translate, is
+[the entry under Presets](#key_missing--messages-locale-commonfooterignore-is-missing--fallback-the-fallback-locale-has-it).
 
 ### `KEY_UNKNOWN` — `messages: <locale>: <key> is not a key of <fallback>, the fallback locale`
 
@@ -1418,7 +1868,8 @@ CSS, or style with Tailwind classes — and look at the rendering with
 
 **When:** the build, on a tag that looks like a component and that no
 component answers — typically a misspelled Maizzle component, `<Buton>` for
-`<Button>`.
+`<Button>`, or a preset's (`<MailButon>` for `<MailButton>`), or a component
+of a preset the config does not list.
 **Why:** Vue renders an unknown component as nothing, with only a warning:
 the element and everything inside it — a button, its text, its link — would
 be missing from the e-mail. The build stops instead.

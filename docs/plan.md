@@ -207,6 +207,41 @@ with a second preset overriding one token and one message; the rendered
 e-mails are checked in at least Gmail, Outlook and Apple Mail (Maizzle's
 guidance, or a rendering service), and the result is written in the README.
 
+**What step 4 found.**
+
+- **The preset is data, and every part of it is checked.** It is a `name`,
+  a `theme` (namespace → token → value), `components` (file name → source)
+  and `messages` (catalogues by locale). `definePreset` lives in
+  `@nxgt/mail-build`. `@nxgt/mail-preset` imports only its type, as a peer.
+- **Why the build merges the components itself.** Given two component
+  folders holding the same name, Maizzle keeps one of them regardless of
+  their order ("naming conflicts … ignored"). So the build writes every
+  preset's components, then the application's `components/`, into one
+  folder: the last write wins, and that folder is Maizzle's only source.
+- **A component may not take a name Maizzle ships (`Button.vue`…).** A
+  component with such a name replaces Maizzle's everywhere, and the
+  replacement can no longer wrap the original. The preset's components are
+  therefore `TransactionalLayout` and `Mail*`.
+- **Tailwind's `@theme` is fed from the preset.** The build writes
+  `theme.css` beside each template. A layout imports it in the *same*
+  `<style>` as Maizzle's Tailwind; tokens in another block do not reach the
+  utilities. The tokens come out inlined (`background-color: #2563eb`), with
+  no `var()` left.
+- **The client check was run against caniemail data, not in real clients.**
+  - On 2026-09-26 the rendered fixture was checked against caniemail data
+    (what Maizzle's compatibility panel reads) for Gmail, Outlook and Apple
+    Mail.
+  - Nothing it uses is unsupported, except `border-radius` in Outlook for
+    Windows and `word-break` in Windows Mail. Both are cosmetic.
+  - A visual check in the real clients is still to do.
+- **The fixture is the preset's own.** It holds the step 3 e-mails rewritten
+  with the preset's components: the step 3 fixture uses Maizzle's `<Layout>`
+  and would not show the tokens.
+- **A token that does not exist is a compile error only in
+  `nxgtPreset({ … })`** (four refusals). A Tailwind class that names a
+  missing token is dropped by Tailwind without a word, and nothing catches
+  it yet.
+
 ## Step 5 — Transports
 
 One package each, `@nxgt/mail` as a required peer, no error class of their
@@ -257,7 +292,8 @@ Then archive `nxgt-maizzle` — Steve decides when.
   needed before them.
 - **The default brand of `nxgtPreset`.** Neutral (grey and one accent) is
   proposed, so a consumer who changes nothing still sends something plain
-  rather than something branded as nxgt.
+  rather than something branded as nxgt. Step 4 shipped it that way
+  (`#2563eb` on greys); one token changes it.
 
 ## Risks to check early
 
@@ -267,7 +303,8 @@ Then archive `nxgt-maizzle` — Steve decides when.
   rewrites it, and fails silently where the package is not hoisted (Bun,
   pnpm). The build renders from a temporary folder that links it, and fails
   if CSS is left uncompiled. Feeding Tailwind 4's `@theme` from a preset
-  object is step 4's to confirm.
+  object: confirmed in step 4, through a generated `theme.css` imported in the
+  layout's Tailwind `<style>`.
 - **Plain text from Maizzle.** Confirmed: its output keeps the placeholders.
 - **The size of the generated module.** One HTML string per e-mail, shared by
   every locale: the fixture's two e-mails in two locales make a 13.8 KB module
