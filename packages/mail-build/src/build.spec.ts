@@ -98,6 +98,60 @@ describe('build with presets', () => {
 			const second = await compileProject(presetOnly, { root: dir });
 			expect(second.module).toContain('>application</p>');
 			expect(second.module).not.toContain('>preset</p>');
+
+			await mkdir(join(dir, 'components', 'nested'));
+			await expect(compileProject(presetOnly, { root: dir })).rejects.toThrow(
+				new TypeError(
+					`build: ${join(dir, 'components', 'nested')} is a folder — put each component directly in ${join(dir, 'components')}`,
+				),
+			);
+		} finally {
+			await rm(dir, { recursive: true, force: true });
+		}
+	}, 30_000);
+});
+
+describe('a component is held to what it renders', () => {
+	test('a value it moves into style fails the build', async () => {
+		const dir = await mkdtemp(join(tmpdir(), 'mail-build-component-'));
+		try {
+			await mkdir(join(dir, 'emails'));
+			await writeFile(
+				join(dir, 'emails', 'a.vue'),
+				`<script setup>
+defineProps(['colour']);
+</script>
+
+<template>
+  <Html :lang="lang"><Body><Paint :colour="colour" /></Body></Html>
+</template>
+`,
+			);
+			await expect(
+				compileProject(
+					{
+						locales: ['en'],
+						fallbackLocale: 'en',
+						presets: [
+							definePreset({
+								name: 'acme',
+								components: {
+									'Paint.vue': `<script setup>
+defineProps(['colour']);
+</script>
+
+<template><p :style="{ color: colour }">x</p></template>
+`,
+								},
+								messages: { en: { a: { subject: 'A' } } },
+							}),
+						],
+					},
+					{ root: dir },
+				),
+			).rejects.toThrow(
+				'templates: a.vue: the prop colour lands in the style attribute',
+			);
 		} finally {
 			await rm(dir, { recursive: true, force: true });
 		}

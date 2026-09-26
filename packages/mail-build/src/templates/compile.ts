@@ -2,7 +2,7 @@ import {
 	type CompileMessagesOptions,
 	compileMessages,
 } from '../messages/compile';
-import type { Theme } from '../presets';
+import { checkComponents, checkTheme, type Theme } from '../presets';
 import { emitMails } from './emit';
 import { type EmailPlan, type MailProp, planEmail } from './plan';
 
@@ -81,6 +81,11 @@ export async function compileMail(
 	}
 
 	const plans: EmailPlan[] = [];
+	// Checked here too: a caller may pass them without `resolvePresets`.
+	if (options.theme !== undefined) checkTheme('compileMail', options.theme);
+	if (options.components !== undefined) {
+		await checkComponents('compileMail', options.components);
+	}
 	const workspace = await openWorkspace({
 		...(options.theme === undefined ? {} : { theme: options.theme }),
 		...(options.components === undefined

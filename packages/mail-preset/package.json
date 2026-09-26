@@ -49,6 +49,7 @@
 		"@types/bun": "^1.4.2"
 	},
 	"peerDependencies": {
-		"@nxgt/mail-build": "workspace:^"
+		"@nxgt/mail-build": "workspace:^",
+		"typescript": "^6.0.3"
 	}
 }

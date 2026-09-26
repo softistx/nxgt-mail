@@ -125,6 +125,26 @@ describe('a second preset', async () => {
 		).toContain('Vous recevez cet e-mail suite à une action sur votre compte.');
 	});
 
+	test('escapes the brand in the rendered e-mail', async () => {
+		const html = (
+			await buildWith([
+				nxgtPreset({
+					brand: {
+						logo: 'https://x.test/a.png?b=1&c="2"><script>',
+						name: 'A <b> & "c" {{ lang }}',
+					},
+				}),
+			])
+		).verifyEmail?.({ locale: 'en', ...verifyEmail }).html;
+		// Quotes escaped, so nothing leaves its attribute; Maizzle's serializer
+		// writes `&` and `<` bare inside a quoted value, which HTML allows.
+		expect(html).toContain(
+			'src="https://x.test/a.png?b=1&c=&quot;2&quot;><script>"',
+		);
+		expect(html).toContain('alt="A <b> & &quot;c&quot; {{ lang }}"');
+		expect(html?.replace(/"[^"]*"/g, '""')).not.toMatch(/<script|<b>/);
+	}, 30_000);
+
 	test('shows the logo of the brand, its name as the alternative text', () => {
 		expect(mails.verifyEmail?.({ locale: 'en', ...verifyEmail }).html).toMatch(
 			/<img src="https:\/\/cdn\.example\.com\/logo\.png"[^>]* alt="Acme"/,
@@ -184,6 +204,17 @@ describe('nxgtPreset options', () => {
 		);
 		expect(call({ brand: { primary: 4 } })).toThrow(
 			new TypeError('nxgtPreset: brand.primary must be a string'),
+		);
+		expect(call({ theme: { color: null } })).toThrow(
+			new TypeError('nxgtPreset: theme.color must be an object'),
+		);
+		expect(call({ brand: null })).toThrow(
+			new TypeError('nxgtPreset: brand must be an object'),
+		);
+		expect(call({ brand: { name: 'Acme' } })).toThrow(
+			new TypeError(
+				"nxgtPreset: brand.name is the logo's alternative text — give brand.logo too",
+			),
 		);
 		expect(call(null)).toThrow(
 			new TypeError('nxgtPreset: options must be an object'),

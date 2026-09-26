@@ -48,8 +48,12 @@ export interface ResolvedPresets {
 
 const NAME = /^[a-z][a-zA-Z0-9]*$/;
 const COMPONENT = /^[A-Z][A-Za-z0-9]*\.vue$/;
-// A value that could close the declaration, the block, or the file's line.
-const UNSAFE_VALUE = /[;{}\r\n\u0085\u2028\u2029]|\/\*/;
+// What one CSS value — a colour, a length, a font stack — never needs, and
+// what could close the declaration, the block or the `<style>`, escape a
+// character, or fetch something: refused rather than trusted to Tailwind.
+const UNSAFE_VALUE = /[;{}\\<>@"\r\n\u0085\u2028\u2029]|\/\*|url\(/i;
+const UNSAFE_MESSAGE =
+	'holds what one CSS value never needs — ;, a brace, a backslash, <, >, @, a double quote, url(), a comment, a line break or an unbalanced quote';
 
 const kebab = (name: string) =>
 	name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
@@ -66,7 +70,8 @@ function builtInComponents(): Promise<ReadonlySet<string>> {
 	return maizzleComponents;
 }
 
-function checkTheme(where: string, theme: unknown): Theme {
+/** Checks a theme a preset or a caller wrote. */
+export function checkTheme(where: string, theme: unknown): Theme {
 	if (typeof theme !== 'object' || theme === null || Array.isArray(theme)) {
 		throw new TypeError(
 			`build: ${where}: theme must be an object of namespaces, as { color: { primary: '#2563eb' } }`,
@@ -98,9 +103,9 @@ function checkTheme(where: string, theme: unknown): Theme {
 					`build: ${where}: the theme token ${namespace}.${token} must be a CSS value, as '#2563eb'`,
 				);
 			}
-			if (UNSAFE_VALUE.test(value)) {
+			if (UNSAFE_VALUE.test(value) || (value.split("'").length - 1) % 2 !== 0) {
 				throw new TypeError(
-					`build: ${where}: the theme token ${namespace}.${token} holds ;, a brace, a comment or a line break — write one CSS value`,
+					`build: ${where}: the theme token ${namespace}.${token} ${UNSAFE_MESSAGE}`,
 				);
 			}
 		}
@@ -108,7 +113,8 @@ function checkTheme(where: string, theme: unknown): Theme {
 	return theme as Theme;
 }
 
-async function checkComponents(
+/** Checks components a preset, the application or a caller wrote. */
+export async function checkComponents(
 	where: string,
 	components: unknown,
 ): Promise<Readonly<Record<string, string>>> {
@@ -151,6 +157,8 @@ async function checkComponents(
 export async function resolvePresets(
 	presets: readonly Preset[],
 	appComponents: Readonly<Record<string, string>> = {},
+	/** The application's components folder, as named in the errors. */
+	appFolder = 'components/',
 ): Promise<ResolvedPresets> {
 	const theme: Record<string, Record<string, string>> = {};
 	const components: Record<string, string> = {};
@@ -191,10 +199,7 @@ export async function resolvePresets(
 			messageSources.push({ name: where, catalogues: preset.messages });
 		}
 	}
-	Object.assign(
-		components,
-		await checkComponents('components/', appComponents),
-	);
+	Object.assign(components, await checkComponents(appFolder, appComponents));
 	return { theme, components, messageSources };
 }
 

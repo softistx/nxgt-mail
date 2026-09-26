@@ -93,6 +93,11 @@ export function nxgtPreset(options: NxgtPresetOptions = {}): Preset {
 		);
 	}
 	const name = checkString('brand.name', brand.name) ?? '';
+	if (logo === null && brand.name !== undefined) {
+		throw new TypeError(
+			"nxgtPreset: brand.name is the logo's alternative text — give brand.logo too",
+		);
+	}
 
 	checkKeys(
 		'theme',
@@ -104,7 +109,9 @@ export function nxgtPreset(options: NxgtPresetOptions = {}): Preset {
 	for (const [namespace, defaults] of Object.entries(defaultTheme)) {
 		const overrides = checkKeys(
 			`theme.${namespace}`,
-			theme[namespace as keyof NxgtTheme] ?? {},
+			theme[namespace as keyof NxgtTheme] === undefined
+				? {}
+				: theme[namespace as keyof NxgtTheme],
 			Object.keys(defaults),
 			'a token of the preset',
 		);

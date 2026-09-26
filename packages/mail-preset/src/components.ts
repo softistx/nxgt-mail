@@ -51,7 +51,7 @@ defineProps({ preheader: { type: String, default: null } });
     </Head>
     <Body class="m-0 p-0 w-full bg-canvas [word-break:break-word]">
       <Preheader v-if="preheader">{{ preheader }}</Preheader>
-      <div role="article" aria-roledescription="email" :lang="lang" class="bg-canvas px-4 py-8 font-sans text-base text-foreground">
+      <div class="bg-canvas px-4 py-8 font-sans text-base text-foreground">
         <Container class="rounded-card bg-surface p-8">${logo}
           <slot />
         </Container>

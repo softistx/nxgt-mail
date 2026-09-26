@@ -47,6 +47,16 @@ describe('resolvePresets', () => {
 		);
 	});
 
+	test("names the application's folder as the config does", async () => {
+		await expect(
+			resolvePresets([], { 'card.vue': '' }, 'parts/'),
+		).rejects.toThrow(
+			new TypeError(
+				'build: parts/: the component card.vue is not a PascalCase .vue file name, as Transactional.vue',
+			),
+		);
+	});
+
 	test('answers nothing to merge without presets', async () => {
 		expect(await resolvePresets([])).toEqual({
 			theme: {},
@@ -113,12 +123,31 @@ describe('resolvePresets refuses a preset that is not one', () => {
 			[{ name: 'a', theme: { color: { primary: '' } } }],
 			"build: preset a: the theme token color.primary must be a CSS value, as '#2563eb'",
 		);
-		for (const value of ['red; } body { color: red', 'red\n', 'red /* x */']) {
+		for (const value of [
+			'red; } body { color: red',
+			'red\n',
+			'red /* x */',
+			'red\\',
+			"'abc",
+			'@import url(x)',
+			'url(https://x.test/a.png)',
+			'red" onmouseover="alert(1)',
+			'red</style><b>x</b>',
+		]) {
 			await refuse(
 				[{ name: 'a', theme: { color: { primary: value } } }],
-				'build: preset a: the theme token color.primary holds ;, a brace, a comment or a line break — write one CSS value',
+				'build: preset a: the theme token color.primary holds what one CSS value never needs — ;, a brace, a backslash, <, >, @, a double quote, url(), a comment, a line break or an unbalanced quote',
 			);
 		}
+		// A font stack keeps its quoted names.
+		await expect(
+			resolvePresets([
+				{
+					name: 'a',
+					theme: { font: { sans: "'Segoe UI', Arial, sans-serif" } },
+				},
+			]),
+		).resolves.toBeDefined();
 		await refuse(
 			[{ name: 'a', theme: [] }],
 			"build: preset a: theme must be an object of namespaces, as { color: { primary: '#2563eb' } }",

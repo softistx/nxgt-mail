@@ -28,8 +28,9 @@ export interface MailConfig {
 	/**
 	 * Theme tokens, components and messages, applied in order before the
 	 * application's own files: `[nxgtPreset({ brand: { primary: '#4f46e5' } })]`.
+	 * A preset function passed uncalled (`[nxgtPreset]`) is refused.
 	 */
-	readonly presets?: readonly Preset[];
+	readonly presets?: readonly (Preset & { readonly call?: never })[];
 	/** The generated module. Default `src/generated/mail.ts`. */
 	readonly out?: string;
 }
@@ -96,6 +97,13 @@ async function readComponents(
 		);
 	}
 	const components: Record<string, string> = {};
+	for (const entry of await readdir(dir, { withFileTypes: true })) {
+		if (entry.isDirectory()) {
+			throw new TypeError(
+				`build: ${join(dir, entry.name)} is a folder — put each component directly in ${dir}`,
+			);
+		}
+	}
 	for (const file of entries.filter((name) => name.endsWith('.vue')).sort()) {
 		components[file] = await readFile(join(dir, file), 'utf8');
 	}
@@ -168,6 +176,7 @@ export async function compileProject(
 			resolve(root, config.components ?? 'components'),
 			config.components !== undefined,
 		),
+		`${config.components ?? 'components'}/`,
 	);
 	if (
 		presets.messageSources.length === 0 &&

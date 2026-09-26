@@ -234,6 +234,29 @@ describe('compileMail', () => {
 		TIMEOUT,
 	);
 
+	test('checks the components and the theme it is given, as a preset would be', async () => {
+		const options = {
+			locales: ['en'],
+			fallbackLocale: 'en',
+			sources: [{ name: 'messages/', catalogues: { en: EN } }],
+			templates: [{ file: 'a.vue', source: sfc('<p></p>', []) }],
+		};
+		await expect(
+			compileMail({ ...options, components: { '../../x.vue': '' } }),
+		).rejects.toThrow(
+			new TypeError(
+				'build: compileMail: the component ../../x.vue is not a PascalCase .vue file name, as Transactional.vue',
+			),
+		);
+		await expect(
+			compileMail({ ...options, theme: { color: { primary: 'red } x {' } } }),
+		).rejects.toThrow(
+			new TypeError(
+				'build: compileMail: the theme token color.primary holds what one CSS value never needs — ;, a brace, a backslash, <, >, @, a double quote, url(), a comment, a line break or an unbalanced quote',
+			),
+		);
+	});
+
 	test('refuses two files that are the same e-mail', async () => {
 		const error = await compileMail({
 			locales: ['en'],
