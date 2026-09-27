@@ -36,6 +36,7 @@ either finds it.
 | **wrapper** | A file the i18n plugin generates under `.maizzle/i18n/<locale>/`, one per template and locale, so one `maizzle build` builds every locale. Never edited, never committed | "copy", "variant" |
 | **build failure** | The build stopping because the catalogues or the templates cannot be right — a message that does not parse, a key missing in a locale, an argument a translation invents, a template calling an unknown key — naming the template, the locale and the key. A mistake in a plugin's own options is a bare `TypeError` instead | *failure* alone, which is `MailFailure` at send time; "warning" — nothing is only reported |
 | **manifest** | `dist/mail-manifest.json`, written by the build: each e-mail's placeholders — and which ones sit in an `href` or a `src` — and its subject per locale. What the renderer reads | "index", "metadata" |
+| **renderer types** | `generated/mail.ts`, written by the build after the manifest, in the project: `MailEmails`, each e-mail with the variables it takes, for `createMailRenderer<MailEmails>`. Committed, so the code that sends type-checks without a build | "schema"; a `.d.ts` beside the sources |
 
 ## Rendering — at send time
 

@@ -59,6 +59,14 @@ describe('i18n — wiring mistakes', () => {
 		refuses({ locales: ['en'], catalogues: [{ en: 'Hello' }] }, message);
 	});
 
+	test('refuses a rendererTypes that is not a .ts file or false', () => {
+		const message =
+			'i18n: rendererTypes must be the path of a .ts file, as generated/mail.ts, or false';
+		for (const rendererTypes of [true, '', 'generated/mail.d.json', 42]) {
+			refuses({ locales: ['en'], rendererTypes }, message);
+		}
+	});
+
 	test('refuses templates that are not a list of absolute folders', () => {
 		const message =
 			"i18n: templates must be a list of template folders, as [{ dir: '/abs/path/emails' }] — emails, when given, names at least one, each once";

@@ -38,6 +38,8 @@ How the messages are shaped:
 - [`TS2345: Argument of type '"de"' is not assignable to parameter of type '"en" | "fr"'.`](#ts2345-argument-of-type-de-is-not-assignable-to-parameter-of-type-en--fr)
 - [`TS2322: Type '"MAIL_BOUNCED"' is not assignable to type 'MailErrorCode'.`](#ts2322-type-mail_bounced-is-not-assignable-to-type-mailerrorcode)
 - [`TS2511: Cannot create an instance of an abstract class.`](#ts2511-cannot-create-an-instance-of-an-abstract-class)
+- [`TS2345: Argument of type '"verify-emial"' is not assignable to parameter of type '"sign-in-code" | "verify-email"'.`](#ts2345-argument-of-type-verify-emial-is-not-assignable-to-parameter-of-type-sign-in-code--verify-email)
+- [`TS2307: Cannot find module './generated/mail' or its corresponding type declarations.`](#ts2307-cannot-find-module-generatedmail-or-its-corresponding-type-declarations)
 - [`error instanceof MailFailure` is `false` for an outage](#error-instanceof-mailfailure-is-false-for-an-outage)
 
 **Sending**
@@ -287,6 +289,55 @@ throw providerRefusedTheMessage
 ```
 
 Keep `MailError` for `catch`: `error instanceof MailError` is true for both.
+
+### `TS2345: Argument of type '"verify-emial"' is not assignable to parameter of type '"sign-in-code" | "verify-email"'.`
+
+Or, on the variables of the same call:
+`TS2353: Object literal may only specify known properties, and 'name' does not exist in type '{ readonly code: string | number; }'.`,
+`Property 'name' is missing in type '{ link: string; }' but required in type …`,
+`TS2554: Expected 2-3 arguments, but got 1.`, or
+`TS2322: Type 'number' is not assignable to type 'string'.`
+
+**When:** `tsc`, on a `render` call of a renderer created as
+`createMailRenderer<MailEmails>(…)`, typically after a template was renamed,
+or a placeholder added, renamed or removed.
+**Why:** `MailEmails` lists the e-mails of the last build and the variables
+each takes; `render` is typed from it. The call names an e-mail or a variable
+that build does not have, leaves one out, or passes a number to a URL
+variable, which is a string. Untyped, the same call would throw at run time:
+[`render: <email> is not an e-mail of the build`](#render-email-is-not-an-e-mail-of-the-build--one-of-emails),
+[`needs the variable`](#render-email-needs-the-variable-key) or
+[`has no variable`](#render-email-has-no-variable-key--it-takes-variables).
+**Fix:** a typo is fixed in the call. When the templates changed, rebuild, so
+that `generated/mail.ts` describes them, then fix the calls `tsc` still
+reports:
+
+```sh
+bunx maizzle build   # rewrites dist/ and generated/mail.ts; commit the new generated/mail.ts
+```
+
+Never edit `generated/mail.ts` by hand to silence the error: the next build
+rewrites it, and the deployed build is what `render` checks at run time.
+
+### `TS2307: Cannot find module './generated/mail' or its corresponding type declarations.`
+
+**When:** `tsc`, on `import type { MailEmails } from './generated/mail'`, in a
+fresh clone or a new project.
+**Why:** `generated/mail.ts` is written by `@nxgt/mail-i18n` at the end of
+`maizzle build`, in the Maizzle project, unless its `rendererTypes` option
+moved it or turned it off (`false`). It is not there until the first build,
+or it was not committed, or the import points at another folder.
+**Fix:** build once and commit the file, so the code that sends type-checks
+without a build; import it from where `rendererTypes` writes it:
+
+```sh
+bunx maizzle build
+git add generated/mail.ts
+```
+
+To go without it, leave the type parameter out:
+`createMailRenderer({ dir: 'dist' })` takes any name and any
+`MailVariables`, checked at run time only.
 
 ### `error instanceof MailFailure` is `false` for an outage
 
@@ -811,6 +862,10 @@ if (missing.length > 0) {
   throw new Error(`e-mails missing from the build: ${missing.join(', ')}`);
 }
 ```
+
+To catch it before the code runs at all, type the renderer with the build's
+`MailEmails`: see
+[Rendering — typing the renderer](guide/rendering.md#typing-the-renderer).
 
 ### `render: the locale asked for is not one of the build's, <locales>`
 

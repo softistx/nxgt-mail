@@ -312,6 +312,26 @@ build fails at start-up rather than at the first send. The renderer is its own
 entry, `@nxgt/mail/renderer`, because it imports `node:fs`: `@nxgt/mail`,
 which every transport imports, stays free of Node built-ins.
 
+## Step 6b — A typed renderer ✅
+
+Steve's question (2026-09-26): « Y a-t-il un moyen d'avoir mail.render type
+safe ? (templates et data) », and his « OK » to the answer:
+
+- `i18n()` writes, after each build, `generated/mail.ts`: `MailEmails`, each
+  e-mail with the variables the manifest records — a URL variable a `string`,
+  any other a `string | number`. `rendererTypes` moves it, or `false` turns it
+  off. The project commits it, so the code that sends type-checks without a
+  build.
+- `createMailRenderer<MailEmails>(…)` types `render`: an unknown e-mail, a
+  missing or unknown variable, and a number for a URL are compile errors, for
+  a literal name and variables written at the call.
+  Without the type parameter nothing changes; the run-time checks stay either
+  way.
+
+**Done when:** the fixture's build writes the module, spec'd to the character;
+each refusal has its `@ts-expect-error` in `packages/mail/test/types/` (13 to
+17) and the option's in `packages/mail-i18n/test/types/` (18) ✅.
+
 ## Step 7 — Transports
 
 `@nxgt/mail-smtp` (on the consumer's `nodemailer`) and `@nxgt/mail-resend`
@@ -348,9 +368,7 @@ built with these packages. Then archive `nxgt-maizzle` — Steve decides when.
 - **Which transports first.** SMTP and Resend are written; say if another is
   needed.
 - **The default brand.** Neutral (greys and `#2563eb`) is what exists.
-- **Typing the renderer.** An `afterBuild` hook could also write
-  `generated/mail.d.ts` (e-mail names and their variables), so an unknown
-  e-mail or variable is a compile error. Not in this plan unless asked.
+- ~~**Typing the renderer.**~~ Answered 2026-09-26: yes — Step 6b.
 - **A placeholder inside a URL.** Step 4 records as a URL variable only a
   placeholder a URL attribute starts with (it decides the scheme, so the
   renderer checks it is `http:`/`https:`). One later in the value —

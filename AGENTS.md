@@ -18,7 +18,7 @@ At run time, `@nxgt/mail` fills the values only known at send time into the
 built files and hands the result to a transport:
 
 ```ts
-const mails = createMailRenderer({ dir: 'dist', getLanguage: () => user.locale }); // @nxgt/mail/renderer
+const mails = createMailRenderer<MailEmails>({ dir: 'dist', getLanguage: () => user.locale }); // @nxgt/mail/renderer
 await mailer.send({ to, ...mails.render('verify-email', { name, link }) });
 ```
 
@@ -100,7 +100,10 @@ catalogues, never a condition a caller would `switch` on. An argument of the
 wrong type at call time (variables that are not an object, a value that is
 not text) is a `TypeError`, as at wiring. The one `render` refusal a caller
 handles is a URL value it will not write: `MailRefused`, since the URL may
-come from outside and sending it again unchanged fails again.
+come from outside and sending it again unchanged fails again. Given the
+build's `MailEmails`, the same mistakes but the URL's value are compile errors
+first, for a literal name and variables written at the call; the run-time
+checks stay, for every other call.
 
 A message reports **a shape, never a value**: never a recipient address, never
 a subject, never a link — a link in a verification e-mail is a credential.

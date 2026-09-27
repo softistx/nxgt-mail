@@ -10,7 +10,7 @@
  * The calls that **must keep compiling** are here too, unmarked: a refusal
  * that refuses the correct call is a bug.
  *
- * **Twelve plausible mistakes, twelve refused.**
+ * **Seventeen plausible mistakes, seventeen refused.**
  */
 
 import type { MailerHarness } from '../../src/conformance/index';
@@ -130,3 +130,42 @@ createMailRenderer({ dir: 'dist', getLanguage: 'en' });
 // An object would render as [object Object], a boolean as true.
 // @ts-expect-error — a string or a number.
 mails.render('verify-email', { link: new URL('https://app.example') });
+
+// ── The renderer, given the build's MailEmails ───────────────────────────────
+// As @nxgt/mail-i18n writes it in generated/mail.ts for test/built, plus an
+// e-mail that takes no variable.
+interface MailEmails {
+	'sign-in-code': { readonly code: string | number };
+	'verify-email': { readonly link: string; readonly name: string | number };
+	welcome: Readonly<Record<string, never>>;
+}
+const typed = createMailRenderer<MailEmails>({ dir: 'dist' });
+// Must keep compiling: a number for a variable that is not a URL, options, an
+// e-mail without variables called without them, and the build's names.
+void typed.render('sign-in-code', { code: 123456 }, { locale: 'fr' });
+void typed.render('verify-email', { link: 'https://app.example', name: 'Ada' });
+void typed.render('welcome');
+const names: readonly ('sign-in-code' | 'verify-email' | 'welcome')[] =
+	typed.emails;
+void names;
+
+// ── 13. An e-mail the build does not have ────────────────────────────────────
+// @ts-expect-error — one of MailEmails' names.
+typed.render('verify-emial', { link: 'https://app.example', name: 'Ada' });
+
+// ── 14. A variable the e-mail does not take ──────────────────────────────────
+// @ts-expect-error — sign-in-code takes code only.
+typed.render('sign-in-code', { code: 1, name: 'Ada' });
+
+// ── 15. A variable left out ──────────────────────────────────────────────────
+// @ts-expect-error — verify-email needs its name.
+typed.render('verify-email', { link: 'https://app.example' });
+
+// ── 16. The variables left out altogether ────────────────────────────────────
+// @ts-expect-error — sign-in-code needs its code.
+typed.render('sign-in-code');
+
+// ── 17. A number for a URL ───────────────────────────────────────────────────
+// A URL variable decides a link's scheme: it is a string, checked at render.
+// @ts-expect-error — link is a string.
+typed.render('verify-email', { link: 42, name: 'Ada' });

@@ -31,6 +31,13 @@ the only number.
   `mailto:` is refused with `MailRefused`; a missing variable, an unknown
   e-mail or locale throws. Its own entry because it reads files with
   `node:fs`: `@nxgt/mail` itself runs anywhere. Built, not yet published.
+- **A renderer typed by the build** — `createMailRenderer<MailEmails>(…)`,
+  with the `MailEmails` that `@nxgt/mail-i18n` writes in `generated/mail.ts`:
+  an unknown e-mail, a variable missing or unknown, the variables left out, or
+  a number for a URL is a compile error rather than a throw at the send, in a
+  call written out. The
+  type parameter is optional; untyped, the renderer is unchanged, and the
+  run-time checks hold either way. Built, not yet published.
 
 ## Next
 
