@@ -1,5 +1,16 @@
 # @nxgt/mail-smtp
 
+## 0.2.0
+
+### Minor Changes
+
+- [#27](https://github.com/softistx/nxgt-mail/pull/27) [`69b4b35`](https://github.com/softistx/nxgt-mail/commit/69b4b351cf8fda0ae151393d1475f638cc2b474a) Thanks [@SteveGT96](https://github.com/SteveGT96)! - Sends attachments: each of a message's `attachments` is handed to nodemailer as `{ filename, content, contentType }`, the bytes copied into a `Buffer`, never a `path` or an `href` — `disableFileAccess` and `disableUrlAccess` stay on. nodemailer encodes a file name outside ASCII. A message over the server's size limit (`552`) is a `MailRefused`, as before. The `@nxgt/mail` peer moves to `^0.2.0`, the minor with attachments. Passes the thirteen cases of `@nxgt/mail/conformance`.
+
+### Patch Changes
+
+- Updated dependencies [[`69b4b35`](https://github.com/softistx/nxgt-mail/commit/69b4b351cf8fda0ae151393d1475f638cc2b474a)]:
+  - @nxgt/mail@0.2.0
+
 ## 0.1.0
 
 ### Minor Changes
