@@ -98,7 +98,8 @@ import { createMailRenderer } from '@nxgt/mail/renderer';
 import type { MailEmails } from './generated/mail';
 
 const mails = createMailRenderer<MailEmails>({ dir: 'dist', getLanguage: () => user.locale });
-await mailer.send({ to, from, ...mails.render('verify-email', { name, link, expiresIn: '15 minutes' }) });
+const minutes = new Intl.NumberFormat(user.locale, { style: 'unit', unit: 'minute', unitDisplay: 'long' });
+await mailer.send({ to, from, ...mails.render('verify-email', { name, link, expiresIn: minutes.format(15) }) });
 ```
 
 In production, `mailer` comes from
@@ -113,7 +114,8 @@ not compile.
 recipient's language (`'15 minutes'`, `'1 heure'`) by the code that sends:
 the server knows the lifetime of the token it made, and the build cannot
 translate a value it does not have. `send.ts` writes it with
-`Intl.NumberFormat(locale, { style: 'unit', unit: 'hour', unitDisplay: 'long' })`.
+`Intl.NumberFormat` and `style: 'unit'`: `'15 minutes'` for `verify-email`,
+`'1 hour'` / `'1 heure'` for `sign-in-code`.
 
 ## Differences from the official starter
 
