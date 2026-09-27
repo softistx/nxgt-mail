@@ -5,12 +5,10 @@ no dates here, and the version something shipped in is the only number.
 
 ## Now
 
-- **Attachments** — the `attachments` of a message are handed to nodemailer
-  as bytes, a `Buffer` copied from each `Uint8Array`, with their file name
-  (encoded by nodemailer when it is not ASCII) and their type. Never a `path`
-  or an `href`: `disableFileAccess` and `disableUrlAccess` stay on. A message
-  over the server's size limit (`552`) is a `MailRefused`. Needs
-  `@nxgt/mail` 0.2. Built, not yet published.
+- **Messages with an idempotency key** — a message that carries an
+  `idempotencyKey` is accepted, and the key is ignored: SMTP has no
+  idempotency, so a message sent twice is delivered twice. Needs `@nxgt/mail`
+  0.3. Built, not yet published.
 
 ## Next
 
@@ -40,6 +38,12 @@ Nothing planned yet. Say what you need in an issue.
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **Attachments, v0.2.0** — the `attachments` of a message are handed to nodemailer
+  as bytes, a `Buffer` copied from each `Uint8Array`, with their file name
+  (encoded by nodemailer when it is not ASCII) and their type. Never a `path`
+  or an `href`: `disableFileAccess` and `disableUrlAccess` stay on. A message
+  over the server's size limit (`552`) is a `MailRefused`. Needs
+  `@nxgt/mail` 0.2.
 - **An SMTP transport on your nodemailer, v0.1.0** — `createSmtpMailer({ transporter,
   from })`: every SMTP option is nodemailer's, set where you create the
   transporter. Each message is checked as every transport checks it, a name is

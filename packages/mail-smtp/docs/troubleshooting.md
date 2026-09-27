@@ -79,6 +79,11 @@ try {
 A retry is yours to decide — from a queue, with a delay. The transport never
 retries in secret.
 
+An `idempotencyKey` does not make that retry safe here: SMTP has no
+idempotency, and this transport ignores the key. If the first attempt went
+through after all, the retry delivers a second copy — weigh that before
+retrying after a timeout.
+
 ### `send: the SMTP server refused the message`
 
 A `MailRefused`, code `MAIL_REFUSED`.

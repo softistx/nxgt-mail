@@ -172,6 +172,7 @@ A string is only an address: `'Acme <noreply@acme.test>'` is refused. Write
 | `from`, `replyTo` | `from`, `replyTo` |
 | `subject`, `html`, `text` | the same, as strings — the e-mail is `multipart/alternative` |
 | `headers` | `headers`, copied |
+| `idempotencyKey` | nothing: ignored — see [below](#the-idempotency-key) |
 | `attachments`, each `{ filename, content, contentType }` | `attachments`, each `{ filename, content: Buffer, contentType }` — the bytes copied into a `Buffer`, never a `path` or an `href`; the e-mail is then `multipart/mixed`. Left out when the list is empty |
 | — | `disableFileAccess: true`, `disableUrlAccess: true`: a part or an attachment is never read from a file or fetched from a URL |
 
@@ -183,6 +184,52 @@ subject or the MIME structure (`Bcc`, `To`, `Content-Type`…). Its messages are
 
 `send` answers `{ messageId }`: nodemailer's `Message-ID` (`<…@acme.test>`), or
 `null` when the transporter answers none — an absence, not a failure.
+
+## The idempotency key
+
+SMTP has no idempotency: a server takes every message it is handed, and
+cannot tell a retry from a new e-mail. The transport therefore **ignores**
+`idempotencyKey` — it neither refuses the message nor writes the key into it
+— and a message sent twice is delivered twice:
+
+```ts
+const once = {
+	to: 'ada@example.com',
+	subject: 'Your receipt',
+	html: '<p>Thank you for your order.</p>',
+	text: 'Thank you for your order.',
+	idempotencyKey: 'order-42/receipt', // still checked by checkMessage; not sent
+};
+
+await mailer.send(once);
+await mailer.send(once); // a second e-mail
+```
+
+Setting the key is still worth it when the same code may run on a
+transport that deduplicates, as `@nxgt/mail-resend`. Over SMTP, a retry
+after a `MailFailure` from a timeout or a dropped connection may deliver
+twice: the server may have taken the message before the connection ended.
+
+**Relaying through Resend's SMTP server** (`smtp.resend.com`)? Resend reads
+its own `Resend-Idempotency-Key` header there. The transport does not set it
+from `idempotencyKey`; set it yourself among the headers, with the same
+value:
+
+```ts
+const key = 'order-42/receipt';
+
+await mailer.send({
+	to: 'ada@example.com',
+	subject: 'Your receipt',
+	html: '<p>Thank you for your order.</p>',
+	text: 'Thank you for your order.',
+	idempotencyKey: key,
+	headers: { 'Resend-Idempotency-Key': key }, // read by Resend's relay; any other server passes it on as a header
+});
+```
+
+On any other server, that header travels with the e-mail to the recipient:
+set it only when the relay is Resend's.
 
 ## Attachments
 

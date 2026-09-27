@@ -263,6 +263,31 @@ describe('checkMessage', () => {
 		expect(() => checkMessage({ ...message, attachments: [] })).not.toThrow();
 	});
 
+	it.each([
+		['empty', ''],
+		['longer than 256 characters', 'k'.repeat(257)],
+		['holding a space', 'order 42'],
+		['holding a line break', 'order-42\r\nX-Evil: 1'],
+		['outside ASCII', 'commande-42-reçu'],
+		['not a string', 42],
+	])('refuses an idempotency key %s, never quoting it', (_, idempotencyKey) => {
+		const error = refusal({ ...message, idempotencyKey });
+		expect(error.message).toBe(
+			'send: idempotencyKey must be 1 to 256 visible ASCII characters, as order-42/receipt',
+		);
+	});
+
+	it('accepts an idempotency key of 1 to 256 visible ASCII characters', () => {
+		for (const idempotencyKey of [
+			'k',
+			'k'.repeat(256),
+			'order-42/receipt',
+			'a:b_c.d~e',
+		]) {
+			expect(() => checkMessage({ ...message, idempotencyKey })).not.toThrow();
+		}
+	});
+
 	it('never puts a refused file name in the message', () => {
 		const error = refusal({
 			...message,

@@ -54,9 +54,12 @@ A transport:
    type — base64 in a JSON body, a MIME part over SMTP, the name encoded when
    it is not ASCII — and **never reads a file or fetches a URL** to attach
    one: `MailAttachment` holds bytes only;
-7. **never retries in secret**, never resolves `false`, never logs and
+7. **uses `idempotencyKey` if the provider deduplicates, and ignores it
+   otherwise** — see [The idempotency key](#the-idempotency-key). It never
+   refuses a message for carrying one, and never writes it into the e-mail;
+8. **never retries in secret**, never resolves `false`, never logs and
    resolves;
-8. **defines no error class of its own**. It throws the classes imported from
+9. **defines no error class of its own**. It throws the classes imported from
    `@nxgt/mail`, declared as a required peer, so `error instanceof MailFailure`
    holds in the application whichever transport threw it. `MailError` is
    abstract, so a bare one cannot be thrown:
@@ -64,14 +67,15 @@ A transport:
 ```json
 {
 	"peerDependencies": {
-		"@nxgt/mail": "^0.2.0"
+		"@nxgt/mail": "^0.3.0"
 	}
 }
 ```
 
-On `0.x`, a caret covers one minor: `^0.2.0` is `>=0.2.0 <0.3.0`. Declare the
+On `0.x`, a caret covers one minor: `^0.3.0` is `>=0.3.0 <0.4.0`. Declare the
 minor whose `MailMessage` your transport reads — `0.2` is the one with
-`attachments` — and release your transport when `@nxgt/mail` moves to the next.
+`attachments`, `0.3` the one with `idempotencyKey` — and release your
+transport when `@nxgt/mail` moves to the next.
 
 An error's `message` reports a shape, never a value: never an address, a
 subject, a link, an API key or a connection string. What the provider said goes
@@ -105,9 +109,12 @@ Throws `MailRefused`, naming **where** the problem is and never the value:
 | an attachment whose `content` is not a `Uint8Array` — a string, a path, an `ArrayBuffer` | `send: attachments[0].content must be a Uint8Array — the file's bytes, never a path or a URL` |
 | a file name that is empty, `.` or `..`, or holds `/`, `\`, a line break, a control character or a format character | `send: attachments[0].filename must be a file name — not empty, not . or .., without / or \, a line break or a control character` |
 | a content type that is not a bare `type/subtype`, or is `multipart/*` or `message/*` | `send: attachments[0].contentType must be a file's type/subtype, as application/pdf — never multipart/* or message/*` |
+| an `idempotencyKey` that is not 1 to 256 visible ASCII characters — empty, a space, a line break, a letter outside ASCII, not a string | `send: idempotencyKey must be 1 to 256 visible ASCII characters, as order-42/receipt` |
 
 An empty `attachments` is accepted, and is the same as none: send no
-attachment field to the provider then.
+attachment field to the provider then. A key that passes is safe to write in
+an HTTP header as it is: no line break, no character a header would need to
+encode.
 
 Two helpers turn addresses into what a provider wants:
 
@@ -153,6 +160,8 @@ export function createHttpMailer(options: HttpMailerOptions): Mailer {
 	return {
 		async send(message) {
 			checkMessage(message);
+			// The key names the send; it is not part of the e-mail, so it stays out of the body.
+			const { idempotencyKey, ...fields } = message;
 			// A JSON API takes an attachment's bytes as base64.
 			// An empty list is none: the field is left out of the request.
 			const attachments = message.attachments?.length
@@ -167,8 +176,13 @@ export function createHttpMailer(options: HttpMailerOptions): Mailer {
 			try {
 				response = await post(options.endpoint, {
 					method: 'POST',
-					headers: { authorization: `Bearer ${options.apiKey}`, 'content-type': 'application/json' },
-					body: JSON.stringify({ ...message, from: message.from ?? options.from, attachments }),
+					headers: {
+						authorization: `Bearer ${options.apiKey}`,
+						'content-type': 'application/json',
+						// This provider deduplicates on a header; with one that does not, leave the key out.
+						...(idempotencyKey === undefined ? {} : { 'idempotency-key': idempotencyKey }),
+					},
+					body: JSON.stringify({ ...fields, from: message.from ?? options.from, attachments }),
 				});
 			} catch (cause) {
 				throw new MailFailure('send: the provider could not be reached', { cause });
@@ -188,6 +202,51 @@ export function createHttpMailer(options: HttpMailerOptions): Mailer {
 		},
 	};
 }
+```
+
+## The idempotency key
+
+`idempotencyKey` names a send, so that sending the same message again — a
+retry after a timeout, a job run twice — delivers it once. What a transport
+does with it depends on its provider:
+
+| The provider | The transport |
+| --- | --- |
+| deduplicates requests on a key — an `Idempotency-Key` header, a field of its API | passes the key there, as it is. A repeated key answers the first send's id: resolve with it, as for any hand-over. Map the provider's answers: a key reused for a **different** message is a `MailRefused` (sending it again fails again); a key whose first send is **still in progress** is a `MailFailure` (a later retry may work) |
+| has no such mechanism — SMTP, most relays | ignores the key. It does not refuse the message, and does not emulate deduplication with state of its own: a cache in one process is not what the caller was promised |
+
+Either way, **never put the key in the e-mail** — not in the body, not as a
+header the recipient receives. It names the send, not the message, and it is
+derived from what the e-mail is about (`order-42/receipt`): a caller did not
+choose to show it. `@nxgt/mail-resend` sends it as Resend's `Idempotency-Key`;
+`@nxgt/mail-smtp` ignores it.
+
+Document which one yours does, and for how long the provider remembers a key:
+past that window, a retry delivers again.
+
+The conformance suite has no case for it — a transport that ignores the key
+is as correct as one that honours it. Test it in your own specs: the key
+reaches the provider where it should, and nowhere else.
+
+```ts
+import { expect, test } from 'bun:test';
+import { sampleMessage } from '@nxgt/mail/conformance';
+import { createHttpMailer } from './http-mailer';
+
+test('sends the idempotency key as a header, never in the body', async () => {
+	const requests: { headers: Headers; body: Record<string, unknown> }[] = [];
+	const mailer = createHttpMailer({
+		endpoint: 'https://mail.example.test/send',
+		apiKey: 'test',
+		fetch: async (_url, init) => {
+			requests.push({ headers: new Headers(init.headers), body: JSON.parse(String(init.body)) });
+			return Response.json({ id: 'm-1' });
+		},
+	});
+	await mailer.send({ ...sampleMessage, idempotencyKey: 'order-42/receipt' });
+	expect(requests[0]?.headers.get('idempotency-key')).toBe('order-42/receipt');
+	expect('idempotencyKey' in (requests[0]?.body ?? {})).toBe(false);
+});
 ```
 
 ## The conformance suite

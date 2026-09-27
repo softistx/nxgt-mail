@@ -154,6 +154,45 @@ larger on the way.
 Inline images (`cid:`) are not supported yet. See
 [Sending — attachments](docs/guide/sending.md#attachments).
 
+### Idempotency — a retry that delivers once
+
+`idempotencyKey` names a send, so sending it again — a retry after a timeout,
+a job run twice — delivers it once where the transport can deduplicate.
+Derive it from what the e-mail is about, never from the time or a random
+value. The memory mailer honours it, so a test can prove a retry is safe:
+
+```ts
+import { expect, it } from 'bun:test';
+import { createMemoryMailer } from '@nxgt/mail';
+
+it('sends one receipt, however often the job runs', async () => {
+	const mailer = createMemoryMailer();
+	const receipt = {
+		to: 'ada@example.com',
+		subject: 'Your receipt',
+		html: '<p>Thank you for your order.</p>',
+		text: 'Thank you for your order.',
+		idempotencyKey: 'order-42/receipt', // 1 to 256 visible ASCII characters
+	};
+
+	const first = await mailer.send(receipt);
+	const again = await mailer.send(receipt); // the retry
+
+	expect(again).toEqual(first); // { messageId: 'memory-1' }
+	expect(mailer.sent).toHaveLength(1); // delivered once
+	expect(mailer.attempts).toBe(2);
+});
+```
+
+A different message under a key already delivered is refused with
+`MailRefused` — a key names one e-mail — and a failed send leaves its key
+free, so its retry delivers. `@nxgt/mail-resend`
+sends the key as Resend's `Idempotency-Key`, which Resend keeps for 24 hours;
+`@nxgt/mail-smtp` ignores it — SMTP has no such mechanism, and a message sent
+twice is delivered twice. A key that is not 1 to 256 visible ASCII characters
+is refused with `MailRefused`. See
+[Sending — idempotency](docs/guide/sending.md#idempotency--sending-once).
+
 ### Errors — switch on `code`
 
 Both errors extend `MailError`, whose `code` is a union a `switch` exhausts.
@@ -251,13 +290,19 @@ export function createHttpMailer(endpoint: string, apiKey: string): Mailer {
 	return {
 		async send(message) {
 			checkMessage(message); // MailRefused, naming where, never the value
+			const { idempotencyKey, ...fields } = message; // names the send: never in the body
 			const attachments = message.attachments?.length
 				? message.attachments.map((file) => ({ ...file, content: base64Of(file.content) }))
 				: undefined; // an empty list is none
 			const response = await fetch(endpoint, {
 				method: 'POST',
-				headers: { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' },
-				body: JSON.stringify({ ...message, to: recipientsOf(message), attachments }),
+				headers: {
+					authorization: `Bearer ${apiKey}`,
+					'content-type': 'application/json',
+					// if the provider deduplicates; a transport whose provider cannot ignores the key
+					...(idempotencyKey === undefined ? {} : { 'idempotency-key': idempotencyKey }),
+				},
+				body: JSON.stringify({ ...fields, to: recipientsOf(message), attachments }),
 			}).catch((cause: unknown) => {
 				throw new MailFailure('send: the provider could not be reached', { cause });
 			});
@@ -334,6 +379,10 @@ a recipient no check saw: `checkMessage` refuses `To`, `Cc`, `Bcc`, `From`,
 again unchanged. Nothing in this package retries a `MAIL_FAILED`: a retry is
 your decision, made where you can see it.
 
+**An idempotency key from the clock or a random value protects nothing.**
+``idempotencyKey: `receipt-${Date.now()}` `` gives the retry a new key, and
+the e-mail goes out twice; write ``idempotencyKey: `order-${order.id}/receipt` ``.
+
 **The locale is the recipient's, not the request's.** An administrator who
 invites a user sends the invitation in the *user's* locale:
 `pickLocale(invitee.locale, supported, fallback)`.
@@ -347,7 +396,7 @@ gives a test file `describe` and `it` as bare identifiers, not on `globalThis`.
 
 ## Type safety, counted
 
-**21 plausible mistakes, 21 refused** at compile time, each measured by a
+**22 plausible mistakes, 22 refused** at compile time, each measured by a
 `@ts-expect-error` in
 [`test/types/refusals.ts`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/test/types/refusals.ts)
 that fails the typecheck the moment it stops holding:
@@ -383,6 +432,11 @@ And an attachment:
 19. A `path` instead of the bytes: no transport reads a file for you.
 20. No `contentType`: nothing guesses it from the file name.
 21. One attachment, not in a list.
+
+And the idempotency key:
+
+22. A number (`idempotencyKey: order.id`): the key is a string, as
+    `order-42/receipt`.
 
 The same file holds the calls that must keep compiling: a refusal that refuses
 the correct call is a bug.

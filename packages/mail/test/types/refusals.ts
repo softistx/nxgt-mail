@@ -249,4 +249,20 @@ const single: MailMessage = {
 	// @ts-expect-error — attachments is a list, even of one.
 	attachments: invoice,
 };
-void [asText, asPath, untyped, single];
+
+// ── 22. An idempotency key given as a number ─────────────────────────────────
+// An order id is often one; the key is a string, as order-42/receipt.
+const orderId = 42;
+const numbered: MailMessage = {
+	...rendered,
+	to: 'ada@example.test',
+	// @ts-expect-error — the key is a string.
+	idempotencyKey: orderId,
+};
+// Must compile: the key built from the id.
+const keyed: MailMessage = {
+	...rendered,
+	to: 'ada@example.test',
+	idempotencyKey: `order-${orderId}/receipt`,
+};
+void [asText, asPath, untyped, single, numbered, keyed];

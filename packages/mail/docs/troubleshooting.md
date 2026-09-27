@@ -64,6 +64,9 @@ How the messages are shaped:
 - [`send: attachments[<n>].content must be a Uint8Array — the file's bytes, never a path or a URL`](#send-attachmentsncontent-must-be-a-uint8array--the-files-bytes-never-a-path-or-a-url)
 - [`send: attachments[<n>].filename must be a file name — not empty, not . or .., without / or \, a line break or a control character`](#send-attachmentsnfilename-must-be-a-file-name--not-empty-not--or--without--or--a-line-break-or-a-control-character)
 - [`send: attachments[<n>].contentType must be a file's type/subtype, as application/pdf — never multipart/* or message/*`](#send-attachmentsncontenttype-must-be-a-files-typesubtype-as-applicationpdf--never-multipart-or-message)
+- [`send: idempotencyKey must be 1 to 256 visible ASCII characters, as order-42/receipt`](#send-idempotencykey-must-be-1-to-256-visible-ascii-characters-as-order-42receipt)
+- [`send: idempotencyKey was already used for a different message — a key names one e-mail`](#send-idempotencykey-was-already-used-for-a-different-message--a-key-names-one-e-mail)
+- [An e-mail is delivered twice although it has an `idempotencyKey`](#an-e-mail-is-delivered-twice-although-it-has-an-idempotencykey)
 - [`send: the memory mailer was told to fail this send`](#send-the-memory-mailer-was-told-to-fail-this-send)
 
 **Locale**
@@ -495,8 +498,11 @@ whether the e-mail is still worth sending.
 the transport's message when the provider answered that the message is
 malformed or too large.
 **Why:** something in the message would break a header, has no valid
-recipient, or is an attachment that is not bytes or is badly named — or the
-whole message is over the provider's size limit. Sending it again unchanged fails again.
+recipient, is an attachment that is not bytes or is badly named, or is an
+`idempotencyKey` that is malformed or already used for a different message
+(the memory mailer's refusal, or Resend's `409 invalid_idempotent_request`) —
+or the whole message is over the provider's size limit. Sending it again
+unchanged fails again.
 **Fix:** read `error.message` for where the problem is, and fix the message;
 the entries below cover each one. Handle the code as in the
 [`MAIL_FAILED`](#mail_failed--mailfailure-the-transport-could-not-hand-the-message-over)
@@ -755,6 +761,91 @@ const notes: MailAttachment = {
   contentType: 'text/plain',
 };
 ```
+
+### `send: idempotencyKey must be 1 to 256 visible ASCII characters, as order-42/receipt`
+
+**When:** `send`, with an `idempotencyKey` that is empty, not a string,
+longer than 256 characters, or holds a space, a line break, a control
+character or anything outside ASCII — an accent, an emoji.
+The message never holds the key.
+**Why:** a transport that deduplicates writes the key into a header (Resend's
+`Idempotency-Key`), where only visible ASCII is safe, and Resend takes at most
+256 characters. The key is checked the same way on every transport, even one
+that ignores it, so switching transports never turns a working key into a
+refusal.
+**Fix:** build the key from what the e-mail is about, and encode what you did
+not write. `encodeURIComponent` keeps a readable key in visible ASCII; a hash
+bounds its length:
+
+```ts
+const orderRef = 'Commande n° 42'; // yours, not ASCII
+
+// Readable, when the reference is short:
+const key = `order-${encodeURIComponent(orderRef)}/receipt`; // order-Commande%20n%C2%B0%2042/receipt
+
+// Always under 256, whatever the reference:
+const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(orderRef));
+const hex = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
+const hashed = `order-${hex}/receipt`; // 64 hex digits, on any runtime
+
+// Pick one, and build it the same way on every attempt:
+await mailer.send({ ...message, idempotencyKey: hashed });
+```
+
+### `send: idempotencyKey was already used for a different message — a key names one e-mail`
+
+**When:** a test, on a send through `createMemoryMailer()` whose
+`idempotencyKey` the mailer already delivered, with a message that differs —
+another recipient, subject, body, header or attachment. A `MailRefused`,
+`code: 'MAIL_REFUSED'`; nothing is delivered. The same message again, key
+included, is not refused: it answers the first `messageId`.
+**Why:** a key names one e-mail. The memory mailer refuses a second, different
+message under it as Resend does (a `409` `invalid_idempotent_request`, which
+`@nxgt/mail-resend` throws as `send: Resend refused the message`), so the test
+fails where production would. The usual causes: a key per user or per job
+rather than per e-mail, or a retry that rendered the e-mail again with a
+template or a variable that changed in between.
+**Fix:** one key per e-mail, and the same message on every attempt at it —
+render once, keep the result with the job, and send that on retry:
+
+```ts
+const message = { ...rendered, to: user.email, idempotencyKey: `order-${order.id}/receipt` };
+
+await mailer.send(message); // the first attempt
+await mailer.send(message); // a retry: the same message, the first messageId
+```
+
+A message meant to be different — a corrected receipt — is a new e-mail:
+give it a new key (`order-42/receipt-2`). Between tests, `clear()` forgets the
+keys.
+
+### An e-mail is delivered twice although it has an `idempotencyKey`
+
+**When:** a retry — after a `MailFailure`, a timeout, a job run twice —
+delivers a second copy, although both sends carried an `idempotencyKey`.
+**Why:** either the key changed between the attempts, or the transport cannot
+deduplicate. A key built from `Date.now()` or `crypto.randomUUID()` at each
+attempt names a new send each time, so it deduplicates nothing. SMTP has no
+idempotency: `@nxgt/mail-smtp` ignores the key, and a message sent twice is
+delivered twice. Resend keeps a key for 24 hours; a retry after that is a new
+send.
+**Fix:** derive the key from what the e-mail is about — one key per e-mail
+the application means to send once — and compute it the same way on every
+attempt:
+
+```ts
+// ✗ a new key per attempt: every retry is a new e-mail
+await mailer.send({ ...message, idempotencyKey: crypto.randomUUID() });
+
+// ✓ the same key for every attempt at this e-mail
+await mailer.send({ ...message, idempotencyKey: `order-${order.id}/receipt` });
+```
+
+A key per user (`user-${user.id}`) is the opposite mistake: the second,
+different e-mail to that user is refused — by the memory mailer, as
+[`send: idempotencyKey was already used for a different message — a key names one e-mail`](#send-idempotencykey-was-already-used-for-a-different-message--a-key-names-one-e-mail),
+and by Resend, as `send: Resend refused the message`. When a random key is
+what you have, create it once, store it with the job, and reuse it on retry.
 
 ### `send: the memory mailer was told to fail this send`
 

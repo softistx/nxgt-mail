@@ -12,7 +12,9 @@
  * ```
  *
  * **A failure throws** the `MailFailure` or `MailRefused` of the `@nxgt/mail`
- * peer, what Resend answered as the `cause`. Nothing is retried.
+ * peer, what Resend answered as the `cause`. Nothing is retried; a message's
+ * `idempotencyKey` is sent as Resend's `Idempotency-Key`, so a retry the
+ * caller makes delivers once.
  */
 
 import {
@@ -121,6 +123,41 @@ function base64Of(bytes: Uint8Array): string {
 	return btoa(binary);
 }
 
+/** The JSON body of `POST /emails`: `message` in Resend's field names. */
+function bodyOf(
+	message: MailMessage,
+	sender: Address,
+): Record<string, unknown> {
+	const to = Array.isArray(message.to) ? message.to : [message.to];
+	return {
+		from: formatAddress(sender),
+		to: to.map(formatAddress),
+		subject: message.subject,
+		html: message.html,
+		text: message.text,
+		...(message.replyTo === undefined
+			? {}
+			: {
+					// biome-ignore lint/style/useNamingConvention: Resend's wire format names the field, not us.
+					reply_to: formatAddress(message.replyTo),
+				}),
+		...(message.headers === undefined ||
+		Object.keys(message.headers).length === 0
+			? {}
+			: { headers: message.headers }),
+		...(message.attachments === undefined || message.attachments.length === 0
+			? {}
+			: {
+					attachments: message.attachments.map((attachment) => ({
+						filename: attachment.filename,
+						content: base64Of(attachment.content),
+						// biome-ignore lint/style/useNamingConvention: Resend's wire format names the field, not us.
+						content_type: attachment.contentType,
+					})),
+				}),
+	};
+}
+
 /** The largest delay a timer takes, 2³¹ − 1 ms — about 24.8 days. */
 const MAX_TIMEOUT_MS = 2_147_483_647;
 
@@ -201,32 +238,7 @@ export function createResendMailer(options: ResendMailerOptions): Mailer {
 					'send: from is missing — give the message a from, or createResendMailer a default one',
 				);
 			}
-			const to = Array.isArray(message.to) ? message.to : [message.to];
-			const body = {
-				from: formatAddress(sender),
-				to: to.map(formatAddress),
-				subject: message.subject,
-				html: message.html,
-				text: message.text,
-				...(message.replyTo === undefined
-					? {}
-					: {
-							// biome-ignore lint/style/useNamingConvention: Resend's wire format names the field, not us.
-							reply_to: formatAddress(message.replyTo),
-						}),
-				...(message.headers === undefined ? {} : { headers: message.headers }),
-				...(message.attachments === undefined ||
-				message.attachments.length === 0
-					? {}
-					: {
-							attachments: message.attachments.map((attachment) => ({
-								filename: attachment.filename,
-								content: base64Of(attachment.content),
-								// biome-ignore lint/style/useNamingConvention: Resend's wire format names the field, not us.
-								content_type: attachment.contentType,
-							})),
-						}),
-			};
+			const body = bodyOf(message, sender);
 
 			const signal = AbortSignal.timeout(timeoutMs);
 			let response: Response;
@@ -237,6 +249,9 @@ export function createResendMailer(options: ResendMailerOptions): Mailer {
 						headers: {
 							authorization: `Bearer ${options.apiKey}`,
 							'content-type': 'application/json',
+							...(message.idempotencyKey === undefined
+								? {}
+								: { 'idempotency-key': message.idempotencyKey }),
 						},
 						body: JSON.stringify(body),
 						signal,
@@ -263,14 +278,18 @@ export function createResendMailer(options: ResendMailerOptions): Mailer {
 				text(answer.name),
 				text(answer.message),
 			);
-			// 400 and 422 are Resend refusing the message, and 413 a request too
-			// large to take — attachments over the limit, which sending again
-			// cannot fix. Anything else — a key refused, a rate limit, an outage —
-			// is Resend failing to take it.
+			// 400 and 422 are Resend refusing the message, 413 a request too large
+			// to take, and a 409 invalid_idempotent_request an idempotency key
+			// already used for another message: sending again cannot fix any of
+			// them. Anything else — a key refused, a rate limit, an outage, a 409
+			// for a send with the same key still in progress — is Resend failing
+			// to take it.
 			if (
 				response.status === 400 ||
 				response.status === 413 ||
-				response.status === 422
+				response.status === 422 ||
+				(response.status === 409 &&
+					cause.errorName === 'invalid_idempotent_request')
 			) {
 				throw new MailRefused('send: Resend refused the message', { cause });
 			}

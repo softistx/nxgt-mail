@@ -37,8 +37,8 @@ bun add @nxgt/mail-smtp @nxgt/mail nodemailer
 
 Peers, all required:
 
-- `@nxgt/mail` — the port, the errors and the checks: `^0.2`, the version
-  with attachments. One copy in your tree, so `error instanceof MailFailure`
+- `@nxgt/mail` — the port, the errors and the checks: `^0.3`, the version
+  with attachments and `idempotencyKey`. One copy in your tree, so `error instanceof MailFailure`
   holds.
 - `nodemailer` (`>=7 <11`; tested with 10). This package never imports it:
   you create the transporter, with every SMTP option nodemailer has.
@@ -91,6 +91,9 @@ await mailer.send({
 - `messageId` is nodemailer's id (`<…@host>`), or `null` when it gives none.
 - The parts are strings and the attachments bytes: nodemailer is told never
   to read a file or a URL (`disableFileAccess`, `disableUrlAccess`).
+- `idempotencyKey` is ignored: SMTP has no such mechanism, so a message sent
+  twice is delivered twice. See
+  [Setting up — the idempotency key](docs/guide/setup.md#the-idempotency-key).
 
 ### Attachments
 
@@ -169,6 +172,11 @@ A timeout ends in `MailFailure`.
 **A `4xx` is a failure, a `5xx` a refusal** — except authentication (`530`–
 `539`) and a sender refused at `MAIL FROM`: the next message would be refused
 the same way, so it is a failure of the wiring, not of the message.
+
+**A retry after a timeout can deliver twice.** SMTP cannot deduplicate, and
+the transport ignores `idempotencyKey`: after a `MailFailure` from a
+timeout, the server may already have the message. Retry only what you can
+afford to send twice.
 
 **Some recipients refused still throws, after the others got it.** The
 server may accept one recipient and refuse another; the message then went out

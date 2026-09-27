@@ -155,6 +155,8 @@ add what the suite does not ask of every transport:
 - the default `from`, `replyTo` and `headers` reach the server, and the id is
   nodemailer's;
 - nodemailer is told never to read a file or a URL;
+- `idempotencyKey` is ignored: the same message sent twice is handed over
+  twice, and the key appears nowhere in what nodemailer receives;
 - attachments are handed over as `{ filename, content, contentType }` with a
   `Buffer` copied from the bytes — a change to the caller's array during the
   send reaches no one — and an empty list sends none;

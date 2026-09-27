@@ -55,10 +55,15 @@ A `MailRefused`, code `MAIL_REFUSED`.
 an address in a form it refuses, a header it does not allow, a subject too
 long, an attachment it will not carry (a `422` `invalid_attachment`, over
 40 MB once encoded in base64 included, a third larger than the files) — or a
-`413`, a request too large for what sits in front of the API.
+`413`, a request too large for what sits in front of the API. Or a `409`
+`invalid_idempotent_request`: the message's `idempotencyKey` was already used,
+within Resend's 24 hours, for a different message — a key per user rather
+than per e-mail, or a template, a variable or a recipient that changed
+between two attempts at the same e-mail.
 
 **Why:** Resend will refuse the same message again; retrying it unchanged is
-pointless.
+pointless. For a `409`, the first message with that key was taken; this one
+was not, and will not be under that key.
 
 **Fix:** read `cause.errorName` and `cause.detail` — Resend's own words:
 
@@ -75,6 +80,10 @@ try {
 			detail?: string | null;
 		};
 		console.warn(status, errorName, detail); // 422 validation_error Invalid `to` field. …
+		if (status === 409 && errorName === 'invalid_idempotent_request') {
+			// The key already named another message: it is not one key per e-mail.
+			console.warn('idempotencyKey reused for a different message');
+		}
 	}
 	throw error;
 }
@@ -85,6 +94,18 @@ try {
 For a message too large (`cause.status` `413`, or a `422` whose `detail`
 names the size), sending it again fails again: send the file as a signed
 link in the template instead of an attachment.
+
+For an `invalid_idempotent_request`, make the key name one e-mail — derived
+from what it is about, the same on every attempt at it — and render that
+e-mail the same way on every attempt:
+
+```ts
+await mailer.send({ ...message, idempotencyKey: `user-${user.id}` }); // ✗ every e-mail to that user
+await mailer.send({ ...message, idempotencyKey: `order-${order.id}/receipt` }); // ✓ this e-mail
+```
+
+A message that was meant to be different — a corrected receipt — is a new
+e-mail: give it a new key (`order-42/receipt-2`).
 
 ### `send: Resend could not take the message`
 
@@ -98,11 +119,30 @@ a server that accepted it before failing.
 | --- | --- | --- |
 | `401` | No key reached Resend | Check the key the process was started with |
 | `403` | An invalid or revoked key; a sending domain not verified; a test key sending to someone else than the account's owner | Check the key, and verify the `from` domain in Resend |
+| `409` `concurrent_idempotent_requests` | A send with the same `idempotencyKey` is still in progress — a retry, or a second worker, that started before the first attempt finished | Retry later, with the same key: once the first finishes, the retry answers its id |
 | `429` | The rate limit or the daily quota | Send less often, or from a queue that spaces the sends |
 | `5xx` | Resend is failing | Retry later |
 
 The transport does not retry: a retry is yours to decide, where you can see
-it.
+it. With an `idempotencyKey`, a retry of the same message within 24 hours is
+safe: if the first attempt went through, Resend answers its id and delivers
+nothing more.
+
+```ts
+import { MailFailure } from '@nxgt/mail';
+
+try {
+	await mailer.send({ ...message, idempotencyKey: `order-${order.id}/receipt` });
+} catch (error) {
+	const errorName = error instanceof MailFailure
+		? (error.cause as { errorName?: string | null } | undefined)?.errorName
+		: undefined;
+	if (errorName === 'concurrent_idempotent_requests') {
+		// The first attempt is still running: retry later, with the same key.
+	}
+	throw error;
+}
+```
 
 ### `send: Resend could not be reached`
 
