@@ -228,10 +228,54 @@ describe('a project built with the ui plugin', () => {
 		expect(html).not.toMatch(/margin[a-z-]*: -/);
 	});
 
+	test('fills a progress bar to its share, on a track at 20% of the primary', async () => {
+		const html = await read('dist/en/sequence.html');
+		expect(html).toContain(
+			'<table role="progressbar" aria-valuenow="2" aria-valuemin="0" aria-valuemax="3"',
+		);
+		expect(html).toContain('background-color: #dadcea;');
+		expect(html).toMatch(
+			/<td height="8" style="width: 67%;[^"]*background-color: #485096;/,
+		);
+		// Empty and full: one cell each, the track's or the fill's.
+		expect(html).toMatch(
+			/aria-valuenow="0"[^>]*><tr> <td height="8" style="height: 8px;/,
+		);
+		expect(html).toMatch(
+			/aria-valuenow="100"[^>]*><tr><td height="8" style="width: 100%;/,
+		);
+	});
+
+	test('numbers the steps in order unless one says its index, and joins all but the last', async () => {
+		const html = await read('dist/en/sequence.html');
+		for (const index of ['1', '2', '7']) {
+			expect(styleOf(html, index, 'span')).toContain(
+				'border: 1px solid #d1d3e5;',
+			);
+		}
+		const steps = html.slice(
+			html.indexOf('>1</span>'),
+			html.indexOf('>Signed in<'),
+		);
+		expect(steps.match(/border-right-width: 1px/g)).toHaveLength(2);
+	});
+
+	test('tones a timeline marker, writes its time as given, and joins all but the last', async () => {
+		const html = await read('dist/en/sequence.html');
+		expect(html).toContain('>{{ time }}</td>');
+		expect(html).toContain(
+			'border: 1px solid #99d5d0; background-color: #d9efed;',
+		);
+		const events = html.slice(html.indexOf('>Signed in<'));
+		expect(events.match(/border-right-width: 1px/g)).toHaveLength(2);
+		expect(html).toContain('>No activity yet</p>');
+	});
+
 	test.each([
 		['welcome.vue', ['html-align', 'html-aria-hidden']],
 		// The caption's caption-side falls back on its align="bottom".
 		['gallery.vue', ['css-caption-side', 'html-align', 'html-align']],
+		['sequence.vue', ['html-align', 'html-aria-hidden']],
 	])(
 		'caniemail reports for Gmail, Outlook and Apple Mail only the known partial support of %s',
 		async (email, known) => {

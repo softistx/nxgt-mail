@@ -7,5 +7,8 @@
 	},
 	"gallery": {
 		"subject": "Votre facture"
+	},
+	"sequence": {
+		"subject": "Votre configuration"
 	}
 }

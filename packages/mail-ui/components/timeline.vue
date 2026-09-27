@@ -1,0 +1,63 @@
+<script setup lang="ts">
+import { twMerge } from '@maizzle/framework';
+import { computed, useAttrs } from 'vue';
+import type { TimelineItem, TimelineTone } from './ui';
+
+/**
+ * material-vue's Timeline: events one under the other, each a toned marker
+ * on a line, its title, a time on the right, and a description.
+ *
+ * An e-mail is built before it is sent, so a time is a label you write —
+ * a placeholder, as `{{ placeholder('signedInAt') }}` — never a relative time
+ * computed at build time. There is no loading state: an e-mail does not load.
+ */
+defineOptions({ inheritAttrs: false });
+
+const props = defineProps<{ items: readonly TimelineItem[]; empty?: string }>();
+
+const MARKER: Record<TimelineTone, string> = {
+	default: 'border-border bg-muted text-muted-foreground',
+	primary: 'border-primary-40 bg-primary-15 text-primary',
+	success: 'border-success-40 bg-success-15 text-success',
+	info: 'border-info-40 bg-info-15 text-info',
+	warning: 'border-warning-40 bg-warning-15 text-warning',
+	error: 'border-error-40 bg-error-15 text-error',
+};
+
+const attrs = useAttrs();
+const classes = computed(() => twMerge('mb-4 w-full', attrs.class as string));
+const emptyClasses = computed(() =>
+	twMerge(
+		'mb-4 py-6 text-center text-sm text-muted-foreground',
+		attrs.class as string,
+	),
+);
+</script>
+
+<template>
+  <table v-if="props.items.length > 0" v-bind="{ ...attrs, class: undefined }" :class="classes" role="presentation" cellpadding="0" cellspacing="0">
+    <template v-for="(item, position) in props.items" :key="item.id">
+      <tr>
+        <td colspan="2" class="w-8 align-top">
+          <span :class="`block h-8 w-8 rounded-full border border-solid text-center text-[12px] leading-[30px] ${MARKER[item.tone ?? 'default']}`" aria-hidden="true">&#9679;</span>
+        </td>
+        <td class="pl-3 align-top">
+          <table class="w-full" role="presentation" cellpadding="0" cellspacing="0">
+            <tr>
+              <td class="pt-1 align-top text-sm font-medium leading-6 text-foreground">{{ item.title }}</td>
+              <td v-if="item.timestampLabel" class="whitespace-nowrap pl-3 pt-1 text-right align-top text-xs leading-6 text-muted-foreground">{{ item.timestampLabel }}</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      <tr>
+        <td :class="['w-4 text-[0px] leading-none', position < props.items.length - 1 && 'border-r [border-right-style:solid] border-border']">&#8203;</td>
+        <td class="w-4 text-[0px] leading-none">&#8203;</td>
+        <td :class="['pl-3 align-top', position < props.items.length - 1 && 'pb-6']">
+          <p v-if="item.description" class="m-0 text-sm text-muted-foreground">{{ item.description }}</p>
+        </td>
+      </tr>
+    </template>
+  </table>
+  <p v-else-if="empty" v-bind="{ ...attrs, class: undefined }" :class="emptyClasses">{{ empty }}</p>
+</template>

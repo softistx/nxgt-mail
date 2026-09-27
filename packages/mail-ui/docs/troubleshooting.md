@@ -353,8 +353,8 @@ background into a plain hex value:
 ```
 
 Each colour of the theme (`primary`, `secondary`, `info`, `success`,
-`warning`, `error`, `foreground`) has the tints `-5`, `-10`, `-15`, `-40` and
-`-50`, for `bg-`, `text-` and `border-`.
+`warning`, `error`, `foreground`) has the tints `-5`, `-10`, `-15`, `-20`,
+`-25`, `-40` and `-50`, for `bg-`, `text-` and `border-`.
 
 ### A side border (`border-b`) is gone, and the style ends with `border: 0`
 
@@ -418,8 +418,9 @@ styles the box; the space below is on the table around it.
 **Fix:** replace the component with your own, copied from the package's, and
 change its outer `mb-4` (`mb-2` on `NxListTile`) — see
 [Replacing a component](guide/plugin.md#replacing-a-component). On
-`NxTypography`, `NxSummaryData`, `NxTable`, `NxDescription` and
-`NxAvatarGroup`, `class="mb-0"` works.
+`NxTypography`, `NxSummaryData`, `NxTable`, `NxDescription`,
+`NxAvatarGroup`, `NxProgress`, `NxSteps` and `NxTimeline`, `class="mb-0"`
+works.
 
 ### The editor says `Property 'brand' does not exist` in a template
 
