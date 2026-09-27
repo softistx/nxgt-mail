@@ -313,6 +313,7 @@ describe('importTarget', () => {
 		).toBe('dist/i.js');
 		expect(importTarget({ default: './dist/d.js' })).toBe('dist/d.js');
 		expect(importTarget('./dist/s.js')).toBe('dist/s.js');
+		expect(importTarget('./dist/m.mjs')).toBe('dist/m.mjs');
 	});
 
 	test('is null for what is not JavaScript, or not there', () => {

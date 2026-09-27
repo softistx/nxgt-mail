@@ -294,7 +294,7 @@ export function importTarget(target: unknown): string | null {
 				? ((target as Record<string, unknown>).import ??
 					(target as Record<string, unknown>).default)
 				: null;
-	return typeof file === 'string' && file.endsWith('.js')
+	return typeof file === 'string' && /\.[cm]?js$/.test(file)
 		? posix.normalize(file)
 		: null;
 }
@@ -617,8 +617,8 @@ async function main(): Promise<void> {
 		}
 		if (builtin > 0) {
 			console.error(
-				`\n${builtin} problem(s) with \`nxgt.noNodeBuiltins\`: a subpath listed there reaches a ` +
-					'built-in module.\nNode and Bun load them, so nothing else ' +
+				`\n${builtin} problem(s) with \`nxgt.noNodeBuiltins\`: a subpath listed there ` +
+					'reaches a built-in module, is no export, or the field is not a list.\nNode and Bun load them, so nothing else ' +
 					'reports it; an edge runtime refuses them.\nMove the import behind ' +
 					'the subpath that may use it (for @nxgt/mail, `./renderer`).',
 			);
