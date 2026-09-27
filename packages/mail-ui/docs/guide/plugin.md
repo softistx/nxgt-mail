@@ -178,6 +178,10 @@ Maizzle writes to `resources/js/types/maizzle`), must include the
 `.maizzle/*.d.ts` of the folder `maizzle` runs in itself. If the editor says
 `Property 'brand' does not exist`, see
 [the troubleshooting entry](../troubleshooting.md#the-editor-says-property-brand-does-not-exist-in-a-template).
+If Biome is the editor's linter, set `html.experimentalFullSupportEnabled` in
+`biome.json`, or it reads a template without `<script>` as JavaScript once you
+edit it — see
+[Biome reports `parse` errors](../troubleshooting.md#biome-reports-parse-errors-in-a-template-as-soon-as-you-edit-it).
 
 ## Replacing a component
 

@@ -454,11 +454,10 @@ editor's linter.
 **Why:** Biome's language server reads only the `<script>` of a `.vue` file
 when it opens it, but re-reads a file without one as JavaScript from the first
 change on. The template is fine; the editor's Biome is not reading it as Vue.
-**Fix:** let Biome parse Vue templates, then run **Biome: Restart** in the
-editor:
+**Fix:** let Biome parse Vue templates — add this key to your existing
+`biome.json` — then run **Biome: Restart** in the editor:
 
 ```json
-// biome.json
 { "html": { "experimentalFullSupportEnabled": true } }
 ```
 
