@@ -214,6 +214,11 @@ through untouched, and never branches or computes on it
 - `bunfig.toml` carries the npm token, **never `.npmrc`**.
 - **A new package starts `"private": true`.** Removing the flag is a
   deliberate commit of its own, with the changeset that versions it.
+- **A private package never gets a changeset before that commit.**
+  `changeset version` would consume it and `publish.ts` skip the package,
+  keeping the release in version mode. `bun run changeset:private`
+  (`scripts/check-changesets.ts`, run by CI, copied from nxgt-janus) refuses a
+  changeset naming a private package, or one that does not exist.
 - `*.spec.ts` colocated in `src/`; `test/` holds helpers; `test/types/` is
   typechecked and never run.
 - Settle an expected rejection where it is created, with `.then(ok, ko)`.
