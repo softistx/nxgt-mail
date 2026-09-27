@@ -9,10 +9,11 @@ type VitePlugin = NonNullable<
 /**
  * A tag the compiled template still asks Vue for by name: what
  * unplugin-vue-components matches, and leaves as is when no file answers to
- * it, and the literal `is` of `<component>`. A self-reference
+ * it, and the literal `is` of `<component>` — `is="NxButton"`, or
+ * `:is="'NxButton'"`, which keeps its single quotes. A self-reference
  * (`_resolveComponent("Tree", true)`) is not matched.
  */
-const RESOLVE = /\b_resolve(?:Dynamic)?Component\d*\("([^"]+)"\)/g;
+const RESOLVE = /\b_resolve(?:Dynamic)?Component\d*\((["'])([^"'\n]+)\1\)/g;
 
 /**
  * A name only a component can have, as Maizzle names them: `NxButton`, or
@@ -40,7 +41,7 @@ const GUARD = '__nxgtResolved';
  */
 export function guardUnresolved(code: string, file: string): string | null {
 	let found = false;
-	const guarded = code.replace(RESOLVE, (call, tag: string) => {
+	const guarded = code.replace(RESOLVE, (call, _quote, tag: string) => {
 		if (!COMPONENT_NAME.test(tag)) return call;
 		found = true;
 		return `${GUARD}(${call}, ${JSON.stringify(tag)})`;

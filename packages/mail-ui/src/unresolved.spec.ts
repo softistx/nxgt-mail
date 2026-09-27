@@ -62,6 +62,7 @@ describe('guardUnresolved', () => {
 		for (const call of [
 			'_resolveComponent("nx-buton")',
 			'_resolveDynamicComponent("NxButon")',
+			"_resolveDynamicComponent('NxButon')",
 		]) {
 			const code = guardUnresolved(
 				`const _component = ${call}`,

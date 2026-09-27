@@ -728,6 +728,18 @@ describe('a tag that resolves to no component', () => {
 		}, 60_000);
 	}
 
+	test('fails the build on the literal is of <component>, quoted either way', async () => {
+		for (const is of ['is="NxButon"', `:is="'NxButon'"`]) {
+			write({
+				'maizzle.config.ts': config(),
+				'emails/welcome.vue': `<template><NxLayout><component ${is} /></NxLayout></template>`,
+			});
+			const { code, output } = await run(root, 'build');
+			expect({ is, code: code === 0 }).toEqual({ is, code: false });
+			expect(output).toContain('ui: <NxButon> in emails/welcome.vue');
+		}
+	}, 60_000);
+
 	test("passes Maizzle's own components, one the app registers, and HTML Vue does not know", async () => {
 		write({
 			'maizzle.config.ts': config(
