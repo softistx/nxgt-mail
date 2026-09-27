@@ -5,7 +5,11 @@ no dates here, and the version something shipped in is the only number.
 
 ## Now
 
-Nothing between releases.
+- **The wrappers under `.maizzle/emails/`** — the files generated per
+  template and locale move from `.maizzle/i18n/` to `.maizzle/emails/`, so
+  `maizzle serve` lists the e-mails under `.maizzle/emails/en` rather than a
+  folder named after the plugin. The build output does not move. Built, not
+  yet published.
 
 ## Next
 

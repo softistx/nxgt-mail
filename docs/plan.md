@@ -52,7 +52,7 @@ What the research proved, on Maizzle 6.1.7, before this plan was written:
   `<style>` as a literal `@import "@maizzle/tailwindcss"`**, or Maizzle scans
   no source and emits no utility, without a word.
 - **One output per locale in one `maizzle build`**: a wrapper per template and
-  locale (`.maizzle/i18n/fr/verify-email.vue`) as `content`, and a
+  locale (`.maizzle/emails/fr/verify-email.vue`) as `content`, and a
   `beforeRender` hook that gives each render its locale's `t`. `maizzle serve`
   shows each locale and reloads on a catalogue change.
 - A value only known at send time stays `{{ name }}` through inlining,
@@ -169,7 +169,7 @@ a plugin for `defineMailConfig` (`fallbackLocale` defaults to the first locale):
   parse, a key missing in a locale or unknown to the fallback locale, an
   argument a translation invents or types differently (the checks of the old
   `@nxgt/mail-build`).
-- Writes one wrapper per template and locale under `.maizzle/i18n/`, only
+- Writes one wrapper per template and locale under `.maizzle/emails/`, only
   when it changed, only on the main thread; `content` points at them; the
   output is `dist/<locale>/<template>.html` (`layout: 'flat'` for
   `dist/<template>.<locale>.html`). A template name is kebab-case.

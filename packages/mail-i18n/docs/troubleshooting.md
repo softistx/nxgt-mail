@@ -97,6 +97,7 @@ template `emails/verify-email.vue`, and keys such as `verifyEmail.title`.
 - [`[Vue warn]: Property "name" was accessed during render but is not defined on instance.`](#vue-warn-property-name-was-accessed-during-render-but-is-not-defined-on-instance)
 - [A link's placeholder is prefixed with a domain](#a-links-placeholder-is-prefixed-with-a-domain)
 - [`.maizzle/` shows up in `git status`](#maizzle-shows-up-in-git-status)
+- [A `.maizzle/i18n/` folder is left after upgrading](#a-maizzlei18n-folder-is-left-after-upgrading)
 - [`No templates found`, or old templates, when Maizzle is built from a worker thread](#no-templates-found-or-old-templates-when-maizzle-is-built-from-a-worker-thread)
 - [The editor says `Property 't' does not exist` in a template, or completes no key](#the-editor-says-property-t-does-not-exist-in-a-template-or-completes-no-key)
 - [The editor flags a key you just added to a catalogue](#the-editor-flags-a-key-you-just-added-to-a-catalogue)
@@ -635,7 +636,7 @@ emails/auth/reset-password.vue   → messages under auth.resetPassword
 **When:** `maizzle build`, on the first template, when the project sets
 `content` itself.
 **Why:** the plugin builds each template through one generated wrapper per
-locale, under `.maizzle/i18n/`, and lists those in `content`. A `content`
+locale, under `.maizzle/emails/`, and lists those in `content`. A `content`
 set in the project **replaces** the plugin's — arrays are not joined — so
 Maizzle builds the templates directly, with no locale.
 **Fix:** leave `content` out, and put every template in the `emails` folder
@@ -1006,7 +1007,7 @@ export default defineMailConfig({
 ### `.maizzle/` shows up in `git status`
 
 **When:** after the first `maizzle build` or `maizzle serve`, `git status`
-lists `.maizzle/i18n/en/verify-email.vue` and one file per template and
+lists `.maizzle/emails/en/verify-email.vue` and one file per template and
 locale.
 **Why:** those are the wrappers the plugin generates, one per template and
 locale, so that one build writes every locale. They are rewritten on every
@@ -1020,13 +1021,28 @@ build, and removed when their template is.
 
 Never edit a wrapper: the change is lost on the next build.
 
+### A `.maizzle/i18n/` folder is left after upgrading
+
+**When:** after upgrading `@nxgt/mail-i18n` from 0.1 to 0.2 or later,
+`.maizzle/` holds both `i18n/` and `emails/`.
+**Why:** 0.1 wrote the wrappers under `.maizzle/i18n/`; 0.2 writes them under
+`.maizzle/emails/`, so that `maizzle serve` lists the e-mails under a folder
+that says what they are. Nothing reads the old folder any more — not the
+build, not `maizzle serve`, not the type-check — and the build output does
+not move.
+**Fix:** delete it, once:
+
+```sh
+rm -rf .maizzle/i18n
+```
+
 ### `No templates found`, or old templates, when Maizzle is built from a worker thread
 
 **When:** Maizzle's `build()` is called from code that runs in a worker
 thread, such as a job runner or a Vitest `threads` pool. The build prints
 `No templates found`, or builds templates that were since renamed or
 removed, without the ones added.
-**Why:** the plugin writes the wrappers under `.maizzle/i18n/` only on the
+**Why:** the plugin writes the wrappers under `.maizzle/emails/` only on the
 main thread, so that the workers of a parallel build never write the same
 file twice. From a worker thread it writes none, and the build finds whatever
 wrappers are already there, or none at all.

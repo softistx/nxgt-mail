@@ -66,7 +66,7 @@ export interface I18nOptions {
 }
 
 /** Where the wrappers go, under the project. */
-export const WRAPPERS_DIR = '.maizzle/i18n';
+export const WRAPPERS_DIR = '.maizzle/emails';
 
 /** The manifest's name, in the output folder. */
 export const MANIFEST_FILE = 'mail-manifest.json';
@@ -174,7 +174,7 @@ function readCatalogues(
  * ```
  *
  * It checks `locales/<locale>.json`, writes one wrapper per template and
- * locale under `.maizzle/i18n/` so one build writes every locale, gives each
+ * locale under `.maizzle/emails/` so one build writes every locale, gives each
  * template `t`, `locale` and `placeholder`, and writes
  * `dist/mail-manifest.json`. A catalogue or a template that cannot be right
  * **fails the build**, naming the locale and the key.
