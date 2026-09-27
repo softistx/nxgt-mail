@@ -49,6 +49,7 @@ interface SmtpTransporter {
 		html: string;
 		text: string;
 		headers?: Record<string, string>;
+		attachments?: { filename: string; content: Buffer; contentType: string }[];
 		disableFileAccess: boolean;
 		disableUrlAccess: boolean;
 	}): Promise<SmtpSentInfo>;
@@ -171,7 +172,8 @@ A string is only an address: `'Acme <noreply@acme.test>'` is refused. Write
 | `from`, `replyTo` | `from`, `replyTo` |
 | `subject`, `html`, `text` | the same, as strings — the e-mail is `multipart/alternative` |
 | `headers` | `headers`, copied |
-| — | `disableFileAccess: true`, `disableUrlAccess: true`: a part is never read from a file or fetched from a URL |
+| `attachments`, each `{ filename, content, contentType }` | `attachments`, each `{ filename, content: Buffer, contentType }` — the bytes copied into a `Buffer`, never a `path` or an `href`; the e-mail is then `multipart/mixed`. Left out when the list is empty |
+| — | `disableFileAccess: true`, `disableUrlAccess: true`: a part or an attachment is never read from a file or fetched from a URL |
 
 Before any of it, `checkMessage` from `@nxgt/mail` refuses what no transport
 hands over — no recipient, something that is not an address, a line break in
@@ -181,6 +183,49 @@ subject or the MIME structure (`Bcc`, `To`, `Content-Type`…). Its messages are
 
 `send` answers `{ messageId }`: nodemailer's `Message-ID` (`<…@acme.test>`), or
 `null` when the transporter answers none — an absence, not a failure.
+
+## Attachments
+
+```ts
+import { readFile } from 'node:fs/promises';
+import nodemailer from 'nodemailer';
+import { createSmtpMailer } from '@nxgt/mail-smtp';
+
+const mailer = createSmtpMailer({
+	transporter: nodemailer.createTransport(process.env.SMTP_URL ?? 'smtp://localhost:1025'),
+	from: 'billing@acme.test',
+});
+
+await mailer.send({
+	to: 'ada@example.com',
+	subject: 'Your invoice',
+	html: '<p>Your invoice is attached.</p>',
+	text: 'Your invoice is attached.',
+	attachments: [
+		{ filename: 'facture n° 42.pdf', content: await readFile('/srv/invoices/42.pdf'), contentType: 'application/pdf' },
+		{ filename: 'invoice.ics', content: new TextEncoder().encode('BEGIN:VCALENDAR…'), contentType: 'text/calendar' },
+	],
+});
+```
+
+- Each attachment is checked by `checkMessage` first: bytes as a
+  `Uint8Array`, a file name without `/`, `\`, a line break or a control
+  character, a `type/subtype` — see
+  [`@nxgt/mail` — attachments](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/guide/sending.md#attachments).
+- The bytes are **copied** into a `Buffer` when `send` is called: changing
+  your array while the message is on its way changes nothing.
+- nodemailer writes each one as a base64 MIME part, the name encoded
+  (RFC 2231) when it is not ASCII.
+- nodemailer's `path`, `href`, `raw` and streams are never used, and
+  `disableFileAccess` and `disableUrlAccess` stay on: an attachment is bytes
+  your code already holds.
+
+**Size.** The server caps the whole message after encoding — base64 makes a
+file a third larger. Gmail's SMTP takes about 25 MB; other servers advertise
+their limit in `EHLO` (`SIZE`), often 10 to 50 MB. Over it, the server
+answers `552` once the message is sent, and `send` throws `MailRefused`:
+[Errors](errors.md#which-smtp-answer-is-which). A large or sensitive file is a
+signed, expiring link in the template instead, which never sits in an inbox.
 
 ## With the renderer
 

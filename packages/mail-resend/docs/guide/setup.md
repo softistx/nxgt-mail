@@ -152,6 +152,7 @@ await mailer.send({
 	subject: 'Hi',
 	html: '<p>Hi</p>',
 	text: 'Hi',
+	attachments: [{ filename: 'hello.txt', content: new TextEncoder().encode('Hello'), contentType: 'text/plain' }],
 });
 ```
 
@@ -168,7 +169,10 @@ Content-Type: application/json
   "html": "<p>Hi</p>",
   "text": "Hi",
   "reply_to": "support@acme.test",
-  "headers": { "List-Unsubscribe": "<https://acme.test/u>" }
+  "headers": { "List-Unsubscribe": "<https://acme.test/u>" },
+  "attachments": [
+    { "filename": "hello.txt", "content": "SGVsbG8=", "content_type": "text/plain" }
+  ]
 }
 ```
 
@@ -185,6 +189,15 @@ Content-Type: application/json
 
 - `replyTo` is sent as `reply_to`, Resend's name for it; `reply_to` and
   `headers` are left out when the message has none.
+- Each attachment is sent as `{ filename, content, content_type }`: its bytes
+  as base64, encoded in slices with `btoa` — no `Buffer`, so it runs on an
+  edge runtime — and its type as `content_type`, Resend's name for it.
+  Resend's `path`, a URL it would fetch, is never used. `attachments` is left
+  out when the list is empty.
+- Resend takes at most 40 MB per e-mail **after** base64, which makes a file
+  a third larger; over it, the answer is a `4xx` and `send` throws
+  `MailRefused`. A large or sensitive file is a signed link in the template
+  instead.
 - Before any of it, `checkMessage` from `@nxgt/mail` refuses what no transport
   hands over. Its messages are listed in
   [`@nxgt/mail`'s troubleshooting](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/troubleshooting.md#sending).

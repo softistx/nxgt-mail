@@ -10,6 +10,12 @@ const message: MailMessage = {
 	text: 'Hello',
 };
 
+const pdf = {
+	filename: 'invoice.pdf',
+	content: new Uint8Array([0x25, 0x50, 0x44, 0x46]),
+	contentType: 'application/pdf',
+};
+
 function refusal(input: unknown): MailRefused {
 	try {
 		checkMessage(input as MailMessage);
@@ -127,6 +133,68 @@ describe('checkMessage', () => {
 			{ ...message, from: { name: 'A', address: 'root,ada@example.test' } },
 			'send: from.address is not an e-mail address',
 		],
+		[
+			'attachments that are not an array',
+			{ ...message, attachments: { filename: 'a.pdf' } },
+			'send: attachments must be an array',
+		],
+		[
+			'an attachment that is not an object',
+			{ ...message, attachments: [pdf, null] },
+			'send: attachments[1] must be an object, as { filename, content, contentType }',
+		],
+		[
+			'an attachment given as a string',
+			{ ...message, attachments: [{ ...pdf, content: '%PDF-1.7' }] },
+			"send: attachments[0].content must be a Uint8Array — the file's bytes, never a path or a URL",
+		],
+		[
+			'an attachment given as a path, with no bytes',
+			{
+				...message,
+				attachments: [
+					{ filename: 'a.pdf', path: '/etc/passwd', contentType: 'text/plain' },
+				],
+			},
+			"send: attachments[0].content must be a Uint8Array — the file's bytes, never a path or a URL",
+		],
+		[
+			'an attachment given as an ArrayBuffer',
+			{ ...message, attachments: [{ ...pdf, content: new ArrayBuffer(4) }] },
+			"send: attachments[0].content must be a Uint8Array — the file's bytes, never a path or a URL",
+		],
+		...[
+			['an empty file name', ''],
+			['a file name that is not a string', 42],
+			['a file name holding a path', 'invoices/42.pdf'],
+			['a file name climbing out', '../42.pdf'],
+			['a file name holding a Windows path', 'C:\\invoices\\42.pdf'],
+			['a line break in a file name', 'a.pdf\r\nContent-Type: text/html'],
+			['a NUL in a file name', 'a.pdf\u0000.exe'],
+			['a C1 control character in a file name', 'a\u0085.pdf'],
+		].map(
+			([what, filename]) =>
+				[
+					what,
+					{ ...message, attachments: [{ ...pdf, filename }] },
+					'send: attachments[0].filename must be a file name — not empty, without / or \\, a line break or a control character',
+				] as const,
+		),
+		...[
+			['a content type without a subtype', 'application'],
+			['a content type with parameters', 'text/plain; charset=utf-8'],
+			['a line break in a content type', 'text/plain\r\nX-Evil: 1'],
+			['a space in a content type', 'text /plain'],
+			['an empty content type', ''],
+			['a content type that is not a string', undefined],
+		].map(
+			([what, contentType]) =>
+				[
+					what,
+					{ ...message, attachments: [{ ...pdf, contentType }] },
+					'send: attachments[0].contentType must be type/subtype, as application/pdf',
+				] as const,
+		),
 	])('refuses %s with MailRefused, naming where', (_, input, text) => {
 		expect(refusal(input).message).toBe(text);
 	});
@@ -153,6 +221,41 @@ describe('checkMessage', () => {
 			`send: header ${name} is reserved — addresses, the subject and the MIME structure are never custom headers`,
 		);
 		expect(error.message).not.toContain('eve@example.test');
+	});
+
+	it('accepts attachments: bytes, a Buffer, a name outside ASCII, an empty list', () => {
+		expect(() =>
+			checkMessage({
+				...message,
+				attachments: [
+					pdf,
+					{
+						filename: 'reçu n° 42 (copie).pdf',
+						content: Buffer.from('%PDF-1.7'),
+						contentType: 'application/pdf',
+					},
+					{
+						filename: '.ics',
+						content: new Uint8Array(),
+						contentType: 'text/calendar',
+					},
+					{
+						filename: 'data.json',
+						content: new Uint8Array([123, 125]),
+						contentType: 'application/vnd.api+json',
+					},
+				],
+			}),
+		).not.toThrow();
+		expect(() => checkMessage({ ...message, attachments: [] })).not.toThrow();
+	});
+
+	it('never puts a refused file name in the message', () => {
+		const error = refusal({
+			...message,
+			attachments: [{ ...pdf, filename: 'secret-7f3a/a.pdf' }],
+		});
+		expect(error.message).not.toContain('secret-7f3a');
 	});
 
 	it('accepts a header that only starts like a reserved one', () => {

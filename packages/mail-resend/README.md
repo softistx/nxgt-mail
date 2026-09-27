@@ -33,8 +33,9 @@ bun add @nxgt/mail-resend @nxgt/mail
 
 Peers, all required:
 
-- `@nxgt/mail` — the port and the errors. One copy in your tree, so
-  `error instanceof MailFailure` holds.
+- `@nxgt/mail` — the port, the errors and the checks: `^0.2`, the version
+  with attachments. One copy in your tree, so `error instanceof MailFailure`
+  holds.
 - `typescript` (6). Bundler resolution (`"moduleResolution": "bundler"`) is
   what is supported and tested; `nodenext` is out of contract.
 
@@ -84,11 +85,35 @@ await mailer.send({
   comma or an angle bracket in it never names another recipient.
 - `messageId` is Resend's `id`, or `null` when the answer carries none.
 
+### Attachments
+
+`attachments` on the message are sent in Resend's `attachments`, each file's
+bytes encoded as base64 — with no Node built-in, so it still runs on an edge
+runtime:
+
+```ts
+const pdf = new Uint8Array(await (await fetch('https://files.acme.test/invoices/42.pdf')).arrayBuffer());
+
+await mailer.send({
+	to: 'ada@example.com',
+	subject: 'Your invoice',
+	html: '<p>Your invoice is attached.</p>',
+	text: 'Your invoice is attached.',
+	attachments: [{ filename: 'invoice-42.pdf', content: pdf, contentType: 'application/pdf' }],
+});
+```
+
+Resend's `path` (a URL it would fetch) is never used: an attachment is bytes
+your code already holds. Resend takes at most **40 MB per e-mail, after
+base64** — a third larger than the files — and refuses more (`MailRefused`).
+**A large or sensitive file is a signed link in the template**, not an
+attachment. See [Setting up — what a message becomes](docs/guide/setup.md#what-a-message-becomes).
+
 ### Errors — a refusal or a failure
 
 | When | Throws | `cause` |
 | --- | --- | --- |
-| `400`, `422` — Resend refuses the message | `MailRefused` — `send: Resend refused the message` | an `Error` with `status`, `errorName` and Resend's `detail` |
+| `400`, `422` — Resend refuses the message; `413` — too large, attachments included | `MailRefused` — `send: Resend refused the message` | an `Error` with `status`, `errorName` and Resend's `detail` |
 | `401`, `403`, `429`, `5xx`, any other status | `MailFailure` — `send: Resend could not take the message` | the same |
 | A network error | `MailFailure` — `send: Resend could not be reached` | the `fetch` error |
 | No answer within `timeoutMs` | `MailFailure` — `send: Resend did not answer within <timeoutMs> ms` | the `TimeoutError` |
@@ -129,6 +154,10 @@ the first send.
 
 **A key read from a file keeps its line break.** A key holding whitespace is
 refused at wiring; trim it.
+
+**Attachments count against Resend's 40 MB after base64.** A 30 MB file
+is over it once encoded. The whole request is also held in memory while it is
+sent; past a few megabytes, send a signed link.
 
 **A `403` is a failure, not a refusal.** An invalid key or an unverified
 sending domain refuses every message alike: it is the wiring that is wrong.

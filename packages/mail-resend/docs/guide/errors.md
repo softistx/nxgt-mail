@@ -45,7 +45,8 @@ Resend answers an error as `{ statusCode, name, message }`:
 | Resend answers | Typical `name` | Throws |
 | --- | --- | --- |
 | `400` | `validation_error` | `MailRefused` |
-| `422` | `validation_error`, `missing_required_field` | `MailRefused` |
+| `413` | — (a request too large: attachments over the limit) | `MailRefused` |
+| `422` | `validation_error`, `missing_required_field`, `invalid_attachment` | `MailRefused` |
 | `401`, `403` | `missing_api_key`, `invalid_api_key`, an unverified domain | `MailFailure` |
 | `429` | `rate_limit_exceeded`, `daily_quota_exceeded` | `MailFailure` |
 | `5xx` | `internal_server_error` | `MailFailure` |
@@ -95,7 +96,7 @@ hold one.
 
 | `message` | Class | When |
 | --- | --- | --- |
-| `send: Resend refused the message` | `MailRefused` | A `400` or `422` |
+| `send: Resend refused the message` | `MailRefused` | A `400`, `413` or `422` |
 | `send: Resend could not take the message` | `MailFailure` | Any other answer that is not `2xx` |
 | `send: Resend could not be reached` | `MailFailure` | `fetch` threw |
 | `send: Resend did not answer within <timeoutMs> ms` | `MailFailure` | The timeout aborted the request |

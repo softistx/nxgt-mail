@@ -6,7 +6,15 @@ the only number.
 
 ## Now
 
-Nothing between releases.
+- **Attachments** — `attachments` on a `MailMessage`: each file's bytes as a
+  `Uint8Array`, its name and its type. Bytes only — no path, no URL, no
+  stream, so a transport never reads a file or fetches a URL for you; a large
+  or sensitive file stays a signed link in the template. `checkMessage`
+  refuses a name holding a path, a line break or a control character, and a
+  type that is not `type/subtype`; the memory mailer keeps a copy of the
+  bytes; the conformance suite gains `send.attachment` and
+  `send.refusesAttachmentPath`, thirteen cases in all. The SMTP and Resend
+  transports send them. Built, not yet published.
 
 ## Next
 
@@ -14,6 +22,8 @@ Nothing yet.
 
 ## Later
 
+- **Inline images (`cid:`)** — an attachment the HTML shows by its content
+  id. Until then, an image is an `https:` URL, as `@nxgt/mail-ui`'s logo is.
 - **More transports** — Amazon SES, Postmark and Mailgun, one package each,
   each passing the conformance suite and throwing `@nxgt/mail`'s errors.
 

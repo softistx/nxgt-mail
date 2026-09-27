@@ -33,6 +33,26 @@ export interface MemoryMailer extends Mailer {
 	clear(): void;
 }
 
+/**
+ * A copy of `message` the caller cannot change afterwards. Each attachment's
+ * bytes are copied to a plain `Uint8Array` of their own: a `Buffer` from
+ * Node's pool is a view on a larger, shared buffer, which a clone would copy
+ * whole.
+ */
+function copyOf(message: MailMessage): MailMessage {
+	const { attachments, ...rest } = message;
+	const copy = structuredClone(rest);
+	if (attachments === undefined) return copy;
+	return {
+		...copy,
+		attachments: attachments.map((attachment) => ({
+			filename: attachment.filename,
+			content: new Uint8Array(attachment.content),
+			contentType: attachment.contentType,
+		})),
+	};
+}
+
 /** Creates a {@link MemoryMailer}. Message ids are `memory-1`, `memory-2`, … */
 export function createMemoryMailer(): MemoryMailer {
 	let sent: MemoryMail[] = [];
@@ -71,7 +91,7 @@ export function createMemoryMailer(): MemoryMailer {
 
 			counter += 1;
 			const messageId = `memory-${counter}`;
-			sent.push({ ...structuredClone(message), messageId });
+			sent.push({ ...copyOf(message), messageId });
 			return { messageId };
 		},
 	};

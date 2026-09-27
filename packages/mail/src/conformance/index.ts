@@ -20,7 +20,7 @@ export {
 	runMailerCase,
 } from './describe';
 export { referenceMailerHarness } from './reference';
-export { sampleMessage } from './sample';
+export { sampleAttachment, sampleMessage } from './sample';
 export type {
 	DeliveredMail,
 	MailerCase,

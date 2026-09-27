@@ -39,7 +39,18 @@ const bareFrom: Mailer = createSmtpMailer({
 	from: 'noreply@acme.test',
 });
 const sent: Promise<SentMail> = mailer.send(message);
-void [withFrom, bareFrom, sent];
+// An attachment is bytes: a Buffer read from disk is one.
+const withFile: Promise<SentMail> = mailer.send({
+	...message,
+	attachments: [
+		{
+			filename: 'invoice.pdf',
+			content: Buffer.from('%PDF-1.7'),
+			contentType: 'application/pdf',
+		},
+	],
+});
+void [withFrom, bareFrom, sent, withFile];
 
 // ── 1. No transporter ────────────────────────────────────────────────────────
 // @ts-expect-error — the transporter is required: the application configures nodemailer.

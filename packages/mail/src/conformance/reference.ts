@@ -19,6 +19,7 @@ export function referenceMailerHarness(): MailerHarness {
 						subject: mail.subject,
 						html: mail.html,
 						text: mail.text,
+						attachments: mail.attachments ?? [],
 					}));
 				},
 				faults: {

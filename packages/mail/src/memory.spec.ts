@@ -39,6 +39,43 @@ describe('createMemoryMailer', () => {
 		expect(mailer.sent[0]?.headers).toEqual({ 'X-Ref': 'a' });
 	});
 
+	it('keeps the attachments, with a copy of their bytes', async () => {
+		const mailer = createMemoryMailer();
+		const content = new Uint8Array([1, 2, 3]);
+		await mailer.send({
+			...message,
+			attachments: [
+				{ filename: 'a.bin', content, contentType: 'application/octet-stream' },
+			],
+		});
+		content[0] = 9;
+		const [sent] = mailer.sent;
+		sent?.attachments?.[0]?.content.fill(7);
+
+		expect(mailer.sent[0]?.attachments).toEqual([
+			{
+				filename: 'a.bin',
+				content: new Uint8Array([1, 2, 3]),
+				contentType: 'application/octet-stream',
+			},
+		]);
+	});
+
+	it('keeps only the bytes of a Buffer, not the pool it is a view on', async () => {
+		const mailer = createMemoryMailer();
+		const content = Buffer.from('%PDF');
+		await mailer.send({
+			...message,
+			attachments: [
+				{ filename: 'a.pdf', content, contentType: 'application/pdf' },
+			],
+		});
+
+		const kept = mailer.sent[0]?.attachments?.[0]?.content;
+		expect(kept?.byteLength).toBe(4);
+		expect(kept?.buffer.byteLength).toBe(4);
+	});
+
 	it('fails the next send when told to, with a MailFailure by default', async () => {
 		const mailer = createMemoryMailer();
 		mailer.failNext();

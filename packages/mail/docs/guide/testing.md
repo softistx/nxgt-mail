@@ -56,6 +56,38 @@ headers['X-Ref'] = 'changed';
 mailer.sent[0]?.headers; // { 'X-Ref': 'a' }
 ```
 
+### Attachments in the outbox
+
+An attachment is kept with its bytes **copied** when it is sent: a caller that
+reuses or fills its buffer afterwards does not change what the outbox holds,
+and each read of `sent` hands out a fresh copy again. A Node `Buffer` comes
+back as a plain `Uint8Array` of the same bytes — compare the bytes, not the
+class:
+
+```ts
+import { expect, it } from 'bun:test';
+import { createMemoryMailer } from '@nxgt/mail';
+
+it('attaches the invoice', async () => {
+	const mailer = createMemoryMailer();
+	const pdf = Buffer.from('%PDF-1.7');
+
+	await mailer.send({
+		to: 'ada@example.com',
+		subject: 'Your invoice',
+		html: '<p>Your invoice is attached.</p>',
+		text: 'Your invoice is attached.',
+		attachments: [{ filename: 'invoice-42.pdf', content: pdf, contentType: 'application/pdf' }],
+	});
+	pdf.fill(0); // changes nothing in the outbox
+
+	const [file] = mailer.sent[0]?.attachments ?? [];
+	expect(file?.filename).toBe('invoice-42.pdf');
+	expect(file?.contentType).toBe('application/pdf');
+	expect(new TextDecoder().decode(file?.content)).toBe('%PDF-1.7');
+});
+```
+
 ## `failNext(error?)` — making a send fail
 
 The next send that reaches the hand-over rejects with `error` — by default a
@@ -121,9 +153,11 @@ going, so an id is never reused within one mailer.
 Exactly what every transport refuses, because it calls
 [`checkMessage`](transports.md#checkmessage-first) first: no recipient, something
 that is not an address, a line break in a name, the subject or a header, a
-missing part. A test that passes against the memory mailer does not pass by
+missing part, an attachment that is not bytes, or whose file name or type is
+malformed. A test that passes against the memory mailer does not pass by
 accident a message a real transport would refuse. The full list is in
-[Sending](sending.md#addresses).
+[Sending](sending.md#addresses) and
+[Sending — attachments](sending.md#attachments).
 
 ## A realistic case — the failure path of a service
 

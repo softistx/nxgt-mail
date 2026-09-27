@@ -51,8 +51,10 @@ A `send: …` message not on this page comes from `checkMessage` in
 
 A `MailRefused`, code `MAIL_REFUSED`.
 
-**When:** Resend answered `400` or `422`: a field it does not accept — an
-address in a form it refuses, a header it does not allow, a subject too long.
+**When:** Resend answered `400`, `413` or `422`: a field it does not accept —
+an address in a form it refuses, a header it does not allow, a subject too
+long, an attachment it will not carry — or a request too large: attachments
+over 40 MB once encoded in base64, a third larger than the files.
 
 **Why:** Resend will refuse the same message again; retrying it unchanged is
 pointless.
@@ -78,6 +80,10 @@ try {
 ```
 
 `detail` may quote an address: keep it out of logs that must not hold one.
+
+For a message too large (`cause.status` `413`, or a `422` whose `detail`
+names the size), sending it again fails again: send the file as a signed
+link in the template instead of an attachment.
 
 ### `send: Resend could not take the message`
 

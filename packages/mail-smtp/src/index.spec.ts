@@ -28,6 +28,8 @@ async function startServer(
 		readonly auth?: boolean;
 		/** The code it answers to `RCPT TO` for these recipients, every time. */
 		readonly refuse?: Readonly<Record<string, number>>;
+		/** The largest message it takes, in bytes; a larger one is refused with `552`. */
+		readonly size?: number;
 	} = {},
 ) {
 	const delivered: DeliveredMail[] = [];
@@ -38,6 +40,7 @@ async function startServer(
 
 	const server = new SMTPServer({
 		authOptional: options.auth !== true,
+		...(options.size === undefined ? {} : { size: options.size }),
 		allowInsecureAuth: true,
 		disabledCommands: ['STARTTLS'],
 		logger: false,
@@ -87,11 +90,21 @@ async function startServer(
 					if (refuse) {
 						return callback(smtpError('Message rejected as spam', 554));
 					}
+					if (stream.sizeExceeded) {
+						return callback(
+							smtpError('Message exceeds fixed maximum message size', 552),
+						);
+					}
 					delivered.push({
 						to: session.envelope.rcptTo.map((rcpt) => rcpt.address),
 						subject: parsed.subject ?? '',
 						html: typeof parsed.html === 'string' ? parsed.html : '',
 						text: parsed.text ?? '',
+						attachments: parsed.attachments.map((file) => ({
+							filename: file.filename ?? '',
+							content: new Uint8Array(file.content),
+							contentType: file.contentType,
+						})),
 					});
 					callback();
 				},
@@ -311,6 +324,83 @@ describe('createSmtpMailer, beyond the suite', () => {
 			disableFileAccess: true,
 			disableUrlAccess: true,
 		});
+	});
+
+	test('hands the attachments to nodemailer as bytes, never as a path or a URL', async () => {
+		let options: Record<string, unknown> = {};
+		const content = new Uint8Array([0x25, 0x50, 0x44, 0x46]);
+		await createSmtpMailer({
+			transporter: {
+				async sendMail(mail) {
+					options = mail;
+					content[0] = 0; // the caller changing its bytes mid-send
+					return {};
+				},
+			},
+		}).send({
+			...sampleMessage,
+			attachments: [
+				{ filename: 'invoice.pdf', content, contentType: 'application/pdf' },
+			],
+		});
+		const [attachment] = options.attachments as {
+			filename: string;
+			content: Buffer;
+			contentType: string;
+		}[];
+		expect(Object.keys(attachment ?? {}).sort()).toEqual([
+			'content',
+			'contentType',
+			'filename',
+		]);
+		expect(Buffer.isBuffer(attachment?.content)).toBe(true);
+		expect([...(attachment?.content ?? [])]).toEqual([0x25, 0x50, 0x44, 0x46]);
+		expect(options).toMatchObject({
+			disableFileAccess: true,
+			disableUrlAccess: true,
+		});
+	});
+
+	test('sends no attachments field for an empty list', async () => {
+		let options: Record<string, unknown> = {};
+		await createSmtpMailer({
+			transporter: {
+				async sendMail(mail) {
+					options = mail;
+					return {};
+				},
+			},
+		}).send({ ...sampleMessage, attachments: [] });
+		expect('attachments' in options).toBe(false);
+	});
+
+	test('a message too large for the server (552) is a refusal of the message', async () => {
+		const server = await startServer({ size: 16 * 1024 });
+		const transporter = transporterFor(server.port);
+		try {
+			const error = await createSmtpMailer({ transporter })
+				.send({
+					...sampleMessage,
+					attachments: [
+						{
+							filename: 'large.bin',
+							content: new Uint8Array(64 * 1024),
+							contentType: 'application/octet-stream',
+						},
+					],
+				})
+				.then(
+					() => null,
+					(caught: unknown) => caught as Error,
+				);
+			expect(error).toBeInstanceOf(MailRefused);
+			expect(error?.message).toBe('send: the SMTP server refused the message');
+			expect(error?.cause).toMatchObject({ responseCode: 552 });
+			expect(server.delivered).toHaveLength(0);
+		} finally {
+			transporter.close();
+			await server.close();
+		}
 	});
 
 	test('answers null when nodemailer gives no id', async () => {

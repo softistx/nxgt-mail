@@ -5,7 +5,12 @@ no dates here, and the version something shipped in is the only number.
 
 ## Now
 
-Nothing between releases.
+- **Attachments** — the `attachments` of a message are sent in Resend's
+  `attachments`, each as `{ filename, content, content_type }` with the bytes
+  in base64, encoded with no Node built-in so the transport still runs on an
+  edge runtime. Resend's `path` (a URL it would fetch) is never used. A
+  request too large (`413`) is a `MailRefused`, as a `400` or `422` is. Needs
+  `@nxgt/mail` 0.2. Built, not yet published.
 
 ## Next
 
@@ -26,8 +31,8 @@ Nothing yet.
   send the same e-mail twice.
 - **A transport's own error class** — it throws `@nxgt/mail`'s `MailFailure`
   and `MailRefused`, so `instanceof` holds whichever transport you wire.
-- **Scheduling, batch sending and attachments** — a message is three strings
-  sent now; the port has no room for more.
+- **Scheduling and batch sending** — a message is sent now, one per request;
+  the port has no room for more.
 
 ## Shipped
 

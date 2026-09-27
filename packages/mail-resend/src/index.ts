@@ -108,6 +108,19 @@ async function readAnswer(
 		: {};
 }
 
+/**
+ * `bytes` as base64, as Resend takes an attachment's `content` — with no Node
+ * built-in, so it runs on an edge runtime. Read in slices, so a large file
+ * never spreads more arguments than a call takes.
+ */
+function base64Of(bytes: Uint8Array): string {
+	let binary = '';
+	for (let start = 0; start < bytes.length; start += 0x8000) {
+		binary += String.fromCharCode(...bytes.subarray(start, start + 0x8000));
+	}
+	return btoa(binary);
+}
+
 /** The largest delay a timer takes, 2³¹ − 1 ms — about 24.8 days. */
 const MAX_TIMEOUT_MS = 2_147_483_647;
 
@@ -202,6 +215,17 @@ export function createResendMailer(options: ResendMailerOptions): Mailer {
 							reply_to: formatAddress(message.replyTo),
 						}),
 				...(message.headers === undefined ? {} : { headers: message.headers }),
+				...(message.attachments === undefined ||
+				message.attachments.length === 0
+					? {}
+					: {
+							attachments: message.attachments.map((attachment) => ({
+								filename: attachment.filename,
+								content: base64Of(attachment.content),
+								// biome-ignore lint/style/useNamingConvention: Resend's wire format names the field, not us.
+								content_type: attachment.contentType,
+							})),
+						}),
 			};
 
 			const signal = AbortSignal.timeout(timeoutMs);
@@ -239,9 +263,15 @@ export function createResendMailer(options: ResendMailerOptions): Mailer {
 				text(answer.name),
 				text(answer.message),
 			);
-			// 400 and 422 are Resend refusing the message; anything else — a key
-			// refused, a rate limit, an outage — is Resend failing to take it.
-			if (response.status === 400 || response.status === 422) {
+			// 400 and 422 are Resend refusing the message, and 413 a request too
+			// large to take — attachments over the limit, which sending again
+			// cannot fix. Anything else — a key refused, a rate limit, an outage —
+			// is Resend failing to take it.
+			if (
+				response.status === 400 ||
+				response.status === 413 ||
+				response.status === 422
+			) {
 				throw new MailRefused('send: Resend refused the message', { cause });
 			}
 			throw new MailFailure('send: Resend could not take the message', {
