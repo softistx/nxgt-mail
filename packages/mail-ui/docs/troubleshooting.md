@@ -284,8 +284,10 @@ export default defineMailConfig({
 ```
 
 A template installed from another package, which uses a component that is
-neither the project's, nor an `Nx*` component, nor one of Maizzle's, is left
-unresolved: that package's plugin must resolve it.
+neither the project's, nor an `Nx*` component, nor one of Maizzle's, fails
+the build once `ui()` is listed:
+[`ui: <…> in … is no component`](#ui-nxbuton-in-emailswelcomevue-is-no-component--check-its-name-or-add-the-plugin-or-the-components-folder-that-brings-it).
+That package's plugin must resolve it.
 
 ### `NxLayout: ui() is not in the plugins of defineMailConfig`
 

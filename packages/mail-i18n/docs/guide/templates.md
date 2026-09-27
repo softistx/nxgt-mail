@@ -266,7 +266,9 @@ which skips that folder. The plugin that ships the components resolves them —
 `@nxgt/mail-ui`'s `ui()` does, for its `Nx*` components and Maizzle's
 built-ins, so list it in `plugins`. A tag left unresolved renders nothing,
 and the build fails on the empty e-mail (see
-[What fails the build](#what-fails-the-build)).
+[What fails the build](#what-fails-the-build)); with `ui()` listed, one
+nested anywhere fails it too, naming the tag and the file:
+`ui: <NxButon> in emails/welcome.vue is no component — …`.
 
 ### Its errors
 
