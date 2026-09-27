@@ -178,11 +178,12 @@ packages.
 
 **`examples/starter`** is the official Maizzle starter with the packages wired
 as their READMEs say — a workspace, private, never published, depending on
-them as `workspace:*`. CI builds it (its `generated/mail.ts` is written by the build and git-ignored),
-renders it in both locales (`send.ts`) and serves it. A README snippet that
-changes changes the starter with it. It has no `postinstall`: in this
-repository `bun install` runs before the packages are built, so the root's
-`postinstall` runs its `maizzle prepare` once they are.
+them as `workspace:*`. CI builds it (its `generated/mail.ts` is written by
+the build and git-ignored), renders it in both locales (`send.ts`) and serves
+it. A README snippet that changes changes the starter with it. It has no
+`postinstall`: in this repository `bun install` runs before the packages are
+built, so the root's `postinstall` runs its `maizzle build` once they are.
+Generated code is never committed.
 
 **A project overrides by name.** Its `components/nx-button.vue` replaces the
 package's `<NxButton>`; its `locales/en.json` overrides a shared message key

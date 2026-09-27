@@ -320,8 +320,8 @@ safe ? (templates et data) », and his « OK » to the answer:
 - `i18n()` writes, after each build, `generated/mail.ts`: `MailEmails`, each
   e-mail with the variables the manifest records — a URL variable a `string`,
   any other a `string | number`. `rendererTypes` moves it, or `false` turns it
-  off. The project commits it, so the code that sends type-checks without a
-  build.
+  off. The project git-ignores it and builds before type-checking (first
+  planned as committed; Steve chose to ignore it, PR #33).
 - `createMailRenderer<MailEmails>(…)` types `render`: an unknown e-mail, a
   missing or unknown variable, and a number for a URL are compile errors, for
   a literal name and variables written at the call.

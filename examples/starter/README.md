@@ -117,7 +117,8 @@ not compile.
 - **No `tailwind.css`**: `<NxLayout>` imports Tailwind and the theme of
   `@nxgt/mail-ui` itself. No `public/` either: a mail client loads no relative
   image, so the brand's logo is an absolute URL (`ui({ brand: { logo } })`).
-- **`.gitignore`** also ignores `dist/`, which the build rewrites.
+- **`.gitignore`** also ignores `dist/` and `generated/`, which the build
+  rewrites.
   `.maizzle/`, where the i18n plugin writes its files and the editor's
   types, is ignored too.
 - **`tsconfig.json`** also includes `send.ts`. `.maizzle/*.d.ts` stays in it:
@@ -125,7 +126,7 @@ not compile.
 - **No `postinstall`** in this copy's `package.json`, only here: in this
   repository, `bun install` runs before the packages are built, and
   `maizzle prepare` would fail to load their `dist/`. The root's own
-  `postinstall` prepares it once they are built. **Keep
+  `postinstall` builds it once they are built. **Keep
   `"postinstall": "maizzle prepare"` in your project**, where the packages
   come from npm already built.
 - The `@nxgt/*` dependencies are `workspace:*`, so CI builds the starter

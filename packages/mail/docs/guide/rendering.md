@@ -252,7 +252,8 @@ so a helper written for any build takes a typed renderer.
 
 The manifest guide also shows
 [a test that holds the two sides together](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-i18n/docs/guide/manifest.md#checking-your-application-against-it),
-for a project that turns `generated/mail.ts` off (`rendererTypes: false`).
+for an application that only installs the built project, or is not
+written in TypeScript.
 
 ## Choosing the locale
 

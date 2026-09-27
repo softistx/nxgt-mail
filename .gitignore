@@ -33,5 +33,5 @@ coverage
 # Maizzle writes its types and our generated wrappers and types here
 .maizzle
 
-# The renderer types a fixture's build writes: a project commits its own
+# The renderer types a fixture's build writes: generated code is never committed
 **/test/fixture/generated/

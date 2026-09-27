@@ -338,7 +338,7 @@ that `generated/mail.ts` describes them, then fix the calls `tsc` still
 reports:
 
 ```sh
-bunx maizzle build   # rewrites dist/ and generated/mail.ts; commit the new generated/mail.ts
+bunx maizzle build   # rewrites dist/ and generated/mail.ts, both git-ignored
 ```
 
 Never edit `generated/mail.ts` by hand to silence the error: the next build
@@ -350,14 +350,17 @@ rewrites it, and the deployed build is what `render` checks at run time.
 fresh clone or a new project.
 **Why:** `generated/mail.ts` is written by `@nxgt/mail-i18n` at the end of
 `maizzle build`, in the Maizzle project, unless its `rendererTypes` option
-moved it or turned it off (`false`). It is not there until the first build,
-or it was not committed, or the import points at another folder.
-**Fix:** build once and commit the file, so the code that sends type-checks
-without a build; import it from where `rendererTypes` writes it:
+moved it or turned it off (`false`). It is git-ignored, as `dist/` is, so it
+is not there until the first build — or the import points at another folder.
+**Fix:** build before type-checking, in the script CI runs too, and import it
+from where `rendererTypes` writes it:
 
-```sh
-bunx maizzle build
-git add generated/mail.ts
+```json
+{
+  "scripts": {
+    "typecheck": "maizzle build && tsc --noEmit"
+  }
+}
 ```
 
 To go without it, leave the type parameter out:
