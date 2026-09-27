@@ -28,4 +28,11 @@ export {
 	type MemoryMailer,
 } from './memory';
 export { addressOf, checkMessage, recipientsOf } from './message';
-export type { Address, Mailer, MailMessage, Rendered, SentMail } from './types';
+export type {
+	Address,
+	MailAttachment,
+	Mailer,
+	MailMessage,
+	Rendered,
+	SentMail,
+} from './types';

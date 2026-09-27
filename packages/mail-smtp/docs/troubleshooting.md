@@ -95,6 +95,24 @@ every recipient refused, `cause.rejectedErrors` holds one error per
 recipient; correct the address or the content. A recipient that does not
 exist is usually worth telling the user about.
 
+A `552` on a message with attachments is the server's size limit — the
+whole message, after base64 has made each file a third larger. Sending it
+again fails again: send the file as a signed link in the template instead.
+
+```ts
+import { MailRefused } from '@nxgt/mail';
+
+try {
+	await mailer.send(message);
+} catch (error) {
+	const cause = error instanceof MailRefused ? (error.cause as { responseCode?: number }) : null;
+	if (cause?.responseCode === 552 && message.attachments?.length) {
+		// too large: resend with a link to the file rather than the file
+	}
+	throw error;
+}
+```
+
 ### `send: the SMTP server refused <n> of <total> recipients, and may have delivered to the others`
 
 A `MailRefused`, code `MAIL_REFUSED`. **The accepted recipients may already

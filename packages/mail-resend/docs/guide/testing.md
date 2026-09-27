@@ -49,8 +49,25 @@ export function startResend() {
 			if (fault === 'outage') return answer(503, 'internal_server_error', 'Service unavailable.');
 			if (fault === 'refusal') return answer(422, 'validation_error', 'Invalid `to` field.');
 
-			const body = (await request.json()) as { to: string[]; subject: string; html: string; text: string };
-			delivered.push({ to: body.to.map(addressOf), subject: body.subject, html: body.html, text: body.text });
+			const body = (await request.json()) as {
+				to: string[];
+				subject: string;
+				html: string;
+				text: string;
+				attachments?: { filename: string; content: string; content_type: string }[];
+			};
+			delivered.push({
+				to: body.to.map(addressOf),
+				subject: body.subject,
+				html: body.html,
+				text: body.text,
+				// As Resend reads them: the content is base64, decoded back to bytes.
+				attachments: (body.attachments ?? []).map((file) => ({
+					filename: file.filename,
+					content: Uint8Array.from(atob(file.content), (char) => char.charCodeAt(0)),
+					contentType: file.content_type,
+				})),
+			});
 			return Response.json({ id: `resend-${delivered.length}` });
 		},
 	});
@@ -102,10 +119,11 @@ describeMailer({
 });
 ```
 
-All eleven cases pass: a send answers `SentMail`, the message arrives byte for
+All thirteen cases pass: a send answers `SentMail`, the message arrives byte for
 byte (accents, an emoji, `&amp;` in a link), every recipient is delivered to,
-a hostile name reaches only its own address, the refusals — a `Bcc` among the
-custom headers included — and the three
+a hostile name reaches only its own address, an attachment arrives byte for
+byte with its name and type, the refusals — a `Bcc` among the custom headers
+and an attachment named with a path included — and the three
 failure cases — an outage is a `MailFailure` with its `cause` and one attempt,
 a refusal a `MailRefused`, and the next send goes through.
 
@@ -115,7 +133,7 @@ The package's own specs
 ([`src/index.spec.ts`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-resend/src/index.spec.ts))
 add what the suite does not ask of every transport:
 
-- a `400` is a `MailRefused`; a `403`, a `429` and a `503` are a `MailFailure`
+- a `400` and a `413` are a `MailRefused`; a `403`, a `429` and a `503` are a `MailFailure`
   with the status on `cause`, each tried once;
 - a server that is not listening ends in `MailFailure` —
   `send: Resend could not be reached` — with the `fetch` error as `cause`;
@@ -127,6 +145,9 @@ add what the suite does not ask of every transport:
   address or what Resend said;
 - the request: `POST /emails`, the bearer key, JSON, a quoted name,
   `reply_to` and `headers`;
+- each attachment as `{ filename, content, content_type }`, the content
+  base64 — a file larger than one slice of the encoder included — and no
+  `attachments` for an empty list;
 - a `2xx` with no id, or with a body that is not JSON, answers
   `{ messageId: null }`;
 - every `TypeError` at wiring, a `timeoutMs` above `2147483647` included.

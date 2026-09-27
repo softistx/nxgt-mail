@@ -40,6 +40,10 @@ How the messages are shaped:
 - [`TS2511: Cannot create an instance of an abstract class.`](#ts2511-cannot-create-an-instance-of-an-abstract-class)
 - [`TS2345: Argument of type '"verify-emial"' is not assignable to parameter of type '"sign-in-code" | "verify-email"'.`](#ts2345-argument-of-type-verify-emial-is-not-assignable-to-parameter-of-type-sign-in-code--verify-email)
 - [`TS2307: Cannot find module './generated/mail' or its corresponding type declarations.`](#ts2307-cannot-find-module-generatedmail-or-its-corresponding-type-declarations)
+- [`TS2322: Type 'string' is not assignable to type 'Uint8Array<ArrayBufferLike>'.`](#ts2322-type-string-is-not-assignable-to-type-uint8arrayarraybufferlike)
+- [`TS2353: Object literal may only specify known properties, and 'path' does not exist in type 'MailAttachment'.`](#ts2353-object-literal-may-only-specify-known-properties-and-path-does-not-exist-in-type-mailattachment)
+- [`TS2741: Property 'contentType' is missing in type '…' but required in type 'MailAttachment'.`](#ts2741-property-contenttype-is-missing-in-type--but-required-in-type-mailattachment)
+- [`TS2740: Type 'MailAttachment' is missing the following properties from type 'readonly MailAttachment[]': length, concat, join, slice, and 26 more.`](#ts2740-type-mailattachment-is-missing-the-following-properties-from-type-readonly-mailattachment-length-concat-join-slice-and-26-more)
 - [`error instanceof MailFailure` is `false` for an outage](#error-instanceof-mailfailure-is-false-for-an-outage)
 
 **Sending**
@@ -55,6 +59,11 @@ How the messages are shaped:
 - [`send: a header name must be letters, digits and hyphens`](#send-a-header-name-must-be-letters-digits-and-hyphens)
 - [`send: header <name> must be a string without a line break`](#send-header-name-must-be-a-string-without-a-line-break)
 - [`send: header <name> is reserved — addresses, the subject and the MIME structure are never custom headers`](#send-header-name-is-reserved--addresses-the-subject-and-the-mime-structure-are-never-custom-headers)
+- [`send: attachments must be an array`](#send-attachments-must-be-an-array)
+- [`send: attachments[<n>] must be an object, as { filename, content, contentType }`](#send-attachmentsn-must-be-an-object-as--filename-content-contenttype-)
+- [`send: attachments[<n>].content must be a Uint8Array — the file's bytes, never a path or a URL`](#send-attachmentsncontent-must-be-a-uint8array--the-files-bytes-never-a-path-or-a-url)
+- [`send: attachments[<n>].filename must be a file name — not empty, not . or .., without / or \, a line break or a control character`](#send-attachmentsnfilename-must-be-a-file-name--not-empty-not--or--without--or--a-line-break-or-a-control-character)
+- [`send: attachments[<n>].contentType must be a file's type/subtype, as application/pdf — never multipart/* or message/*`](#send-attachmentsncontenttype-must-be-a-files-typesubtype-as-applicationpdf--never-multipart-or-message)
 - [`send: the memory mailer was told to fail this send`](#send-the-memory-mailer-was-told-to-fail-this-send)
 
 **Locale**
@@ -96,6 +105,9 @@ How the messages are shaped:
 - [`conformance: the transport retried a failed hand-over`](#conformance-the-transport-retried-a-failed-hand-over)
 - [`conformance: a name let a second recipient through`](#conformance-a-name-let-a-second-recipient-through)
 - [`conformance: <what>, yet something was delivered`](#conformance-what-yet-something-was-delivered)
+- [`conformance: the harness's delivered() reads back no attachments — read them from the receiving end, or skip send.attachment with the reason`](#conformance-the-harnesss-delivered-reads-back-no-attachments--read-them-from-the-receiving-end-or-skip-sendattachment-with-the-reason)
+- [`conformance: expected 1 delivered attachment, got <n>`](#conformance-expected-1-delivered-attachment-got-n)
+- [`conformance: the attachment was not delivered byte for byte`](#conformance-the-attachment-was-not-delivered-byte-for-byte)
 - [Other `conformance:` messages](#other-conformance-messages)
 - [A bug in `@nxgt/mail` itself](#a-bug-in-nxgtmail-itself)
 
@@ -340,6 +352,64 @@ To go without it, leave the type parameter out:
 `createMailRenderer({ dir: 'dist' })` takes any name and any
 `MailVariables`, checked at run time only.
 
+### `TS2322: Type 'string' is not assignable to type 'Uint8Array<ArrayBufferLike>'.`
+
+**When:** `tsc`, on an attachment whose `content` is text:
+`{ filename: 'notes.txt', content: 'notes', contentType: 'text/plain' }`.
+**Why:** an attachment is bytes. A string would be sent in whatever encoding
+the transport picked; bytes are sent as they are.
+**Fix:** encode the text yourself, in the encoding you mean:
+
+```ts
+import type { MailAttachment } from '@nxgt/mail';
+
+declare const csv: string;
+
+const report: MailAttachment = {
+  filename: 'report.csv',
+  content: new TextEncoder().encode(csv), // UTF-8
+  contentType: 'text/csv',
+};
+```
+
+### `TS2353: Object literal may only specify known properties, and 'path' does not exist in type 'MailAttachment'.`
+
+**When:** `tsc`, on an attachment written as nodemailer's, with a `path` (or
+an `href`) for the transport to read.
+**Why:** no transport reads a file or fetches a URL to attach it — a value
+from outside could then make an e-mail carry any file the server can read.
+`MailAttachment` holds the bytes.
+**Fix:** read the file where your code decides which files may be read, and
+pass its bytes:
+
+```ts
+import { readFile } from 'node:fs/promises';
+import type { MailAttachment } from '@nxgt/mail';
+
+const invoice: MailAttachment = {
+  filename: 'invoice-42.pdf',
+  content: await readFile('/srv/invoices/42.pdf'),
+  contentType: 'application/pdf',
+};
+```
+
+A file too large to hold in memory is too large for an e-mail: send a signed
+link instead — [Sending — attachments](guide/sending.md#attachments).
+
+### `TS2741: Property 'contentType' is missing in type '…' but required in type 'MailAttachment'.`
+
+**When:** `tsc`, on an attachment without its `contentType`.
+**Why:** nothing guesses the type from the file name: a guess can be wrong,
+and a mail client opens a file by its type.
+**Fix:** name it — `application/pdf`, `text/calendar`, `image/png`, or
+`application/octet-stream` for bytes of no particular type.
+
+### `TS2740: Type 'MailAttachment' is missing the following properties from type 'readonly MailAttachment[]': length, concat, join, slice, and 26 more.`
+
+**When:** `tsc`, on `attachments: invoice` — one attachment, not in a list.
+**Why:** `attachments` is a list, even of one.
+**Fix:** `attachments: [invoice]`.
+
 ### `error instanceof MailFailure` is `false` for an outage
 
 **When:** at run time, with a transport from another package or your own. An
@@ -423,9 +493,10 @@ whether the e-mail is still worth sending.
 **When:** `await mailer.send(message)` rejects, either with one of the
 `send: …` messages below (the message was refused before it left), or with
 the transport's message when the provider answered that the message is
-malformed.
-**Why:** something in the message would break a header or has no valid
-recipient. Sending it again unchanged fails again.
+malformed or too large.
+**Why:** something in the message would break a header, has no valid
+recipient, or is an attachment that is not bytes or is badly named — or the
+whole message is over the provider's size limit. Sending it again unchanged fails again.
 **Fix:** read `error.message` for where the problem is, and fix the message;
 the entries below cover each one. Handle the code as in the
 [`MAIL_FAILED`](#mail_failed--mailfailure-the-transport-could-not-hand-the-message-over)
@@ -590,6 +661,99 @@ declare const rendered: Rendered;
 // ✗ headers: { Bcc: 'audit@example.com' }
 await mailer.send({ ...rendered, to: 'ada@example.com' });
 await mailer.send({ ...rendered, to: 'audit@example.com' }); // ✓ the copy, on its own
+```
+
+### `send: attachments must be an array`
+
+**When:** `send`, with `attachments` that is not a list — one attachment on
+its own, or `null`.
+**Why:** the attachments are a list, in order, even of one.
+**Fix:** `attachments: [invoice]`; leave the field out, or pass `[]`, for none.
+
+### `send: attachments[<n>] must be an object, as { filename, content, contentType }`
+
+**When:** `send`, with an entry of `attachments` that is not an object —
+`undefined` from a lookup that found nothing, `null`, or a hole in the list
+(`[, pdf]`, `new Array(2)`). `<n>` is its index.
+**Why:** each entry is one file: its name, its bytes and its type.
+**Fix:** filter the list before sending, or refuse to send when a file you
+meant to attach is missing — an e-mail that says "attached" with nothing
+attached is worse than an error.
+
+### `send: attachments[<n>].content must be a Uint8Array — the file's bytes, never a path or a URL`
+
+**When:** `send`, with an attachment whose `content` is not a `Uint8Array`:
+a string, an `ArrayBuffer`, a stream, or no `content` at all because the
+attachment was written with a `path` or an `href`, as nodemailer takes them.
+A Node `Buffer` is a `Uint8Array`, and accepted.
+**Why:** an attachment is bytes the application already holds. No
+transport reads a file or fetches a URL to attach it, so a value from outside
+can never make an e-mail carry a file it should not.
+**Fix:** read or convert it first:
+
+```ts
+import { readFile } from 'node:fs/promises';
+
+declare const csv: string;
+declare const response: Response;
+
+const fromDisk = await readFile('/srv/invoices/42.pdf'); // a Buffer
+const fromText = new TextEncoder().encode(csv);
+const fromFetch = new Uint8Array(await response.arrayBuffer());
+const fromArrayBuffer = new Uint8Array(new ArrayBuffer(8));
+```
+
+A file too large to read into memory is too large for an e-mail: send a
+signed link instead.
+
+### `send: attachments[<n>].filename must be a file name — not empty, not . or .., without / or \, a line break or a control character`
+
+**When:** `send`, with an attachment whose `filename` is empty, is not a
+string, is `.` or `..`, or holds `/`, `\`, a line break (U+2028 and U+2029
+included), a NUL or another control character, or a format character such
+as a right-to-left override.
+The message never holds the name.
+**Why:** the recipient's mail client shows the name and saves the file under
+it. A path — `../…`, `invoices/42.pdf`, `C:\…`, `..` — asks it to save
+elsewhere, a line break or a control character can split the header the name
+is written in, and a right-to-left override shows `invoice\u202Efdp.exe` as
+`invoiceexe.pdf`.
+**Fix:** a bare file name. Accents, spaces and parentheses are fine — the
+transport encodes them. From a name you did not write, keep the last segment
+of the path and drop the control characters:
+
+```ts
+const safeName = (name: string) =>
+  name.split(/[\\/]/).pop()?.replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/gu, '').trim().replace(/^\.\.?$/, '') ||
+  'attachment';
+
+safeName('../uploads/Relevé\nmars.pdf'); // 'Relevémars.pdf'
+```
+
+### `send: attachments[<n>].contentType must be a file's type/subtype, as application/pdf — never multipart/* or message/*`
+
+**When:** `send`, with an attachment whose `contentType` is not a bare
+`type/subtype`: an extension (`pdf`), a type with parameters
+(`text/plain; charset=utf-8`), a space or a line break — or a MIME container,
+`multipart/*` or `message/*`, in any case.
+**Why:** the type is written into the attachment's `Content-Type` header; a
+parameter there is a second, unchecked place for a name or a charset. The
+transport writes the parameters it needs. A container is not a file: SMTP
+writes `message/rfc822` and `multipart/mixed` unencoded, as parts of the
+message itself, and the recipient gets no attachment while `send` resolves.
+To forward an e-mail, attach it as `application/octet-stream` with a `.eml`
+name.
+**Fix:** the bare type — `text/plain`, and encode the text as UTF-8, which is
+what a mail client assumes:
+
+```ts
+import type { MailAttachment } from '@nxgt/mail';
+
+const notes: MailAttachment = {
+  filename: 'notes.txt',
+  content: new TextEncoder().encode('Hello'),
+  contentType: 'text/plain',
+};
 ```
 
 ### `send: the memory mailer was told to fail this send`
@@ -1188,7 +1352,8 @@ simulated, so the skip is on purpose and visible.
 
 `<send>` is, for example, `a send during an outage`, `a refused send`,
 `a send with no recipient`, `a send with a line break in the subject`,
-`a send with a Bcc header` or `a send to something that is not an address`.
+`a send with a Bcc header`, `a send with an attachment named with a path` or
+`a send to something that is not an address`.
 
 **When:** a `failure.*` or `send.refuses*` case.
 **Why:** the transport answered where it had to throw: it caught the
@@ -1298,6 +1463,64 @@ told "not sent" retries, and the e-mail arrives twice.
 **Fix:** call `checkMessage(message)` **before** the hand-over, and throw only
 for a hand-over that did not succeed.
 
+### `conformance: the harness's delivered() reads back no attachments — read them from the receiving end, or skip send.attachment with the reason`
+
+**When:** `send.attachment`, on a harness whose `delivered()` answers
+messages without an `attachments` field — typically one written before
+`@nxgt/mail` had attachments.
+**Why:** a missing field is not "no attachment arrived": the case cannot tell
+a transport that drops files from a harness that does not look. It fails
+rather than pass a transport it did not check.
+**Fix:** read the attachments back from the receiving end, decoded to bytes
+— `[]` when none arrived:
+
+```ts
+import type { DeliveredMail } from '@nxgt/mail/conformance';
+import type { ParsedMail } from 'mailparser';
+
+// Over SMTP, from what mailparser parsed:
+const fromSmtp = (parsed: ParsedMail): DeliveredMail['attachments'] =>
+  parsed.attachments.map((file) => ({
+    filename: file.filename ?? '',
+    content: new Uint8Array(file.content),
+    contentType: file.contentType,
+  }));
+
+// From a JSON body, where the content is base64:
+const fromJson = (files: { filename: string; content: string; contentType: string }[]) =>
+  files.map((file) => ({
+    ...file,
+    content: Uint8Array.from(atob(file.content), (char) => char.charCodeAt(0)),
+  }));
+```
+
+If the provider cannot carry attachments at all, say so:
+`skip: { 'send.attachment': 'the provider takes no attachments' }`.
+
+### `conformance: expected 1 delivered attachment, got <n>`
+
+**When:** `send.attachment`: the message arrived with no attachment, or
+with more than the one sent.
+**Why:** the transport left `message.attachments` out of what it handed
+over — the usual cause when a transport builds the provider's request field
+by field — or the harness reads the parts of the body as attachments too.
+**Fix:** map each attachment into the provider's request, as in
+[the transports guide](guide/transports.md#a-transport-over-http); in the
+harness, read only the parts the provider marks as attachments.
+
+### `conformance: the attachment was not delivered byte for byte`
+
+**When:** `send.attachment`, whose file holds every byte from 0 to 255.
+**Why:** the bytes were read as text on the way — decoded as UTF-8 (every
+byte above 127 changes), a NUL cut short, or line breaks rewritten — or
+base64 was encoded from a string instead of the bytes. Over JSON, the usual
+cause is a `Uint8Array` handed to `JSON.stringify` as it is: it becomes an
+object keyed by index (`{"0":0,"1":1,…}`), never base64, so the harness's
+`atob` throws or decodes something else.
+**Fix:** encode the bytes, never a string made of them: base64 from the
+`Uint8Array` for a JSON API, a `Buffer` of the same bytes for nodemailer.
+In the harness, decode base64 back to bytes, not to a string.
+
 ### Other `conformance:` messages
 
 Each names what the transport did not do, in the case whose id is in the
@@ -1316,7 +1539,12 @@ test title:
 | `conformance: a line break in the subject must throw MailRefused` | `send.refusesLineBreakInSubject` | call `checkMessage` |
 | `conformance: a malformed address must throw MailRefused` | `send.refusesWithoutTheValue` | call `checkMessage` |
 | `conformance: a Bcc header must throw MailRefused` | `send.refusesAddressHeader` | call `checkMessage`, from a version of `@nxgt/mail` that refuses reserved headers |
-| `conformance: the refusal message holds the refused value` | `send.refusesWithoutTheValue`, `send.refusesAddressHeader` | name where the problem is, never the value |
+| `conformance: an attachment named with a path must throw MailRefused` | `send.refusesAttachmentPath` | call `checkMessage`, from a version of `@nxgt/mail` that checks attachments (0.2 on) |
+| `conformance: the refusal message holds the refused value` | `send.refusesWithoutTheValue`, `send.refusesAddressHeader`, `send.refusesAttachmentPath` | name where the problem is, never the value |
+| `conformance: the message with an attachment was not delivered` | `send.attachment` | a message with attachments is a message: deliver it |
+| `conformance: the attachment was not delivered with its file name` | `send.attachment` | pass the name as is; the name `reçu n° 42.pdf` needs RFC 2231 encoding in a raw header — nodemailer and a JSON API do it for you |
+| `conformance: the attachment was not delivered with its content type` | `send.attachment` | pass `contentType` through; do not guess it from the name |
+| `conformance: the parts of a message with an attachment were not delivered as sent` | `send.attachment` | keep the HTML and the text parts beside the attachment — `multipart/mixed` around `multipart/alternative` |
 | `conformance: the send after a failure was not delivered` | `failure.recovers` | do not leave the transport broken after a failure: reopen the connection on the next send |
 | `conformance: faults are required` | a `failure.*` case whose `run` you called yourself | pass `faults` in the context, or go through `runMailerCase`, which skips the case instead |
 

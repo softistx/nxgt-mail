@@ -1,7 +1,8 @@
 # Sending
 
 This page is for calling `mailer.send`: the shape of what it takes, the
-addresses and headers it accepts, what it answers, and what it throws.
+addresses, headers and attachments it accepts, what it answers, and what it
+throws.
 
 ```ts
 import { createMemoryMailer } from '@nxgt/mail';
@@ -73,6 +74,13 @@ interface MailMessage extends Rendered {
 	readonly from?: Address;
 	readonly replyTo?: Address;
 	readonly headers?: Readonly<Record<string, string>>;
+	readonly attachments?: readonly MailAttachment[];
+}
+
+interface MailAttachment {
+	readonly filename: string;
+	readonly content: Uint8Array;
+	readonly contentType: string;
 }
 ```
 
@@ -85,6 +93,7 @@ interface MailMessage extends Rendered {
 | `from` | `Address` | no | The sender. `checkMessage` does not require one: a transport is usually wired with a default sender, and one without a default may refuse a message without `from` — see its documentation |
 | `replyTo` | `Address` | no | Where replies go |
 | `headers` | `Record<string, string>` | no | Extra headers, such as `List-Unsubscribe` |
+| `attachments` | `readonly MailAttachment[]` | no | Files sent with the e-mail, in order, as bytes — see [Attachments](#attachments). An empty list is the same as none |
 
 `Rendered` is what the renderer answers — `mails.render('verify-email', { name, link })`
 fills the values only known at send time into a built Maizzle template — and a
@@ -214,6 +223,85 @@ const message: MailMessage = {
 | `{ Bcc: 'eve@example.com' }` | `MailRefused`: `send: header Bcc is reserved — addresses, the subject and the MIME structure are never custom headers` |
 | `{ 'content-type': 'text/plain' }` | `MailRefused`: `send: header content-type is reserved — …` |
 
+## Attachments
+
+An attachment is a file's **bytes**, its name and its type:
+
+| Field | Type | Effect |
+| --- | --- | --- |
+| `filename` | `string` | The name the recipient's mail client shows and saves it as. Not empty, not `.` or `..`; no `/` or `\`, no line break, no control or format character. Accents and spaces are fine: the transport encodes the name |
+| `content` | `Uint8Array` | The bytes, sent as they are. A Node `Buffer` is a `Uint8Array` |
+| `contentType` | `string` | A bare `type/subtype`, as `application/pdf` or `text/calendar` — no parameters, and never `multipart/*` or `message/*`, which are not files. Nothing guesses it from the file name |
+
+```ts
+import { readFile } from 'node:fs/promises';
+import type { Mailer } from '@nxgt/mail';
+import { createMailRenderer } from '@nxgt/mail/renderer';
+
+const mails = createMailRenderer({ dir: 'dist' });
+
+export async function sendInvoice(mailer: Mailer, to: string, name: string, number: string): Promise<void> {
+	const pdf = await readFile(`invoices/${number}.pdf`); // your storage: a Buffer
+	await mailer.send({
+		to,
+		...mails.render('invoice', { name, number }),
+		attachments: [{ filename: `invoice-${number}.pdf`, content: pdf, contentType: 'application/pdf' }],
+	});
+}
+```
+
+Bytes from anywhere fit — a file read with `readFile`, a PDF your code just
+generated, what `fetch` answered (`new Uint8Array(await response.arrayBuffer())`),
+or text you encoded (`new TextEncoder().encode(csv)`).
+
+**There is no `path`, no URL and no stream.** A transport never reads a file
+from disk or fetches a URL to attach it: a value that came from outside —
+a file name in a request, a link in a database — can then never make an
+e-mail carry a file it should not. The SMTP transport tells nodemailer so
+explicitly. Read the file yourself, where you decide which files may be read.
+
+**A large or sensitive file is a link.** Every provider caps the whole
+message — about 25 MB sending through Gmail, 40 MB at Resend once encoded —
+and base64, which every transport uses on the way, makes a file a third
+larger. A file in an e-mail also stays in an inbox forever, forwarded or not.
+Put a signed, expiring URL in the template instead; a
+[URL variable](rendering.md) is already checked (`http:`, `https:` or
+`mailto:` only):
+
+```ts
+import type { Mailer } from '@nxgt/mail';
+import { createMailRenderer } from '@nxgt/mail/renderer';
+
+declare function signedUrl(key: string, expiresInSeconds: number): Promise<string>; // your storage
+
+const mails = createMailRenderer({ dir: 'dist' });
+
+export async function sendExport(mailer: Mailer, to: string, key: string): Promise<void> {
+	const link = await signedUrl(key, 24 * 3600);
+	await mailer.send({ to, ...mails.render('export-ready', { link }) });
+}
+```
+
+Inline images — a `cid:` the HTML points at — are not supported yet: a
+logo belongs on an `https:` URL, which is what the templates of
+`@nxgt/mail-ui` already use.
+
+`checkMessage` refuses, naming where and never the file's name:
+
+| Written | Answer |
+| --- | --- |
+| `attachments: pdf` — one, not in a list | a compile error; at run time `MailRefused`: `send: attachments must be an array` |
+| `[null]` | `MailRefused`: `send: attachments[0] must be an object, as { filename, content, contentType }` |
+| `{ filename, content: '%PDF-1.7', contentType }`, or `{ filename, path, contentType }` | a compile error; at run time `MailRefused`: `send: attachments[0].content must be a Uint8Array — the file's bytes, never a path or a URL` |
+| `filename: 'invoices/42.pdf'`, `'..\\42.pdf'`, `'..'`, `''`, or one holding a line break or a right-to-left override | `MailRefused`: `send: attachments[0].filename must be a file name — not empty, not . or .., without / or \, a line break or a control character` |
+| `contentType: 'text/plain; charset=utf-8'`, `'pdf'`, or `'message/rfc822'` | `MailRefused`: `send: attachments[0].contentType must be a file's type/subtype, as application/pdf — never multipart/* or message/*` |
+| `attachments: []` | accepted: the same as none |
+
+A message the provider refuses — too large, or an attachment it will not
+carry — is a `MailRefused` from the transport (an SMTP `552`; a Resend `400`,
+`413` or `422`), and sending it again unchanged fails again: send a link
+instead.
+
 ## Errors
 
 ```ts
@@ -238,7 +326,7 @@ class MailRefused extends MailError {
 | Code | Class | When | Sending it again |
 | --- | --- | --- | --- |
 | `MAIL_FAILED` | `MailFailure` | The transport could not hand the e-mail over: a refused connection, a timeout, a 5xx from the provider, an expired credential. The transport's error is the `cause`. **Nothing is known to have been sent**: after a timeout or a dropped connection the provider may have taken it all the same | May work later. Never report it as sent |
-| `MAIL_REFUSED` | `MailRefused` | The e-mail itself was refused, before or by the transport: no recipient, something that is not an address, a line break in the subject or a header, a reserved header, or the provider answering that the message is malformed | Fails again, unchanged |
+| `MAIL_REFUSED` | `MailRefused` | The e-mail itself was refused, before or by the transport: no recipient, something that is not an address, a line break in the subject or a header, a reserved header, an attachment that is not bytes or is badly named, or the provider answering that the message is malformed or too large | Fails again, unchanged |
 
 `MailError` is **abstract**: catch it, test `instanceof MailError`, but
 `new MailError(…)` does not compile — a bare one would pass a `code` check and

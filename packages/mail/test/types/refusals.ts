@@ -10,12 +10,13 @@
  * The calls that **must keep compiling** are here too, unmarked: a refusal
  * that refuses the correct call is a bug.
  *
- * **Seventeen plausible mistakes, seventeen refused.**
+ * **Twenty-one plausible mistakes, twenty-one refused.**
  */
 
-import type { MailerHarness } from '../../src/conformance/index';
+import type { DeliveredMail, MailerHarness } from '../../src/conformance/index';
 import {
 	createMemoryMailer,
+	type MailAttachment,
 	MailError,
 	type MailErrorCode,
 	type Mailer,
@@ -169,3 +170,83 @@ typed.render('sign-in-code');
 // A URL variable decides a link's scheme: it is a string, checked at render.
 // @ts-expect-error — link is a string.
 typed.render('verify-email', { link: 42, name: 'Ada' });
+
+// ── Attachments ──────────────────────────────────────────────────────────────
+// Must keep compiling: bytes from anywhere — a Uint8Array, a Buffer, what
+// fetch answers — and a harness that reads them back, or one written before
+// attachments, which leaves them out.
+declare const pdf: Uint8Array;
+const invoice: MailAttachment = {
+	filename: 'invoice-42.pdf',
+	content: pdf,
+	contentType: 'application/pdf',
+};
+const withFiles: MailMessage = {
+	...rendered,
+	to: 'ada@example.test',
+	attachments: [
+		invoice,
+		{
+			filename: 'notes.txt',
+			content: Buffer.from('notes'),
+			contentType: 'text/plain',
+		},
+		{
+			filename: 'logo.png',
+			content: new Uint8Array(await new Response('png').arrayBuffer()),
+			contentType: 'image/png',
+		},
+	],
+};
+const readBack: DeliveredMail = {
+	to: ['ada@example.test'],
+	subject: 's',
+	html: 'h',
+	text: 't',
+	attachments: [invoice],
+};
+const olderHarness: DeliveredMail = {
+	to: ['ada@example.test'],
+	subject: 's',
+	html: 'h',
+	text: 't',
+};
+void [withFiles, readBack, olderHarness];
+
+// ── 18. An attachment's content as text ──────────────────────────────────────
+// A string would be sent in some encoding the transport picks: bytes only.
+const asText: MailAttachment = {
+	filename: 'notes.txt',
+	// @ts-expect-error — content is a Uint8Array.
+	content: 'notes',
+	contentType: 'text/plain',
+};
+
+// ── 19. An attachment given as a path ────────────────────────────────────────
+// No transport reads a file or a URL for you: read it, and pass its bytes.
+const asPath: MailMessage = {
+	...rendered,
+	to: 'ada@example.test',
+	attachments: [
+		{
+			filename: 'invoice.pdf',
+			// @ts-expect-error — no path, no URL: content is the file's bytes.
+			path: '/srv/invoices/42.pdf',
+			contentType: 'application/pdf',
+		},
+	],
+};
+
+// ── 20. An attachment without its content type ───────────────────────────────
+// Nothing guesses it from the file name.
+// @ts-expect-error — contentType is required.
+const untyped: MailAttachment = { filename: 'invoice.pdf', content: pdf };
+
+// ── 21. One attachment, not in a list ────────────────────────────────────────
+const single: MailMessage = {
+	...rendered,
+	to: 'ada@example.test',
+	// @ts-expect-error — attachments is a list, even of one.
+	attachments: invoice,
+};
+void [asText, asPath, untyped, single];

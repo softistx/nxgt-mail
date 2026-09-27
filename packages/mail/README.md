@@ -41,9 +41,9 @@ import without extensions, so `nodenext` is not supported.
 
 | Import | What it holds |
 | --- | --- |
-| `@nxgt/mail` | The port (`Mailer`, `MailMessage`, `Rendered`, `SentMail`, `Address`), the errors (`MailError`, `MailFailure`, `MailRefused`), `createMemoryMailer`, `pickLocale` and `parseAcceptLanguage`, and what a transport calls first: `checkMessage`, `recipientsOf`, `addressOf`. No Node built-in: it runs anywhere |
+| `@nxgt/mail` | The port (`Mailer`, `MailMessage`, `Rendered`, `SentMail`, `Address`, `MailAttachment`), the errors (`MailError`, `MailFailure`, `MailRefused`), `createMemoryMailer`, `pickLocale` and `parseAcceptLanguage`, and what a transport calls first: `checkMessage`, `recipientsOf`, `addressOf`. No Node built-in: it runs anywhere |
 | `@nxgt/mail/renderer` | The renderer: `createMailRenderer`, `MailRenderer`, `MailRendererOptions`, `RenderOptions`, `MailVariables`, and the types that type it with a build's `MailEmails` (`MailEmailsOf`, `AnyMailEmails`, `RenderArguments`). Reads the build with `node:fs` |
-| `@nxgt/mail/conformance` | **For transport authors**: `describeMailer`, its cases as data, `runMailerCase`, and the memory mailer's harness as a worked example |
+| `@nxgt/mail/conformance` | **For transport authors**: `describeMailer`, its cases as data, `runMailerCase`, the messages they send (`sampleMessage`, `sampleAttachment`), and the memory mailer's harness as a worked example |
 
 ## Usage
 
@@ -116,6 +116,43 @@ export function notifyPasswordChanged(mailer: Mailer, to: string): Promise<SentM
 
 `SentMail` is `{ messageId: string | null }`: `null` when the transport gives no
 id — an absence, not a failure. See [Sending](docs/guide/sending.md).
+
+### Attachments — bytes, never a path
+
+A file goes with the e-mail as `attachments`: its name, its bytes as a
+`Uint8Array` (a Node `Buffer` is one), and its type:
+
+```ts
+import { readFile } from 'node:fs/promises';
+import type { Mailer, Rendered } from '@nxgt/mail';
+
+export async function sendInvoice(mailer: Mailer, to: string, rendered: Rendered, pdfPath: string): Promise<void> {
+	await mailer.send({
+		...rendered,
+		to,
+		attachments: [
+			{ filename: 'invoice-2026-09.pdf', content: await readFile(pdfPath), contentType: 'application/pdf' },
+		],
+	});
+}
+```
+
+There is no `path`, no URL and no stream: a transport never reads a file or
+fetches a URL for you, so a value from outside can never make it attach one.
+`checkMessage` refuses a hole in the list, content that is not a `Uint8Array`,
+a file name that is empty, `.` or `..`, or holds `/`, `\`, a line break, a
+control character or a format character (a right-to-left override), and a
+content type that is not a bare `type/subtype` or is a MIME container
+(`multipart/*`, `message/*`). An empty list is the same as none.
+
+**A large or sensitive file is a link, not an attachment.** Put a signed,
+expiring URL in the template as a URL variable —
+`mails.render('invoice-ready', { link: signedUrl })` — and the file never
+sits in an inbox. Providers cap the whole message — about 25 MB sending
+through Gmail, 40 MB at Resend once encoded — and base64 makes a file a third
+larger on the way.
+Inline images (`cid:`) are not supported yet. See
+[Sending — attachments](docs/guide/sending.md#attachments).
 
 ### Errors — switch on `code`
 
@@ -201,14 +238,26 @@ peer, and passes the conformance suite:
 ```ts
 import { checkMessage, MailFailure, MailRefused, type Mailer, recipientsOf } from '@nxgt/mail';
 
+// JSON has no bytes: an attachment travels as base64, read in slices.
+function base64Of(bytes: Uint8Array): string {
+	let binary = '';
+	for (let start = 0; start < bytes.length; start += 0x8000) {
+		binary += String.fromCharCode(...bytes.subarray(start, start + 0x8000));
+	}
+	return btoa(binary);
+}
+
 export function createHttpMailer(endpoint: string, apiKey: string): Mailer {
 	return {
 		async send(message) {
 			checkMessage(message); // MailRefused, naming where, never the value
+			const attachments = message.attachments?.length
+				? message.attachments.map((file) => ({ ...file, content: base64Of(file.content) }))
+				: undefined; // an empty list is none
 			const response = await fetch(endpoint, {
 				method: 'POST',
 				headers: { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' },
-				body: JSON.stringify({ ...message, to: recipientsOf(message) }),
+				body: JSON.stringify({ ...message, to: recipientsOf(message), attachments }),
 			}).catch((cause: unknown) => {
 				throw new MailFailure('send: the provider could not be reached', { cause });
 			});
@@ -271,6 +320,11 @@ with `MailRefused`; write `{ name: 'Ada', address: 'ada@example.com' }`.
 into an unhandled rejection and the user into someone waiting for an e-mail
 that never comes. `await` it, or hand it to a queue that does.
 
+**An attachment is bytes you already hold.** Read the file first
+(`await readFile(path)`, `new Uint8Array(await response.arrayBuffer())`);
+a `path` or a URL is a compile error and a `MailRefused`. Past a few
+megabytes, send a signed link instead.
+
 **A custom header cannot set an address.** `headers: { Bcc: '…' }` would add
 a recipient no check saw: `checkMessage` refuses `To`, `Cc`, `Bcc`, `From`,
 `Sender`, `Reply-To`, `Return-Path`, `Subject`, `MIME-Version` and
@@ -293,7 +347,7 @@ gives a test file `describe` and `it` as bare identifiers, not on `globalThis`.
 
 ## Type safety, counted
 
-**17 plausible mistakes, 17 refused** at compile time, each measured by a
+**21 plausible mistakes, 21 refused** at compile time, each measured by a
 `@ts-expect-error` in
 [`test/types/refusals.ts`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/test/types/refusals.ts)
 that fails the typecheck the moment it stops holding:
@@ -322,6 +376,13 @@ The name written as a literal and the variables at the call, as usual:
 15. A variable the e-mail takes, left out.
 16. The variables left out altogether, for an e-mail that takes some.
 17. A number for a URL variable: a URL is a string.
+
+And an attachment:
+
+18. Its `content` as a string: an attachment is bytes, a `Uint8Array`.
+19. A `path` instead of the bytes: no transport reads a file for you.
+20. No `contentType`: nothing guesses it from the file name.
+21. One attachment, not in a list.
 
 The same file holds the calls that must keep compiling: a refusal that refuses
 the correct call is a bug.

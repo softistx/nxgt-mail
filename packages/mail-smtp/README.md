@@ -37,8 +37,9 @@ bun add @nxgt/mail-smtp @nxgt/mail nodemailer
 
 Peers, all required:
 
-- `@nxgt/mail` — the port and the errors. One copy in your tree, so
-  `error instanceof MailFailure` holds.
+- `@nxgt/mail` — the port, the errors and the checks: `^0.2`, the version
+  with attachments. One copy in your tree, so `error instanceof MailFailure`
+  holds.
 - `nodemailer` (`>=7 <11`; tested with 10). This package never imports it:
   you create the transporter, with every SMTP option nodemailer has.
 - `typescript` (6). Bundler resolution (`"moduleResolution": "bundler"`) is
@@ -88,15 +89,43 @@ await mailer.send({
 - A name is handed to nodemailer as `{ name, address }`: nodemailer quotes and
   encodes it, so `Doe, John` names one recipient.
 - `messageId` is nodemailer's id (`<…@host>`), or `null` when it gives none.
-- The parts are strings: nodemailer is told never to read a file or a URL
-  (`disableFileAccess`, `disableUrlAccess`).
+- The parts are strings and the attachments bytes: nodemailer is told never
+  to read a file or a URL (`disableFileAccess`, `disableUrlAccess`).
+
+### Attachments
+
+`attachments` on the message are handed to nodemailer as bytes — a `Buffer`
+copied from each `Uint8Array` — with their file name and type:
+
+```ts
+import { readFile } from 'node:fs/promises';
+
+await mailer.send({
+	to: 'ada@example.com',
+	subject: 'Your invoice',
+	html: '<p>Your invoice is attached.</p>',
+	text: 'Your invoice is attached.',
+	attachments: [
+		{ filename: 'invoice-42.pdf', content: await readFile('/srv/invoices/42.pdf'), contentType: 'application/pdf' },
+	],
+});
+```
+
+There is no `path` or `href`, as nodemailer would take them: read the file
+yourself, where your code decides which files may be read. A file name
+outside ASCII is encoded by nodemailer. The server caps the whole message,
+attachments in base64 included — a third larger than the files — at about
+25 MB sending through Gmail, often 10 to 50 MB elsewhere; over it, the
+server answers `552` and `send` throws `MailRefused`. **A large or sensitive
+file is a signed link in the template**, not an attachment. See
+[Setting up — attachments](docs/guide/setup.md#attachments).
 
 ### Errors — a refusal or a failure
 
 | When | Throws | `cause` |
 | --- | --- | --- |
 | The server cannot be reached, a timeout, a `4xx` (try later), credentials refused (`530`–`539`), the sender refused (`5xx` on `MAIL FROM`) | `MailFailure` — `send: the SMTP server could not take the message` | nodemailer's error, with its `code` and `responseCode` |
-| A permanent `5xx` on every recipient or on the content (`550`, `552` too large, `554`) | `MailRefused` — `send: the SMTP server refused the message` | nodemailer's error |
+| A permanent `5xx` on every recipient or on the content (`550`; `552` too large, attachments included; `554`) | `MailRefused` — `send: the SMTP server refused the message` | nodemailer's error |
 | Some recipients refused, the others accepted — **they may have the message** | `MailRefused` — `send: the SMTP server refused <n> of <total> recipients, and may have delivered to the others` — or `MailFailure` — `send: the SMTP server could not take <n> of <total> recipients, …` when a refusal is not permanent, or nodemailer gives no reason | nodemailer's error for the first refused recipient |
 | No sender, on the message or as a default | `MailRefused` — `send: from is missing — give the message a from, or createSmtpMailer a default one` | — |
 | A bad option | `TypeError` from `createSmtpMailer` | — |
@@ -145,6 +174,11 @@ the same way, so it is a failure of the wiring, not of the message.
 server may accept one recipient and refuse another; the message then went out
 to the accepted one. Retrying it whole sends it to them twice — send to one
 recipient per `send` when every result must be all or nothing.
+
+**An attachment is held in memory, whole, and grows a third on the way.**
+nodemailer encodes it in base64 into the message it streams; a file of tens
+of megabytes is refused by most servers (`552`, `MailRefused`) after it was
+read. Send a signed link instead.
 
 **A custom header cannot set an address.** `headers: { Bcc: '…' }` would add
 an envelope recipient no check saw: `checkMessage` refuses `To`, `Cc`, `Bcc`,

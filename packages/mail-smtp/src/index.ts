@@ -19,6 +19,7 @@
 import {
 	type Address,
 	checkMessage,
+	type MailAttachment,
 	type Mailer,
 	MailFailure,
 	type MailMessage,
@@ -57,6 +58,11 @@ export interface SmtpTransporter {
 		html: string;
 		text: string;
 		headers?: Record<string, string>;
+		/**
+		 * A `Buffer`, not a `Uint8Array`: nodemailer's own types want one, and
+		 * what `nodemailer.createTransport(…)` answers then fits with no cast.
+		 */
+		attachments?: { filename: string; content: Buffer; contentType: string }[];
 		disableFileAccess: boolean;
 		disableUrlAccess: boolean;
 	}): Promise<SmtpSentInfo>;
@@ -73,6 +79,17 @@ const toNodemailer = (address: Address): NodemailerAddress =>
 	typeof address === 'string'
 		? { name: '', address }
 		: { name: address.name, address: address.address };
+
+/**
+ * An attachment as nodemailer takes it: its bytes as a `Buffer` — copied, so
+ * a change the caller makes during the send reaches no one — and never a
+ * `path` or an `href`, which nodemailer would read or fetch.
+ */
+const toNodemailerAttachment = (attachment: MailAttachment) => ({
+	filename: attachment.filename,
+	content: Buffer.from(attachment.content),
+	contentType: attachment.contentType,
+});
 
 interface SmtpError {
 	readonly code?: unknown;
@@ -198,7 +215,12 @@ export function createSmtpMailer(options: SmtpMailerOptions): Mailer {
 					...(message.headers === undefined
 						? {}
 						: { headers: { ...message.headers } }),
-					// The parts are strings: nothing is ever read from a file or a URL.
+					...(message.attachments === undefined ||
+					message.attachments.length === 0
+						? {}
+						: { attachments: message.attachments.map(toNodemailerAttachment) }),
+					// The parts are strings and the attachments bytes: nothing is ever
+					// read from a file or a URL.
 					disableFileAccess: true,
 					disableUrlAccess: true,
 				});

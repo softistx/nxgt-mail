@@ -50,9 +50,13 @@ A transport:
    separate field when the API has one, a quoted or encoded display name in a
    header otherwise. A name is free text: `Ada <mallory@example.test>, "Eve"`
    is a name, and it must reach only its own address;
-6. **never retries in secret**, never resolves `false`, never logs and
+6. **sends each attachment's bytes as they are**, with its file name and its
+   type — base64 in a JSON body, a MIME part over SMTP, the name encoded when
+   it is not ASCII — and **never reads a file or fetches a URL** to attach
+   one: `MailAttachment` holds bytes only;
+7. **never retries in secret**, never resolves `false`, never logs and
    resolves;
-7. **defines no error class of its own**. It throws the classes imported from
+8. **defines no error class of its own**. It throws the classes imported from
    `@nxgt/mail`, declared as a required peer, so `error instanceof MailFailure`
    holds in the application whichever transport threw it. `MailError` is
    abstract, so a bare one cannot be thrown:
@@ -60,10 +64,14 @@ A transport:
 ```json
 {
 	"peerDependencies": {
-		"@nxgt/mail": "^0.1.0"
+		"@nxgt/mail": "^0.2.0"
 	}
 }
 ```
+
+On `0.x`, a caret covers one minor: `^0.2.0` is `>=0.2.0 <0.3.0`. Declare the
+minor whose `MailMessage` your transport reads — `0.2` is the one with
+`attachments` — and release your transport when `@nxgt/mail` moves to the next.
 
 An error's `message` reports a shape, never a value: never an address, a
 subject, a link, an API key or a connection string. What the provider said goes
@@ -92,6 +100,14 @@ Throws `MailRefused`, naming **where** the problem is and never the value:
 | a header name that is not letters, digits and hyphens | `send: a header name must be letters, digits and hyphens` |
 | a line break in a header value | `send: header X-Ref must be a string without a line break` |
 | a header the transport writes from the message — `To`, `Cc`, `Bcc`, `From`, `Sender`, `Reply-To`, `Return-Path`, `Subject`, `MIME-Version`, `Content-*`, in any case | `send: header Bcc is reserved — addresses, the subject and the MIME structure are never custom headers` |
+| `attachments` that is not an array | `send: attachments must be an array` |
+| an attachment that is not an object | `send: attachments[0] must be an object, as { filename, content, contentType }` |
+| an attachment whose `content` is not a `Uint8Array` — a string, a path, an `ArrayBuffer` | `send: attachments[0].content must be a Uint8Array — the file's bytes, never a path or a URL` |
+| a file name that is empty, `.` or `..`, or holds `/`, `\`, a line break, a control character or a format character | `send: attachments[0].filename must be a file name — not empty, not . or .., without / or \, a line break or a control character` |
+| a content type that is not a bare `type/subtype`, or is `multipart/*` or `message/*` | `send: attachments[0].contentType must be a file's type/subtype, as application/pdf — never multipart/* or message/*` |
+
+An empty `attachments` is accepted, and is the same as none: send no
+attachment field to the provider then.
 
 Two helpers turn addresses into what a provider wants:
 
@@ -115,6 +131,15 @@ export interface HttpMailerOptions {
 	readonly fetch?: (url: string, init: RequestInit) => Promise<Response>;
 }
 
+/** Base64 with no Node built-in, read in slices so a large file spreads no huge argument list. */
+function base64Of(bytes: Uint8Array): string {
+	let binary = '';
+	for (let start = 0; start < bytes.length; start += 0x8000) {
+		binary += String.fromCharCode(...bytes.subarray(start, start + 0x8000));
+	}
+	return btoa(binary);
+}
+
 export function createHttpMailer(options: HttpMailerOptions): Mailer {
 	// Wiring mistakes: a bare TypeError, now, and never the value.
 	if (!/^https?:\/\//.test(options.endpoint)) {
@@ -128,13 +153,22 @@ export function createHttpMailer(options: HttpMailerOptions): Mailer {
 	return {
 		async send(message) {
 			checkMessage(message);
+			// A JSON API takes an attachment's bytes as base64.
+			// An empty list is none: the field is left out of the request.
+			const attachments = message.attachments?.length
+				? message.attachments.map((file) => ({
+						filename: file.filename,
+						content: base64Of(file.content),
+						contentType: file.contentType,
+					}))
+				: undefined;
 
 			let response: Response;
 			try {
 				response = await post(options.endpoint, {
 					method: 'POST',
 					headers: { authorization: `Bearer ${options.apiKey}`, 'content-type': 'application/json' },
-					body: JSON.stringify({ ...message, from: message.from ?? options.from }),
+					body: JSON.stringify({ ...message, from: message.from ?? options.from, attachments }),
 				});
 			} catch (cause) {
 				throw new MailFailure('send: the provider could not be reached', { cause });
@@ -204,16 +238,19 @@ and when `skip` names a case that does not exist
 | `send.deliversBytes` | the subject, the HTML and the text are delivered byte for byte: accents, an emoji, `&amp;` in a link | no |
 | `send.recipients` | every recipient is delivered to, written as a string or with a name | no |
 | `send.hostileName` | a name holding `<…>`, a comma and quotes — `Ada <mallory@example.test>, "Eve" <eve@example.test>;` — reaches only its own address: quoting the name is the transport's job | no |
+| `send.attachment` | an attachment — `sampleAttachment`, every byte from 0 to 255 named `reçu n° 42.pdf`, `application/pdf` — is delivered byte for byte, with its file name and its type (compared without case), and the parts beside it as sent | no |
 | `send.refusesNoRecipient` | no recipient throws `MailRefused`, and nothing is delivered | no |
 | `send.refusesLineBreakInSubject` | a line break in the subject throws `MailRefused`, and nothing is delivered | no |
 | `send.refusesAddressHeader` | a `Bcc` among the custom headers throws `MailRefused` without the address in its message, and nothing is delivered: it would add a recipient no check saw | no |
+| `send.refusesAttachmentPath` | an attachment named with a path (`../…/report.pdf`) throws `MailRefused` without the name in its message, and nothing is delivered: a mail client could save it elsewhere | no |
 | `send.refusesWithoutTheValue` | a refusal's `message` does not hold the refused value | no |
 | `failure.outage` | an outage throws `MailFailure` — **the class from `@nxgt/mail`** — with code `MAIL_FAILED` and a `cause`; one attempt; nothing delivered | yes |
 | `failure.refusal` | a provider's refusal throws `MailRefused` with code `MAIL_REFUSED` and a `cause`; one attempt | yes |
 | `failure.recovers` | after a failure, the next send goes through | yes |
 
-The message they send is exported as `sampleMessage`, and the cases as data:
-`sendCases` (the eight `send.*`), `failureCases` (the three `failure.*`) and
+The message they send is exported as `sampleMessage`, its attachment as
+`sampleAttachment`, and the cases as data:
+`sendCases` (the ten `send.*`), `failureCases` (the three `failure.*`) and
 `allMailerCases` (both, in the order above). A transport's own tests can reuse
 them — send the sample through your transport, or run only the cases that
 need no faults:
@@ -262,6 +299,7 @@ interface DeliveredMail {
 	readonly subject: string;
 	readonly html: string;
 	readonly text: string;
+	readonly attachments?: readonly MailAttachment[]; // as they arrived: [] when none did
 }
 
 interface MailerFaults {
@@ -274,7 +312,11 @@ interface MailerFaults {
   fresh receiving end, so no case sees another's messages.
 - `delivered()` reads back what **the receiving end** got — the test SMTP
   server, the recorded request, the fake provider — not what the mailer was
-  asked to send.
+  asked to send. That includes each attachment, decoded back to bytes:
+  `mailparser`'s `attachments` over SMTP, the base64 `content` of a JSON body
+  otherwise. `attachments` is optional so a harness written before it still
+  compiles, but `send.attachment` **fails** on a harness that leaves it out,
+  saying so — read them back, or skip the case with its reason.
 - `close()`, when present, is called after the case, pass or fail.
 
 ### Faults — failing the way the provider fails
@@ -290,11 +332,16 @@ translation of its provider's errors.
 
 ```ts
 // fake-provider.ts
-import { type MailMessage, recipientsOf } from '@nxgt/mail';
+import { addressOf, type MailMessage } from '@nxgt/mail';
 import type { DeliveredMail, MailerFaults } from '@nxgt/mail/conformance';
 
+/** What the HTTP mailer above posts: a message, its attachments' bytes as base64. */
+type Posted = Omit<MailMessage, 'attachments'> & {
+	readonly attachments?: readonly { filename: string; content: string; contentType: string }[];
+};
+
 export function fakeProvider() {
-	const inbox: MailMessage[] = [];
+	const inbox: Posted[] = [];
 	let attempts = 0;
 	let next: 'outage' | 'refusal' | null = null;
 
@@ -315,18 +362,28 @@ export function fakeProvider() {
 			next = null;
 			if (fault === 'outage') return new Response('unavailable', { status: 503 });
 			if (fault === 'refusal') return Response.json({ error: 'malformed' }, { status: 422 });
-			inbox.push(JSON.parse(String(init.body)) as MailMessage);
+			inbox.push(JSON.parse(String(init.body)) as Posted);
 			return Response.json({ id: `fake-${inbox.length}` });
 		},
 		delivered(): DeliveredMail[] {
-			return inbox.map((mail) => ({ to: recipientsOf(mail), subject: mail.subject, html: mail.html, text: mail.text }));
+			return inbox.map((mail) => ({
+				to: (Array.isArray(mail.to) ? mail.to : [mail.to]).map(addressOf),
+				subject: mail.subject,
+				html: mail.html,
+				text: mail.text,
+				attachments: (mail.attachments ?? []).map((file) => ({
+					filename: file.filename,
+					content: Uint8Array.from(atob(file.content), (char) => char.charCodeAt(0)),
+					contentType: file.contentType,
+				})),
+			}));
 		},
 	};
 }
 ```
 
 With the transport and the fake above, the example at the top of this page
-passes all eleven cases.
+passes all thirteen cases.
 
 ### Without faults
 

@@ -1,4 +1,4 @@
-import type { Mailer } from '../types';
+import type { MailAttachment, Mailer } from '../types';
 
 /**
  * What the receiving end got, as the harness reads it back: from the test
@@ -10,6 +10,16 @@ export interface DeliveredMail {
 	readonly subject: string;
 	readonly html: string;
 	readonly text: string;
+	/**
+	 * The files that arrived with it, in order, each with its bytes, its name
+	 * and its type as the receiving end read them — `[]` when none did.
+	 *
+	 * Optional, so a harness written before attachments still compiles; but
+	 * **its absence is reported, never passed over**: `send.attachment` fails
+	 * on a harness that leaves it out, until it reads them back or skips the
+	 * case with a reason.
+	 */
+	readonly attachments?: readonly MailAttachment[];
 }
 
 /**

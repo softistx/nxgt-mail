@@ -58,7 +58,7 @@ a `responseCode`. The transport reads both:
 | The sender refused (`550`, `553` on `MAIL FROM`) | `EENVELOPE` with a `5xx` and `command: 'MAIL FROM'` | `MailFailure` |
 | A recipient refused for good (`550`, `553`) | `EENVELOPE` with a `5xx` | `MailRefused` |
 | Every recipient refused | `EENVELOPE`, one error per recipient on `rejectedErrors` | `MailRefused` if every one is a permanent `5xx` (not `530`–`539`), else `MailFailure` |
-| The content refused for good (`552` too large, `554` rejected) | `EMESSAGE` with a `5xx` | `MailRefused` |
+| The content refused for good (`552` too large, attachments included; `554` rejected) | `EMESSAGE` with a `5xx` | `MailRefused` |
 | Anything else | — | `MailFailure` |
 
 Two `5xx` are failures: authentication, and a sender refused at

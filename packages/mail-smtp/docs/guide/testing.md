@@ -60,6 +60,11 @@ export async function startSmtpServer() {
 						subject: parsed.subject ?? '',
 						html: typeof parsed.html === 'string' ? parsed.html : '',
 						text: parsed.text ?? '',
+						attachments: parsed.attachments.map((file) => ({
+							filename: file.filename ?? '',
+							content: new Uint8Array(file.content), // a Buffer, read back as bytes
+							contentType: file.contentType,
+						})),
 					});
 					callback();
 				},
@@ -81,7 +86,9 @@ export async function startSmtpServer() {
 
 `to` is read from the **envelope** (`RCPT TO`), not from the `To:` header: it
 is who the server was asked to deliver to, and what proves a name did not
-smuggle a second recipient in.
+smuggle a second recipient in. `attachments` is what `mailparser` decoded,
+the file name included: `send.attachment` fails on a harness that leaves it
+out.
 
 ## The conformance suite
 
@@ -120,10 +127,11 @@ describeMailer({
 });
 ```
 
-All eleven cases pass: a send answers `SentMail`, the message arrives byte for
+All thirteen cases pass: a send answers `SentMail`, the message arrives byte for
 byte (accents, an emoji, `&amp;` in a link), every recipient is delivered to,
-a hostile name reaches only its own address, the refusals — a `Bcc` among the
-custom headers included — and the three
+a hostile name reaches only its own address, an attachment arrives byte for
+byte with its name and type, the refusals — a `Bcc` among the custom headers
+and an attachment named with a path included — and the three
 failure cases — an outage is a `MailFailure` with its `cause` and one attempt,
 a refusal a `MailRefused`, and the next send goes through.
 
@@ -146,7 +154,12 @@ add what the suite does not ask of every transport:
 - no error message holds the password or a recipient's address;
 - the default `from`, `replyTo` and `headers` reach the server, and the id is
   nodemailer's;
-- nodemailer is told never to read a file or a URL.
+- nodemailer is told never to read a file or a URL;
+- attachments are handed over as `{ filename, content, contentType }` with a
+  `Buffer` copied from the bytes — a change to the caller's array during the
+  send reaches no one — and an empty list sends none;
+- a message over the server's size limit (`552`, from `smtp-server`'s `size`)
+  is a `MailRefused`, and nothing is delivered.
 
 A transporter can also be a plain object, when a test only needs to see what
 was handed over:

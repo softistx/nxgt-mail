@@ -22,10 +22,10 @@ export type MailErrorCode =
 	/**
 	 * The message itself was refused, before or by the transport: no
 	 * recipient, something that is not an address, a line break in the
-	 * subject or a header, a provider answering that the message is
-	 * malformed, or — from `@nxgt/mail/renderer` — a URL variable that is not
-	 * an `http:`, `https:` or `mailto:` URL. Sending it again unchanged fails
-	 * again.
+	 * subject or a header, an attachment that is not bytes or is badly named,
+	 * a provider answering that the message is malformed or too large, or —
+	 * from `@nxgt/mail/renderer` — a URL variable that is not an `http:`,
+	 * `https:` or `mailto:` URL. Sending it again unchanged fails again.
 	 */
 	| 'MAIL_REFUSED';
 

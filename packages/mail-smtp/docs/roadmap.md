@@ -5,7 +5,12 @@ no dates here, and the version something shipped in is the only number.
 
 ## Now
 
-Nothing between releases.
+- **Attachments** — the `attachments` of a message are handed to nodemailer
+  as bytes, a `Buffer` copied from each `Uint8Array`, with their file name
+  (encoded by nodemailer when it is not ASCII) and their type. Never a `path`
+  or an `href`: `disableFileAccess` and `disableUrlAccess` stay on. A message
+  over the server's size limit (`552`) is a `MailRefused`. Needs
+  `@nxgt/mail` 0.2. Built, not yet published.
 
 ## Next
 
@@ -25,8 +30,9 @@ Nothing planned yet. Say what you need in an issue.
   twice.
 - **A transport's own error class** — it throws `@nxgt/mail`'s `MailFailure`
   and `MailRefused`, so `instanceof` holds whichever transport you wire.
-- **Attachments and files read by nodemailer** — a message is three strings;
-  `disableFileAccess` and `disableUrlAccess` stay on.
+- **Files and URLs read by nodemailer** — an attachment is bytes your code
+  already holds; `disableFileAccess` and `disableUrlAccess` stay on, so no
+  value from outside can make nodemailer read a file or fetch a URL.
 - **Bundling nodemailer** — it is a peer: one copy, the version you choose.
 
 ## Shipped

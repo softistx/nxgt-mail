@@ -14,6 +14,7 @@ type Fault =
 	| 'outage'
 	| 'refusal'
 	| 'badRequest'
+	| 'tooLarge'
 	| 'rateLimit'
 	| 'keyRefused'
 	| 'noId'
@@ -118,6 +119,8 @@ function startResend() {
 					);
 				case 'badRequest':
 					return error(400, 'validation_error', 'Invalid idempotency key.');
+				case 'tooLarge':
+					return new Response('Request Entity Too Large', { status: 413 });
 				case 'rateLimit':
 					return error(429, 'rate_limit_exceeded', 'Too many requests.');
 				case 'keyRefused':
@@ -132,11 +135,25 @@ function startResend() {
 				default:
 			}
 			const to = body.to as string[];
+			const attachments = (body.attachments ?? []) as {
+				filename: string;
+				content: string;
+				// biome-ignore lint/style/useNamingConvention: Resend's wire format names the field, not us.
+				content_type: string;
+			}[];
 			delivered.push({
 				to: to.flatMap(addressesIn),
 				subject: String(body.subject),
 				html: String(body.html),
 				text: String(body.text),
+				// Read back as Resend reads them: the content is base64.
+				attachments: attachments.map((file) => ({
+					filename: file.filename,
+					content: Uint8Array.from(atob(file.content), (char) =>
+						char.charCodeAt(0),
+					),
+					contentType: file.content_type,
+				})),
 			});
 			return Response.json({ id: `resend-${delivered.length}` });
 		},
@@ -216,6 +233,17 @@ describe('createResendMailer, refusals and failures', () => {
 	test('a 400 is a refusal', async () => {
 		const { error } = await sendWith('badRequest');
 		expect(error).toBeInstanceOf(MailRefused);
+	});
+
+	test('a 413 — attachments too large — is a refusal', async () => {
+		const { error, attempts } = await sendWith('tooLarge');
+		expect(error).toBeInstanceOf(MailRefused);
+		expect((error as MailRefused).cause).toMatchObject({
+			message: 'Resend answered 413',
+			status: 413,
+			errorName: null,
+		});
+		expect(attempts).toBe(1);
 	});
 
 	for (const [fault, status] of [
@@ -348,6 +376,56 @@ describe('createResendMailer, the request', () => {
 				'ada@example.test',
 				'john@example.test',
 			]);
+		} finally {
+			await resend.close();
+		}
+	});
+
+	test('sends each attachment as base64, with its filename and content_type', async () => {
+		const resend = startResend();
+		try {
+			const large = Uint8Array.from({ length: 100_000 }, (_, i) => i % 251);
+			await createResendMailer({
+				apiKey: API_KEY,
+				baseUrl: resend.baseUrl,
+			}).send({
+				...sampleMessage,
+				attachments: [
+					{
+						filename: 'invoice.pdf',
+						content: new TextEncoder().encode('%PDF-1.7'),
+						contentType: 'application/pdf',
+					},
+					{
+						filename: 'data.bin',
+						content: large,
+						contentType: 'application/octet-stream',
+					},
+				],
+			});
+			const [first, second] = (resend.received[0]?.body.attachments ??
+				[]) as Record<string, unknown>[];
+			expect(first).toEqual({
+				filename: 'invoice.pdf',
+				content: 'JVBERi0xLjc=',
+				// biome-ignore lint/style/useNamingConvention: Resend's wire format names the field, not us.
+				content_type: 'application/pdf',
+			});
+			// Longer than one slice of the encoder: every slice joins up.
+			expect(second?.content).toBe(Buffer.from(large).toString('base64'));
+		} finally {
+			await resend.close();
+		}
+	});
+
+	test('sends no attachments field for an empty list', async () => {
+		const resend = startResend();
+		try {
+			await createResendMailer({
+				apiKey: API_KEY,
+				baseUrl: resend.baseUrl,
+			}).send({ ...sampleMessage, attachments: [] });
+			expect('attachments' in (resend.received[0]?.body ?? {})).toBe(false);
 		} finally {
 			await resend.close();
 		}

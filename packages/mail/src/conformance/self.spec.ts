@@ -5,7 +5,7 @@ import { allMailerCases, failureCases } from './cases/index';
 import { describeMailer, MAILER_SKIP_REASONS, runMailerCase } from './describe';
 import { referenceMailerHarness } from './reference';
 import { sampleMessage } from './sample';
-import type { MailerHarness } from './types';
+import type { DeliveredMail, MailerHarness } from './types';
 
 // The suite, proven against the reference transport before any other exists.
 describeMailer({
@@ -263,6 +263,116 @@ describe('the suite fails a bad transport', () => {
 		expect(
 			await failureOf(runMailerCase(byId('send.hostileName'), naive)),
 		).toContain('a name let a second recipient through');
+	});
+
+	/** The reference harness, with what `delivered()` answers rewritten. */
+	const readingBack = (
+		rewrite: (mail: DeliveredMail) => DeliveredMail,
+	): MailerHarness => ({
+		async open() {
+			const opened = await referenceMailerHarness().open();
+			return {
+				...opened,
+				delivered: async () => (await opened.delivered()).map(rewrite),
+			};
+		},
+	});
+
+	it('fails a transport that drops the attachments', async () => {
+		expect(
+			await failureOf(
+				runMailerCase(
+					byId('send.attachment'),
+					readingBack((mail) => ({ ...mail, attachments: [] })),
+				),
+			),
+		).toContain('expected 1 delivered attachment, got 0');
+	});
+
+	it('fails a transport that reads the bytes as text', async () => {
+		// Decoding the bytes as UTF-8 and encoding them back is the usual way
+		// a binary file gets mangled: every byte above 127 changes.
+		const asText: MailerHarness = readingBack((mail) => ({
+			...mail,
+			attachments: (mail.attachments ?? []).map((file) => ({
+				...file,
+				content: new TextEncoder().encode(
+					new TextDecoder().decode(file.content),
+				),
+			})),
+		}));
+		expect(
+			await failureOf(runMailerCase(byId('send.attachment'), asText)),
+		).toContain('the attachment was not delivered byte for byte');
+	});
+
+	it('fails a transport that loses the file name or the type', async () => {
+		const renamed = readingBack((mail) => ({
+			...mail,
+			attachments: (mail.attachments ?? []).map((file) => ({
+				...file,
+				filename: 'attachment.bin',
+			})),
+		}));
+		const retyped = readingBack((mail) => ({
+			...mail,
+			attachments: (mail.attachments ?? []).map((file) => ({
+				...file,
+				contentType: 'application/octet-stream',
+			})),
+		}));
+		expect(
+			await failureOf(runMailerCase(byId('send.attachment'), renamed)),
+		).toContain('the attachment was not delivered with its file name');
+		expect(
+			await failureOf(runMailerCase(byId('send.attachment'), retyped)),
+		).toContain('the attachment was not delivered with its content type');
+	});
+
+	it('accepts a content type read back in capitals: a media type is case-insensitive', async () => {
+		const upper = readingBack((mail) => ({
+			...mail,
+			attachments: (mail.attachments ?? []).map((file) => ({
+				...file,
+				contentType: file.contentType.toUpperCase(),
+			})),
+		}));
+		expect(await runMailerCase(byId('send.attachment'), upper)).toEqual({
+			passed: true,
+		});
+	});
+
+	it('fails a harness that reads back no attachments, saying so, rather than passing', async () => {
+		// A harness written before attachments leaves the field out: the case
+		// must not read that as "delivered", nor as "dropped".
+		const older = readingBack(({ attachments: _, ...mail }) => mail);
+		expect(
+			await failureOf(runMailerCase(byId('send.attachment'), older)),
+		).toContain(
+			"the harness's delivered() reads back no attachments — read them from the receiving end, or skip send.attachment with the reason",
+		);
+	});
+
+	it('fails a transport that hands over an attachment named with a path', async () => {
+		const unchecked: MailerHarness = {
+			async open() {
+				const opened = await referenceMailerHarness().open();
+				return {
+					...opened,
+					mailer: {
+						async send(message) {
+							const { attachments: _, ...rest } = message;
+							return opened.mailer.send(rest);
+						},
+					},
+				};
+			},
+		};
+		expect(
+			await failureOf(
+				runMailerCase(byId('send.refusesAttachmentPath'), unchecked),
+			),
+		).toContain('a send with an attachment named with a path resolved');
 	});
 
 	it('fails a failure case when the harness has no faults and did not say so', async () => {

@@ -26,6 +26,22 @@ export interface Rendered {
 }
 
 /**
+ * A file sent with an e-mail, **as bytes**: never a path or a URL for the
+ * transport to read, never a stream. A large or sensitive file is a signed
+ * link in the template instead — a URL variable.
+ *
+ * `filename` is what the recipient's mail client shows and saves it as: no
+ * path (`/`, `\`, `.`, `..`), no line break, no control or format character.
+ * `contentType` is a bare `type/subtype`, as `application/pdf`, without
+ * parameters, and never a MIME container (`multipart/*`, `message/*`).
+ */
+export interface MailAttachment {
+	readonly filename: string;
+	readonly content: Uint8Array;
+	readonly contentType: string;
+}
+
+/**
  * A rendered e-mail, addressed. What a {@link Mailer} sends.
  *
  * `from` is optional because a transport is usually wired with a default
@@ -43,6 +59,11 @@ export interface MailMessage extends Rendered {
 	 * case — is refused.
 	 */
 	readonly headers?: Readonly<Record<string, string>>;
+	/**
+	 * Files sent with the e-mail, in order. An empty list is the same as none.
+	 * Each is bytes, checked by `checkMessage`: see {@link MailAttachment}.
+	 */
+	readonly attachments?: readonly MailAttachment[];
 }
 
 /** What a transport answers once it has handed a message over. */
