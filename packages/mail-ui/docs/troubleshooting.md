@@ -309,7 +309,10 @@ The message names your locale and template; the key starts `common.`.
 footer calls `t('common.footer.why')`), or an `<NxAvatarGroup>` hiding avatars
 past its `max` (its `+N` calls `t('common.avatarGroup.more')`), an
 `<NxTimeline>` with no events and no `empty`
-(`t('common.timeline.empty')`), or that calls
+(`t('common.timeline.empty')`), an `<NxGoalCard>`
+(`t('common.metrics.ofTarget')`), an `<NxCompareCard>` whose boxes have no
+`label` (`t('common.metrics.thisPeriod')`, `t('common.metrics.lastPeriod')`),
+an `<NxSeeAlso>` with links and no `label` (`t('common.seeAlso')`), or that calls
 `t('common.greeting')` or another `common.` key, when `@nxgt/mail-i18n` is in the plugins without
 the package's messages.
 **Why:** the `common.*` messages ship in `uiCatalogues`, not in the
@@ -344,11 +347,16 @@ The prop named is `modelValue`, `max` or `height` (which must also be above 0).
 **When:** `maizzle build`, on a template whose `<NxProgress>` is given a
 placeholder or any value that is not a number:
 `<NxProgress :model-value="placeholder('share')" />`,
-`<NxProgress model-value="40" />` (a string, without the `:`).
+`<NxProgress model-value="40" />` (a string, without the `:`). The cards that
+draw an `NxProgress` fail the same way: `<NxGoalCard>`'s `value`
+(`modelValue`) and `target` (`max`), `<NxRatioCard>`'s `percent` and each
+`percent` of `<NxBreakdownCard>`'s `items` (`modelValue`) —
+`<NxGoalCard label="Seats" :value="placeholder('used')" :target="10" />`.
 **Why:** the bar's width is computed when the e-mail is built; a placeholder
 is only filled when it is sent. Rather than draw an empty bar, the build stops.
 **Fix:** pass a number with `v-bind`. For a share that differs per recipient,
-write it as text, which a placeholder fills:
+write it as text, which a placeholder fills — or use an `<NxStatCard>`, which
+draws no bar:
 
 ```vue
 <template>
@@ -442,8 +450,10 @@ styles the box; the space below is on the table around it.
 change its outer `mb-4` (`mb-2` on `NxListTile`) — see
 [Replacing a component](guide/plugin.md#replacing-a-component). On
 `NxTypography`, `NxSummaryData`, `NxTable`, `NxDescription`,
-`NxAvatarGroup`, `NxProgress`, `NxSteps` and `NxTimeline`, `class="mb-0"`
-works.
+`NxAvatarGroup`, `NxProgress`, `NxSteps`, `NxTimeline` and `NxSeeAlso`,
+`class="mb-0"` works. `NxHero`, `NxEntityHeader` and the metric cards
+(`NxStatCard` to `NxBreakdownCard`) keep it, as `NxCard` does: their `class`
+goes on the box.
 
 ### The editor says `Property 'brand' does not exist` in a template
 

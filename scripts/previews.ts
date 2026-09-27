@@ -206,7 +206,7 @@ try {
 			`${ui}/previews/components-${locale}.png`,
 		);
 	}
-	// The data and sequence components' e-mails are written in English only.
+	// The data, sequence and summary components' e-mails are in English only.
 	shoot(
 		readFileSync(`${ui}/test/fixture/dist/en/gallery.html`, 'utf8'),
 		'en',
@@ -218,6 +218,12 @@ try {
 		'en',
 		'sequence',
 		`${ui}/previews/sequence-components.png`,
+	);
+	shoot(
+		readFileSync(`${ui}/test/fixture/dist/en/summary.html`, 'utf8'),
+		'en',
+		'summary',
+		`${ui}/previews/summary-components.png`,
 	);
 } finally {
 	rmSync(scratch, { recursive: true, force: true });

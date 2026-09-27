@@ -308,11 +308,83 @@ describe('a project built with the ui plugin', () => {
 		);
 	});
 
+	test('arrows a delta by its tone, coloured, and leaves the arrow out of the text', async () => {
+		const html = await read('dist/en/summary.html');
+		const arrow = (glyph: string, label: string) =>
+			`<span aria-hidden="true">${glyph}</span> ${label}<`;
+		expect(html).toContain(arrow('▲', '+12'));
+		// A fall the card says is good: up, whatever its sign.
+		expect(html).toContain(arrow('▲', '-2'));
+		expect(html).toContain(arrow('–', 'flat'));
+		expect(html).toContain(arrow('▲', '+42'));
+		expect(html).toMatch(
+			/color: #009588;[^>]*>\s*<span aria-hidden="true">▲<\/span> \+12</,
+		);
+		expect(html).toMatch(
+			/color: #62748e;[^>]*>\s*<span aria-hidden="true">–<\/span> flat</,
+		);
+		const text = await read('dist/en/summary.txt');
+		expect(text).toContain('Revenue $12,400 +12 vs last month Refunds 3 -2');
+		expect(text).not.toMatch(/[▲▼↗]/);
+	});
+
+	test("writes a metric card's shared words in each locale", async () => {
+		const en = await read('dist/en/summary.html');
+		const fr = await read('dist/fr/summary.html');
+		for (const words of ['>of 24<', '>This period<', '>Last period<']) {
+			expect(en).toContain(words);
+		}
+		for (const words of [
+			'>sur 24<',
+			'>Cette période<',
+			'>Période précédente<',
+		]) {
+			expect(fr).toContain(words);
+		}
+	});
+
+	test('fills a goal, a ratio and a breakdown with a bar, a breakdown rounding its share', async () => {
+		const html = await read('dist/en/summary.html');
+		expect(html).toContain(
+			'aria-valuenow="18" aria-valuemin="0" aria-valuemax="24"',
+		);
+		expect(html).toContain(
+			'aria-valuenow="72" aria-valuemin="0" aria-valuemax="100"',
+		);
+		for (const share of ['54%', '16%']) {
+			expect(html).toContain(`>${share}</td>`);
+			expect(html).toContain(`style="width: ${share}; height: 6px;`);
+		}
+		// A value, when given, in place of the share.
+		expect(html).toContain('>1,204</td>');
+		expect(html).not.toContain('>30%</td>');
+	});
+
+	test('heads a see-also with the shared words, and writes nothing for one with no links', async () => {
+		const en = await read('dist/en/summary.html');
+		expect(en).toContain('uppercase;">See also</p>');
+		expect(en.match(/>See also</g)).toHaveLength(1);
+		expect(en).toContain('<a href="https://acme.example/team"');
+		expect(await read('dist/fr/summary.html')).toContain(
+			'uppercase;">Voir aussi</p>',
+		);
+	});
+
 	test.each([
 		['welcome.vue', ['html-align', 'html-aria-hidden']],
 		// The caption's caption-side falls back on its align="bottom".
 		['gallery.vue', ['css-caption-side', 'html-align', 'html-align']],
 		['sequence.vue', ['html-align', 'html-aria-hidden']],
+		// A delta's arrow in each card, and a see-also's, hidden from a reader.
+		[
+			'summary.vue',
+			[
+				'html-align',
+				'html-aria-hidden',
+				'html-aria-hidden',
+				'html-aria-hidden',
+			],
+		],
 	])(
 		'caniemail reports for Gmail, Outlook and Apple Mail only the known partial support of %s',
 		async (email, known) => {

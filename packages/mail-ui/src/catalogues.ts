@@ -15,6 +15,12 @@ export const uiCatalogues = {
 			greeting: 'Hello {name},',
 			avatarGroup: { more: '{count, plural, other {# more}}' },
 			timeline: { empty: 'No activity yet' },
+			metrics: {
+				ofTarget: 'of {target}',
+				thisPeriod: 'This period',
+				lastPeriod: 'Last period',
+			},
+			seeAlso: 'See also',
 			footer: {
 				why: 'You received this e-mail because you have an account with {brand}.',
 				ignore: 'If you did not ask for this, you can ignore this e-mail.',
@@ -26,6 +32,12 @@ export const uiCatalogues = {
 			greeting: 'Bonjour {name},',
 			avatarGroup: { more: '{count, plural, one {# autre} other {# autres}}' },
 			timeline: { empty: 'Aucune activité pour le moment' },
+			metrics: {
+				ofTarget: 'sur {target}',
+				thisPeriod: 'Cette période',
+				lastPeriod: 'Période précédente',
+			},
+			seeAlso: 'Voir aussi',
 			footer: {
 				why: 'Vous recevez cet e-mail parce que vous avez un compte chez {brand}.',
 				ignore:

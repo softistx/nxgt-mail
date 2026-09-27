@@ -30,6 +30,11 @@ The components from `NxTable` to `NxAvatar`
 `NxProgress`, `NxSteps` and `NxTimeline`
 ([their template](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-ui/test/fixture/emails/sequence.vue)).
 
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-ui/previews/summary-components.png" width="420" alt="An e-mail using the summary components: a hero with an eyebrow and a button, an entity header with an icon, a status badge and a link, three stat cards with toned deltas, a goal card, a ratio card, a compare card, a breakdown card with three bars, and a see-also list of two links">
+
+The components from `NxHero` to `NxSeeAlso`
+([their template](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-ui/test/fixture/emails/summary.vue)).
+
 Every component is registered by [`ui()`](plugin.md) and used with no import.
 They keep material-vue's names (with the `Nx` prefix), its props and its
 values, and render with tables and inlined styles, which every mail client
@@ -43,12 +48,15 @@ reads. They need no JavaScript and no web font.
   attributes (`style`, `id`, `data-*`) go to the same element as `class`.
 - **Block components end with space below.** `NxTypography`, `NxAlert`,
   `NxBanner`, `NxCard`, `NxCode`, `NxSummaryData`, `NxTable`,
-  `NxDescription`, `NxAvatarGroup`, `NxProgress`, `NxSteps` and `NxTimeline`
-  carry `mb-4`, `NxListTile` `mb-2`. On `NxTypography`, `NxSummaryData`,
-  `NxTable`, `NxDescription`, `NxAvatarGroup`, `NxProgress`, `NxSteps` and
-  `NxTimeline`, `class="mb-0"` removes it. `NxAlert`,
-  `NxBanner`, `NxCard`, `NxCode` and `NxListTile` put their `class` on the box inside, and
-  keep their 16px below: to change it, replace the component with your own
+  `NxDescription`, `NxAvatarGroup`, `NxProgress`, `NxSteps`, `NxTimeline`,
+  `NxHero`, `NxEntityHeader`, the metric cards (`NxStatCard` to
+  `NxBreakdownCard`) and `NxSeeAlso` carry `mb-4`, `NxListTile` `mb-2`. On
+  `NxTypography`, `NxSummaryData`, `NxTable`, `NxDescription`,
+  `NxAvatarGroup`, `NxProgress`, `NxSteps`, `NxTimeline` and `NxSeeAlso`,
+  `class="mb-0"` removes it. `NxAlert`, `NxBanner`, `NxCard`, `NxCode`,
+  `NxListTile`, `NxHero`, `NxEntityHeader` and the metric cards put their
+  `class` on the box inside, and keep their 16px below: to change it, replace
+  the component with your own
   (see [Replacing a component](plugin.md#replacing-a-component)).
 - **Vertical space is Maizzle's `<Spacer>`**, which Outlook respects:
 
@@ -96,6 +104,14 @@ reads. They need no JavaScript and no web font.
 | [`NxSteps`](#nxsteps-and-nxstepsitem) | `Steps` | — | default: `NxStepsItem`s |
 | `NxStepsItem` | `StepsItem` | `title`, `index` (its place), `last` (set by `NxSteps`) | default, `index` |
 | [`NxTimeline`](#nxtimeline) | `Timeline` | `items` (required), `empty` (a shared message) | — |
+| [`NxHero`](#nxhero) | `Hero` | `title` (required), `eyebrow`, `description` | default, `actions` |
+| [`NxEntityHeader`](#nxentityheader) | `EntityHeader` | `title` (required), `metadata` (`[]`) | default, `icon`, `status`, `actions` |
+| [`NxStatCard`](#nxstatcard) | `StatCard` | `label` (required), `value`, `hint`, `delta`, `deltaTone` (by the delta's sign) | `icon` |
+| [`NxGoalCard`](#nxgoalcard) | `GoalCard` | `label`, `value`, `target` (required), `unit` | — |
+| [`NxRatioCard`](#nxratiocard) | `RatioCard` | `label`, `left`, `right`, `percent` (required) | — |
+| [`NxCompareCard`](#nxcomparecard) | `CompareCard` | `label`, `current`, `previous` (required), `delta` | — |
+| [`NxBreakdownCard`](#nxbreakdowncard) | `BreakdownCard` | `label`, `items` (required) | — |
+| [`NxSeeAlso`](#nxseealso) | `SeeAlso` | `items` (required), `label` (a shared message) | — |
 
 ## NxLayout
 
@@ -685,6 +701,246 @@ An e-mail is built before it is sent, so there is no `timestamp` turned into
 the time as `timestampLabel`, most often a placeholder filled at send time.
 There is no `loading` either: an e-mail does not load.
 
+## NxHero
+
+material-vue's `Hero`: an eyebrow, a large title, a description and actions,
+in a rounded, bordered box. Its gradient and blurred shapes are a plain ground
+at 5% of the primary colour: a mail client draws neither reliably.
+
+```vue
+<template>
+  <NxHero eyebrow="September" title="Your month at Acme" description="What your team did, and what is next.">
+    <template #actions><NxButton href="https://acme.example/report">Open the report</NxButton></template>
+  </NxHero>
+</template>
+```
+
+| Prop | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `title` | `string` | required | `<h1>`, `text-3xl` semibold |
+| `eyebrow` | `string` | none | Above the title: `text-xs`, semibold, uppercase, in `text-primary` |
+| `description` | `string` | none | Under the title, `text-base` muted |
+
+| Slot | Effect |
+| --- | --- |
+| `actions` | Under the description, `mt-6`: an `NxButton` or two |
+| default | Under the actions, `mt-8` |
+
+The box is `rounded-2xl`, a `border` line, `px-8 py-10`; its `class` goes on
+it.
+
+## NxEntityHeader
+
+material-vue's `EntityHeader`: what an e-mail is about — an icon, a title with
+its status, its details on one line, and actions on the right. Its shadow is a
+border here.
+
+```vue
+<template>
+  <NxEntityHeader title="Acme Labs" :metadata="[{ label: 'Plan', value: 'Pro' }, { label: 'Seats', value: 12 }]">
+    <template #icon>&#127970;</template>
+    <template #status><NxBadge variant="success">Active</NxBadge></template>
+    <template #actions><NxLink href="https://acme.example/settings">Settings</NxLink></template>
+  </NxEntityHeader>
+</template>
+```
+
+| Prop | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `title` | `string` | required | `<h2>`, `text-lg` semibold |
+| `metadata` | `{ label: string; value?: string \| number \| null }[]` | `[]` | Under the title, as an `inline` [`NxSummaryData`](#nxsummarydata): `Plan: Pro  Seats: 12`. A row without a value is left out, as there |
+
+| Slot | Effect |
+| --- | --- |
+| `icon` | A column on the left, `text-3xl`: a character or an `<img>` |
+| `status` | After the title, on its line: an `NxBadge` or an `NxStatusIndicator` |
+| `actions` | A column on the right, aligned to the middle |
+| default | Under the title and its details |
+
+The box is `rounded`, a `border` line, `bg-background`, `p-4`; its `class`
+goes on it.
+
+## The metric cards
+
+`NxStatCard`, `NxGoalCard`, `NxRatioCard`, `NxCompareCard` and
+`NxBreakdownCard` are material-vue's metric cards: each is an
+[`NxCard`](#nxcard-and-its-parts) with a `label` at its top, one under the
+other, full width. Their `class` goes on the card's box.
+
+They have no `loading` state: an e-mail does not load. The figures they
+**write** — a `value`, a `delta` — may be placeholders; the numbers they
+**draw** as an [`NxProgress`](#nxprogress) — `NxGoalCard`'s `value` and
+`target`, `NxRatioCard`'s `percent`, each `percent` of `NxBreakdownCard` —
+are known when the e-mail is built: a placeholder there
+[fails the build](../troubleshooting.md#nxprogress-modelvalue-must-be-a-number-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent).
+
+### A delta and its arrow
+
+`NxStatCard` and `NxCompareCard` write a `delta` as material-vue's
+`formatStatDelta` does, with an arrow before it that follows its tone, as
+material-vue's `TrendingUp`, `TrendingDown` and `Minus` icons do — a
+character here, since an e-mail has no icon font:
+
+| `delta` | Written | Tone (without `deltaTone`) |
+| --- | --- | --- |
+| `12` | `▲ +12` | `up`: `text-success` |
+| `-3` | `▼ -3` | `down`: `text-error` |
+| `0` | `– 0` | `neutral`: muted |
+| `'flat'`, any string | `– flat`, as given | `neutral`: muted |
+
+The arrow is `aria-hidden`, and left out of the plain-text version: there,
+`▲ +12` reads `+12`.
+
+## NxStatCard
+
+material-vue's `StatCard`: a label, a figure, and under it a delta and a hint.
+
+```vue
+<template>
+  <NxStatCard label="Revenue" value="$12,400" :delta="12" hint="vs last month" />
+  <NxStatCard label="Refunds" value="3" :delta="-2" delta-tone="up" />
+  <NxStatCard label="Churn" value="0.4%" delta="flat" />
+</template>
+```
+
+| Prop | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `label` | `string` | required | The first line, `text-sm` muted |
+| `value` | `string \| number` | none | The figure, `text-2xl` semibold. A placeholder is fine |
+| `delta` | `number \| string` | none | Under the figure, toned, with its arrow — see [A delta and its arrow](#a-delta-and-its-arrow). `''` writes none |
+| `deltaTone` | `'up' \| 'down' \| 'neutral'` | by the sign; `neutral` for a string | Overrides the tone, and so the arrow and colour |
+| `hint` | `string` | none | After the delta, `text-xs` muted |
+
+| Slot | Effect |
+| --- | --- |
+| `icon` | On the right of the label, muted: a character or an `<img>` |
+
+`deltaTone` is for a figure whose fall is good: above, `Refunds` is `▲ -2` in
+`text-success`. A delta known only when the e-mail is sent is a string —
+`:delta="placeholder('delta')"` — and neutral, unless `delta-tone` says
+otherwise: no component branches on a placeholder.
+
+## NxGoalCard
+
+material-vue's `GoalCard`: a figure against its target, `of {target}`, and a
+thin bar of the share reached.
+
+```vue
+<template>
+  <NxGoalCard label="Signed contracts" :value="18" :target="24" />
+  <NxGoalCard label="Storage used" :value="42" :target="100" unit=" GB" />
+</template>
+```
+
+| Prop | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `label` | `string` | required | The first line, `text-sm` muted |
+| `value` | `number` | required | The figure, `text-2xl` semibold, and the bar's `modelValue` |
+| `target` | `number` | required | Written after the figure, and the bar's `max` |
+| `unit` | `string` | none | Written right after `value`, with no space: `unit="%"` gives `18%`. Not after the target |
+
+`of 24` is the shared message `common.metrics.ofTarget` (`of {target}`,
+`sur {target}`) when `@nxgt/mail-i18n` is listed, and English otherwise; see
+[Shared messages](messages.md). The bar is an `NxProgress` of `height` 6: a
+`value` past its `target` fills it, and both are numbers known at build time.
+
+## NxRatioCard
+
+material-vue's `RatioCard`: two figures side by side, and a bar of the left
+one's share, on a track at 15% of the primary colour.
+
+```vue
+<template>
+  <NxRatioCard label="Plans" :left="{ label: 'Pro', value: '72%' }" :right="{ label: 'Free', value: '28%' }" :percent="72" />
+</template>
+```
+
+| Prop | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `label` | `string` | required | The first line, `text-sm` muted |
+| `left` | `{ label: string; value: string }` | required | On the left: its label small and uppercase, its value `text-lg` semibold |
+| `right` | `{ label: string; value: string }` | required | On the right, the same, its value muted |
+| `percent` | `number` | required | The bar's fill, out of 100: the left one's share |
+
+The values are written as given, and `percent` is not computed from them:
+pass both. `percent` is a number known at build time; the values may be
+placeholders.
+
+## NxCompareCard
+
+material-vue's `CompareCard`: this period's figure beside the last one's, in
+two boxes, and the delta between them.
+
+```vue
+<template>
+  <NxCompareCard label="Sign-ups" :current="{ value: '340' }" :previous="{ value: '298' }" :delta="42" />
+  <NxCompareCard label="Orders" :current="{ value: '51', label: 'October' }" :previous="{ value: '63', label: 'September' }" :delta="-12" />
+</template>
+```
+
+| Prop | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `label` | `string` | required | The first line, `text-sm` muted |
+| `current` | `{ value: string; label?: string }` | required | The left box, `text-2xl` semibold. `label` defaults to the shared message `common.metrics.thisPeriod` (`This period`) |
+| `previous` | `{ value: string; label?: string }` | required | The right box, muted. `label` defaults to `common.metrics.lastPeriod` (`Last period`) |
+| `delta` | `number` | none | On the right of the label, toned by its sign, with its arrow — see [A delta and its arrow](#a-delta-and-its-arrow) |
+
+Without `@nxgt/mail-i18n`, the two default labels are in English. The delta's
+tone is its sign's: there is no `deltaTone` here.
+
+## NxBreakdownCard
+
+material-vue's `BreakdownCard`: the parts of a whole, each a label, its value,
+and a thin bar of its share.
+
+```vue
+<template>
+  <NxBreakdownCard
+    label="Traffic"
+    :items="[
+      { label: 'Search', percent: 54.4 },
+      { label: 'Direct', value: '1,204', percent: 30 },
+      { label: 'Social', percent: 15.6 },
+    ]"
+  />
+</template>
+```
+
+| Prop | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `label` | `string` | required | The first line, `text-sm` muted |
+| `items` | `{ label: string; value?: string; percent: number }[]` | required | The parts, in order; each `label` unique |
+
+Each part writes its `value`, or its share rounded to a whole percent when it
+has none: above, `54%`, `1,204` and `16%`. Its bar is an `NxProgress` of
+`height` 6 filled to `percent`, a number known at build time.
+
+## NxSeeAlso
+
+material-vue's `SeeAlso`: a line, a small uppercase label, and links one per
+row, each with the `↗` material-vue gives an external link — every link of an
+e-mail opens a browser.
+
+```vue
+<template>
+  <NxSeeAlso
+    :items="[
+      { title: 'Billing', href: 'https://acme.example/billing' },
+      { id: 'team', title: 'Your team', href: 'https://acme.example/team' },
+    ]"
+  />
+</template>
+```
+
+| Prop | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `items` | `{ id?: string; title: string; href: string }[]` | required | The links, in order; each `id`, or else each `href`, unique |
+| `label` | `string` | the shared message `common.seeAlso` (`See also`); without `@nxgt/mail-i18n`, `See also` in every language | The label over the links |
+
+With no `items`, it writes nothing: no line, no label. The `↗` is
+`aria-hidden` and left out of the plain-text version. Its `class` is merged
+on the block, `mt-10 pt-8 mb-4` with a line above.
+
 ## A complete template
 
 With `@nxgt/mail-i18n` and [`uiCatalogues`](messages.md), in two locales:
@@ -724,4 +980,5 @@ With `@nxgt/mail-i18n` and [`uiCatalogues`](messages.md), in two locales:
 
 - [The plugin](plugin.md) — replacing one of these components with your own.
 - [The theme](theme.md) — the colours and radii these classes use.
-- [Shared messages](messages.md) — `common.greeting` and the footer's text.
+- [Shared messages](messages.md) — `common.greeting`, the footer's text, and
+  the words the components write themselves.
