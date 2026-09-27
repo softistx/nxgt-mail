@@ -29,6 +29,11 @@
 			"import": "./dist/conformance/index.js",
 			"default": "./dist/conformance/index.js"
 		},
+		"./telemetry": {
+			"types": "./dist/telemetry.d.ts",
+			"import": "./dist/telemetry.js",
+			"default": "./dist/telemetry.js"
+		},
 		"./package.json": "./package.json"
 	},
 	"keywords": [
@@ -56,17 +61,28 @@
 		"entrypoints": [
 			"src/index.ts",
 			"src/renderer.ts",
-			"src/conformance/index.ts"
+			"src/conformance/index.ts",
+			"src/telemetry.ts"
 		],
 		"noNodeBuiltins": [
 			".",
-			"./conformance"
+			"./conformance",
+			"./telemetry"
 		]
 	},
 	"devDependencies": {
+		"@opentelemetry/api": "1.9.1",
+		"@opentelemetry/sdk-metrics": "^2.4.0",
+		"@opentelemetry/sdk-trace-base": "^2.4.0",
 		"@types/bun": "^1.4.2"
 	},
 	"peerDependencies": {
+		"@opentelemetry/api": "^1.9.0",
 		"typescript": "^6.0.3"
+	},
+	"peerDependenciesMeta": {
+		"@opentelemetry/api": {
+			"optional": true
+		}
 	}
 }
