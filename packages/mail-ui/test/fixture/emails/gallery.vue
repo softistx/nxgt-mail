@@ -53,7 +53,7 @@
       <NxAvatar><NxAvatarFallback>AT</NxAvatarFallback></NxAvatar>
       <NxAvatar><NxAvatarFallback>KJ</NxAvatarFallback></NxAvatar>
     </NxAvatarGroup>
-    <NxAvatarGroup size="sm">
+    <NxAvatarGroup size="sm" :max="0">
       <NxAvatar v-for="initials in ['AB', 'CD', 'EF']" :key="initials"><NxAvatarFallback>{{ initials }}</NxAvatarFallback></NxAvatar>
     </NxAvatarGroup>
     <NxAvatar :size="48"><NxAvatarImage src="https://acme.example/ada.png" alt="Ada" /></NxAvatar>

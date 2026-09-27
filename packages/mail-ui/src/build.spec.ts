@@ -212,7 +212,7 @@ describe('a project built with the ui plugin', () => {
 		expect(html).toContain('alt="Ada" width="48" height="48"');
 	});
 
-	test('lays out a group from a v-for, all of it without max', async () => {
+	test('lays out a group from a v-for, all of it with a max under 1', async () => {
 		const html = await read('dist/en/gallery.html');
 		for (const initials of ['AB', 'CD', 'EF']) {
 			expect(styleOf(html, initials, 'span')).toContain('line-height: 24px;');

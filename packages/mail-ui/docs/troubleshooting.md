@@ -305,8 +305,9 @@ export default defineMailConfig({
 The message names your locale and template; the key starts `common.`.
 
 **When:** `maizzle build`, on the first template that uses `<NxLayout>` (its
-footer calls `t('common.footer.why')`), or that calls `t('common.greeting')`
-or another `common.` key, when `@nxgt/mail-i18n` is in the plugins without
+footer calls `t('common.footer.why')`), or an `<NxAvatarGroup>` hiding avatars
+past its `max` (its `+N` calls `t('common.avatarGroup.more')`), or that calls
+`t('common.greeting')` or another `common.` key, when `@nxgt/mail-i18n` is in the plugins without
 the package's messages.
 **Why:** the `common.*` messages ship in `uiCatalogues`, not in the
 project's `locales/`. The i18n plugin only knows them when they are passed
