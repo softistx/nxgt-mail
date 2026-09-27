@@ -41,6 +41,8 @@ template `emails/verify-email.vue`, and keys such as `verify-email.title`.
 - [`i18n: locales holds the same locale twice`](#i18n-locales-holds-the-same-locale-twice)
 - [`i18n: fallbackLocale must be one of locales`](#i18n-fallbacklocale-must-be-one-of-locales)
 - [`i18n: dir must be a folder of the project`](#i18n-dir-must-be-a-folder-of-the-project)
+- [`i18n: messages must be a module path, as './i18n/messages.ts'`](#i18n-messages-must-be-a-module-path-as-i18nmessagests)
+- [`i18n: dir and messages cannot both be set — messages replaces the folder`](#i18n-dir-and-messages-cannot-both-be-set--messages-replaces-the-folder)
 - [`i18n: layout must be 'nested' or 'flat'`](#i18n-layout-must-be-nested-or-flat)
 - [`i18n: catalogues must be a list of catalogues by locale, as [{ en: {...}, fr: {...} }]`](#i18n-catalogues-must-be-a-list-of-catalogues-by-locale-as--en--fr--)
 - [`i18n: templates must be a list of template folders, as [{ dir: '/abs/path/emails' }] — emails, when given, names at least one, each once`](#i18n-templates-must-be-a-list-of-template-folders-as--dir-abspathemails---emails-when-given-names-at-least-one-each-once)
@@ -64,6 +66,14 @@ template `emails/verify-email.vue`, and keys such as `verify-email.title`.
 - [`i18n: fr: verify-email.titel is not a key of en, the fallback locale`](#i18n-fr-verify-emailtitel-is-not-a-key-of-en-the-fallback-locale)
 - [`i18n: fr: verify-email.title uses {name}, which en does not declare`](#i18n-fr-verify-emailtitle-uses-name-which-en-does-not-declare)
 - [`i18n: fr: verify-email.expires uses {minutes} as date, and en declares it as number`](#i18n-fr-verify-emailexpires-uses-minutes-as-date-and-en-declares-it-as-number)
+- [`i18n: locales/fr/mails.json is missing — locales/en/mails.json exists`](#i18n-localesfrmailsjson-is-missing--localesenmailsjson-exists)
+- [`i18n: locales/en/sign_in.json: sign_in is not camelCase or kebab-case — a file path segment is a key segment too, as mails or sign-in`](#i18n-localesensign_injson-sign_in-is-not-camelcase-or-kebab-case--a-file-path-segment-is-a-key-segment-too-as-mails-or-sign-in)
+- [`i18n: en: mails is defined by both locales/en.json and locales/en/mails.json`](#i18n-en-mails-is-defined-by-both-localesenjson-and-localesenmailsjson)
+- [`i18n: ./i18n/messages.ts could not be loaded (<reason>)`](#i18n-i18nmessagests-could-not-be-loaded-reason)
+- [`i18n: ./i18n/messages.ts has no default export — export the resources object, or a function that returns it`](#i18n-i18nmessagests-has-no-default-export--export-the-resources-object-or-a-function-that-returns-it)
+- [`i18n: ./i18n/messages.ts's default export could not be run (<reason>)`](#i18n-i18nmessagestss-default-export-could-not-be-run-reason)
+- [`i18n: ./i18n/messages.ts's default export must be a resources object ({ en: {...}, fr: {...} }) or a function that returns one`](#i18n-i18nmessagestss-default-export-must-be-a-resources-object--en--fr---or-a-function-that-returns-one)
+- [`i18n: ./i18n/messages.ts is missing the fr locale`](#i18n-i18nmessagests-is-missing-the-fr-locale)
 
 **Templates** — while `maizzle build` renders
 - [`[Vue warn]: Unhandled error during execution of render function`](#vue-warn-unhandled-error-during-execution-of-render-function)
@@ -105,6 +115,7 @@ template `emails/verify-email.vue`, and keys such as `verify-email.title`.
 - [The editor says `Property 't' does not exist` in a template, or completes no key](#the-editor-says-property-t-does-not-exist-in-a-template-or-completes-no-key)
 - [The editor flags a key you just added to a catalogue](#the-editor-flags-a-key-you-just-added-to-a-catalogue)
 - [Biome reports `parse` errors in a template as soon as you edit it](#biome-reports-parse-errors-in-a-template-as-soon-as-you-edit-it)
+- [A `messages` module does not reload under `maizzle serve`](#a-messages-module-does-not-reload-under-maizzle-serve)
 - [A bug in `@nxgt/mail-i18n` itself](#a-bug-in-nxgtmail-i18n-itself)
 
 ---
@@ -223,6 +234,29 @@ i18n({ locales: ['en', 'fr'], dir: 'i18n', emails: 'templates' });
 ```
 
 Leave them out for the defaults, `locales` and `emails`.
+
+### `i18n: messages must be a module path, as './i18n/messages.ts'`
+
+**When:** loading `maizzle.config.ts`, when `messages` is not a string, or is
+an empty string.
+**Why:** `messages` replaces `dir`: a module path from the project's root,
+whose default export is the resources object.
+**Fix:**
+
+```ts
+i18n({ locales: ['en', 'fr'], messages: './i18n/messages.ts' });
+```
+
+### `i18n: dir and messages cannot both be set — messages replaces the folder`
+
+**When:** loading `maizzle.config.ts`, when both `dir` and `messages` are set.
+**Why:** they are two ways to answer the same question — where the project's
+own catalogues are — and only one can win.
+**Fix:** keep one:
+
+```ts
+i18n({ locales: ['en', 'fr'], messages: './i18n/messages.ts' });   // not dir: 'locales', messages: '…'
+```
 
 ### `i18n: layout must be 'nested' or 'flat'`
 
@@ -588,6 +622,120 @@ in one and a date in the other.
 
 ```json
 { "verify-email": { "expires": "Le lien expire dans {minutes, plural, one {# minute} other {# minutes}}." } }
+```
+
+### `i18n: locales/fr/mails.json is missing — locales/en/mails.json exists`
+
+The reverse also happens: `i18n: locales/fr/mails.json exists, and
+locales/en/mails.json does not — every locale has the same files`.
+
+**When:** loading `maizzle.config.ts`, when a catalogue is
+[split into folders](guide/catalogues.md#splitting-catalogues) and a file
+under `<dir>/<locale>/` exists for one locale and not another.
+**Why:** a folder file is checked the same way a flat key is: every locale
+needs the same catalogue, down to which files it is split into.
+**Fix:** add the missing file, with the same keys as the one that exists, or
+remove it from every locale:
+
+```json
+// locales/fr/mails.json
+{ "welcome": { "subject": "Bienvenue dans l'appli" } }
+```
+
+### `i18n: locales/en/sign_in.json: sign_in is not camelCase or kebab-case — a file path segment is a key segment too, as mails or sign-in`
+
+**When:** loading `maizzle.config.ts`, for a folder or a file under
+`<dir>/<locale>/` in `snake_case`, starting with a capital, or with a dot in
+its name other than the `.json` extension.
+**Why:** a folder file's path is a key prefix, so each segment of it — every
+folder name, and the file's own basename — is a key segment too, checked the
+same way as a key written inside the file.
+**Fix:** rename the folder or the file:
+
+```
+locales/en/sign-in.json   # not sign_in.json
+```
+
+### `i18n: en: mails is defined by both locales/en.json and locales/en/mails.json`
+
+**When:** loading `maizzle.config.ts`, when two catalogue sources claim the
+same key: the flat file and a folder file (`locales/en.json`'s `mails` key
+and `locales/en/mails.json`), or two folder files whose paths nest one under
+the other. In that second case, `locales/en/auth.json` claims the whole
+`auth` prefix for itself — even a key under `auth` that `auth.json`'s own
+content does not have — so `locales/en/auth/sign-in.json`, which would add to
+that prefix, collides on `auth` itself, not on `sign-in`.
+**Why:** each key comes from exactly one file; two files writing the same key
+would have one silently win, and which one would depend on the order files
+are read in.
+**Fix:** keep the key in one file only, and remove it from the other — not
+also in `locales/en.json`'s own `mails` key:
+
+```json
+// locales/en/mails.json
+{ "welcome": { "subject": "Welcome to the app" } }
+```
+
+### `i18n: ./i18n/messages.ts could not be loaded (<reason>)`
+
+The path is `messages` as given; the reason in brackets is the error the
+`import()` threw.
+
+**When:** loading `maizzle.config.ts`, with `messages` set, when the module
+does not exist, has a syntax error, or throws while it runs.
+**Why:** `messages` is loaded with a plain dynamic `import()`, resolved
+against the project's root.
+**Fix:** fix the path, or the module's own error.
+
+### `i18n: ./i18n/messages.ts has no default export — export the resources object, or a function that returns it`
+
+**When:** loading `maizzle.config.ts`, with `messages` set, when the module
+has no `export default`.
+**Why:** `messages` is read from the module's default export alone; a named
+export is not looked at.
+**Fix:**
+
+```ts
+// i18n/messages.ts
+export default { en, fr };
+```
+
+### `i18n: ./i18n/messages.ts's default export could not be run (<reason>)`
+
+The reason in brackets is what the function threw.
+
+**When:** loading `maizzle.config.ts`, with `messages` set, when the default
+export is a function and calling it throws.
+**Why:** a function default export is called with no arguments, so its
+result can be built at load time (from a database, an API, or anything else
+JSON cannot express directly).
+**Fix:** fix what the function does, or export the resources object
+directly.
+
+### `i18n: ./i18n/messages.ts's default export must be a resources object ({ en: {...}, fr: {...} }) or a function that returns one`
+
+**When:** loading `maizzle.config.ts`, with `messages` set, when the default
+export (or what it answers, once called) is not an object of catalogues by
+locale — `null`, an array, a string.
+**Why:** `messages` replaces `dir`; what it answers is read exactly as a
+`dir`'s files, merged into one object first.
+**Fix:**
+
+```ts
+// i18n/messages.ts
+export default { en: { 'verify-email': { subject: 'Confirm' } }, fr: { 'verify-email': { subject: 'Confirmez' } } };
+```
+
+### `i18n: ./i18n/messages.ts is missing the fr locale`
+
+**When:** loading `maizzle.config.ts`, with `messages` set, when the resources
+object has no key for one of `locales`.
+**Why:** every locale in `locales` needs its own catalogue, whether it comes
+from `dir` or from `messages`.
+**Fix:** add the locale to the module's default export:
+
+```ts
+export default { en, fr };   // not just { en }
 ```
 
 ---
@@ -1178,6 +1326,20 @@ such as `useAnchorContent` on `<a><slot /></a>`, is silenced on its element:
 <!-- biome-ignore lint/a11y/useAnchorContent: the link's text is the slot. -->
 <a :href="href"><slot /></a>
 ```
+
+### A `messages` module does not reload under `maizzle serve`
+
+**When:** running `maizzle serve` with `i18n({ messages })`, a change to the
+module (or to a file it imports) is not reflected — the config reloads (a
+change to `maizzle.config.ts` itself always does), but the messages are
+still the ones read when the server started.
+**Why:** `messages` is loaded with a plain dynamic `import()`, with no
+cache-busting: Node's and Bun's module registries cache it for the life of
+the process, unlike `dir`'s JSON files, which are read fresh on every config
+reload.
+**Fix:** restart `maizzle serve` after editing the module or anything it
+imports. `dir` does not have this trap — prefer it when editing catalogues
+often matters more than a single module.
 
 ### A bug in `@nxgt/mail-i18n` itself
 

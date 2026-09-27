@@ -326,6 +326,39 @@ describe('a build failure names the locale, the template and the key', () => {
 			},
 			'i18n: fr: verify-email.title is missing — en, the fallback locale, has it',
 		],
+		[
+			'folder-collides-with-flat',
+			{
+				'locales/en.json': { ...en, mails: { subject: 'Welcome' } },
+				'locales/fr.json': { ...fr, mails: { subject: 'Bienvenue' } },
+				'locales/en/mails.json': { title: 'Welcome' },
+				'locales/fr/mails.json': { title: 'Bienvenue' },
+			},
+			'i18n: en: mails is defined by both locales/en.json and locales/en/mails.json',
+		],
+		[
+			'folder-collides-with-folder',
+			{
+				'locales/en/auth.json': { 'sign-in': { title: 'Sign in' } },
+				'locales/fr/auth.json': { 'sign-in': { title: 'Connexion' } },
+				'locales/en/auth/sign-in.json': { title: 'Sign in' },
+				'locales/fr/auth/sign-in.json': { title: 'Connexion' },
+			},
+			'i18n: en: auth is defined by both locales/en/auth.json and locales/en/auth/sign-in.json',
+		],
+		[
+			'folder-file-missing-in-a-locale',
+			{ 'locales/en/mails.json': { welcome: 'Welcome' } },
+			'i18n: locales/fr/mails.json is missing — locales/en/mails.json exists',
+		],
+		[
+			'folder-bad-path-segment',
+			{
+				'locales/en/sign_in.json': { title: 'Sign in' },
+				'locales/fr/sign_in.json': { title: 'Connexion' },
+			},
+			'i18n: locales/en/sign_in.json: sign_in is not camelCase or kebab-case — a file path segment is a key segment too, as mails or sign-in',
+		],
 	])(
 		'%s',
 		async (name, files, message) => {
@@ -388,4 +421,183 @@ describe('a right-to-left locale', () => {
 		expect(ar).toContain('تأكيد عنوانك');
 		expect(en).toContain('dir="ltr"');
 	});
+});
+
+describe('catalogues split into folders', () => {
+	const root = `${cases}/folders`;
+	afterAll(() => rmSync(root, { recursive: true, force: true }));
+
+	beforeAll(async () => {
+		rmSync(root, { recursive: true, force: true });
+		const files: Record<string, string | object> = {
+			'maizzle.config.ts': [
+				"import { defineMailConfig } from '@nxgt/mail-config';",
+				"import { i18n } from '../../../src/index';",
+				"const shared = { en: { common: { greeting: 'Hi {name},' } }, fr: { common: { greeting: 'Salut {name},' } } };",
+				"export default defineMailConfig({ plugins: [i18n({ locales: ['en', 'fr'], catalogues: [shared] })] });",
+			].join('\n'),
+			// The flat file keeps its usual keys.
+			'locales/en.json': {
+				'verify-email': { subject: 'Confirm', title: 'Confirm your address' },
+			},
+			'locales/fr.json': {
+				'verify-email': {
+					subject: 'Confirmez',
+					title: 'Confirmez votre adresse',
+				},
+			},
+			// A folder file at the top of the locale directory: mails.*
+			'locales/en/mails.json': { welcome: { subject: 'Welcome to the app' } },
+			'locales/fr/mails.json': {
+				welcome: { subject: "Bienvenue dans l'appli" },
+			},
+			// A nested folder file: auth.sign-in.*
+			'locales/en/auth/sign-in.json': { title: 'Sign in' },
+			'locales/fr/auth/sign-in.json': { title: 'Connexion' },
+			'emails/verify-email.vue': [
+				'<template>',
+				"  <p>{{ t('verify-email.title') }}</p>",
+				"  <p>{{ t('common.greeting', { name: 'Ada' }) }}</p>",
+				"  <p>{{ t('mails.welcome.subject') }}</p>",
+				"  <p>{{ t('auth.sign-in.title') }}</p>",
+				'</template>',
+			].join('\n'),
+		};
+		for (const [path, content] of Object.entries(files)) {
+			mkdirSync(dirname(`${root}/${path}`), { recursive: true });
+			writeFileSync(
+				`${root}/${path}`,
+				typeof content === 'string' ? content : JSON.stringify(content),
+			);
+		}
+		await build(root);
+	}, 60_000);
+
+	test('reads the flat file, a folder file and a nested folder file, catalogues still layered under them', async () => {
+		const en = await Bun.file(`${root}/dist/en/verify-email.html`).text();
+		expect(en).toContain('Confirm your address');
+		expect(en).toContain('Hi Ada,');
+		expect(en).toContain('Welcome to the app');
+		expect(en).toContain('Sign in');
+		const fr = await Bun.file(`${root}/dist/fr/verify-email.html`).text();
+		expect(fr).toContain("Bienvenue dans l'appli");
+		expect(fr).toContain('Connexion');
+	});
+});
+
+describe('messages instead of a folder', () => {
+	const root = `${cases}/messages`;
+	afterAll(() => rmSync(root, { recursive: true, force: true }));
+
+	beforeAll(async () => {
+		rmSync(root, { recursive: true, force: true });
+		const files: Record<string, string> = {
+			'maizzle.config.ts': [
+				"import { defineMailConfig } from '@nxgt/mail-config';",
+				"import { i18n } from '../../../src/index';",
+				'export default defineMailConfig({',
+				"  plugins: [await i18n({ locales: ['en', 'fr'], messages: './i18n/messages.ts' })],",
+				'});',
+			].join('\n'),
+			'i18n/messages.ts': [
+				"const en = { 'verify-email': { subject: 'Confirm', title: 'Confirm your address' } };",
+				"const fr = { 'verify-email': { subject: 'Confirmez', title: 'Confirmez votre adresse' } };",
+				'export default { en, fr };',
+			].join('\n'),
+			'emails/verify-email.vue':
+				"<template><p>{{ t('verify-email.title') }}</p></template>",
+		};
+		for (const [path, content] of Object.entries(files)) {
+			mkdirSync(dirname(`${root}/${path}`), { recursive: true });
+			writeFileSync(`${root}/${path}`, content);
+		}
+		await build(root);
+	}, 60_000);
+
+	test('reads the catalogues from the module, no locales/ folder at all', async () => {
+		const en = await Bun.file(`${root}/dist/en/verify-email.html`).text();
+		expect(en).toContain('Confirm your address');
+		const fr = await Bun.file(`${root}/dist/fr/verify-email.html`).text();
+		expect(fr).toContain('Confirmez votre adresse');
+	});
+});
+
+describe('a messages module that cannot be read', () => {
+	const root = `${cases}/messages-failures`;
+	afterAll(() => rmSync(root, { recursive: true, force: true }));
+
+	/** Writes a project with `messages` set, builds it, and answers what it printed. */
+	async function messagesFailure(
+		name: string,
+		files: Record<string, string>,
+	): Promise<string> {
+		const dir = `${root}/${name}`;
+		rmSync(dir, { recursive: true, force: true });
+		const all: Record<string, string> = {
+			'maizzle.config.ts': [
+				"import { defineMailConfig } from '@nxgt/mail-config';",
+				"import { i18n } from '../../../../src/index';",
+				'export default defineMailConfig({',
+				"  plugins: [await i18n({ locales: ['en', 'fr'], messages: './i18n/messages.ts' })],",
+				'});',
+			].join('\n'),
+			'emails/verify-email.vue':
+				"<template><p>{{ t('verify-email.title') }}</p></template>",
+			...files,
+		};
+		for (const [path, content] of Object.entries(all)) {
+			mkdirSync(dirname(`${dir}/${path}`), { recursive: true });
+			writeFileSync(`${dir}/${path}`, content);
+		}
+		const { code, output } = await run(dir, 'build');
+		expect(code).not.toBe(0);
+		return output;
+	}
+
+	test('no module at the path', async () => {
+		const output = await messagesFailure('missing', {});
+		expect(output).toMatch(
+			/i18n: \.\/i18n\/messages\.ts could not be loaded \(.+\)/,
+		);
+	}, 60_000);
+
+	test('a module with no default export', async () => {
+		const output = await messagesFailure('no-default', {
+			'i18n/messages.ts': 'export const en = {};\n',
+		});
+		expect(output).toContain(
+			'i18n: ./i18n/messages.ts has no default export — export the resources object, or a function that returns it',
+		);
+	}, 60_000);
+
+	test('a default export that throws when called', async () => {
+		const output = await messagesFailure('throws', {
+			'i18n/messages.ts':
+				"export default () => { throw new Error('boom'); };\n",
+		});
+		expect(output).toMatch(
+			/i18n: \.\/i18n\/messages\.ts's default export could not be run \(boom\)/,
+		);
+	}, 60_000);
+
+	test('a resources object missing a locale', async () => {
+		const output = await messagesFailure('missing-locale', {
+			'i18n/messages.ts': [
+				"const en = { 'verify-email': { subject: 'Confirm', title: 'Confirm your address' } };",
+				'export default { en };',
+			].join('\n'),
+		});
+		expect(output).toContain(
+			'i18n: ./i18n/messages.ts is missing the fr locale',
+		);
+	}, 60_000);
+
+	test('a default export that is not a resources object', async () => {
+		const output = await messagesFailure('not-an-object', {
+			'i18n/messages.ts': 'export default 42;\n',
+		});
+		expect(output).toContain(
+			"i18n: ./i18n/messages.ts's default export must be a resources object ({ en: {...}, fr: {...} }) or a function that returns one",
+		);
+	}, 60_000);
 });

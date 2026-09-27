@@ -167,7 +167,8 @@ See [Templates](docs/guide/templates.md).
 | --- | --- | --- | --- |
 | `locales` | `readonly string[]` | — (required) | Every locale to build, as BCP 47 tags: `['en', 'fr', 'pt-BR']` |
 | `fallbackLocale` | `string` | the first of `locales` | The reference catalogue: every other locale must have its keys, and may not add an argument |
-| `dir` | `string` | `'locales'` | The folder of `<locale>.json` catalogues, relative to where `maizzle` runs |
+| `dir` | `string` | `'locales'` | The folder of `<locale>.json` catalogues (and `<locale>/**/*.json`, [split into folders](docs/guide/catalogues.md#splitting-catalogues)), relative to where `maizzle` runs. Not with `messages` |
+| `messages` | `string` | — | A module whose default export is the resources object (`{ en: {...}, fr: {...} }`), instead of `dir`. Answers `i18n()` as a `Promise` — see [Messages from a module](docs/guide/catalogues.md#messages-from-a-module) |
 | `emails` | `string` | `'emails'` | The folder of templates |
 | `layout` | `'nested' \| 'flat'` | `'nested'` | `nested` writes `dist/en/verify-email.html`; `flat` writes `dist/verify-email.en.html` |
 | `catalogues` | `readonly Catalogues[]` | `[]` | Catalogues a package ships, merged in order **under** your `<locale>.json`, key by key |
@@ -206,6 +207,52 @@ export default defineMailConfig({
 // locales/en.json — common.footer.why and common.footer.ignore stay the package's
 { "common": { "greeting": "Hi {name}," } }
 ```
+
+### Splitting catalogues
+
+`locales/<locale>.json` does not have to hold every message. A file at
+`<dir>/<locale>/**/*.json` is read too, and its **path is a key prefix**:
+
+```
+locales/
+  en.json          # the keys it always had
+  en/
+    mails.json      # mails.*
+    auth/
+      sign-in.json   # auth.sign-in.*
+```
+
+```json
+// locales/en/mails.json
+{ "welcome": { "subject": "Welcome to the app" } }
+```
+
+is exactly as if `locales/en.json` held `{ "mails": { "welcome": {
+"subject": "Welcome to the app" } } }`. Every locale needs the same files, at
+the same paths, as the fallback locale. See
+[Splitting catalogues](docs/guide/catalogues.md#splitting-catalogues).
+
+### Messages from a module
+
+Instead of `dir`, `messages` names a module whose default export is the
+resources object, or a function that returns one:
+
+```ts
+// i18n/messages.ts
+import en from './locales/en.json';
+import fr from './locales/fr.json';
+
+export default { en, fr };
+```
+
+```ts
+// maizzle.config.ts — `messages` is read asynchronously
+export default defineMailConfig({
+	plugins: [await i18n({ locales: ['en', 'fr'], messages: './i18n/messages.ts' })],
+});
+```
+
+See [Messages from a module](docs/guide/catalogues.md#messages-from-a-module).
 
 The merged catalogues are checked like your own. A source's locale your
 project does not build is left out. See
@@ -423,7 +470,7 @@ layout, and the build fails when the manifest is written.
 
 ## Type safety, counted
 
-**18 plausible mistakes, 18 refused** at compile time. Each one is measured by
+**20 plausible mistakes, 20 refused** at compile time. Each one is measured by
 a `@ts-expect-error` in
 [`test/types/refusals.ts`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-i18n/test/types/refusals.ts),
 which fails the typecheck the moment it stops holding:
@@ -448,11 +495,14 @@ which fails the typecheck the moment it stops holding:
 16. A template folder's `emails` given as one name rather than a list.
 17. A template folder's `emails` given as an empty list.
 18. `rendererTypes` given as `true` rather than a path.
+19. `messages` given as something that is not a module path.
+20. `messages` set, and the plugin used as if it answered the plugin
+    directly, not a `Promise<MailPlugin>`.
 
 The same file holds the calls that must keep compiling: a refusal that refuses
 the correct call is a bug.
 
-**7 template mistakes, 7 refused** by the types generated from the
+**8 template mistakes, 8 refused** by the types generated from the
 catalogues, each measured by a `@vue-expect-error` in
 [`test/fixture/types/refusals.vue`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-i18n/test/fixture/types/refusals.vue),
 checked by `vue-tsc` after `maizzle prepare` (`bun run typecheck:templates`):
@@ -465,6 +515,7 @@ checked by `vue-tsc` after `maizzle prepare` (`bun run typecheck:templates`):
 6. A key that may be a message without arguments or one with
    (`t(ok ? 'verify-email.title' : 'verify-email.expires')`).
 7. The same, given the arguments of only one of them.
+8. A folder file's own key, called without its prefix.
 
 The same file holds the template calls that must keep compiling. The build
 still checks every call against every locale's catalogue; the types report
