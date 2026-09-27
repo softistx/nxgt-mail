@@ -41,7 +41,7 @@ import without extensions, so `nodenext` is not supported.
 
 | Import | What it holds |
 | --- | --- |
-| `@nxgt/mail` | The port (`Mailer`, `MailMessage`, `Rendered`, `SentMail`, `Address`, `MailAttachment`), the errors (`MailError`, `MailFailure`, `MailRefused`), `createMemoryMailer`, `pickLocale` and `parseAcceptLanguage`, `listUnsubscribe` with `ListUnsubscribeOptions` and `ListUnsubscribeHeaders`, and what a transport calls first: `checkMessage`, `recipientsOf`, `addressOf`. No Node built-in: it runs anywhere |
+| `@nxgt/mail` | The port (`Mailer`, `MailMessage`, `Rendered`, `SentMail`, `Address`, `MailAttachment`), the errors (`MailError`, `MailFailure`, `MailRefused`), `createMemoryMailer`, `withRetry` with `RetryOptions` and `RetryExhausted`, `pickLocale` and `parseAcceptLanguage`, `listUnsubscribe` with `ListUnsubscribeOptions` and `ListUnsubscribeHeaders`, and what a transport calls first: `checkMessage`, `recipientsOf`, `addressOf`. No Node built-in: it runs anywhere |
 | `@nxgt/mail/renderer` | The renderer: `createMailRenderer`, `MailRenderer`, `MailRendererOptions`, `RenderOptions`, `MailVariables`, the types that type it with a build's `MailEmails` (`MailEmailsOf`, `AnyMailEmails`, `RenderArguments`), and `MANIFEST_FORMAT`, the newest manifest format it reads. Reads the build with `node:fs` |
 | `@nxgt/mail/conformance` | **For transport authors**: `describeMailer`, its cases as data, `runMailerCase`, the messages they send (`sampleMessage`, `sampleAttachment`, `sampleInlineImage`), and the memory mailer's harness as a worked example |
 | `@nxgt/mail/telemetry` | **Optional**: `withTelemetry` and `withRendererTelemetry`, a span per send and per render on `@opentelemetry/api` — an optional peer, installed only if this subpath is imported |
@@ -239,6 +239,51 @@ sends the key as Resend's `Idempotency-Key`, which Resend keeps for 24 hours;
 twice is delivered twice. A key that is not 1 to 256 visible ASCII characters
 is refused with `MailRefused`. See
 [Sending — idempotency](docs/guide/sending.md#idempotency--sending-once).
+
+### Retrying — `withRetry`
+
+`withRetry(mailer, options)` wraps any `Mailer` so a `MailFailure` — a
+transient outage — is retried with exponential backoff and full jitter,
+instead of reaching the caller on the first one. A `MailRefused` never is:
+sending it again fails again.
+
+```ts
+import { type MailMessage, withRetry } from '@nxgt/mail';
+import { createResendMailer } from '@nxgt/mail-resend';
+
+declare const receipt: MailMessage;
+
+const mailer = withRetry(createResendMailer({ apiKey: process.env.RESEND_API_KEY ?? '' }));
+
+await mailer.send(receipt); // up to 5 tries, by default, before a MailFailure reaches you
+```
+
+A message with no `idempotencyKey` gets one, generated once for this logical
+send and reused on every retry, so `@nxgt/mail-resend` delivers it once; a
+message that already carries a key keeps it. Once every attempt has failed,
+the error is the last `MailFailure`, with `attempts` on it:
+
+```ts
+import { MailFailure, type Mailer, type MailMessage, type RetryExhausted } from '@nxgt/mail';
+
+declare const mailer: Mailer; // wrapped in withRetry
+declare const receipt: MailMessage;
+
+try {
+	await mailer.send(receipt);
+} catch (error) {
+	if (error instanceof MailFailure) console.error(`gave up after ${(error as RetryExhausted).attempts} attempts`, error.cause);
+	throw error;
+}
+```
+
+**SMTP ignores the key outright.** A retry after an *ambiguous* SMTP failure
+— a timeout waiting for the response to `DATA`, where the server may already
+have accepted the message — can still duplicate the e-mail: `@nxgt/mail-smtp`
+throws `MailFailure` for it, as for every other outage, since nothing tells
+the two apart. `withRetry` therefore retries it like any other `MailFailure`;
+pass `attempts: 1` to a mailer built on SMTP if that risk is not acceptable.
+See [Sending — retrying](docs/guide/sending.md#retrying--withretry).
 
 ### Tags — labels for the provider
 
@@ -598,7 +643,7 @@ gives a test file `describe` and `it` as bare identifiers, not on `globalThis`.
 
 ## Type safety, counted
 
-**26 plausible mistakes, 26 refused** at compile time, each measured by a
+**27 plausible mistakes, 27 refused** at compile time, each measured by a
 `@ts-expect-error` in
 [`test/types/refusals.ts`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/test/types/refusals.ts)
 that fails the typecheck the moment it stops holding:
@@ -658,6 +703,11 @@ And scheduling:
 
 26. `scheduledAt` given as an ISO string: the field is a `Date`, checked at
     run time.
+
+And `withRetry`:
+
+27. `attempts` given as a numeral string (`'5'`): it is a number, checked at
+    wiring time.
 
 The same file holds the calls that must keep compiling: a refusal that refuses
 the correct call is a bug.

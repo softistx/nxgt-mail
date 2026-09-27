@@ -697,6 +697,196 @@ export async function runSendJob(mailer: Mailer, job: { message: MailMessage }):
 }
 ```
 
+## Retrying — `withRetry`
+
+A `MailFailure` may be transient — a dropped connection, a provider's `5xx`,
+an expired credential just rotated — and worth trying again; a `MailRefused`
+never is. `withRetry(mailer, options)` wraps a `Mailer` so the first kind is
+retried, with exponential backoff and full jitter, and the second reaches the
+caller at once, unchanged:
+
+```ts
+import { type MailMessage, withRetry } from '@nxgt/mail';
+import { createResendMailer } from '@nxgt/mail-resend';
+
+declare const receipt: MailMessage;
+
+const mailer = withRetry(createResendMailer({ apiKey: process.env.RESEND_API_KEY ?? '' }));
+
+await mailer.send(receipt); // retries a MailFailure up to 5 times, by default
+```
+
+```ts
+interface RetryOptions {
+	readonly attempts?: number; // default 5, the first try included
+	readonly baseDelayMs?: number; // default 200
+	readonly maxDelayMs?: number; // default 30000 (30 s)
+	readonly signal?: AbortSignal;
+}
+
+function withRetry(mailer: Mailer, options?: RetryOptions): Mailer;
+```
+
+| Option | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `attempts` | `number` | `5` | How many times `send` is tried in all, the first try included. `1` disables retrying |
+| `baseDelayMs` | `number` | `200` | The delay before the first retry. Later ones double it, up to `maxDelayMs` |
+| `maxDelayMs` | `number` | `30000` | The most a delay ever grows to |
+| `signal` | `AbortSignal` | none | Stops retrying: the pending wait rejects with `signal.reason`, and no further attempt is made |
+
+**The backoff is exponential with full jitter**: before retry number `n`
+(`1`, `2`, …), the wait is `random() * min(maxDelayMs, baseDelayMs * 2 ** (n - 1))`
+— a random value between `0` and the cap, so many callers retrying at once do
+not all retry at the same moment.
+
+### Idempotency, generated once per send
+
+A message with no `idempotencyKey` of its own gets one — `crypto.randomUUID()`,
+generated **once** for this logical send, and reused on every retry of it, so
+a transport that deduplicates (`@nxgt/mail-resend`) delivers the e-mail once
+however many attempts it took. A message that already carries a key keeps it
+untouched:
+
+```ts
+import type { Mailer } from '@nxgt/mail';
+
+declare const mailer: Mailer; // wrapped in withRetry
+
+// No idempotencyKey: withRetry generates one and reuses it on every retry.
+await mailer.send({ to: 'ada@example.test', subject: 'Hello', html: '<p>Hello</p>', text: 'Hello' });
+
+// A key of your own: kept as is, retried under it.
+await mailer.send({
+	to: 'ada@example.test',
+	subject: 'Your receipt',
+	html: '<p>Thank you for your order.</p>',
+	text: 'Thank you for your order.',
+	idempotencyKey: 'order-42/receipt',
+});
+```
+
+**SMTP ignores the key outright** — it has no such mechanism, generated or
+not — so a message sent twice over SMTP is delivered twice. This matters most
+for an **ambiguous** SMTP failure: a timeout while waiting for the response to
+the `DATA` command, after the message itself was already transmitted. The
+server may have accepted it, or the connection may have dropped before its
+answer arrived — nothing tells the two apart. `@nxgt/mail-smtp` throws
+`MailFailure` for it, exactly as for a connection that never reached the
+server at all: **nothing is known to have been sent** is the honest answer
+either way, and treating it as a hard failure that must not be retried would
+leave a real outage unrecovered. `withRetry` therefore retries an ambiguous
+SMTP failure like any other `MailFailure`, and accepts the small chance of a
+duplicate e-mail as the cost of retrying at all over a protocol with no
+idempotency of its own. Pass `attempts: 1` to a mailer built on SMTP to turn
+retrying off instead, if that risk is not acceptable for what it sends.
+
+### Exhaustion — the last `MailFailure`, with `attempts`
+
+Once every attempt has failed, `withRetry` throws the **last** `MailFailure`
+it caught — still `instanceof MailFailure`, its `cause` still the transport's
+own error — with `attempts` added, the number of tries made:
+
+```ts
+import { MailError, MailFailure, type Mailer, type MailMessage, type RetryExhausted } from '@nxgt/mail';
+
+declare const mailer: Mailer; // wrapped in withRetry
+declare const receipt: MailMessage;
+
+try {
+	await mailer.send(receipt);
+} catch (error) {
+	if (error instanceof MailFailure) {
+		const attempts = (error as RetryExhausted).attempts;
+		console.error(`send failed after ${attempts} attempts`, error.cause);
+	}
+	if (!(error instanceof MailError)) throw error;
+	// tell the caller the e-mail did not go out
+}
+```
+
+`RetryExhausted` is `MailFailure & { readonly attempts: number }` — still a
+`MailFailure`, `instanceof` and all, with `attempts` added; it is not a class
+of its own.
+
+### A provider's own retry-after
+
+A `MailFailure` may carry `retryAfterMs` — a number of milliseconds, typically
+read from a provider's `Retry-After` header on a rate limit. `withRetry`
+honours it instead of the computed backoff, for that one wait, when it is
+present and a non-negative, finite number. **No transport sets it today** —
+this is a convention a future one can implement cheaply, from its own answer;
+nothing here reads a header for you.
+
+### Abort
+
+`signal` stops retrying between attempts — the pending wait rejects with
+`signal.reason`, and `send` never tries again. A `send` already in flight is
+not cancelled: the `Mailer` port takes no signal, so an attempt under way
+runs to its own conclusion regardless. A `signal` already aborted when `send`
+is called rejects at once, with `signal.reason`, before the wrapped mailer is
+ever called — zero attempts, not one.
+
+```ts
+import type { Mailer, MailMessage } from '@nxgt/mail';
+
+declare const mailer: Mailer; // wrapped in withRetry, with { signal: controller.signal }
+declare const controller: AbortController;
+declare const receipt: MailMessage;
+
+setTimeout(() => controller.abort(), 5000); // give up on retrying after 5 s
+
+await mailer.send(receipt); // rejects with the abort reason once it fires
+```
+
+### A durable outbox is not this package's job
+
+`withRetry` retries **within one call**: the process stays up, and the
+message stays in memory between attempts. It is not a queue — a crash between
+attempts loses the send outright, whatever `attempts` was set to. A message
+that must survive a restart, or retry for longer than a process runs, needs a
+place of its own to live: a durable outbox, kept by the project, not by this
+package.
+
+**The pattern**, generic — a database row per send, and a job that reads it:
+
+```ts
+import { MailFailure, type Mailer, type MailMessage } from '@nxgt/mail';
+
+// Yours: one row per send, its own idempotencyKey generated once, when it is
+// first queued — never regenerated by a retry.
+interface OutboxRow {
+	readonly id: string;
+	readonly message: MailMessage; // idempotencyKey already set
+	readonly attempts: number;
+	readonly nextAttemptAt: Date;
+}
+
+declare function dueRows(): Promise<readonly OutboxRow[]>; // your storage
+declare function markSent(id: string): Promise<void>;
+declare function markFailed(id: string, attempts: number, retryInSeconds: number): Promise<void>;
+declare function markRefused(id: string): Promise<void>; // sending it again would fail again
+
+// Run on a schedule (a cron job, a queue worker) — not a loop in the process.
+export async function runOutbox(mailer: Mailer): Promise<void> {
+	for (const row of await dueRows()) {
+		try {
+			await mailer.send(row.message); // the row's own idempotencyKey, stable across runs
+			await markSent(row.id);
+		} catch (error) {
+			if (error instanceof MailFailure) {
+				await markFailed(row.id, row.attempts + 1, 60 * 2 ** row.attempts); // your own backoff, across runs
+			} else {
+				await markRefused(row.id); // MailRefused: no further run will help
+			}
+		}
+	}
+}
+```
+
+`withRetry` and an outbox are not mutually exclusive: wrapping the mailer the
+outbox's job calls still smooths over a short outage within one run, while the
+outbox is what survives the process going away between runs.
+
 ## Tags — labels for the provider
 
 `tags` label a send where the provider shows or reports it — its dashboard,

@@ -39,8 +39,8 @@ Nothing yet.
   answering `Rendered` is accepted.
 - **Silent retries inside a transport** — a transport tries once and throws;
   the conformance suite fails one that retries in secret. Whether and when to
-  retry is the caller's decision (a queue, a job runner), and a hidden retry
-  can send the same e-mail twice.
+  retry is the caller's decision, explicit — `withRetry` wraps a `Mailer`,
+  never hides inside one — and a hidden retry can send the same e-mail twice.
 - **Answering `false`, or logging and resolving, on a failed send** — a
   caller that reads a failed send as "sent" tells a user to check an inbox
   that will stay empty. A failure throws `MailFailure`.
@@ -74,6 +74,13 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   subject, a body or a placeholder's value — only a shape: a transport's
   name, a recipient count, a tag's name. `@opentelemetry/api` is an optional
   peer, imported only from this subpath.
+- **Retrying a failed send, `withRetry`, v0.8.0** — wraps a `Mailer` so a
+  `MailFailure` is retried with exponential backoff and full jitter (`attempts`,
+  `baseDelayMs`, `maxDelayMs`, an `AbortSignal`), while a `MailRefused` never
+  is. A message with no `idempotencyKey` gets one, generated once per logical
+  send and reused on every retry; the exhausted error is the last
+  `MailFailure`, with `attempts` on it. A future transport's `retryAfterMs`
+  is honoured in place of the computed delay — none sets it yet.
 - **Scheduled send, v0.7.0** — `scheduledAt` on a `MailMessage`, a `Date` that
   sends the e-mail later instead of now. `checkMessage` refuses a value that
   is not a valid `Date`, one in the past (a small tolerance for clock skew),
@@ -136,9 +143,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   bytes; the conformance suite gains `send.attachment` and
   `send.refusesAttachmentPath`, thirteen cases in all. The SMTP and Resend
   transports send them.
-- **The run-time core, v0.1.0** — `@nxgt/mail`, with no dependency: the `Mailer` port
-  a transport implements, the `Rendered` and `MailMessage` shapes it sends, and
-  its two errors — `MailFailure` (`MAIL_FAILED`) when the transport could not
-  hand the message over, `MailRefused` (`MAIL_REFUSED`) when the message itself
-  was refused. A send resolves only once the transport has accepted the
-  e-mail; it never answers `false`.
