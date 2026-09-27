@@ -5,7 +5,9 @@ are no dates here, and the version something shipped in is the only number.
 
 ## Now
 
-Nothing between releases.
+- **`@nxgt/mail-i18n` 0.2** — the peer moves to `^0.2.0`, the version that
+  writes its generated files under `.maizzle/emails/`. The e-mails and their
+  output do not change. Built, not yet published.
 
 ## Next
 

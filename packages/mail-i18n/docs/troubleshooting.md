@@ -97,6 +97,7 @@ template `emails/verify-email.vue`, and keys such as `verifyEmail.title`.
 - [`[Vue warn]: Property "name" was accessed during render but is not defined on instance.`](#vue-warn-property-name-was-accessed-during-render-but-is-not-defined-on-instance)
 - [A link's placeholder is prefixed with a domain](#a-links-placeholder-is-prefixed-with-a-domain)
 - [`.maizzle/` shows up in `git status`](#maizzle-shows-up-in-git-status)
+- [A `.maizzle/i18n/` folder is left after upgrading](#a-maizzlei18n-folder-is-left-after-upgrading)
 - [`No templates found`, or old templates, when Maizzle is built from a worker thread](#no-templates-found-or-old-templates-when-maizzle-is-built-from-a-worker-thread)
 - [The editor says `Property 't' does not exist` in a template, or completes no key](#the-editor-says-property-t-does-not-exist-in-a-template-or-completes-no-key)
 - [The editor flags a key you just added to a catalogue](#the-editor-flags-a-key-you-just-added-to-a-catalogue)
@@ -1019,6 +1020,21 @@ build, and removed when their template is.
 ```
 
 Never edit a wrapper: the change is lost on the next build.
+
+### A `.maizzle/i18n/` folder is left after upgrading
+
+**When:** after upgrading `@nxgt/mail-i18n` from 0.1 to 0.2 or later,
+`.maizzle/` holds both `i18n/` and `emails/`.
+**Why:** 0.1 wrote the wrappers under `.maizzle/i18n/`; 0.2 writes them under
+`.maizzle/emails/`, so that `maizzle serve` lists the e-mails under a folder
+that says what they are. Nothing reads the old folder any more — not the
+build, not `maizzle serve`, not the type-check — and the build output does
+not move.
+**Fix:** delete it, once:
+
+```sh
+rm -rf .maizzle/i18n
+```
 
 ### `No templates found`, or old templates, when Maizzle is built from a worker thread
 
