@@ -155,7 +155,7 @@ export function ui(options: UiOptions): MailPlugin {
 		name: 'ui',
 		components: { source: [COMPONENTS] },
 		vite: {
-			plugins: [...packagedComponents(COMPONENTS), unresolvedComponents()],
+			plugins: [...packagedComponents(), unresolvedComponents()],
 		},
 		vue: {
 			globalProperties: { brand },

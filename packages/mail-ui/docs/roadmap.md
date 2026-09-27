@@ -25,6 +25,10 @@ Built, not yet published:
   `NxFileList` for attachments or downloads, with the size written by locale,
   and `NxRating`, read only or as a row of review links: material-vue's names
   and props, with their words in the shared messages in `en` and `fr`.
+- **Installed files resolve as the project's do** — a template or component
+  installed from npm resolves its tags with Maizzle's own resolver, so the
+  project's `components/` subfolders (`<BrandLogo>`) and every
+  `components.source` folder count there too.
 
 ## Next
 

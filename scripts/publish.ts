@@ -25,7 +25,7 @@
  * environment. Nothing is written to `~/.npmrc`.
  */
 
-import { appendFile } from 'node:fs/promises';
+import { appendFile, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { $ } from 'bun';
 
@@ -46,6 +46,53 @@ export async function appendChangesetsOutput(
 }
 
 const ROOT = new URL('..', import.meta.url).pathname.replace(/\/$/, '');
+
+/**
+ * Where the repository's docs load their pictures from: raw files on
+ * `develop`, so GitHub shows the latest. On npm, a package's page must show
+ * the pictures of the version it describes instead.
+ */
+export const DEVELOP_FILES =
+	'https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/';
+
+/**
+ * `text` with every link to a raw file on `develop` pinned to the release
+ * tag `<name>@<version>`, which `main` creates on the commit it publishes.
+ */
+export function pinDocs(text: string, name: string, version: string): string {
+	return text.replaceAll(
+		DEVELOP_FILES,
+		`https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/${name}@${version}/`,
+	);
+}
+
+/**
+ * Pins the README and the `docs/` of the package in `dir` to its release
+ * tag, and answers a function that puts them back as they were.
+ */
+export async function pinPackageDocs(
+	dir: string,
+	name: string,
+	version: string,
+): Promise<() => Promise<void>> {
+	const files = [
+		'README.md',
+		...new Bun.Glob('docs/**/*.md').scanSync({ cwd: dir }),
+	];
+	const originals = new Map<string, string>();
+	for (const rel of files) {
+		const path = join(dir, rel);
+		const text = await readFile(path, 'utf8').catch(() => null);
+		if (text === null) continue;
+		const pinned = pinDocs(text, name, version);
+		if (pinned === text) continue;
+		originals.set(path, text);
+		await writeFile(path, pinned);
+	}
+	return async () => {
+		for (const [path, text] of originals) await writeFile(path, text);
+	};
+}
 const REGISTRY = 'https://registry.npmjs.org';
 
 export type Pkg = {
@@ -121,7 +168,14 @@ async function main(): Promise<void> {
 			continue;
 		}
 
-		const result = await $`bun publish`.cwd(pkg.dir).quiet().nothrow();
+		// The tarball carries the docs pinned to the tag created below; the
+		// working tree gets its `develop` links back either way.
+		const restore = await pinPackageDocs(pkg.dir, pkg.name, pkg.version);
+		const result = await $`bun publish`
+			.cwd(pkg.dir)
+			.quiet()
+			.nothrow()
+			.finally(restore);
 		const output = `${result.stdout.toString()}${result.stderr.toString()}`;
 
 		if (result.exitCode === 0) {
