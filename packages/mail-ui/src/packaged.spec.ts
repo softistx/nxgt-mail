@@ -1,104 +1,88 @@
-import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import {
-	mkdirSync,
-	readdirSync,
-	readFileSync,
-	rmSync,
-	writeFileSync,
-} from 'node:fs';
+import { afterAll, describe, expect, test } from 'bun:test';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { fileForTag } from './packaged';
-import { COMPONENTS_DIR } from './plugin';
+import { maizzleComponents } from './packaged';
 
-const root = fileURLToPath(new URL('../test/.packaged', import.meta.url));
-const project = { path: `${root}/project` };
-const ours = { path: `${root}/ours`, prefix: 'Nx' };
-const builtins = { path: `${root}/builtins` };
-const folders = [project, ours, builtins];
+const api = (tag: string) => ({
+	findComponent: async (name: string) =>
+		name === tag ? { as: name, from: `/${tag}.vue` } : undefined,
+});
 
-function write(path: string): void {
-	writeFileSync(path, '<template><slot /></template>\n');
-}
-
-describe('fileForTag, which finds the file of a tag in an installed template', () => {
-	beforeAll(() => {
-		rmSync(root, { recursive: true, force: true });
-		for (const { path } of folders) mkdirSync(path, { recursive: true });
-		for (const name of [
-			'card-header',
-			'2fa',
-			'code-2',
-			'a-b',
-			'badge',
-			'nx-chip',
-		]) {
-			write(`${ours.path}/${name}.vue`);
-		}
-		write(`${builtins.path}/Button.vue`);
-		write(`${builtins.path}/NxBadge.vue`);
-		write(`${project.path}/NxBadge.vue`);
-		write(`${project.path}/nx-card-header.vue`);
-		write(`${project.path}/card.vue`);
-		write(`${ours.path}/notes.md`);
-		mkdirSync(`${project.path}/brand`);
-		write(`${project.path}/brand/logo.vue`);
-	});
-	afterAll(() => rmSync(root, { recursive: true, force: true }));
-
-	test('names a file of a prefixed folder with the prefix, once', () => {
-		expect(fileForTag([ours], 'NxCardHeader')).toBe(
-			`${ours.path}/card-header.vue`,
+describe("maizzleComponents, which finds Maizzle's resolver", () => {
+	test('takes the instance that is not ours', async () => {
+		const ours = api('Ours');
+		const found = maizzleComponents(
+			[
+				{ name: 'vite:vue' },
+				{ name: 'unplugin-vue-components', api: ours },
+				{ name: 'unplugin-vue-components', api: api('Button') },
+			],
+			ours,
 		);
-		expect(fileForTag([ours], 'NxChip')).toBe(`${ours.path}/nx-chip.vue`);
-		expect(fileForTag([ours], 'CardHeader')).toBeUndefined();
+		expect(await found?.findComponent('Button')).toEqual({
+			as: 'Button',
+			from: '/Button.vue',
+		});
 	});
 
-	test('finds the names no case conversion of the tag gives back', () => {
-		expect(fileForTag([ours], 'Nx2fa')).toBe(`${ours.path}/2fa.vue`);
-		expect(fileForTag([ours], 'NxCode2')).toBe(`${ours.path}/code-2.vue`);
-		expect(fileForTag([ours], 'NxAB')).toBe(`${ours.path}/a-b.vue`);
-	});
-
-	test("finds a Pascal-case file, as Maizzle's built-ins are", () => {
-		expect(fileForTag(folders, 'Button')).toBe(`${builtins.path}/Button.vue`);
-	});
-
-	test("takes the project's file first, in either case, then ours, then the built-ins", () => {
-		expect(fileForTag(folders, 'NxBadge')).toBe(`${project.path}/NxBadge.vue`);
-		expect(fileForTag(folders, 'NxCardHeader')).toBe(
-			`${project.path}/nx-card-header.vue`,
-		);
-		expect(fileForTag([ours, builtins], 'NxBadge')).toBe(
-			`${ours.path}/badge.vue`,
-		);
-		// A project's card.vue is <Card>, not ours.
-		expect(fileForTag(folders, 'Card')).toBe(`${project.path}/card.vue`);
-	});
-
-	test('reads only the top of a folder, only .vue files, and skips a missing folder', () => {
-		expect(fileForTag(folders, 'BrandLogo')).toBeUndefined();
-		expect(fileForTag(folders, 'NxNotes')).toBeUndefined();
-		expect(fileForTag([{ path: `${root}/missing` }, ours], 'Nx2fa')).toBe(
-			`${ours.path}/2fa.vue`,
-		);
-		expect(fileForTag(folders, 'NxUnknown')).toBeUndefined();
+	test('is null without one', () => {
+		expect(maizzleComponents([{ name: 'vite:vue' }], undefined)).toBeNull();
 	});
 });
 
-describe("the package's components", () => {
-	test('none uses its own name as a tag, which Vue would read as the file itself', () => {
-		const offenders = readdirSync(COMPONENTS_DIR)
-			.filter((file) => file.endsWith('.vue'))
-			.filter((file) => {
-				const self = file
-					.slice(0, -'.vue'.length)
-					.replace(/(^|-)(.)/g, (_, _dash: string, c: string) =>
-						c.toUpperCase(),
-					);
-				return new RegExp(`<${self}[\\s/>]`).test(
-					readFileSync(`${COMPONENTS_DIR}/${file}`, 'utf8'),
-				);
-			});
-		expect(offenders).toEqual([]);
-	});
+const root = fileURLToPath(new URL('../test/.packaged', import.meta.url));
+const maizzle = fileURLToPath(
+	new URL('../node_modules/.bin/maizzle', import.meta.url),
+);
+
+describe('a component installed from npm', () => {
+	afterAll(() => rmSync(root, { recursive: true, force: true }));
+
+	test("resolves its tags as the project's would: subfolders, components.source and the built-ins", async () => {
+		rmSync(root, { recursive: true, force: true });
+		const files: Record<string, string> = {
+			'maizzle.config.ts': [
+				"import { defineMailConfig } from '@nxgt/mail-config';",
+				"import { ui } from '../../src/index';",
+				'export default defineMailConfig({',
+				"  plugins: [ui({ brand: { name: 'Acme' } })],",
+				"  components: { source: [{ path: 'shared', prefix: 'Acme' }] },",
+				'});',
+			].join('\n'),
+			'emails/welcome.vue': [
+				'<script setup>',
+				"import Card from 'acme-mails/card.vue';",
+				'</script>',
+				'<template><NxLayout><Card /></NxLayout></template>',
+			].join('\n'),
+			'components/brand/logo.vue': '<template><p>Brand logo</p></template>',
+			'shared/box.vue': '<template><p>Acme box</p></template>',
+			'node_modules/acme-mails/package.json':
+				'{ "name": "acme-mails", "version": "1.0.0", "type": "module" }',
+			'node_modules/acme-mails/card.vue':
+				'<template><NxCard><BrandLogo /><AcmeBox /><Spacer height="8px" /></NxCard></template>',
+		};
+		for (const [path, content] of Object.entries(files)) {
+			mkdirSync(dirname(`${root}/${path}`), { recursive: true });
+			writeFileSync(`${root}/${path}`, content);
+		}
+		const child = Bun.spawn([maizzle, 'build'], {
+			cwd: root,
+			stdout: 'pipe',
+			stderr: 'pipe',
+		});
+		const [code, stdout, stderr] = await Promise.all([
+			child.exited,
+			new Response(child.stdout).text(),
+			new Response(child.stderr).text(),
+		]);
+		expect({ code, output: code === 0 ? '' : stdout + stderr }).toEqual({
+			code: 0,
+			output: '',
+		});
+		const html = await Bun.file(`${root}/dist/welcome.html`).text();
+		expect(html).toContain('Brand logo');
+		expect(html).toContain('Acme box');
+	}, 60_000);
 });

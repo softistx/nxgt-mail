@@ -9,8 +9,8 @@ How the messages are shaped:
 - **A wiring mistake is a `TypeError` starting `ui:`**, thrown by the `ui()`
   call in `maizzle.config.ts` when the config loads, so `maizzle build` and
   `maizzle serve` stop before any template is built. Fix the call. One
-  failure at that moment is a plain `Error` instead, since no option causes
-  it: `ui: @maizzle/framework is not installed beside @nxgt/mail-ui`.
+  failure while building is a plain `Error` too, since no option causes
+  it: `ui: no component resolver of Maizzle was found — is @maizzle/framework 6 installed?`.
 - **A build failure is a plain `Error`**, thrown while `maizzle build` renders
   a template, and printed after Vue's own
   `[Vue warn]: Unhandled error during execution of setup function`, or
@@ -41,7 +41,7 @@ The samples below use the locales `en` and `fr`, the template
 - [`ui: theme must be an object of tokens, as { 'color-primary': '#0f766e' }`](#ui-theme-must-be-an-object-of-tokens-as--color-primary-0f766e-)
 - [`ui: theme.--color-primary is not a token of the theme — name one of theme.css without its --, as color-primary`](#ui-theme--color-primary-is-not-a-token-of-the-theme--name-one-of-themecss-without-its----as-color-primary)
 - [`ui: theme.color-primary must be a CSS value, as #0f766e or 8px`](#ui-themecolor-primary-must-be-a-css-value-as-0f766e-or-8px)
-- [`ui: @maizzle/framework is not installed beside @nxgt/mail-ui`](#ui-maizzleframework-is-not-installed-beside-nxgtmail-ui)
+- [`ui: no component resolver of Maizzle was found — is @maizzle/framework 6 installed?`](#ui-no-component-resolver-of-maizzle-was-found--is-maizzleframework-6-installed)
 
 **Build** — while `maizzle build` renders
 - [`[Vue warn]: Failed to resolve component: NxLayout`](#vue-warn-failed-to-resolve-component-nxlayout)
@@ -232,25 +232,21 @@ end it or open another is refused.
 theme: { 'color-primary': '#0f766e', 'radius-lg': '4px' }   // not 4
 ```
 
-### `ui: @maizzle/framework is not installed beside @nxgt/mail-ui`
+### `ui: no component resolver of Maizzle was found — is @maizzle/framework 6 installed?`
 
 This one is a plain `Error`, not a `TypeError`: the call is right, the
 install is not.
 
-**When:** loading `maizzle.config.ts`, when `ui()` finds no
-`@maizzle/framework` in any `node_modules` folder above the one it is
-installed in. It happens when `@maizzle/framework` is not a dependency of the
-project, or when `@nxgt/mail-ui` is linked from a folder outside the project
-(`bun link`, a `file:` or `link:` dependency).
-**Why:** `ui()` resolves the tags of templates and components installed from
-npm itself, with Maizzle's built-in components (`<Container>`, `<Spacer>`,
-…) as the last choice. It finds them where Node would find the package, up
-from its own folder. `@maizzle/framework` is a required peer.
-**Fix:** install Maizzle in the project, beside `@nxgt/mail-ui`, and install
-the package from the registry rather than linking it:
+**When:** `maizzle build`, on the first component or template installed
+under `node_modules`, when Maizzle's own component resolver is not among the
+Vite plugins — a Maizzle other than 6, or none.
+**Why:** `ui()` resolves the tags of files installed from npm, which Maizzle
+skips, by asking Maizzle's own resolver, so they resolve as a project's
+template would. `@maizzle/framework` 6 is a required peer.
+**Fix:** install Maizzle 6 in the project, beside `@nxgt/mail-ui`:
 
 ```sh
-bun add @nxgt/mail-ui @maizzle/framework
+bun add @nxgt/mail-ui @maizzle/framework@^6
 ```
 
 ---
@@ -276,8 +272,9 @@ and nothing else.
 resolves the tags of the project's own templates from its `components`
 folders, but skips every file under `node_modules`: the package's components,
 and templates installed from npm such as `@nxgt/mail-presets`'s. `ui()`
-resolves the tags of those files: the project's `components/` first, then
-the `Nx*` components, then Maizzle's built-ins.
+resolves the tags of those files with Maizzle's own resolver: the project's
+`components/` and its subfolders, every `components.source` folder, the
+`Nx*` components, then Maizzle's built-ins, as in a project's template.
 **Fix:** list `ui()`, rather than registering `COMPONENTS_DIR` in
 `components.source`:
 

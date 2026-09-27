@@ -263,10 +263,12 @@ export default defineMailConfig({
 });
 ```
 
-`ui()` brings `unplugin-vue-components` as a dependency — the one Maizzle
-uses — and finds Maizzle's built-ins beside the package, up through each
-`node_modules`; without `@maizzle/framework` installed, the config fails to
-load with `ui: @maizzle/framework is not installed beside @nxgt/mail-ui`.
+`ui()` resolves those tags with Maizzle's own resolver, so they resolve as in
+a project's template: the project's `components/` and its subfolders
+(`components/brand/logo.vue` is `<BrandLogo>`), every `components.source`
+folder with its prefix, then Maizzle's built-ins, in Maizzle's order. Without
+that resolver — a Maizzle other than 6 — the build fails with
+`ui: no component resolver of Maizzle was found — is @maizzle/framework 6 installed?`.
 
 With `@nxgt/mail-i18n`, an e-mail that still renders empty — a tag none of
 the three places has — fails the build:
@@ -341,11 +343,11 @@ ui({ brand: { name: 'Acme', url: '/home' } });
 // TypeError: ui: brand.url must be an absolute http(s) URL
 ```
 
-One plain `Error`, when `ui()` is called: `@maizzle/framework`, a required
-peer, could not be found up from the package.
+One plain `Error`, when the first installed file is built: no Maizzle
+resolver was found among the Vite plugins, with a Maizzle other than 6.
 
 ```text
-Error: ui: @maizzle/framework is not installed beside @nxgt/mail-ui
+Error: ui: no component resolver of Maizzle was found — is @maizzle/framework 6 installed?
 ```
 
 A component rendered without the plugin fails the build instead, naming

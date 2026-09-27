@@ -1,6 +1,3 @@
-import { existsSync, readdirSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import type { MaizzleConfig } from '@maizzle/framework';
 import Components from 'unplugin-vue-components/vite';
 
@@ -13,110 +10,84 @@ const PACKAGED = /[\\/]node_modules[\\/].*\.vue(\?vue.*)?$/;
 /** Maizzle's built-ins resolve their own imports; leave them be. */
 const MAIZZLE = /[\\/]node_modules[\\/]@maizzle[\\/]framework[\\/]/;
 
+/** What unplugin-vue-components answers for a tag: the file, and its export. */
+interface ComponentInfo {
+	readonly as?: string;
+	readonly name?: string;
+	readonly from: string;
+}
+
+/** The public API of an unplugin-vue-components instance. */
+interface ComponentsApi {
+	findComponent(name: string): Promise<ComponentInfo | undefined>;
+}
+
+interface NamedPlugin {
+	readonly name?: string;
+	readonly api?: unknown;
+}
+
+const hasFindComponent = (api: unknown): api is ComponentsApi =>
+	typeof api === 'object' &&
+	api !== null &&
+	typeof (api as { findComponent?: unknown }).findComponent === 'function';
+
 /**
- * The folder of `@maizzle/framework`'s built-in components, found the way
- * Node finds the package: up from here, through each `node_modules`. The
- * package exports no subpath to ask it with.
+ * The API of Maizzle's own unplugin-vue-components instance among `plugins`,
+ * other than `ours`, or `null` when there is none.
  */
-function maizzleComponentsDir(from: string): string {
-	for (let dir = from; ; dir = dirname(dir)) {
-		const candidate = join(
-			dir,
-			'node_modules/@maizzle/framework/dist/components',
-		);
-		if (existsSync(candidate)) return candidate;
-		if (dirname(dir) === dir) {
-			throw new Error(
-				'ui: @maizzle/framework is not installed beside @nxgt/mail-ui',
-			);
+export function maizzleComponents(
+	plugins: readonly NamedPlugin[],
+	ours: unknown,
+): ComponentsApi | null {
+	for (const plugin of plugins) {
+		if (plugin.name !== 'unplugin-vue-components' || plugin.api === ours) {
+			continue;
 		}
+		if (hasFindComponent(plugin.api)) return plugin.api;
 	}
-}
-
-/**
- * `card-header` in PascalCase, `CardHeader`, as Maizzle writes a file's name.
- * A copy of its `pascalCase` (`@maizzle/framework/dist/utils/componentSources.js`),
- * which the package does not export: change them together.
- */
-const pascalCase = (name: string): string =>
-	name
-		.replace(/[-_\s]+(.)/g, (_, c: string) => c.toUpperCase())
-		.replace(/^(.)/, (c) => c.toUpperCase());
-
-/** A folder of components, and the prefix Maizzle gives their names, if any. */
-export interface ComponentsFolder {
-	readonly path: string;
-	readonly prefix?: string;
-}
-
-/**
- * The name Maizzle gives the component of a file at the top of a folder, as
- * its `componentNameFromPath`: `card-header.vue` under the prefix `Nx` is
- * `NxCardHeader`, and so is `nx-card-header.vue` — a prefix the name already
- * starts with is not repeated. Without a prefix, `nx-badge.vue` is `NxBadge`.
- */
-function componentName(file: string, prefix: string | undefined): string {
-	const name = pascalCase(file.slice(0, -'.vue'.length));
-	if (prefix === undefined) return name;
-	return prefix + (name.startsWith(prefix) ? name.slice(prefix.length) : name);
-}
-
-/**
- * The first `.vue` file at the top of `folders`, in order, that Maizzle names
- * `tag` — `button.vue` under the prefix `Nx`, or a project's `nx-button.vue`
- * or `NxButton.vue`, for `<NxButton>`. Named, not guessed: `2fa.vue` under
- * `Nx` is `<Nx2fa>`, which no case conversion of the tag gives back. A missing
- * folder is skipped.
- */
-export function fileForTag(
-	folders: readonly ComponentsFolder[],
-	tag: string,
-): string | undefined {
-	for (const { path, prefix } of folders) {
-		if (!existsSync(path)) continue;
-		// Sorted, so that of two files Maizzle would give the same name, as
-		// `nx-badge.vue` and `NxBadge.vue`, the same one wins on every machine.
-		const file = readdirSync(path)
-			.filter((entry) => entry.endsWith('.vue'))
-			.sort()
-			.find((entry) => componentName(entry, prefix) === tag);
-		if (file !== undefined) return join(path, file);
-	}
-	return undefined;
+	return null;
 }
 
 /**
  * Maizzle resolves the tags of a template (`<NxButton>`, `<Container>`) with
  * unplugin-vue-components, which skips every file under `node_modules` — so a
  * component or a template installed from npm would render empty, and the
- * build would pass. These plugins resolve the tags of those files the way
- * Maizzle would: the project's `components/` first, then ours, then Maizzle's
- * built-ins.
+ * build would pass. These plugins resolve the tags of those files with
+ * Maizzle's own instance, so they resolve as a project's template would: the
+ * project's `components/` and its subfolders, every `components.source`
+ * folder with its prefix, and Maizzle's built-ins, in Maizzle's order.
+ *
+ * Maizzle's instance reads its folders on its first transform: that of the
+ * template, or of the i18n plugin's wrapper, which imports every installed
+ * file and so is always transformed before one.
  */
-export function packagedComponents(ours: ComponentsFolder): VitePlugins {
-	const builtins = maizzleComponentsDir(
-		dirname(fileURLToPath(import.meta.url)),
-	);
-	let root = process.cwd();
+export function packagedComponents(): VitePlugins {
+	let maizzle: ComponentsApi | null = null;
+	const ours = Components({
+		include: [PACKAGED],
+		exclude: [MAIZZLE],
+		dirs: [],
+		resolvers: [
+			async (name) => {
+				if (maizzle === null) {
+					throw new Error(
+						'ui: no component resolver of Maizzle was found — is @maizzle/framework 6 installed?',
+					);
+				}
+				return maizzle.findComponent(name);
+			},
+		],
+		dts: false,
+	});
+	const oursApi = (ours as NamedPlugin).api;
 	return [
 		{
-			name: 'nxgt:mail-ui:root',
-			configResolved(config: { readonly root: string }) {
-				root = config.root;
+			name: 'nxgt:mail-ui:maizzle-components',
+			configResolved(config: { readonly plugins: readonly NamedPlugin[] }) {
+				maizzle = maizzleComponents(config.plugins, oursApi);
 			},
 		},
-		Components({
-			include: [PACKAGED],
-			exclude: [MAIZZLE],
-			dirs: [],
-			resolvers: [
-				(name) =>
-					fileForTag(
-						[{ path: resolve(root, 'components') }, ours, { path: builtins }],
-						name,
-					),
-			],
-			dts: false,
-		}),
+		ours,
 	];
 }
