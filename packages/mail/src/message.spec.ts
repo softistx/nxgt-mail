@@ -410,7 +410,7 @@ describe('checkMessage', () => {
 			expect(() =>
 				checkMessage({
 					...message,
-					html: '<p>Write cid:logo in a src.</p>',
+					html: '<p>Write cid:logo in a src.</p><a href="https://app.test/x?next=cid:abc">x</a>',
 					text: 'src="cid:logo"',
 				}),
 			).not.toThrow();

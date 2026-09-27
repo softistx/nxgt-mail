@@ -40,8 +40,10 @@ const CONTENT_ID_MAX = 127;
 // A `cid:` URL where the HTML uses one: an attribute value, quoted or not
 // (`src="cid:…"`, `background=cid:…`), or a CSS `url(…)`, quoted or not. The
 // scheme is case-insensitive. A `cid:` in prose is not a reference.
+// An attribute is its name after whitespace, then `=`: a `next=cid:…` inside
+// a link's query is not one.
 const CID_REFERENCE =
-	/(?:=|url\()\s*(?:"cid:([^"]*)"|'cid:([^']*)'|cid:([^\s"'<>)]*))/gi;
+	/(?:\s[A-Za-z_:][\w:.-]*\s*=|url\()\s*(?:"cid:([^"]*)"|'cid:([^']*)'|cid:([^\s"'<>)]*))/gi;
 // What ends the URL inside a value: a `srcset` descriptor (`cid:logo 2x`).
 const CID_URL_END = /[\s,]/;
 // Written into a header by the transports that use it (Resend's
