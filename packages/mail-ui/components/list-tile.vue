@@ -59,10 +59,14 @@ const titleClass = computed(() =>
 	),
 );
 const gap = computed(() => {
-	const px = props.size === 'md' ? '4' : '2';
+	if (props.size === 'md') {
+		return dir.value === 'rtl'
+			? { leading: 'pl-4', trailing: 'pr-4' }
+			: { leading: 'pr-4', trailing: 'pl-4' };
+	}
 	return dir.value === 'rtl'
-		? { leading: `pl-${px}`, trailing: `pr-${px}` }
-		: { leading: `pr-${px}`, trailing: `pl-${px}` };
+		? { leading: 'pl-2', trailing: 'pr-2' }
+		: { leading: 'pr-2', trailing: 'pl-2' };
 });
 </script>
 
