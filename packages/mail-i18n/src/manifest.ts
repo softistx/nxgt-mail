@@ -33,8 +33,9 @@ export const MANIFEST_FORMAT = 1;
 /** `dist/mail-manifest.json`: what the build wrote, for the renderer. */
 export interface Manifest {
 	/**
-	 * {@link MANIFEST_FORMAT} when built. A manifest without it is format 1,
-	 * as `@nxgt/mail-i18n` 0.1 and 0.2 wrote it.
+	 * {@link MANIFEST_FORMAT} when built, and the first key written. This type
+	 * is what this version writes: a manifest from `@nxgt/mail-i18n` 0.1 or
+	 * 0.2 has no such field, and the renderer reads it as format 1.
 	 */
 	readonly formatVersion: number;
 	readonly locales: readonly string[];

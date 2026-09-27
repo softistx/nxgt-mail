@@ -271,6 +271,14 @@ describe('createMailRenderer — wiring and a broken build', () => {
 		expect(() => createMailRenderer({ dir: newer })).toThrow(
 			`createMailRenderer: ${join(newer, 'mail-manifest.json')} is manifest format 2, newer than this @nxgt/mail reads (1) — upgrade @nxgt/mail`,
 		);
+		// A newer format may change any field: it is refused as newer first.
+		const reshaped = editManifest((m) => {
+			m.formatVersion = 2;
+			delete m.locales;
+		});
+		expect(() => createMailRenderer({ dir: reshaped })).toThrow(
+			`createMailRenderer: ${join(reshaped, 'mail-manifest.json')} is manifest format 2, newer than this @nxgt/mail reads (1) — upgrade @nxgt/mail`,
+		);
 	});
 
 	it.each([0, 1.5, '1', null])(

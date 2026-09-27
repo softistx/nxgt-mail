@@ -90,8 +90,9 @@ the locale chosen through `getLanguage`, and every error.
 
 A renderer reads every manifest format up to its `MANIFEST_FORMAT`, within
 0.x: a build from any earlier `@nxgt/mail-i18n` 0.x keeps working with a newer
-`@nxgt/mail`, so a package that ships a prebuilt build can peer `@nxgt/mail`
-`>=0.1.0 <1`. A build in a newer format fails at start-up with
+`@nxgt/mail`, so a package that ships a prebuilt format-1 build can peer
+`@nxgt/mail` `>=0.1.0 <1` — the lower bound is the first `@nxgt/mail` that
+reads the build's format. A build in a newer format fails at start-up with
 `… is manifest format 2, newer than this @nxgt/mail reads (1) — upgrade
 @nxgt/mail`. See
 [Rendering — which builds it reads](docs/guide/rendering.md#which-builds-it-reads--manifest_format).

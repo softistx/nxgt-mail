@@ -186,28 +186,34 @@ function readManifest(dir: string) {
 		}
 		throw error;
 	}
+	const notManifest = () =>
+		new Error(
+			`createMailRenderer: ${file} is not a manifest of @nxgt/mail-i18n — build with its i18n() plugin`,
+		);
+	if (!isObject(manifest)) throw notManifest();
+	// The format first, before any field it may change: a newer format is
+	// refused as newer, whatever its shape. Absent: format 1, written before
+	// the field was.
+	const format = 'formatVersion' in manifest ? manifest.formatVersion : 1;
 	if (
-		!isObject(manifest) ||
+		typeof format !== 'number' ||
+		!Number.isSafeInteger(format) ||
+		format < 1
+	) {
+		throw notManifest();
+	}
+	if (format > MANIFEST_FORMAT) {
+		throw new Error(
+			`createMailRenderer: ${file} is manifest format ${format}, newer than this @nxgt/mail reads (${MANIFEST_FORMAT}) — upgrade @nxgt/mail`,
+		);
+	}
+	if (
 		!isStringList(manifest.locales) ||
 		manifest.locales.length === 0 ||
 		typeof manifest.fallbackLocale !== 'string' ||
 		!isObject(manifest.emails)
 	) {
-		throw new Error(
-			`createMailRenderer: ${file} is not a manifest of @nxgt/mail-i18n — build with its i18n() plugin`,
-		);
-	}
-	// Absent: format 1, written before the field was.
-	const format = 'formatVersion' in manifest ? manifest.formatVersion : 1;
-	if (!Number.isSafeInteger(format) || (format as number) < 1) {
-		throw new Error(
-			`createMailRenderer: ${file} is not a manifest of @nxgt/mail-i18n — build with its i18n() plugin`,
-		);
-	}
-	if ((format as number) > MANIFEST_FORMAT) {
-		throw new Error(
-			`createMailRenderer: ${file} is manifest format ${format}, newer than this @nxgt/mail reads (${MANIFEST_FORMAT}) — upgrade @nxgt/mail`,
-		);
+		throw notManifest();
 	}
 	return {
 		locales: manifest.locales,

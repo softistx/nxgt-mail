@@ -68,14 +68,18 @@ The promise, within 0.x:
 
 - **A renderer reads every format up to its own.** A build from any earlier
   `@nxgt/mail-i18n` 0.x keeps working with a newer `@nxgt/mail`: a package
-  that ships a prebuilt build can peer `@nxgt/mail` `>=0.1.0 <1`.
+  that ships a prebuilt format-1 build can peer `@nxgt/mail` `>=0.1.0 <1`.
+  The peer's lower bound is the first `@nxgt/mail` that reads the build's
+  format.
 - **A manifest without `formatVersion` is format 1**, as `@nxgt/mail-i18n`
   0.1 and 0.2 wrote it.
 - **The format changes only when the manifest's shape does.** A new
   `@nxgt/mail-i18n` that writes the same shape writes the same format.
 
-So upgrade `@nxgt/mail` no later than `@nxgt/mail-i18n`: an older renderer
-refuses a newer format when it starts, rather than misreading it.
+So upgrade `@nxgt/mail` no later than `@nxgt/mail-i18n`. From 0.5.1, a
+renderer refuses a newer format when it starts, before reading any other
+field. 0.1.0 to 0.5.0 know no format and read only format 1: a build in a
+later format must peer at least the first `@nxgt/mail` that reads it.
 
 | The manifest's `formatVersion` | At start-up |
 | --- | --- |

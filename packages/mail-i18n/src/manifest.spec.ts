@@ -54,6 +54,12 @@ const both = (html: string, text?: string) => ({
 });
 
 describe('buildManifest', () => {
+	test('writes formatVersion first, so a reader finds it before any field it may change', () => {
+		expect(
+			Object.keys(manifestOf(both('<p>{{ code }}</p>', '{{ code }}')))[0],
+		).toBe('formatVersion');
+	});
+
 	test('records the placeholders, the subject per locale and the files', () => {
 		expect(manifestOf(both('<p>{{ code }}</p>', '{{ code }}'))).toEqual({
 			formatVersion: 1,
