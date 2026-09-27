@@ -80,6 +80,10 @@ How the messages are shaped:
 - [`send: scheduledAt is not supported — SMTP has no way to schedule a send, and sending it now would be wrong`](#send-scheduledat-is-not-supported--smtp-has-no-way-to-schedule-a-send-and-sending-it-now-would-be-wrong)
 - [`send: the memory mailer was told to fail this send`](#send-the-memory-mailer-was-told-to-fail-this-send)
 
+**Batch sending**
+- [`sendBatch: mailer must be a Mailer, as { send }`](#sendbatch-mailer-must-be-a-mailer-as--send-)
+- [`sendBatch: messages must be an array of MailMessage`](#sendbatch-messages-must-be-an-array-of-mailmessage)
+
 **Retrying**
 - [`withRetry: mailer must be a Mailer, as { send }`](#withretry-mailer-must-be-a-mailer-as--send-)
 - [`withRetry: options must be an object, as { attempts }`](#withretry-options-must-be-an-object-as--attempts-)
@@ -1092,6 +1096,50 @@ import { createMemoryMailer } from '@nxgt/mail';
 
 const mailer = createMemoryMailer();
 beforeEach(() => mailer.clear());
+```
+
+---
+
+## Batch sending
+
+Both messages below are a bare `TypeError`, thrown by `sendBatch(mailer,
+messages)` before anything is attempted — a wiring mistake, never something a
+recipient did. Every message that does reach a transport is checked the same
+way `send` checks one, and is reported `refused` or `failed` in the result
+array rather than thrown — see
+[Sending many at once — `sendBatch`](guide/sending.md#sending-many-at-once--sendbatch).
+
+### `sendBatch: mailer must be a Mailer, as { send }`
+
+**When:** `sendBatch(mailer, messages)`, with a first argument that is not an
+object with a `send` function — `undefined`, a transport's factory itself
+rather than what it answers, a plain object.
+**Why:** `sendBatch` sends over whichever `Mailer` it is given — through the
+transport's own `sendBatch` when it has one, over repeated `send` calls
+otherwise — so without one there is nothing to send through.
+**Fix:** pass what a transport's factory answers:
+
+```ts
+import { sendBatch } from '@nxgt/mail';
+import { createResendMailer } from '@nxgt/mail-resend';
+
+const mailer = createResendMailer({ apiKey: process.env.RESEND_API_KEY ?? '' });
+const results = await sendBatch(mailer, messages);
+```
+
+### `sendBatch: messages must be an array of MailMessage`
+
+**When:** `sendBatch(mailer, messages)`, with `messages` that is not an array
+— a single message passed on its own, `undefined`, or a value read from
+somewhere without being checked.
+**Why:** `sendBatch` answers exactly one result per message, in the same
+order; there is nothing to index without a list.
+**Fix:** pass a list, even of one:
+
+```ts
+import { sendBatch } from '@nxgt/mail';
+
+const results = await sendBatch(mailer, [message]); // not sendBatch(mailer, message)
 ```
 
 ---

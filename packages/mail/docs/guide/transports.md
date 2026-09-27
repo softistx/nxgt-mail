@@ -290,6 +290,35 @@ a silent send: it fails a transport whose `delivered()` shows the message
 without the `scheduledAt` it was sent with, which is what a transport that
 drops the field and sends anyway looks like.
 
+## Batch sending — optional
+
+`sendBatch(messages)` is optional on `Mailer`: implement it only to use your
+provider's own batching (Resend's `POST /emails/batch`). Without one, callers
+of the exported `sendBatch(mailer, messages)` helper get one `send` per
+message, in turn — a correct, if slower, answer every transport gets for
+free. Implement it when the provider answers many messages in one request,
+and:
+
+- **pre-check every message** with `checkMessage`, before any request goes
+  out, so a message near the end that is malformed is known from the start
+  and never reaches the provider;
+- **answer one `MailBatchResult` per message given, in the same order, never
+  fewer** — `{ status: 'sent', sentMail }`, `{ status: 'refused', error }` or
+  `{ status: 'failed', error }` — and never throw for one message's own
+  outcome: unlike `send`, a batch holds many messages, and one bad one must
+  never hide what happened to the others;
+- refuse, on its own message, anything the provider's batch call cannot carry
+  that a single `send` can (Resend: an attachment, or a message's own
+  `idempotencyKey` — Resend takes one per *request*, never one per message);
+- when the provider answers a whole request as one — refused, or
+  unreachable — report every message of that request the same way, since
+  there is no way to tell which one it was about.
+
+`batch.deliversEach` and `batch.refusalPerMessage`, below, call the
+`sendBatch` helper against your transport either way — with or without your
+own `sendBatch` — so they hold for a transport that relies on the fallback
+too.
+
 ## The conformance suite
 
 ```ts
@@ -348,16 +377,18 @@ and when `skip` names a case that does not exist
 | `send.refusesAddressHeader` | a `Bcc` among the custom headers throws `MailRefused` without the address in its message, and nothing is delivered: it would add a recipient no check saw | no |
 | `send.refusesAttachmentPath` | an attachment named with a path (`../…/report.pdf`) throws `MailRefused` without the name in its message, and nothing is delivered: a mail client could save it elsewhere | no |
 | `send.refusesWithoutTheValue` | a refusal's `message` does not hold the refused value | no |
+| `batch.deliversEach` | `sendBatch(mailer, messages)` — the exported helper, not your transport's own `sendBatch` directly — delivers three messages and reports each `sent`, in order | no |
+| `batch.refusalPerMessage` | one message with no recipient is reported `refused`, on its own; the message before it and the one after are still `sent` and delivered | no |
 | `failure.outage` | an outage throws `MailFailure` — **the class from `@nxgt/mail`** — with code `MAIL_FAILED` and a `cause`; one attempt; nothing delivered | yes |
 | `failure.refusal` | a provider's refusal throws `MailRefused` with code `MAIL_REFUSED` and a `cause`; one attempt | yes |
 | `failure.recovers` | after a failure, the next send goes through | yes |
 
 The message they send is exported as `sampleMessage`, its attachment as
 `sampleAttachment`, its inline image as `sampleInlineImage`, and the cases as
-data: `sendCases` (the fourteen `send.*`), `failureCases` (the three `failure.*`) and
-`allMailerCases` (both, in the order above). A transport's own tests can reuse
-them — send the sample through your transport, or run only the cases that
-need no faults:
+data: `sendCases` (the fourteen `send.*`), `batchCases` (the two `batch.*`),
+`failureCases` (the three `failure.*`) and `allMailerCases` (all three, in the
+order above). A transport's own tests can reuse them — send the sample
+through your transport, or run only the cases that need no faults:
 
 ```ts
 import { expect, it } from 'bun:test';

@@ -1,5 +1,5 @@
 import { describe, expect, it, test } from 'bun:test';
-import { MailFailure, MailRefused } from '@nxgt/mail';
+import { MailFailure, MailRefused, MailScheduleRefused } from '@nxgt/mail';
 import {
 	type DeliveredMail,
 	describeMailer,
@@ -22,12 +22,21 @@ type Fault =
 	| 'notJson'
 	| 'hang';
 
-/** One request as Resend received it. */
+/**
+ * One request as Resend received it. `body` is typed as an object for the
+ * usual `/emails` request; a batch request's is really an array — read it
+ * back with {@link batchBodyOf}.
+ */
 interface Received {
 	readonly method: string;
 	readonly path: string;
 	readonly headers: Headers;
 	readonly body: Record<string, unknown>;
+}
+
+/** `received.body` for a `/emails/batch` request, which is really an array. */
+function batchBodyOf(received: Received | undefined): unknown[] {
+	return received?.body as unknown as unknown[];
 }
 
 /**
@@ -81,28 +90,88 @@ function startResend() {
 	const error = (statusCode: number, name: string, message: string) =>
 		Response.json({ statusCode, name, message }, { status: statusCode });
 
+	/** The fault Resend answers with, shared by `/emails` and `/emails/batch`. `null` when none is queued. */
+	function faultResponse(fault: Fault | undefined): Response | null {
+		switch (fault) {
+			case 'outage':
+				return error(503, 'internal_server_error', 'Service unavailable.');
+			case 'refusal':
+				return error(
+					422,
+					'validation_error',
+					'Invalid `to` field. The email address needs to follow the `email@example.com` format.',
+				);
+			case 'badRequest':
+				return error(400, 'validation_error', 'Invalid idempotency key.');
+			case 'tooLarge':
+				return new Response('Request Entity Too Large', { status: 413 });
+			case 'rateLimit':
+				return error(429, 'rate_limit_exceeded', 'Too many requests.');
+			case 'keyRefused':
+				return error(403, 'invalid_api_key', 'API key is invalid.');
+			case 'keyInUse':
+				return error(
+					409,
+					'concurrent_idempotent_requests',
+					'Same idempotency key used while original request is still in progress.',
+				);
+			case 'noId':
+				return Response.json({});
+			case 'notJson':
+				return new Response('ok', { status: 200 });
+			default:
+				return null;
+		}
+	}
+
+	/** One item of a `POST /emails` or a `POST /emails/batch` body, read back as `delivered()` answers it. */
+	function deliveredOf(item: Record<string, unknown>): DeliveredMail {
+		const to = item.to as string[];
+		const attachments = (item.attachments ?? []) as {
+			filename: string;
+			content: string;
+			// biome-ignore lint/style/useNamingConvention: Resend's wire format names the field, not us.
+			content_type: string;
+			// biome-ignore lint/style/useNamingConvention: Resend's wire format names the field, not us.
+			content_id?: string;
+		}[];
+		return {
+			to: to.flatMap(addressesIn),
+			subject: String(item.subject),
+			html: String(item.html),
+			text: String(item.text),
+			// Read back as Resend reads them: the content is base64.
+			attachments: attachments.map((file) => ({
+				filename: file.filename,
+				content: Uint8Array.from(atob(file.content), (char) =>
+					char.charCodeAt(0),
+				),
+				contentType: file.content_type,
+				...(file.content_id === undefined
+					? {}
+					: { contentId: file.content_id }),
+			})),
+			...(typeof item.scheduled_at === 'string'
+				? { scheduledAt: new Date(item.scheduled_at) }
+				: {}),
+		};
+	}
+
 	const server = Bun.serve({
 		port: 0,
 		hostname: '127.0.0.1',
 		async fetch(request) {
 			const url = new URL(request.url);
-			const body = (await request.json().catch(() => ({}))) as Record<
-				string,
-				unknown
-			>;
+			const parsed: unknown = await request.json().catch(() => ({}));
+			const body = (
+				typeof parsed === 'object' && parsed !== null ? parsed : {}
+			) as Record<string, unknown>;
 			received.push({
 				method: request.method,
 				path: url.pathname,
 				headers: request.headers,
 				body,
 			});
-			if (request.method !== 'POST' || url.pathname !== '/emails') {
-				return error(
-					404,
-					'not_found',
-					'The requested endpoint does not exist.',
-				);
-			}
 			if (request.headers.get('authorization') !== `Bearer ${API_KEY}`) {
 				return error(
 					401,
@@ -110,39 +179,66 @@ function startResend() {
 					'Missing API key in the authorization header.',
 				);
 			}
-			attempts += 1;
-			switch (faults.shift()) {
-				case 'outage':
-					return error(503, 'internal_server_error', 'Service unavailable.');
-				case 'refusal':
-					return error(
-						422,
-						'validation_error',
-						'Invalid `to` field. The email address needs to follow the `email@example.com` format.',
-					);
-				case 'badRequest':
-					return error(400, 'validation_error', 'Invalid idempotency key.');
-				case 'tooLarge':
-					return new Response('Request Entity Too Large', { status: 413 });
-				case 'rateLimit':
-					return error(429, 'rate_limit_exceeded', 'Too many requests.');
-				case 'keyRefused':
-					return error(403, 'invalid_api_key', 'API key is invalid.');
-				case 'keyInUse':
-					return error(
-						409,
-						'concurrent_idempotent_requests',
-						'Same idempotency key used while original request is still in progress.',
-					);
-				case 'noId':
-					return Response.json({});
-				case 'notJson':
-					return new Response('ok', { status: 200 });
-				case 'hang':
-					await Bun.sleep(1_000);
-					return Response.json({ id: 'too-late' });
-				default:
+
+			if (request.method === 'POST' && url.pathname === '/emails/batch') {
+				attempts += 1;
+				const fault = faultResponse(faults.shift());
+				if (fault !== null) return fault;
+				const items = Array.isArray(parsed)
+					? (parsed as Record<string, unknown>[])
+					: [];
+				const ids = items.map((item) => {
+					delivered.push(deliveredOf(item));
+					return `resend-${delivered.length}`;
+				});
+				return Response.json({ data: ids.map((id) => ({ id })) });
 			}
+
+			const cancelMatch = url.pathname.match(/^\/emails\/([^/]+)\/cancel$/);
+			if (request.method === 'POST' && cancelMatch) {
+				const id = decodeURIComponent(cancelMatch[1] ?? '');
+				if (id === 'unknown-id')
+					return error(404, 'not_found', 'Email not found.');
+				if (id === 'already-sent-id') {
+					return error(
+						400,
+						'validation_error',
+						'This email has already been sent.',
+					);
+				}
+				return Response.json({ object: 'email', id });
+			}
+
+			const rescheduleMatch = url.pathname.match(/^\/emails\/([^/]+)$/);
+			if (request.method === 'PATCH' && rescheduleMatch) {
+				const id = decodeURIComponent(rescheduleMatch[1] ?? '');
+				if (id === 'unknown-id')
+					return error(404, 'not_found', 'Email not found.');
+				if (id === 'already-sent-id') {
+					return error(
+						400,
+						'validation_error',
+						'This email has already been sent.',
+					);
+				}
+				return Response.json({ object: 'email', id });
+			}
+
+			if (request.method !== 'POST' || url.pathname !== '/emails') {
+				return error(
+					404,
+					'not_found',
+					'The requested endpoint does not exist.',
+				);
+			}
+			attempts += 1;
+			const queuedFault = faults.shift();
+			if (queuedFault === 'hang') {
+				await Bun.sleep(1_000);
+				return Response.json({ id: 'too-late' });
+			}
+			const fault = faultResponse(queuedFault);
+			if (fault !== null) return fault;
 			const key = request.headers.get('idempotency-key');
 			const known = key === null ? undefined : keys.get(key);
 			if (known !== undefined) {
@@ -154,35 +250,7 @@ function startResend() {
 							'Same idempotency key used with a different request payload.',
 						);
 			}
-			const to = body.to as string[];
-			const attachments = (body.attachments ?? []) as {
-				filename: string;
-				content: string;
-				// biome-ignore lint/style/useNamingConvention: Resend's wire format names the field, not us.
-				content_type: string;
-				// biome-ignore lint/style/useNamingConvention: Resend's wire format names the field, not us.
-				content_id?: string;
-			}[];
-			delivered.push({
-				to: to.flatMap(addressesIn),
-				subject: String(body.subject),
-				html: String(body.html),
-				text: String(body.text),
-				// Read back as Resend reads them: the content is base64.
-				attachments: attachments.map((file) => ({
-					filename: file.filename,
-					content: Uint8Array.from(atob(file.content), (char) =>
-						char.charCodeAt(0),
-					),
-					contentType: file.content_type,
-					...(file.content_id === undefined
-						? {}
-						: { contentId: file.content_id }),
-				})),
-				...(typeof body.scheduled_at === 'string'
-					? { scheduledAt: new Date(body.scheduled_at) }
-					: {}),
-			});
+			delivered.push(deliveredOf(body));
 			const id = `resend-${delivered.length}`;
 			if (key !== null) keys.set(key, { body: JSON.stringify(body), id });
 			return Response.json({ id });
@@ -705,6 +773,313 @@ describe('createResendMailer, the request', () => {
 				address: 'ada@example.test',
 			}),
 		).toBe('"Ada \\"A\\\\L\\" <x@y>, Eve" <ada@example.test>');
+	});
+});
+
+describe('createResendMailer, sendBatch', () => {
+	test('posts one request to /emails/batch, and answers one result per message, in order', async () => {
+		const resend = startResend();
+		try {
+			const mailer = createResendMailer({
+				apiKey: API_KEY,
+				baseUrl: resend.baseUrl,
+			});
+			const results = await mailer.sendBatch([
+				{ ...sampleMessage, subject: 'First' },
+				{ ...sampleMessage, subject: 'Second' },
+			]);
+			expect(resend.received).toHaveLength(1);
+			expect(resend.received[0]?.path).toBe('/emails/batch');
+			expect(batchBodyOf(resend.received[0])).toEqual([
+				expect.objectContaining({ subject: 'First' }),
+				expect.objectContaining({ subject: 'Second' }),
+			]);
+			expect(results).toEqual([
+				{ status: 'sent', sentMail: { messageId: 'resend-1' } },
+				{ status: 'sent', sentMail: { messageId: 'resend-2' } },
+			]);
+			expect(resend.delivered.map((mail) => mail.subject)).toEqual([
+				'First',
+				'Second',
+			]);
+		} finally {
+			await resend.close();
+		}
+	});
+
+	test('sends no Idempotency-Key header for a batch request', async () => {
+		const resend = startResend();
+		try {
+			await createResendMailer({
+				apiKey: API_KEY,
+				baseUrl: resend.baseUrl,
+			}).sendBatch([sampleMessage]);
+			expect(resend.received[0]?.headers.has('idempotency-key')).toBe(false);
+		} finally {
+			await resend.close();
+		}
+	});
+
+	test('splits more than 100 messages into as many requests of 100', async () => {
+		const resend = startResend();
+		try {
+			const messages = Array.from({ length: 101 }, (_, index) => ({
+				...sampleMessage,
+				subject: `Message ${index}`,
+			}));
+			const results = await createResendMailer({
+				apiKey: API_KEY,
+				baseUrl: resend.baseUrl,
+			}).sendBatch(messages);
+			const batchRequests = resend.received.filter(
+				(r) => r.path === '/emails/batch',
+			);
+			expect(batchRequests).toHaveLength(2);
+			expect(batchBodyOf(batchRequests[0]).length).toBe(100);
+			expect(batchBodyOf(batchRequests[1]).length).toBe(1);
+			expect(results.every((r) => r.status === 'sent')).toBe(true);
+		} finally {
+			await resend.close();
+		}
+	});
+
+	test('checks every message before any request goes out: a bad one is refused on its own, and never reaches Resend', async () => {
+		const resend = startResend();
+		try {
+			const { to: _, ...withoutTo } = sampleMessage;
+			const results = await createResendMailer({
+				apiKey: API_KEY,
+				baseUrl: resend.baseUrl,
+			}).sendBatch([sampleMessage, { ...withoutTo, to: [] }, sampleMessage]);
+			expect(results[0]?.status).toBe('sent');
+			expect(results[1]?.status).toBe('refused');
+			expect((results[1] as { error: unknown }).error).toBeInstanceOf(
+				MailRefused,
+			);
+			expect(results[2]?.status).toBe('sent');
+			expect(batchBodyOf(resend.received[0])).toHaveLength(2);
+		} finally {
+			await resend.close();
+		}
+	});
+
+	test('refuses a message with attachments, or its own idempotencyKey, on its own', async () => {
+		const resend = startResend();
+		try {
+			const results = await createResendMailer({
+				apiKey: API_KEY,
+				baseUrl: resend.baseUrl,
+			}).sendBatch([
+				{
+					...sampleMessage,
+					attachments: [
+						{
+							filename: 'a.pdf',
+							content: new Uint8Array([1]),
+							contentType: 'application/pdf',
+						},
+					],
+				},
+				{ ...sampleMessage, idempotencyKey: 'order-42' },
+			]);
+			expect(results[0]?.status).toBe('refused');
+			expect((results[0] as { error: MailRefused }).error.message).toContain(
+				'attachments are not supported in a batch send',
+			);
+			expect(results[1]?.status).toBe('refused');
+			expect((results[1] as { error: MailRefused }).error.message).toContain(
+				'idempotencyKey is not supported in a batch send',
+			);
+			expect(resend.received).toHaveLength(0);
+		} finally {
+			await resend.close();
+		}
+	});
+
+	test('a batch request Resend refuses reports every message in it as refused, with the same cause', async () => {
+		const resend = startResend();
+		try {
+			resend.faults.push('refusal');
+			const results = await createResendMailer({
+				apiKey: API_KEY,
+				baseUrl: resend.baseUrl,
+			}).sendBatch([sampleMessage, { ...sampleMessage, subject: 'Other' }]);
+			expect(results.every((r) => r.status === 'refused')).toBe(true);
+			expect((results[0] as { error: MailRefused }).error).toBeInstanceOf(
+				MailRefused,
+			);
+		} finally {
+			await resend.close();
+		}
+	});
+
+	test('a batch request Resend cannot take reports every message in it as failed', async () => {
+		const resend = startResend();
+		try {
+			resend.faults.push('outage');
+			const results = await createResendMailer({
+				apiKey: API_KEY,
+				baseUrl: resend.baseUrl,
+			}).sendBatch([sampleMessage]);
+			expect(results[0]?.status).toBe('failed');
+			expect((results[0] as { error: unknown }).error).toBeInstanceOf(
+				MailFailure,
+			);
+		} finally {
+			await resend.close();
+		}
+	});
+
+	test('a Resend that cannot be reached reports every message as failed', async () => {
+		const resend = startResend();
+		await resend.close();
+		const results = await createResendMailer({
+			apiKey: API_KEY,
+			baseUrl: resend.baseUrl,
+		}).sendBatch([sampleMessage]);
+		expect(results[0]?.status).toBe('failed');
+	});
+});
+
+describe('createResendMailer, cancel and reschedule', () => {
+	test('cancel resolves once Resend confirms it, posting to /emails/{id}/cancel', async () => {
+		const resend = startResend();
+		try {
+			await createResendMailer({
+				apiKey: API_KEY,
+				baseUrl: resend.baseUrl,
+			}).cancel('some-id');
+			expect(resend.received[0]?.path).toBe('/emails/some-id/cancel');
+			expect(resend.received[0]?.method).toBe('POST');
+		} finally {
+			await resend.close();
+		}
+	});
+
+	test('cancel refuses an unknown id with MailScheduleRefused, code UNKNOWN_ID', async () => {
+		const resend = startResend();
+		try {
+			const error = await createResendMailer({
+				apiKey: API_KEY,
+				baseUrl: resend.baseUrl,
+			})
+				.cancel('unknown-id')
+				.then(
+					() => null,
+					(caught: unknown) => caught,
+				);
+			expect(error).toBeInstanceOf(MailScheduleRefused);
+			expect((error as MailScheduleRefused).code).toBe('UNKNOWN_ID');
+		} finally {
+			await resend.close();
+		}
+	});
+
+	test('cancel refuses an already-sent message with MailScheduleRefused, code ALREADY_SENT', async () => {
+		const resend = startResend();
+		try {
+			const error = await createResendMailer({
+				apiKey: API_KEY,
+				baseUrl: resend.baseUrl,
+			})
+				.cancel('already-sent-id')
+				.then(
+					() => null,
+					(caught: unknown) => caught,
+				);
+			expect(error).toBeInstanceOf(MailScheduleRefused);
+			expect((error as MailScheduleRefused).code).toBe('ALREADY_SENT');
+		} finally {
+			await resend.close();
+		}
+	});
+
+	test('cancel raises MailFailure when Resend cannot be reached', async () => {
+		const resend = startResend();
+		await resend.close();
+		const error = await createResendMailer({
+			apiKey: API_KEY,
+			baseUrl: resend.baseUrl,
+		})
+			.cancel('some-id')
+			.then(
+				() => null,
+				(caught: unknown) => caught,
+			);
+		expect(error).toBeInstanceOf(MailFailure);
+	});
+
+	test('reschedule PATCHes /emails/{id} with scheduled_at, and resolves once confirmed', async () => {
+		const resend = startResend();
+		try {
+			const scheduledAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+			await createResendMailer({
+				apiKey: API_KEY,
+				baseUrl: resend.baseUrl,
+			}).reschedule('some-id', scheduledAt);
+			expect(resend.received[0]?.method).toBe('PATCH');
+			expect(resend.received[0]?.path).toBe('/emails/some-id');
+			expect(resend.received[0]?.body).toEqual({
+				// biome-ignore lint/style/useNamingConvention: Resend's wire format names the field, not us.
+				scheduled_at: scheduledAt.toISOString(),
+			});
+		} finally {
+			await resend.close();
+		}
+	});
+
+	test('reschedule refuses a scheduledAt in the past or too far ahead, before any request', async () => {
+		const resend = startResend();
+		try {
+			const mailer = createResendMailer({
+				apiKey: API_KEY,
+				baseUrl: resend.baseUrl,
+				fetch: () => {
+					throw new Error('fetch must not be called');
+				},
+			});
+			await expect(
+				mailer.reschedule('some-id', new Date(Date.now() - 60_000 * 5)),
+			).rejects.toThrow('reschedule: scheduledAt is in the past');
+		} finally {
+			await resend.close();
+		}
+	});
+
+	test('reschedule refuses an unknown or already-sent id the same way cancel does', async () => {
+		const resend = startResend();
+		try {
+			const mailer = createResendMailer({
+				apiKey: API_KEY,
+				baseUrl: resend.baseUrl,
+			});
+			const scheduledAt = new Date(Date.now() + 60_000);
+			const unknown = await mailer.reschedule('unknown-id', scheduledAt).then(
+				() => null,
+				(caught: unknown) => caught,
+			);
+			expect((unknown as MailScheduleRefused).code).toBe('UNKNOWN_ID');
+			const already = await mailer
+				.reschedule('already-sent-id', scheduledAt)
+				.then(
+					() => null,
+					(caught: unknown) => caught,
+				);
+			expect((already as MailScheduleRefused).code).toBe('ALREADY_SENT');
+		} finally {
+			await resend.close();
+		}
+	});
+
+	test('cancel and reschedule refuse a messageId that is not a string, before any request', async () => {
+		const mailer = createResendMailer({
+			apiKey: API_KEY,
+			fetch: () => {
+				throw new Error('fetch must not be called');
+			},
+		});
+		await expect(mailer.cancel('')).rejects.toThrow(TypeError);
+		await expect(mailer.reschedule('', new Date())).rejects.toThrow(TypeError);
 	});
 });
 

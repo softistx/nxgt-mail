@@ -26,6 +26,7 @@ sent.messageId; // 'memory-1'
 ```ts
 interface Mailer {
 	send(message: MailMessage): Promise<SentMail>;
+	sendBatch?(messages: readonly MailMessage[]): Promise<readonly MailBatchResult[]>;
 }
 
 interface SentMail {
@@ -37,6 +38,9 @@ interface SentMail {
 provider. `messageId` is the id the provider gave it, or `null` when it gives
 none — an absence, not a failure. It is not a promise the e-mail reached an
 inbox: a bounce happens after the hand-over, and `send` does not report it.
+
+`sendBatch` is optional, and rarely called directly: see
+[Sending many at once](#sending-many-at-once--sendbatch) below.
 
 Anything else rejects, with one of the two errors below. A mailer never
 resolves `false` and never logs and resolves.
@@ -887,6 +891,68 @@ export async function runOutbox(mailer: Mailer): Promise<void> {
 outbox's job calls still smooths over a short outage within one run, while the
 outbox is what survives the process going away between runs.
 
+## Sending many at once — `sendBatch`
+
+`sendBatch(mailer, messages)` sends many messages and answers one result per
+message, in the same order — **never a throw for one message's own
+outcome**, unlike `send`:
+
+```ts
+import { sendBatch } from '@nxgt/mail';
+import type { Mailer, MailMessage } from '@nxgt/mail';
+
+declare const mailer: Mailer;
+declare const messages: readonly MailMessage[];
+
+const results = await sendBatch(mailer, messages);
+results.forEach((result, index) => {
+	if (result.status === 'sent') return;
+	console.error(messages[index]?.subject, result.error.code, result.error.message);
+});
+```
+
+```ts
+type MailBatchResult =
+	| { readonly status: 'sent'; readonly sentMail: SentMail }
+	| { readonly status: 'refused'; readonly error: MailRefused }
+	| { readonly status: 'failed'; readonly error: MailFailure };
+
+function sendBatch(mailer: Mailer, messages: readonly MailMessage[]): Promise<readonly MailBatchResult[]>;
+```
+
+Every message is checked with `checkMessage` **before any of them is sent** —
+a message near the end that is malformed is known from the start, and never
+reaches the transport; the others are unaffected. **Nothing is silently
+dropped**: `sendBatch` answers exactly one result per message given, in
+order, never fewer. A bare `TypeError` — `messages` is not an array, or
+`mailer` is not a `Mailer` — is the only way it throws, and only before
+anything is attempted.
+
+| Transport | What `sendBatch` does |
+| --- | --- |
+| `@nxgt/mail-resend` | Calls Resend's `POST /emails/batch`, up to 100 messages per request — see [`@nxgt/mail-resend`'s guide](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-resend/docs/guide/setup.md#sendbatch) |
+| `@nxgt/mail-smtp` | No batching of its own: falls back to sending each message in turn over `send` — one by one, over whatever connection the transporter you configured pools |
+| a `Mailer` with no `sendBatch` | The same fallback: one `send` per message, in order |
+
+**A transport implements `sendBatch` only to use its provider's own
+batching.** It is optional on the `Mailer` port: `sendBatch(mailer, messages)`
+calls it when present, and otherwise sends each message in turn over `send` —
+so it works with every `Mailer`, including a third-party one written before
+this function existed.
+
+### `withRetry` and `withTelemetry`
+
+`withRetry(mailer)` passes a `sendBatch` through **untouched** when `mailer`
+has one: no retry, no `idempotencyKey` added to a message that lacks its
+own. A batch's own contract already answers a result per message instead of
+throwing — retry the ones that come back `failed`, one by one, with `send`.
+
+`withTelemetry(mailer, { transport })` gives a `sendBatch` its own span,
+`mail.sendBatch` — one for the whole call, `mail.outcome: 'ok'` whenever the
+call itself resolved (a `MailBatchResult` per message is the answer, not a
+throw), with `mail.batch.sent_count`, `mail.batch.refused_count` and
+`mail.batch.failed_count` alongside it. See [Observability](observability.md).
+
 ## Tags — labels for the provider
 
 `tags` label a send where the provider shows or reports it — its dashboard,
@@ -971,7 +1037,7 @@ transport changed.
 | Transport | Effect |
 | --- | --- |
 | `createMemoryMailer()` | Accepts it and records it on the message in `mailer.sent`. Included in the idempotency fingerprint: the same key rescheduled to a different moment is a `MailRefused`, as a different message under that key always is |
-| `@nxgt/mail-resend` | Sent as Resend's `scheduled_at`, ISO 8601 (`message.scheduledAt.toISOString()`). Resend answers an id right away; the e-mail itself goes out later. Resend's own [`POST /emails/{id}/cancel`](https://resend.com/docs/api-reference/emails/cancel-email) cancels one it has not sent yet — out of scope here, no package wraps it |
+| `@nxgt/mail-resend` | Sent as Resend's `scheduled_at`, ISO 8601 (`message.scheduledAt.toISOString()`). Resend answers an id right away; the e-mail itself goes out later. Cancel it with the mailer's own `cancel(messageId)`, or move it with `reschedule(messageId, scheduledAt)` — see [`@nxgt/mail-resend`'s guide](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-resend/docs/guide/setup.md#cancel-and-reschedule) |
 | `@nxgt/mail-smtp` | Refused with `MailRefused`: `send: scheduledAt is not supported — SMTP has no way to schedule a send, and sending it now would be wrong`. SMTP has no notion of a later send, and sending it at once instead would silently ignore what was asked |
 
 **A transport that cannot schedule must refuse the message, never send it at

@@ -31,6 +31,32 @@ A `send: …` message not on this page comes from `checkMessage` in
 - [`send: Resend takes at most 75 tags on one e-mail`](#send-resend-takes-at-most-75-tags-on-one-e-mail)
 - [`Resend answered <status> <name>`](#resend-answered-status-name)
 
+**Batch sending**
+- [`sendBatch: messages must be an array of MailMessage`](#sendbatch-messages-must-be-an-array-of-mailmessage)
+- [`sendBatch: from is missing — give the message a from, or createResendMailer a default one`](#sendbatch-from-is-missing--give-the-message-a-from-or-createresendmailer-a-default-one)
+- [`sendBatch: attachments are not supported in a batch send — Resend's /emails/batch refuses them; send this message on its own with send`](#sendbatch-attachments-are-not-supported-in-a-batch-send--resends-emailsbatch-refuses-them-send-this-message-on-its-own-with-send)
+- [`sendBatch: idempotencyKey is not supported in a batch send — Resend takes one Idempotency-Key per batch request, never one per message; send this message on its own with send`](#sendbatch-idempotencykey-is-not-supported-in-a-batch-send--resend-takes-one-idempotency-key-per-batch-request-never-one-per-message-send-this-message-on-its-own-with-send)
+- [`sendBatch: Resend takes at most 75 tags on one e-mail`](#sendbatch-resend-takes-at-most-75-tags-on-one-e-mail)
+- [`sendBatch: Resend refused the batch request`](#sendbatch-resend-refused-the-batch-request)
+- [`sendBatch: Resend could not take the batch request`](#sendbatch-resend-could-not-take-the-batch-request)
+- [`sendBatch: Resend did not answer within <timeoutMs> ms`](#sendbatch-resend-did-not-answer-within-timeoutms-ms)
+- [`sendBatch: Resend could not be reached`](#sendbatch-resend-could-not-be-reached)
+
+**Cancelling and rescheduling**
+- [`cancel: messageId must be the id send answered`](#cancel-messageid-must-be-the-id-send-answered)
+- [`reschedule: messageId must be the id send answered`](#reschedule-messageid-must-be-the-id-send-answered)
+- [`reschedule: scheduledAt must be a valid Date`](#reschedule-scheduledat-must-be-a-valid-date)
+- [`reschedule: scheduledAt is in the past`](#reschedule-scheduledat-is-in-the-past)
+- [`reschedule: scheduledAt is more than 30 days ahead — Resend's own limit`](#reschedule-scheduledat-is-more-than-30-days-ahead--resends-own-limit)
+- [`cancel: Resend has no scheduled message with this id — it may already have been cancelled, or the id is wrong`](#cancel-resend-has-no-scheduled-message-with-this-id--it-may-already-have-been-cancelled-or-the-id-is-wrong)
+- [`reschedule: Resend has no scheduled message with this id — it may already have been cancelled, or the id is wrong`](#reschedule-resend-has-no-scheduled-message-with-this-id--it-may-already-have-been-cancelled-or-the-id-is-wrong)
+- [`cancel: Resend refused to cancel this message — it has already been sent, and is no longer scheduled`](#cancel-resend-refused-to-cancel-this-message--it-has-already-been-sent-and-is-no-longer-scheduled)
+- [`reschedule: Resend refused to reschedule this message — it has already been sent, and is no longer scheduled`](#reschedule-resend-refused-to-reschedule-this-message--it-has-already-been-sent-and-is-no-longer-scheduled)
+- [`cancel: Resend could not take the request`](#cancel-resend-could-not-take-the-request)
+- [`reschedule: Resend could not take the request`](#reschedule-resend-could-not-take-the-request)
+- [`cancel: Resend did not answer within <timeoutMs> ms` / `cancel: Resend could not be reached`](#cancel-resend-did-not-answer-within-timeoutms-ms--cancel-resend-could-not-be-reached)
+- [`reschedule: Resend did not answer within <timeoutMs> ms` / `reschedule: Resend could not be reached`](#reschedule-resend-did-not-answer-within-timeoutms-ms--reschedule-resend-could-not-be-reached)
+
 **Wiring**
 - [`createResendMailer: options must be an object, as { apiKey }`](#createresendmailer-options-must-be-an-object-as--apikey-)
 - [`createResendMailer: apiKey must be a Resend API key — is the environment variable set?`](#createresendmailer-apikey-must-be-a-resend-api-key--is-the-environment-variable-set)
@@ -219,6 +245,334 @@ The message of the `cause` of a `MailRefused` or a `MailFailure` — for
 example `Resend answered 422 validation_error`, or `Resend answered 503` when
 the body named no error. See the entry of the error it is the cause of,
 above; `cause.detail` holds Resend's own message.
+
+## Batch sending
+
+Every message here is thrown by `mailer.sendBatch(messages)`, Resend's own
+implementation — `POST /emails/batch`, up to 100 messages per request, split
+into as many requests as it takes. See
+[Setting up — sendBatch](guide/setup.md#sendbatch) for the full behaviour,
+and [Errors — sendBatch](guide/errors.md#sendbatch) for the table this
+section expands.
+
+### `sendBatch: messages must be an array of MailMessage`
+
+A `TypeError`, thrown before anything is attempted.
+
+**When:** `mailer.sendBatch(messages)`, with `messages` that is not an array
+— a single message on its own, `undefined`, or a value read from somewhere
+without being checked.
+**Why:** `sendBatch` answers exactly one result per message, in the same
+order; there is nothing to index without a list.
+**Fix:** pass a list, even of one:
+
+```ts
+const results = await mailer.sendBatch([message]); // not mailer.sendBatch(message)
+```
+
+### `sendBatch: from is missing — give the message a from, or createResendMailer a default one`
+
+A `MailRefused`, reported as `{ status: 'refused', error }` for that message
+alone, before any request. The rest of the batch is unaffected.
+
+**When:** one of `messages` has no `from`, and the mailer was created without
+one.
+**Fix:** give the mailer a default sender, or that message its own — same
+fix as [`send`'s own](#send-from-is-missing--give-the-message-a-from-or-createresendmailer-a-default-one):
+
+```ts
+import { createResendMailer } from '@nxgt/mail-resend';
+
+const mailer = createResendMailer({
+	apiKey: process.env.RESEND_API_KEY ?? '',
+	from: { name: 'Acme', address: 'noreply@acme.test' },
+});
+```
+
+### `sendBatch: attachments are not supported in a batch send — Resend's /emails/batch refuses them; send this message on its own with send`
+
+A `MailRefused`, reported for that message alone, before any request. The
+rest of the batch is unaffected.
+
+**When:** one of `messages` has one or more `attachments`.
+**Why:** Resend's `/emails/batch` has no attachments field at all — unlike
+the other per-message refusals here, this one is not a limit `send` would
+also hit, it is a whole field the batch endpoint does not carry.
+**Fix:** send that message on its own, over `send`:
+
+```ts
+import type { MailMessage } from '@nxgt/mail';
+
+declare const withAttachment: MailMessage;
+declare const rest: readonly MailMessage[];
+
+await mailer.send(withAttachment);
+await mailer.sendBatch(rest);
+```
+
+### `sendBatch: idempotencyKey is not supported in a batch send — Resend takes one Idempotency-Key per batch request, never one per message; send this message on its own with send`
+
+A `MailRefused`, reported for that message alone, before any request. The
+rest of the batch is unaffected.
+
+**When:** one of `messages` carries its own `idempotencyKey`.
+**Why:** Resend takes at most one `Idempotency-Key`, per batch *request* —
+never one per message inside it — and `sendBatch` sends no `Idempotency-Key`
+header for a batch request at all, so a key on one of several messages
+cannot be honoured for that message alone. Retrying `sendBatch` itself, with
+no such header, can duplicate every message that already went through.
+**Fix:** send that message on its own, over `send`, where its key is
+honoured:
+
+```ts
+import type { MailMessage } from '@nxgt/mail';
+
+declare const withKey: MailMessage;
+declare const rest: readonly MailMessage[];
+
+await mailer.send(withKey); // idempotencyKey honoured here
+await mailer.sendBatch(rest);
+```
+
+### `sendBatch: Resend takes at most 75 tags on one e-mail`
+
+A `MailRefused`, reported for that message alone, before any request. The
+rest of the batch is unaffected.
+
+**When:** one of `messages` has more than 75 entries in `tags`.
+**Why:** the same limit as [`send`'s own](#send-resend-takes-at-most-75-tags-on-one-e-mail).
+**Fix:** keep the tags you filter or group by in Resend's dashboard, and drop
+the rest.
+
+### `sendBatch: Resend refused the batch request`
+
+A `MailRefused`. **Every message of the request this batch fell into is
+reported this way** — the same `error`, even though only one of up to 100
+messages may be at fault. Resend answers the request as a whole, never one
+message at a time, so `sendBatch` cannot single out which one.
+
+**When:** Resend answered `400`, `413` or `422` for a chunk of up to 100
+messages — the same statuses as [`send: Resend refused the message`](#send-resend-refused-the-message),
+for the request as a whole.
+**Why:** a malformed message anywhere in that request, once past the
+per-message checks above, or a request too large for what sits in front of
+the API.
+**Fix:** read `cause.errorName` and `cause.detail`, as with `send`. A chunk
+of 100 is harder to narrow down than one message: keep chunks smaller, or
+send the suspect message on its own first, to find it:
+
+```ts
+const results = await mailer.sendBatch(messages);
+results.forEach((result, index) => {
+	if (result.status === 'refused') console.warn(messages[index]?.subject, result.error.cause);
+});
+```
+
+A request further along in the same call that Resend does accept still
+runs, and is reported on its own — only the messages of the refused request
+are affected.
+
+### `sendBatch: Resend could not take the batch request`
+
+A `MailFailure`. **Every message of that request is reported `failed`** —
+nothing is known to have been sent for any of them, the same as
+[`send: Resend could not take the message`](#send-resend-could-not-take-the-message).
+
+**When:** Resend answered a chunk's request with any status that is neither
+`2xx` nor a refusal — `401`, `403`, `429`, a `5xx`.
+**Fix:** the same table as `send`'s own failure — a key problem, a rate
+limit, an outage. A request further along that Resend does accept still
+runs, and is reported on its own.
+
+### `sendBatch: Resend did not answer within <timeoutMs> ms`
+
+A `MailFailure`. **Every message of that request's chunk is reported
+`failed`.** `cause` is the `TimeoutError` that aborted the request — the
+same as [`send: Resend did not answer within <timeoutMs> ms`](#send-resend-did-not-answer-within-timeoutms-ms),
+for the whole chunk rather than one message.
+
+**When:** no answer within `timeoutMs` for one of the requests `sendBatch`
+made.
+**Fix:** a slow network or a slow proxy — raise `timeoutMs`, or retry the
+messages reported `failed` later. Before retrying, weigh that the chunk may
+have gone through all the same.
+
+### `sendBatch: Resend could not be reached`
+
+A `MailFailure`. **Every message of that request's chunk is reported
+`failed`** — the same as [`send: Resend could not be reached`](#send-resend-could-not-be-reached),
+for the whole chunk.
+
+**When:** `fetch` threw before any answer, for one of the requests
+`sendBatch` made: DNS, a refused connection, TLS, a proxy in the way.
+**Fix:** check the network from the process's host, and retry the messages
+reported `failed` — a chunk further along in the same call that did reach
+Resend is reported on its own, and is unaffected.
+
+## Cancelling and rescheduling
+
+Every message here is thrown by `mailer.cancel(messageId)` or
+`mailer.reschedule(messageId, scheduledAt)`, against a message `send`
+scheduled ahead with `scheduledAt` and has not sent yet. `messageId` is never
+printed: it is Resend's own id, but it is still a credential — one that can
+cancel or reschedule someone else's send. See
+[Setting up — Cancel and reschedule](guide/setup.md#cancel-and-reschedule)
+and [Errors — Cancel and reschedule](guide/errors.md#cancel-and-reschedule).
+
+### `cancel: messageId must be the id send answered`
+
+A `TypeError`, thrown before any request.
+
+**When:** `mailer.cancel(messageId)`, with `messageId` missing, not a
+string, or an empty string.
+**Why:** `messageId` must be the id `send` answered — `SentMail.messageId` —
+never an id of your own (an order id, a queue job id): Resend never held any
+other id pending.
+**Fix:** pass the id `send` answered, checked not `null` first:
+
+```ts
+const { messageId } = await mailer.send(message);
+if (messageId === null) throw new Error('Resend answered with no id'); // rare
+
+await mailer.cancel(messageId);
+```
+
+### `reschedule: messageId must be the id send answered`
+
+A `TypeError`, thrown before any request. The same check as
+[`cancel`'s own](#cancel-messageid-must-be-the-id-send-answered), for
+`reschedule`.
+
+### `reschedule: scheduledAt must be a valid Date`
+
+A `MailRefused`, thrown before any request.
+
+**When:** `mailer.reschedule(messageId, scheduledAt)`, with a `scheduledAt`
+that is not a `Date` — an ISO string, a number — or is an invalid `Date`
+(`new Date(Number.NaN)`).
+**Why:** the same rule `checkScheduledAt` holds `send`'s own `scheduledAt`
+to, applied here too — see
+[`send: scheduledAt must be a valid Date`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/troubleshooting.md#send-scheduledat-must-be-a-valid-date).
+**Fix:** pass a `Date`:
+
+```ts
+await mailer.reschedule(messageId, new Date('2027-01-01T09:00:00.000Z'));
+```
+
+### `reschedule: scheduledAt is in the past`
+
+A `MailRefused`, thrown before any request.
+
+**When:** `scheduledAt` is more than about a minute earlier than now.
+**Why:** the same rule as
+[`send: scheduledAt is in the past`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/troubleshooting.md#send-scheduledat-is-in-the-past):
+a reschedule into the past is not a schedule, it is a mistake.
+**Fix:** check the moment before rescheduling.
+
+### `reschedule: scheduledAt is more than 30 days ahead — Resend's own limit`
+
+A `MailRefused`, thrown before any request.
+
+**When:** `scheduledAt` is more than 30 days from now.
+**Why:** Resend's own limit on a scheduled send — the same one `send`'s own
+`scheduledAt` is held to; see
+[`send: scheduledAt is more than 30 days ahead`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/troubleshooting.md#send-scheduledat-is-more-than-30-days-ahead--resends-own-limit).
+**Fix:** reschedule closer, or hold the new date yourself and reschedule
+again once you are within the window.
+
+### `cancel: Resend has no scheduled message with this id — it may already have been cancelled, or the id is wrong`
+
+A `MailScheduleRefused` from the `@nxgt/mail` peer, code `UNKNOWN_ID`.
+
+**When:** Resend answered `404` for `mailer.cancel(messageId)`.
+**Why:** Resend does not document precisely what it answers for an id it
+never held pending — this reads a `404` as `UNKNOWN_ID`, the only such
+answer observed. Either the message was already cancelled, or `messageId`
+never named a message Resend has pending.
+**Fix:** there is nothing left to cancel — treat it the same as a successful
+cancel:
+
+```ts
+import { MailScheduleRefused } from '@nxgt/mail';
+
+try {
+	await mailer.cancel(messageId);
+} catch (error) {
+	if (error instanceof MailScheduleRefused && error.code === 'UNKNOWN_ID') {
+		return; // already cancelled, or never a valid id — nothing to do
+	}
+	throw error;
+}
+```
+
+### `reschedule: Resend has no scheduled message with this id — it may already have been cancelled, or the id is wrong`
+
+A `MailScheduleRefused` from the `@nxgt/mail` peer, code `UNKNOWN_ID`. The
+same cause and fix as
+[`cancel`'s own](#cancel-resend-has-no-scheduled-message-with-this-id--it-may-already-have-been-cancelled-or-the-id-is-wrong),
+for `reschedule`.
+
+### `cancel: Resend refused to cancel this message — it has already been sent, and is no longer scheduled`
+
+A `MailScheduleRefused` from the `@nxgt/mail` peer, code `ALREADY_SENT`.
+
+**When:** Resend answered `400` for `mailer.cancel(messageId)`.
+**Why:** the message went out before the cancel request reached Resend —
+this reads a `400` as `ALREADY_SENT`, the only such answer observed.
+**Fix:** nothing to do — the e-mail was already sent, which is what a
+cancel would have prevented:
+
+```ts
+import { MailScheduleRefused } from '@nxgt/mail';
+
+try {
+	await mailer.cancel(messageId);
+} catch (error) {
+	if (error instanceof MailScheduleRefused && error.code === 'ALREADY_SENT') {
+		return; // it already went out
+	}
+	throw error;
+}
+```
+
+### `reschedule: Resend refused to reschedule this message — it has already been sent, and is no longer scheduled`
+
+A `MailScheduleRefused` from the `@nxgt/mail` peer, code `ALREADY_SENT`. The
+same cause and fix as
+[`cancel`'s own](#cancel-resend-refused-to-cancel-this-message--it-has-already-been-sent-and-is-no-longer-scheduled),
+for `reschedule`.
+
+### `cancel: Resend could not take the request`
+
+A `MailFailure`. **Nothing about the cancel is known to have taken effect.**
+
+**When:** Resend answered `mailer.cancel(messageId)` with any status that is
+neither `2xx` nor `404` nor `400` — `401`, `403`, `429`, a `5xx`.
+**Fix:** the same table as [`send: Resend could not take the message`](#send-resend-could-not-take-the-message)
+— a key problem, a rate limit, an outage. Retry later; whether the message
+is still worth cancelling by then is yours to decide.
+
+### `reschedule: Resend could not take the request`
+
+A `MailFailure`. The same cause and fix as
+[`cancel`'s own](#cancel-resend-could-not-take-the-request), for
+`reschedule`.
+
+### `cancel: Resend did not answer within <timeoutMs> ms` / `cancel: Resend could not be reached`
+
+Both a `MailFailure`. **Nothing about the cancel is known to have taken
+effect** — the same as [`send`'s own](#send-resend-did-not-answer-within-timeoutms-ms).
+
+**When:** no answer within `timeoutMs` for `mailer.cancel(messageId)`, or
+`fetch` threw before any answer — DNS, a refused connection, TLS.
+**Fix:** check the network, or raise `timeoutMs`; retry later, weighing that
+the cancel may have taken effect all the same.
+
+### `reschedule: Resend did not answer within <timeoutMs> ms` / `reschedule: Resend could not be reached`
+
+Both a `MailFailure`. The same cause and fix as
+[`cancel`'s own](#cancel-resend-did-not-answer-within-timeoutms-ms--cancel-resend-could-not-be-reached),
+for `reschedule`.
 
 ## Wiring
 

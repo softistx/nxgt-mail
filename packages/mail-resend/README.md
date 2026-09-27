@@ -46,8 +46,9 @@ no Node built-in.
 
 | Export | What it is |
 | --- | --- |
-| `createResendMailer(options)` | A `Mailer` that sends each message with `POST /emails` |
+| `createResendMailer(options)` | A `ResendMailer` — a `Mailer` that sends each message with `POST /emails`, plus `sendBatch`, `cancel` and `reschedule` |
 | `ResendMailerOptions` | `{ apiKey, from?, baseUrl?, fetch?, timeoutMs? }` |
+| `ResendMailer` | The type `createResendMailer` answers: `Mailer` and the three methods above |
 | `formatAddress(address)` | An `Address` as Resend reads it: bare, or `"name" <address>` with the name quoted |
 
 ## Usage
@@ -186,6 +187,32 @@ The same key while its first send is **still in progress**
 reaches the e-mail. See
 [Setting up — the idempotency key](docs/guide/setup.md#the-idempotency-key).
 
+### Sending many at once — `sendBatch`
+
+`mailer.sendBatch(messages)` calls Resend's `POST /emails/batch` — up to 100
+messages per request; above it, split into as many requests as it takes:
+
+```ts
+const results = await mailer.sendBatch([
+	{ to: 'ada@example.com', subject: 'Welcome', html: '<p>…</p>', text: '…' },
+	{ to: 'grace@example.com', subject: 'Welcome', html: '<p>…</p>', text: '…' },
+]);
+// [{ status: 'sent', sentMail: { messageId: '…' } }, { status: 'sent', sentMail: { messageId: '…' } }]
+```
+
+Every message is checked with `checkMessage` before any request goes out — a
+malformed one is reported `refused` on its own, and never reaches Resend.
+Two things `send` takes are refused in a batch instead, each on its own
+message, the rest unaffected: an **attachment** (Resend's batch does not
+support them yet) and a message's own **`idempotencyKey`** (Resend takes one
+`Idempotency-Key` per batch *request*, in the header, never one per message —
+none is sent for a batch request at all, so retrying `sendBatch` itself can
+duplicate every message that went through). A request of up to 100 that
+Resend refuses, or cannot be reached for, reports every message in it the
+same way — `refused` or `failed` — since Resend answers the whole request as
+one; a later request still runs, and is reported on its own. See
+[Setting up — sendBatch](docs/guide/setup.md#sendbatch).
+
 ### Scheduling — `scheduledAt`
 
 A message's `scheduledAt` is sent as Resend's `scheduled_at`, ISO 8601:
@@ -204,9 +231,41 @@ Resend answers an id right away, as any send does; the e-mail itself goes out
 later. `@nxgt/mail`'s `checkMessage` already refuses a `scheduledAt` more than
 30 days ahead — [Resend's own limit](https://resend.com/docs/dashboard/emails/schedule-email) —
 before anything is sent, so a message accepted here is never refused by
-Resend for being too far out. Cancelling one already accepted is Resend's own
-[`POST /emails/{id}/cancel`](https://resend.com/docs/api-reference/emails/cancel-email):
-out of scope here, no method wraps it yet. Needs `@nxgt/mail` 0.7 or later.
+Resend for being too far out. Needs `@nxgt/mail` 0.7 or later.
+
+### Cancel and reschedule
+
+`mailer.cancel(messageId)` stops a message `send` scheduled ahead, before
+Resend sends it — its own [`POST /emails/{id}/cancel`](https://resend.com/docs/api-reference/emails/cancel-email).
+`mailer.reschedule(messageId, scheduledAt)` moves one to a new time instead —
+[`PATCH /emails/{id}`](https://resend.com/docs/api-reference/emails/update-email),
+held to the same 30-day and clock-skew rule as `send`'s own `scheduledAt`.
+
+```ts
+import { MailScheduleRefused } from '@nxgt/mail';
+
+const { messageId } = await mailer.send({ ...message, scheduledAt: inThreeDays });
+if (messageId === null) {
+	throw new Error('Resend answered no id: nothing to cancel or reschedule.');
+}
+
+try {
+	await mailer.cancel(messageId);
+} catch (error) {
+	if (error instanceof MailScheduleRefused && error.code === 'ALREADY_SENT') {
+		// too late: it already went out
+	}
+	throw error;
+}
+```
+
+Both resolve once Resend confirms it, and both refuse with
+`@nxgt/mail`'s `MailScheduleRefused` — `UNKNOWN_ID` for an id Resend does not
+hold pending (already cancelled, or never valid), `ALREADY_SENT` for one it
+already sent — Resend documents neither answer precisely; this reads a `404`
+as `UNKNOWN_ID` and a `400` as `ALREADY_SENT`, the only two observed for these
+endpoints. Anything else is a `MailFailure`, Resend's answer as the `cause`.
+See [Setting up — cancel and reschedule](docs/guide/setup.md#cancel-and-reschedule).
 
 ### Errors — a refusal or a failure
 
@@ -361,9 +420,21 @@ connection dropped mid-request, Resend may have accepted the e-mail: a retry
 without a key can send it twice. Set `idempotencyKey: 'order-42/receipt'`,
 and retry within Resend's 24 hours.
 
+**A batch request refuses or fails as a whole.** Resend answers one request
+of up to 100 messages as one; a malformed message anywhere in it, or an
+outage, is reported for **every** message of that request, not only the bad
+one — `sendBatch` cannot tell which one it was about. Keep a batch to
+messages you have already checked (`sendBatch`'s own pre-check catches what
+`checkMessage` would), and read every result: `sent`, `refused` or `failed`.
+
+**`cancel` and `reschedule` need the id `send` answered, not your own.**
+`messageId` is Resend's own id, from `SentMail.messageId` — not an order id
+or any id of your own; passing one of those is `MailScheduleRefused` with
+`UNKNOWN_ID`, since Resend never held that id pending.
+
 ## Type safety, counted
 
-**10 plausible mistakes, 10 refused** at compile time, each measured by a
+**12 plausible mistakes, 12 refused** at compile time, each measured by a
 `@ts-expect-error` in
 [`test/types/refusals.ts`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-resend/test/types/refusals.ts)
 that fails the typecheck the moment it stops holding:
@@ -379,10 +450,13 @@ that fails the typecheck the moment it stops holding:
 8. `createResendWebhook` without a `secret`.
 9. `verify` given an already-parsed body instead of the raw text.
 10. A `MailWebhookErrorCode` the union does not declare.
+11. `sendBatch` given one message instead of a list, even of one.
+12. `reschedule`'s `scheduledAt` given as an ISO string rather than a `Date`.
 
 The same file holds the calls that must keep compiling — among them a `fetch`
-written as a plain function, and a webhook verified against a `Request` or
-`{ headers, body }`.
+written as a plain function, a webhook verified against a `Request` or
+`{ headers, body }`, and `sendBatch`, `cancel` and `reschedule` called as
+`ResendMailer` declares them.
 
 ## Documentation
 
