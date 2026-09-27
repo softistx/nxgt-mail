@@ -56,12 +56,14 @@ no dates here, and the version something shipped in is the only number.
   compile time, without a build in CI. Rewritten only when it changes;
   `rendererTypes` moves it, or `false` turns it off. Built, not yet
   published.
+- **A starter project** — the official Maizzle starter with
+  `defineMailConfig`, the i18n and the UI plugins wired in as the READMEs
+  say, built, rendered in `en` and `fr` and served in CI, so the snippets are
+  known to work: [`examples/starter`](https://github.com/softistx/nxgt-mail/tree/develop/examples/starter).
+  In the repository; the packages it installs are not yet published.
 
 ## Next
 
-- **A starter project** — the official Maizzle starter with
-  `@nxgt/mail-config`, this plugin and the UI plugin wired in, built in CI, so
-  the README's snippet is known to work.
 - **The first release, 0.1.0** — `@nxgt/mail-i18n` on npm, building an empty
   Maizzle project in two languages with the README's own snippet.
 

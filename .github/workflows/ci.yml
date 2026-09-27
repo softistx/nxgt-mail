@@ -61,6 +61,41 @@ jobs:
       # does and imports every declared subpath.
       - name: Verify the built artifacts load
         run: bun run verify:artifacts
+      # examples/starter is the READMEs followed in an empty Maizzle project:
+      # it must build, render and serve an e-mail in two languages. It reaches
+      # the packages of this commit through workspace links to their dist/,
+      # built above; its templates and send.ts were type-checked above too.
+      - name: Build the starter
+        working-directory: examples/starter
+        run: bun run build
+      # generated/mail.ts is committed so the code that sends type-checks
+      # without a build. A build that rewrites it means the copy in git is
+      # stale.
+      - name: The starter's committed renderer types are current
+        run: git diff --exit-code -- examples/starter/generated
+      # send.ts throws unless every e-mail renders in every locale, filled
+      # and escaped; it prints each subject.
+      - name: Render the starter's e-mails in both locales
+        working-directory: examples/starter
+        run: bun run send
+      # /__maizzle/templates is the list Maizzle's dev UI shows, as
+      # mail-i18n's build spec reads it.
+      - name: Serve the starter in both locales
+        working-directory: examples/starter
+        run: |
+          ./node_modules/.bin/maizzle serve --port 3999 > /dev/null 2>&1 &
+          server=$!
+          trap 'kill $server' EXIT
+          list=''
+          for attempt in $(seq 1 60); do
+            list=$(curl -sf http://localhost:3999/__maizzle/templates) && break
+            sleep 1
+          done
+          for email in en/verify-email fr/verify-email en/sign-in-code fr/sign-in-code; do
+            grep -q "\"/.maizzle/i18n/$email\"" <<< "$list" \
+              || { echo "maizzle serve does not list $email"; exit 1; }
+          done
+          echo "maizzle serve lists every e-mail in en and fr"
       # A change to a package without a changeset is a change that never
       # reaches a consumer: the release workflow has nothing to version.
       #

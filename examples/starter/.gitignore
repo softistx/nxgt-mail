@@ -1,0 +1,9 @@
+# The official Maizzle starter's, with the build output: dist/ is rebuilt by
+# `maizzle build`, and the server that sends deploys it with its code.
+.idea
+.vscode
+.maizzle
+node_modules
+dist
+Thumbs.db
+.DS_Store

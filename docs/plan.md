@@ -368,6 +368,18 @@ in their `test/types/`, each package with its `docs/`.
 **Done when:** the packages are on npm, and an empty project following the
 README serves, builds and renders an e-mail in two languages.
 
+Progress: `examples/starter` ✅ — the official Maizzle 6 starter (`npx maizzle
+new`, as of 2026-06) with `ui()`, `i18n()` and one preset (`sign-in-code`)
+wired as the READMEs say, a template of its own (`verify-email`) and `en`/`fr`
+catalogues. A workspace, private, on the packages as `workspace:*`. CI builds
+it, checks its committed `generated/mail.ts`, renders every e-mail in both
+locales through `send.ts` (`createMailRenderer<MailEmails>` and the memory
+mailer), and checks that `maizzle serve` lists them; the root `typecheck`
+checks its templates and `send.ts` with `vue-tsc`. Still open: the READMEs'
+"not published yet" notes and the release — `"private"` removed and a
+`0.1.0` changeset, one commit per package — then the same starter installed
+from npm rather than the workspace.
+
 ## Step 9 — Handing over to janus
 
 Not in this repository: `@nxgt/janus-mail` in `nxgt-janus`, holding the janus

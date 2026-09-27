@@ -40,6 +40,11 @@ const mails = createMailRenderer<MailEmails>({ dir: 'dist', getLanguage: () => u
 await mailer.send({ to, ...mails.render('verify-email', { name, link }) });
 ```
 
+**See it working in [`examples/starter`](./examples/starter)**: the official
+Maizzle starter with these snippets wired in — an e-mail of its own and a
+preset, in `en` and `fr`, and a script that renders and sends them to a memory
+mailer. CI builds, renders and serves it on every change.
+
 ## Status
 
 **Not released yet.** The plan was rewritten on 2026-09-26; work follows

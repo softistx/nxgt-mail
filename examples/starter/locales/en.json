@@ -1,0 +1,11 @@
+{
+	"verifyEmail": {
+		"subject": "Confirm your e-mail address, {name}",
+		"preheader": "One click to confirm your address.",
+		"title": "Confirm your e-mail address",
+		"body": "Confirm that this address is yours to finish creating your {brand} account.",
+		"action": "Confirm my address",
+		"expires": "The link expires in {minutes, plural, one {# minute} other {# minutes}}.",
+		"linkFallback": "Or paste this link into your browser:"
+	}
+}
