@@ -289,8 +289,10 @@ image URL starts with, its subject in each locale, and its files:
 answers the subject, HTML and text, every value escaped.
 
 After the manifest, each build writes `generated/mail.ts`, in the project — the manifest's e-mails
-and variables as a type, rewritten only when they change. **Commit it**: the
-code that sends then type-checks without running a build.
+and variables as a type, rewritten only when they change. **Git-ignore it**
+and build before type-checking — `"typecheck": "maizzle build && tsc
+--noEmit"` — as you do for `dist/`: it is output of the build, like the
+e-mails it describes.
 
 ```ts
 // generated/mail.ts — never edited

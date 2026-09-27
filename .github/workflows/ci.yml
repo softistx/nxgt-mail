@@ -71,17 +71,11 @@ jobs:
       # examples/starter is the READMEs followed in an empty Maizzle project:
       # it must build, render and serve an e-mail in two languages. It reaches
       # the packages of this commit through workspace links to their dist/,
-      # built above; its templates and send.ts were type-checked above too.
+      # built above; its templates and send.ts were type-checked above too,
+      # after a build that wrote generated/mail.ts, which git ignores.
       - name: Build the starter
         working-directory: examples/starter
         run: bun run build
-      # generated/mail.ts is committed so the code that sends type-checks
-      # without a build. A build that rewrites it means the copy in git is
-      # stale.
-      - name: The starter's committed renderer types are current
-        run: |
-          changed=$(git status --porcelain -- examples/starter/generated)
-          [ -z "$changed" ] || { echo "$changed"; echo "examples/starter/generated is stale: build the starter and commit it"; exit 1; }
       # send.ts throws unless every e-mail renders in every locale, filled
       # and escaped; it prints each subject.
       - name: Render the starter's e-mails in both locales

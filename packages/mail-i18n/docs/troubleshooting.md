@@ -32,6 +32,7 @@ template `emails/verify-email.vue`, and keys such as `verifyEmail.title`.
 
 **Install and types**
 - [Which `moduleResolution` is supported](#install-and-types)
+- [`Cannot find module './generated/mail' or its corresponding type declarations`](#cannot-find-module-generatedmail-or-its-corresponding-type-declarations)
 
 **Wiring**
 - [`i18n: options must be an object, as { locales: ['en', 'fr'] }`](#i18n-options-must-be-an-object-as--locales-en-fr-)
@@ -109,6 +110,26 @@ template `emails/verify-email.vue`, and keys such as `verifyEmail.title`.
 Resolve as a bundler does (`"moduleResolution": "bundler"`, as Maizzle's jiti
 loader does): that is the supported contract. `nodenext` and `node16` are out
 of contract — they may work today, and are not tested.
+
+### `Cannot find module './generated/mail' or its corresponding type declarations`
+
+**When:** `tsc` or `vue-tsc` (TS2307), or the editor, on the code that sends
+— `import type { MailEmails } from './generated/mail'` — in a fresh clone,
+or in CI, before any `maizzle build`.
+**Why:** `generated/mail.ts` is written by each build and git-ignored, as
+`dist/` is: until the project has been built once, it does not exist.
+**Fix:** build before type-checking, in the script CI runs too:
+
+```json
+{
+  "scripts": {
+    "typecheck": "maizzle build && tsc --noEmit"
+  }
+}
+```
+
+In an editor, run `maizzle build` once after cloning, and again when an
+e-mail gains or loses a variable.
 
 ---
 

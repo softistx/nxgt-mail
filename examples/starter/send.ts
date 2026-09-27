@@ -10,7 +10,7 @@
  */
 import { createMemoryMailer } from '@nxgt/mail';
 import { createMailRenderer } from '@nxgt/mail/renderer';
-import type { MailEmails } from './generated/mail'; // written by `maizzle build`, committed
+import type { MailEmails } from './generated/mail'; // written by each `maizzle build`, git-ignored
 
 const mails = createMailRenderer<MailEmails>({ dir: 'dist' }); // reads dist/ now, or throws
 const mailer = createMemoryMailer();

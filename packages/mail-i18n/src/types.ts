@@ -77,7 +77,7 @@ export function rendererTypes(manifest: Manifest): string {
 		});
 	return [
 		`${RENDERER_TYPES_HEADER}, after each maizzle build.`,
-		'// Never edited; committed, so the code that sends type-checks without a build.',
+		'// Never edited, never committed: git-ignore it, and build before type-checking.',
 		'',
 		'/** The e-mails of the build, each with the variables it takes when it is sent. */',
 		'export interface MailEmails {',

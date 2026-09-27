@@ -168,8 +168,9 @@ mails.render('sign-in-code', { code: 123456 }, { locale: 'fr' });
 
 After each `maizzle build`, `@nxgt/mail-i18n` writes `generated/mail.ts` in
 the project: `MailEmails`, each e-mail of the build with the variables it
-takes. Commit it, so the code that sends type-checks without running a build,
-and pass it to `createMailRenderer`:
+takes. Git-ignore it — each build rewrites it — and run `maizzle build`
+before type-checking, as `"typecheck": "maizzle build && tsc --noEmit"`
+does; then pass it to `createMailRenderer`:
 
 ```ts
 // generated/mail.ts — written by the build, never edited
@@ -251,7 +252,7 @@ so a helper written for any build takes a typed renderer.
 
 The manifest guide also shows
 [a test that holds the two sides together](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-i18n/docs/guide/manifest.md#checking-your-application-against-it),
-for a project that does not commit `generated/mail.ts`.
+for a project that turns `generated/mail.ts` off (`rendererTypes: false`).
 
 ## Choosing the locale
 

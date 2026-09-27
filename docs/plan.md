@@ -372,7 +372,7 @@ Progress: `examples/starter` ✅ — the official Maizzle 6 starter (`npx maizzl
 new`, as of 2026-06) with `ui()`, `i18n()` and one preset (`sign-in-code`)
 wired as the READMEs say, a template of its own (`verify-email`) and `en`/`fr`
 catalogues. A workspace, private, on the packages as `workspace:*`. CI builds
-it, checks its committed `generated/mail.ts`, renders every e-mail in both
+it (its `generated/mail.ts` is git-ignored since, written by each build), renders every e-mail in both
 locales through `send.ts` (`createMailRenderer<MailEmails>` and the memory
 mailer), and checks that `maizzle serve` lists them; the root `typecheck`
 checks its templates and `send.ts` with `vue-tsc`.

@@ -178,7 +178,7 @@ packages.
 
 **`examples/starter`** is the official Maizzle starter with the packages wired
 as their READMEs say — a workspace, private, never published, depending on
-them as `workspace:*`. CI builds it, checks its committed `generated/mail.ts`,
+them as `workspace:*`. CI builds it (its `generated/mail.ts` is written by the build and git-ignored),
 renders it in both locales (`send.ts`) and serves it. A README snippet that
 changes changes the starter with it. It has no `postinstall`: in this
 repository `bun install` runs before the packages are built, so the root's
