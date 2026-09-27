@@ -15,6 +15,11 @@ props, defaults and slots, and the `@nxgt/material-vue` component it mirrors.
 </template>
 ```
 
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-ui/previews/components-en.png" width="420" alt="An e-mail using every Nx component: layout, typography, code, buttons, separator, card with badge, summary data and status, alert, banner, link">
+
+Every component above, in one e-mail
+([its template](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-ui/test/fixture/emails/welcome.vue)).
+
 Every component is registered by [`ui()`](plugin.md) and used with no import.
 They keep material-vue's names (with the `Nx` prefix), its props and its
 values, and render with tables and inlined styles, which every mail client

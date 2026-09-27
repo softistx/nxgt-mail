@@ -234,6 +234,12 @@ bun run test
 bun run verify:artifacts   # on the tarball actually packed
 ```
 
+`bun run previews` rewrites the PNGs the READMEs show (`mail-presets/previews/`,
+`mail-ui/previews/`) with a headless Chromium and ImageMagick. Run it after
+changing how an e-mail looks, and commit the images; CI never compares them,
+since fonts differ between machines. They are not in any package's `files`:
+the READMEs load them from GitHub.
+
 `mail-ui`'s and `mail-presets`' `tsconfig.json` also include their fixture's
 `test/fixture/.maizzle/*.d.ts`, for the editor only, so their own templates and
 components see `t` and `brand` while you edit them; the measurement is the
