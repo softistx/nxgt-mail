@@ -343,6 +343,11 @@ export function tagOf(file: string): string {
  * The top-level prop names of a component's `defineProps<{ … }>()`, read
  * from its source with brace-depth tracking, so a nested object type's own
  * fields (`current: { value: string }`) are not read as props of their own.
+ *
+ * The tracker is not comment- or string-aware: a doc comment holding an
+ * unbalanced `{` or `}` would close the block early. `TABLE`'s own meta-test
+ * still catches the result — a short or empty prop list shows up as
+ * declared entries with nothing found — just naming the wrong cause.
  */
 export function propsOf(source: string): readonly string[] {
 	const opens = /defineProps<\{/.exec(source);
