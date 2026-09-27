@@ -64,6 +64,7 @@ describe('a project built with the ui plugin', () => {
 			'sequence',
 			'summary',
 			'content',
+			'details',
 		]) {
 			const html = await read(`dist/en/${email}.html`);
 			expect({ email, oklch: html.includes('oklch(') }).toEqual({
@@ -556,6 +557,143 @@ describe('a project built with the ui plugin', () => {
 		);
 	});
 
+	test('tints an event chip by its colour, a hex one mixed at 18%, and hides the time of an all-day one', async () => {
+		const html = await read('dist/en/details.html');
+		const chip = (title: string) =>
+			html.slice(
+				html.lastIndexOf('<table', html.indexOf(`>${title}<`)),
+				html.indexOf(`>${title}<`),
+			);
+		// The theme's primary, its bar and its 20% ground.
+		expect(chip('Onboarding call')).toContain('background-color: #485096;');
+		expect(chip('Onboarding call')).toContain('background-color: #dadcea;');
+		expect(chip('Onboarding call')).toContain('>{{ time }}</p>');
+		// #0f766e at 18% over white, square on the right where it continues.
+		expect(chip('Team offsite')).toContain('background-color: #0f766e;');
+		expect(chip('Team offsite')).toContain('background-color: #d4e6e5;');
+		expect(chip('Team offsite')).not.toContain('border-top-right-radius');
+		expect(html).not.toContain('>All day<');
+		// Selected: a border where material-vue draws a ring.
+		// #0f7 as #00ff77, at 18%; a compact title muted, as material-vue's caption.
+		expect(chip('Standup')).toContain('background-color: #d1ffe7;');
+		expect(chip('Standup')).toMatch(
+			/font-size: 10px;[^>]*color: #62748e;[^>]*$/,
+		);
+		expect(chip('Review')).toContain(
+			'border-color: #485096; border-style: solid; border-width: 1px;',
+		);
+		expect(await read('dist/en/details.txt')).toStartWith(
+			'Your booking at Acme Labs\n\nhttps://acme.example\n\nYour booking\n\n{{ time }}\n\nOnboarding call\n\nTeam offsite\n\n14:00\n\nReview',
+		);
+	});
+
+	test('lists attributes by their values, a default and a unit, and leaves out one without a value', async () => {
+		const html = await read('dist/en/details.html');
+		expect(html).toMatch(/>\s*Attributes\s*<\/h3>/);
+		expect(html.match(/>Attributes</g)).toHaveLength(1);
+		expect(html).not.toContain('>Parking<');
+		expect(html).not.toContain('>Note<');
+		expect(await read('dist/fr/details.html')).toMatch(
+			/>\s*Attributs\s*<\/h3>/,
+		);
+		expect(await read('dist/en/details.txt')).toContain(
+			'Attributes\n\nRoom\n\nLovelace\n\nSeats\n\n0\n\nArea\n\n42 m²\n\nEquipment\n\nScreen, Whiteboard\n\nFloor\n\nGround\n\n',
+		);
+	});
+
+	test('writes a postal address as material-vue, the country named in each locale', async () => {
+		const en = await read('dist/en/details.txt');
+		expect(en).toContain(
+			'Address\n\n12 rue de la Paix\n\n75002 Paris · France\n\n',
+		);
+		expect(en).toContain('Warehouse\n\nPotsdam\n\nBrandenburg · Germany\n\n');
+		// A region alone is the title, written once.
+		expect(en).toContain('Depot\n\nBrandenburg\n\nOpening hours');
+		expect(await read('dist/fr/details.txt')).toContain(
+			'Adresse\n\n12 rue de la Paix\n\n75002 Paris · France\n\nWarehouse\n\nPotsdam\n\nBrandenburg · Allemagne\n\n',
+		);
+		// Heads it with a bar, left out of the plain text.
+		expect(await read('dist/en/details.html')).toMatch(
+			/<h3 style="margin: 0; font-size: 18px;[^>]*>\s*Address\s*<\/h3>/,
+		);
+	});
+
+	test('orders opening hours by day, in each locale, with a closed day and a missing time', async () => {
+		expect(await read('dist/en/details.txt')).toContain(
+			'Opening hours\n\nMonday\n\n09:00 – 18:00\n\nTuesday\n\n09:00 – —\n\nSaturday\n\nClosed all day\n\n',
+		);
+		expect(await read('dist/fr/details.txt')).toContain(
+			"Horaires d'ouverture\n\nLundi\n\n09:00 – 18:00\n\nMardi\n\n09:00 – —\n\nSamedi\n\nFermé toute la journée\n\n",
+		);
+	});
+
+	test('links a contact where a client can follow it, titled by its label or its type', async () => {
+		const html = await read('dist/en/details.html');
+		expect(html).toContain('<a href="mailto:hello@acme.example"');
+		expect(html).toContain('<a href="tel:+33 1 23 45 67 89"');
+		expect(html).toContain(
+			'<a href="https://acme.example" style="font-size: 14px;',
+		);
+		expect(html).not.toContain('tel:+33 1 23 45 67 90');
+		expect(await read('dist/en/details.txt')).toContain(
+			'Reach us\n\nE-mail\n\nmailto:hello@acme.example\n\nhello@acme.example\n\nFront desk\n\n',
+		);
+		expect(html).not.toContain('>Contacts<');
+		expect(await read('dist/fr/details.txt')).toContain(
+			'Reach us\n\nE-mail\n\nmailto:hello@acme.example\n\nhello@acme.example\n\nFront desk\n\ntel:+33 1 23 45 67 89\n\n+33 1 23 45 67 89\n\nFax\n\n+33 1 23 45 67 90\n\nSite web\n\n',
+		);
+		expect(await read('dist/fr/details.txt')).toContain(
+			'Mobile\n\ntel:{{ mobile }}',
+		);
+		// A placeholder after the scheme is filled bare; one that starts a
+		// website's href is a URL the renderer checks at send time.
+		expect(html).toContain('<a href="mailto:{{ email }}"');
+		expect(html).toContain('<a href="tel:{{ mobile }}"');
+		expect(html).toContain('>Mobile</a>');
+		expect(html).toContain('<a href="{{ site }}"');
+		const manifest = JSON.parse(await read('dist/mail-manifest.json'));
+		expect(manifest.emails.details.urlVariables).toEqual(['site']);
+	});
+
+	test('lists files with their size by locale, their extension, and a download link but for a disabled one', async () => {
+		const html = await read('dist/en/details.html');
+		expect(html.match(/>Download</g)).toHaveLength(1);
+		expect(html).not.toContain('https://acme.example/files/badge');
+		for (const extension of ['PDF', 'PNG']) {
+			expect(html).toContain(`>${extension}</span>`);
+		}
+		expect(styleOf(html, 'badge.pkpass', 'span')).toContain('color: #62748e;');
+		expect(await read('dist/en/details.txt')).toContain(
+			'agenda.pdf\n\n1.5 MB\n\nDownload\n\nhttps://acme.example/files/agenda.pdf\n\nmap\n\n512 B\n\nnotes.txt\n\n84.0 KB\n\nphotos.zip\n\n3.0 GB\n\nbadge.pkpass\n\n{{ badgeSize }}\n\nNo files\n\nNothing attached',
+		);
+		expect(await read('dist/fr/details.txt')).toContain(
+			'agenda.pdf\n\n1,5 Mo\n\nTélécharger\n\nhttps://acme.example/files/agenda.pdf\n\nmap\n\n512 o\n\nnotes.txt\n\n84,0 Ko\n\nphotos.zip\n\n3,0 Go\n\nbadge.pkpass\n\n{{ badgeSize }}\n\nAucun fichier',
+		);
+	});
+
+	test('draws a rating as stars, and a review request as a link per star, read as "4 of 5"', async () => {
+		const html = await read('dist/en/details.html');
+		expect(html).toContain('<p role="img" aria-label="4 of 5"');
+		// Four stars in the warning colour, one muted.
+		expect(html.match(/color: #f05100;[^>]*>★</g)).toHaveLength(4);
+		for (const star of [1, 2, 3, 4, 5]) {
+			expect(html).toContain(
+				`<a href="https://acme.example/review?rating=${star}" title="${star} of 5" aria-label="${star} of 5"`,
+			);
+		}
+		expect(await read('dist/fr/details.html')).toContain(
+			'aria-label="4 sur 5"',
+		);
+		const text = await read('dist/en/details.txt');
+		expect(text).toContain(
+			'Your last visit\n\n4 of 5\n\nRated on 2 September.',
+		);
+		expect(text).toContain(
+			'How was it?\n\n1 of 5\n\nhttps://acme.example/review?rating=1\n\n2 of 5',
+		);
+		expect(text).not.toContain('★');
+	});
+
 	test.each([
 		['welcome.vue', ['html-align', 'html-aria-hidden']],
 		// The caption's caption-side falls back on its align="bottom".
@@ -573,6 +711,7 @@ describe('a project built with the ui plugin', () => {
 				'html-aria-hidden',
 			],
 		],
+		['details.vue', ['html-align', 'html-aria-hidden']],
 	])(
 		'caniemail reports for Gmail, Outlook and Apple Mail only the known partial support of %s',
 		async (email, known) => {
@@ -665,6 +804,63 @@ describe.each([
 		}, 60_000);
 	},
 );
+
+describe('a data component given what the build cannot draw', () => {
+	afterAll(() =>
+		rmSync(`${cases}/data-refused`, { recursive: true, force: true }),
+	);
+
+	test.each([
+		[
+			'<NxRating :model-value="placeholder(\'stars\')" />',
+			'NxRating: modelValue must be a number known when the e-mail is built — a placeholder is filled only when it is sent',
+		],
+		[
+			'<NxRating :max="placeholder(\'max\')" />',
+			'NxRating: max must be a number known when the e-mail is built — a placeholder is filled only when it is sent',
+		],
+		[
+			'<NxEventChip title="Call" color="var(--color-primary)" />',
+			'NxEventChip: color must be a colour of the theme, as success, or a hex colour, as #0f766e — the build mixes its tint',
+		],
+		[
+			'<NxOpeningHours :data="[{ dayOfWeek: 7 }]" />',
+			'NxOpeningHours: dayOfWeek must be a whole number from 0 (Sunday) to 6 (Saturday)',
+		],
+		[
+			'<NxOpeningHours :data="[{ dayOfWeek: 1.5 }]" />',
+			'NxOpeningHours: dayOfWeek must be a whole number from 0 (Sunday) to 6 (Saturday)',
+		],
+		[
+			"<NxContacts :data=\"[{ type: 'email', value: 'a@acme.example' }]\" />",
+			'NxContacts: type must be EMAIL, FAX, MOBILE, PHONE or WEBSITE',
+		],
+	])(
+		'%s fails the build, naming the component and the prop',
+		async (tag, message) => {
+			const root = `${cases}/data-refused`;
+			rmSync(root, { recursive: true, force: true });
+			const files: Record<string, string> = {
+				'maizzle.config.ts': [
+					"import { defineMailConfig } from '@nxgt/mail-config';",
+					"import { i18n } from '@nxgt/mail-i18n';",
+					"import { ui, uiCatalogues } from '../../../src/index';",
+					"export default defineMailConfig({ plugins: [ui({ brand: { name: 'Acme' } }), i18n({ locales: ['en'], catalogues: [uiCatalogues] })] });",
+				].join('\n'),
+				'locales/en.json': '{ "welcome": { "subject": "Welcome" } }',
+				'emails/welcome.vue': `<template><NxLayout>${tag}</NxLayout></template>`,
+			};
+			for (const [path, content] of Object.entries(files)) {
+				mkdirSync(dirname(`${root}/${path}`), { recursive: true });
+				writeFileSync(`${root}/${path}`, content);
+			}
+			const { code, output } = await run(root, 'build');
+			expect(code).not.toBe(0);
+			expect(output).toContain(message);
+		},
+		60_000,
+	);
+});
 
 describe('a component without the ui plugin', () => {
 	afterAll(() => rmSync(cases, { recursive: true, force: true }));

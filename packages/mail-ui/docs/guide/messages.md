@@ -48,6 +48,17 @@ because you have an account with Acme.`
 | `common.metrics.lastPeriod` | `Last period` | `Période précédente` | — |
 | `common.seeAlso` | `See also` | `Voir aussi` | — |
 | `common.countBadge.label` | `{count, plural, one {# notification} other {# notifications}}` | `{count, plural, one {# notification} other {# notifications}}` | `count`, a number |
+| `common.attributes` | `Attributes` | `Attributs` | — |
+| `common.postalAddress` | `Address` | `Adresse` | — |
+| `common.openingHours.label` | `Opening hours` | `Horaires d'ouverture` | — |
+| `common.openingHours.closed` | `Closed all day` | `Fermé toute la journée` | — |
+| `common.openingHours.days.sunday` … `.saturday` | `Sunday` … `Saturday` | `Dimanche` … `Samedi` | — |
+| `common.contacts.label` | `Contacts` | `Contacts` | — |
+| `common.contacts.types.email`, `.fax`, `.mobile`, `.phone`, `.website` | `E-mail`, `Fax`, `Mobile`, `Phone`, `Website` | `E-mail`, `Fax`, `Mobile`, `Téléphone`, `Site web` | — |
+| `common.fileList.empty` | `No files` | `Aucun fichier` | — |
+| `common.fileList.download` | `Download` | `Télécharger` | — |
+| `common.fileList.size` | `{size} {unit, select, kb {KB} mb {MB} gb {GB} other {B}}` | `{size} {unit, select, kb {Ko} mb {Mo} gb {Go} other {o}}` | `size`, the number written in the locale; `unit`, `b`, `kb`, `mb` or `gb` |
+| `common.rating.star` | `{value} of {max}` | `{value} sur {max}` | `value`, `max` |
 
 ```ts
 import type { Catalogues } from '@nxgt/mail-i18n';
@@ -64,8 +75,16 @@ gives its `+N`, for a screen reader; `common.timeline.empty` is what
 `common.metrics.thisPeriod` and `common.metrics.lastPeriod` label
 `<NxCompareCard>`'s two boxes, unless given their `label`; `common.seeAlso`
 heads `<NxSeeAlso>`, unless given `label`; `common.countBadge.label` is what
-a screen reader hears for `<NxCountBadge>`'s badge. The other two, `common.greeting`
-and `common.footer.ignore`, are for your templates.
+a screen reader hears for `<NxCountBadge>`'s badge. `common.attributes`,
+`common.postalAddress`, `common.openingHours.label` and
+`common.contacts.label` head `<NxAttributes>`, `<NxPostalAddress>`,
+`<NxOpeningHours>` and `<NxContacts>`, unless given `label`; the days,
+`common.openingHours.closed` and the contact types are the titles and text
+of their tiles. `common.fileList.empty` is what `<NxFileList>` writes for no
+files, unless given `empty`, `common.fileList.download` its link, and
+`common.fileList.size` a size in bytes; `common.rating.star` is how
+`<NxRating>` reads a star and its row, `4 of 5`. The other two,
+`common.greeting` and `common.footer.ignore`, are for your templates.
 
 ## `<NxLayout>` needs `common.footer.why`
 
@@ -98,14 +117,14 @@ keys you want to change, and keep the others.
 ```
 
 ```json
-// locales/fr.json — no common: the ten French messages are uiCatalogues'
+// locales/fr.json — no common: the 31 French messages are uiCatalogues'
 {
 	"welcome": { "subject": "Bienvenue chez Acme, {name}", "body": "Votre compte est prêt." }
 }
 ```
 
 The English build writes `Hi {{ name }},`, the French one
-`Bonjour {{ name }},`; both keep the nine other `common` messages from the
+`Bonjour {{ name }},`; both keep the 30 other `common` messages from the
 package. The merge rules — several sources, a
 message replacing a group — are in `@nxgt/mail-i18n`'s
 [Catalogues](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-i18n/docs/guide/catalogues.md#catalogues-from-a-package).
@@ -117,7 +136,7 @@ the `en` message does not declare.
 ## Another locale
 
 `uiCatalogues` has `en` and `fr`. For any other locale, your catalogue writes
-the ten `common` keys, or the build fails on the first one missing:
+the 31 `common` keys, or the build fails on the first one missing:
 
 ```text
 Error: i18n: de: common.footer.ignore is missing — en, the fallback locale, has it
@@ -140,15 +159,48 @@ Error: i18n: de: common.footer.ignore is missing — en, the fallback locale, ha
 			"lastPeriod": "Vorheriger Zeitraum"
 		},
 		"seeAlso": "Siehe auch",
-		"countBadge": { "label": "{count, plural, one {# Benachrichtigung} other {# Benachrichtigungen}}" }
+		"countBadge": { "label": "{count, plural, one {# Benachrichtigung} other {# Benachrichtigungen}}" },
+		"attributes": "Attribute",
+		"postalAddress": "Adresse",
+		"openingHours": {
+			"label": "Öffnungszeiten",
+			"closed": "Ganztägig geschlossen",
+			"days": {
+				"sunday": "Sonntag",
+				"monday": "Montag",
+				"tuesday": "Dienstag",
+				"wednesday": "Mittwoch",
+				"thursday": "Donnerstag",
+				"friday": "Freitag",
+				"saturday": "Samstag"
+			}
+		},
+		"contacts": {
+			"label": "Kontakte",
+			"types": {
+				"email": "E-Mail",
+				"fax": "Fax",
+				"mobile": "Mobil",
+				"phone": "Telefon",
+				"website": "Website"
+			}
+		},
+		"fileList": {
+			"empty": "Keine Dateien",
+			"download": "Herunterladen",
+			"size": "{size} {unit, select, kb {KB} mb {MB} gb {GB} other {B}}"
+		},
+		"rating": { "star": "{value} von {max}" }
 	},
 	"welcome": { "subject": "Willkommen bei Acme, {name}", "body": "Ihr Konto ist bereit." }
 }
 ```
 
 `<NxLayout>` passes `{brand}` to `common.footer.why`, the brand's name, and
-`<NxGoalCard>` `{target}` to `common.metrics.ofTarget`, and `<NxCountBadge>`
-`{count}` to `common.countBadge.label`. A translation may
+`<NxGoalCard>` `{target}` to `common.metrics.ofTarget`, `<NxCountBadge>`
+`{count}` to `common.countBadge.label`, `<NxFileList>` `{size}` and `{unit}`
+to `common.fileList.size`, and `<NxRating>` `{value}` and `{max}` to
+`common.rating.star`. A translation may
 leave one out; it cannot add another argument.
 
 ## See also

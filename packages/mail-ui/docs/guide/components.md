@@ -40,6 +40,11 @@ The components from `NxHero` to `NxSeeAlso`
 The components from `NxSpacer` to `NxButtonGroup`
 ([their template](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-ui/test/fixture/emails/content.vue)).
 
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-ui@0.2.0/packages/mail-ui/previews/details-components.png" width="420" alt="An e-mail using the details components: event chips, a list of attributes, postal addresses, opening hours, contacts, a file list with a download link and empty ones, a rating of four stars and a row of five review stars">
+
+The components from `NxEventChip` to `NxRating`
+([their template](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-ui/test/fixture/emails/details.vue)).
+
 Every component is registered by [`ui()`](plugin.md) and used with no import.
 They keep material-vue's names (with the `Nx` prefix), its props and its
 values, and render with tables and inlined styles, which every mail client
@@ -55,15 +60,18 @@ reads. They need no JavaScript and no web font.
   `NxBanner`, `NxCard`, `NxCode`, `NxSummaryData`, `NxTable`,
   `NxDescription`, `NxAvatarGroup`, `NxProgress`, `NxSteps`, `NxTimeline`,
   `NxHero`, `NxEntityHeader`, the metric cards (`NxStatCard` to
-  `NxBreakdownCard`), `NxSeeAlso`, `NxActionCard`, `NxFigure` and
-  `NxButtonGroup` carry `mb-4`, `NxListTile` `mb-2`, `NxExtendedLabel`
-  `mb-1.5`. On `NxTypography`, `NxSummaryData`, `NxTable`, `NxDescription`,
-  `NxAvatarGroup`, `NxProgress`, `NxSteps`, `NxTimeline`, `NxSeeAlso`,
-  `NxFigure` and `NxExtendedLabel`, `class="mb-0"` removes it. `NxAlert`,
-  `NxBanner`, `NxCard`, `NxCode`, `NxListTile`, `NxHero`, `NxEntityHeader`,
-  the metric cards, `NxActionCard` and `NxButtonGroup` put their `class` on
-  the box inside, and keep their 16px below: to change it, replace the
-  component with your own
+  `NxBreakdownCard`), `NxSeeAlso`, `NxActionCard`, `NxFigure`,
+  `NxButtonGroup`, `NxAttributes`, `NxPostalAddress`, `NxOpeningHours`,
+  `NxContacts`, `NxFileList` and `NxRating` carry `mb-4`, `NxListTile` and
+  `NxEventChip` `mb-2`, `NxExtendedLabel` `mb-1.5`. On `NxTypography`,
+  `NxSummaryData`, `NxTable`, `NxDescription`, `NxAvatarGroup`,
+  `NxProgress`, `NxSteps`, `NxTimeline`, `NxSeeAlso`, `NxFigure`,
+  `NxExtendedLabel`, `NxEventChip` and the components from `NxAttributes` to
+  `NxRating`, `class="mb-0"` removes it (the last tile of a list keeps its
+  own `mb-2`). `NxAlert`, `NxBanner`, `NxCard`, `NxCode`, `NxListTile`,
+  `NxHero`, `NxEntityHeader`, the metric cards, `NxActionCard` and
+  `NxButtonGroup` put their `class` on the box inside, and keep their 16px
+  below: to change it, replace the component with your own
   (see [Replacing a component](plugin.md#replacing-a-component)).
 - **Vertical space is `NxSpacer`**, on Maizzle's `<Spacer>`, which Outlook
   respects:
@@ -131,6 +139,13 @@ reads. They need no JavaScript and no web font.
 | [`NxLinkButton`](#nxlinkbutton) | `LinkButton` | `to` (required), `variant` (`'link'`), `color`, `size`, `align` | default |
 | [`NxIconButton`](#nxiconbutton) | `IconButton` | `href` (required), `icon`, `variant` (`'filled'`), `color` (`'primary'`), `tooltip` | default |
 | [`NxButtonGroup`](#nxbuttongroup) | `ButtonGroup` | — | default: buttons |
+| [`NxEventChip`](#nxeventchip) | `EventChip` | `title` (required), `time`, `color` (`'primary'`), `allDay`, `compact`, `selected`, `continuesBefore`, `continuesAfter` (`false`) | — |
+| [`NxAttributes`](#nxattributes) | `AttributesList`, read | `data` (`[]`), `values` (`{}`), `label` (a shared message) | `label` |
+| [`NxPostalAddress`](#nxpostaladdress) | `PostalAddress` | `data`, `label` (a shared message) | `label` |
+| [`NxOpeningHours`](#nxopeninghours) | `OpeningHours` | `data` (`[]`), `label` (a shared message) | `label` |
+| [`NxContacts`](#nxcontacts) | `Contacts` | `data` (`[]`), `label` (a shared message) | `label` |
+| [`NxFileList`](#nxfilelist) | `FileList` | `items` (required), `empty` (a shared message) | `empty` |
+| [`NxRating`](#nxrating) | `RatingField`, read only | `modelValue` (`0`), `max` (`5`), `color` (`'warning'`), `label`, `helperText`, `href` | — |
 
 ## NxLayout
 
@@ -1218,6 +1233,234 @@ rather than pills and `tonal`, and the one marked `data-state="active"` is
 which paints every button of a group in the primary colour, each keeps its
 own `color`. Its `class` is merged
 on the group's box, `bg-background p-2`, and it keeps 16 pixels below.
+
+## NxEventChip
+
+material-vue's `EventChip`, static: an event's time over its title, on a
+ground of its colour with a bar of the colour on the left — the date and
+time of an invitation.
+
+```vue
+<template>
+  <NxEventChip title="Onboarding call" :time="placeholder('time')" />
+  <NxEventChip title="Team offsite" color="#0f766e" all-day compact continues-after />
+  <NxEventChip title="Review" color="success" time="14:00" selected />
+</template>
+```
+
+| Prop | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `title` | `string` | required | `text-xs` medium (`text-[10px]` and muted when `compact`, material-vue's `caption`) |
+| `time` | `string` | none | Over the title, in `text-[10px]`, as written: a placeholder, or a time you format |
+| `color` | ``Color \| `#${string}` `` | `'primary'` | A colour of the theme (`'primary'`, `'secondary'`, `'info'`, `'success'`, `'warning'`, `'error'`, `'default'`), or a hex colour (`'#0f766e'`) |
+| `allDay` | `boolean` | `false` | Leaves the time out |
+| `compact` | `boolean` | `false` | Less padding, a smaller title |
+| `selected` | `boolean` | `false` | A 1px border in the primary colour |
+| `continuesBefore`, `continuesAfter` | `boolean` | `false` | Squares the left or right corners, for an event that runs on from another day |
+
+material-vue mixes the colour at 18% over nothing, which a mail client would
+not draw: here the ground is a plain colour, mixed when the e-mail is built.
+A colour of the theme takes its 20% tint (`bg-primary-20`) and follows the
+theme; a hex colour is mixed at 18% over white. Any other colour — a name,
+a `var()`, a placeholder — fails the build:
+`NxEventChip: color must be a colour of the theme, as success, or a hex colour, as #0f766e — the build mixes its tint`.
+There is no click and no `disabled`: an e-mail runs no script.
+
+## NxAttributes
+
+material-vue's `AttributesList`, read: its label over one tile per
+attribute, the attribute's `label` as the title and its value under it, with
+its `unit`.
+
+```vue
+<template>
+  <NxAttributes
+    :data="[
+      { name: 'room', label: 'Room', type: 'STRING' },
+      { name: 'area', label: 'Area', type: 'NUMBER', unit: 'm²' },
+      { name: 'equipment', label: 'Equipment', type: 'MULTI_SELECT' },
+      { name: 'floor', label: 'Floor', type: 'STRING', defaultValue: 'Ground' },
+    ]"
+    :values="{ room: placeholder('room'), area: 42, equipment: ['Screen', 'Whiteboard'] }"
+  />
+</template>
+```
+
+| Prop | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `data` | `Attribute[]`: `{ name: string; label: string; unit?: string \| null; defaultValue?: AttributeValue; type?; description?; options?; priority? }` | `[]` | The attributes, in order — material-vue's `Attribute`, of which `name`, `label`, `unit` and `defaultValue` are read |
+| `values` | `Record<string, AttributeValue>` | `{}` | The values, by attribute `name` |
+| `label` | `string` | the shared message `common.attributes` (`Attributes`) | The heading |
+
+material-vue's list describes attributes to edit, with their type under the
+label; an e-mail tells the reader what they hold, so it shows the value, from
+the `values` it adds. `AttributeValue` is
+`string | number | (string | number)[] | null`. A value is written as given,
+from `values` or else — when `values` has no entry for the `name`, or `null`
+— from the attribute's `defaultValue`; a list is joined with commas. Nothing
+is parsed or formatted when the e-mail is built — format a date or a number
+yourself, or pass a placeholder. An attribute without a value (`undefined`,
+`null`, `''`, `[]`) is left out — a `''` or `[]` in `values` without its
+`defaultValue` — and `0` stays. With none left, nothing is written, heading
+included: an e-mail has no "Add" button for an empty list. The `label`
+slot replaces the heading's text.
+
+The heading of `NxAttributes`, `NxPostalAddress`, `NxOpeningHours` and
+`NxContacts` is an [`NxExtendedLabel`](#nxextendedlabel), as in
+material-vue: a title in `title-medium`, and a 56 × 4px bar in the primary
+colour under it, left out of the plain-text version.
+
+## NxPostalAddress
+
+material-vue's `PostalAddress`, read: its label over one tile, the street as
+the title and `postalCode locality · country` under it.
+
+```vue
+<template>
+  <NxPostalAddress :data="{ street: '12 rue de la Paix', postalCode: '75002', locality: 'Paris', country: 'FR' }" />
+  <NxPostalAddress label="Warehouse" :data="{ locality: 'Potsdam', region: 'Brandenburg', country: 'DE' }" />
+</template>
+```
+
+| Prop | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `data` | `{ street?; locality?; region?; postalCode?; country? }`, each `string \| null` | none | The address |
+| `label` | `string` | the shared message `common.postalAddress` (`Address`) | The heading |
+
+The layout is material-vue's, the same in every locale: without a street, the
+city — else the country, else the region — is the title and
+`region · country` is under it, without the part that is already the title — where
+material-vue takes the heading as the title and repeats the part. A
+two-letter `country` code is named in the template's locale by
+`Intl.DisplayNames` — `DE` is `Germany` in English, `Allemagne` in French —
+where material-vue writes an English name; anything else, a placeholder
+included, is written as given. An address with no field (or `null`) writes
+nothing.
+
+## NxOpeningHours
+
+material-vue's `OpeningHours`, read: its label over one tile per day, the
+day as the title and its hours under it.
+
+```vue
+<template>
+  <NxOpeningHours
+    :data="[
+      { dayOfWeek: 1, openTime: '09:00', closeTime: '18:00' },
+      { dayOfWeek: 2, openTime: '09:00' },
+      { dayOfWeek: 6, isClosed: true },
+    ]"
+  />
+</template>
+```
+
+| Prop | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `data` | `{ dayOfWeek: number; openTime?: string; closeTime?: string; isClosed?: boolean }[]` | `[]` | The days, sorted from Sunday (`0`) to Saturday (`6`) |
+| `label` | `string` | the shared message `common.openingHours.label` (`Opening hours`) | The heading |
+
+The day's name is a shared message (`common.openingHours.days.monday`, …),
+the hours `09:00 – 18:00` as written, `—` for a time not given, and a closed
+day `common.openingHours.closed` (`Closed all day`). With no day, nothing is
+written. A `dayOfWeek` outside `0`–`6` names no day and fails the build:
+`NxOpeningHours: dayOfWeek must be a whole number from 0 (Sunday) to 6 (Saturday)`.
+
+## NxContacts
+
+material-vue's `Contacts`, read: its label over one tile per contact, its
+`label` — else the words for its type — as the title, and its value under
+it.
+
+```vue
+<template>
+  <NxContacts
+    :data="[
+      { type: 'EMAIL', value: 'hello@acme.example' },
+      { type: 'PHONE', value: '+33 1 23 45 67 89', label: 'Front desk' },
+      { type: 'WEBSITE', value: 'https://acme.example' },
+    ]"
+  />
+</template>
+```
+
+| Prop | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `data` | `{ type: ContactType; value: string; label?: string \| null }[]` | `[]` | The contacts, in order |
+| `label` | `string` | the shared message `common.contacts.label` (`Contacts`) | The heading |
+
+`ContactType` is material-vue's:
+`'EMAIL' | 'FAX' | 'MOBILE' | 'PHONE' | 'WEBSITE'`, its words the shared messages `common.contacts.types.email`, …
+The title links to the contact where a mail client can follow it: `mailto:`
+an e-mail address, `tel:` a phone or mobile number, and a website to its
+value, which must then be an absolute `http(s)` URL — a placeholder there is
+checked at send time as any URL. A placeholder after `mailto:` or `tel:` is
+filled with the bare address or number, HTML-escaped; the scheme stays. A
+literal number keeps its spaces in `tel:`, which phones accept. A fax is not
+linked. Another `type` fails the build:
+`NxContacts: type must be EMAIL, FAX, MOBILE, PHONE or WEBSITE`. With no contact, nothing is written.
+
+## NxFileList
+
+material-vue's `FileList`: one tile per file, its name as the title and its
+size under it, with a `Download` link for a file with an `href` — an
+attachment's page, or a download.
+
+```vue
+<template>
+  <NxFileList
+    :items="[
+      { id: 'agenda', name: 'agenda.pdf', size: 1572864, href: 'https://acme.example/files/agenda.pdf', type: 'application/pdf' },
+      { id: 'badge', name: 'badge.pkpass', size: placeholder('badgeSize'), href: placeholder('badgeLink') },
+    ]"
+  />
+  <NxFileList :items="[]" />
+</template>
+```
+
+| Prop | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `items` | `{ id: string; name: string; size?: number \| string; href?: string; type?: string; disabled?: boolean }[]` | required | The files, in order; each `id` unique |
+| `empty` | `string` | the shared message `common.fileList.empty` (`No files`) | The text shown, centred and muted, when `items` is empty; the `empty` slot replaces it |
+
+A size in bytes is written as material-vue's `formatFileSize` does, in the
+template's locale: `1.5 MB`, `1,5 Mo` (`common.fileList.size`). A string — a
+placeholder — is written as given. Where material-vue draws an icon for the
+type, the tile shows the extension on a tonal circle, from the name
+(`agenda.pdf` is `PDF`), else from the MIME `type` (`image/png` is `PNG`),
+four letters at most, and left out of the plain-text version. A `disabled`
+file's name is muted and it has no link. There is no remove button and no
+loading state: an e-mail runs no script and does not load.
+
+## NxRating
+
+material-vue's `RatingField`, read only: `max` stars, the first
+`modelValue` in its `color` and the others muted — or, with `href`, a row of
+links for a review request, one per star.
+
+```vue
+<template>
+  <NxRating :model-value="4" label="Your last visit" />
+  <NxRating label="How was it?" :href="(star) => `https://acme.example/review?rating=${star}`" />
+</template>
+```
+
+| Prop | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `modelValue` | `number` | `0` | The stars filled, rounded and kept between 0 and `max` |
+| `max` | `number` | `5` | The stars drawn, at least 1 |
+| `color` | `Color` | `'warning'` | The filled stars' colour |
+| `label` | `string` | none | Over the stars, `text-sm` medium |
+| `helperText` | `string` | none | Under the stars, muted |
+| `href` | `(star: number) => string` | none | Makes each star a link to `href(star)` |
+
+A star is the character `★` at 20px — an e-mail has no icon font — and a
+muted one is in the foreground at 25%, where material-vue draws a duotone
+icon, lighter than its muted text. The row
+reads `4 of 5` to a screen reader (`common.rating.star`), and says it in the
+plain-text version, where each linked star is `2 of 5` followed by its link.
+The stars are drawn when the e-mail is built: a `modelValue` or `max` that is
+not a number — a placeholder — fails the build, as `NxProgress`'s does. For
+a rating known only at send time, write it in text.
 
 ## A complete template
 

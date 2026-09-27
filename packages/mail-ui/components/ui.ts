@@ -225,3 +225,88 @@ export function formatCount(count: number, max = 99): string {
 	const safe = Math.max(0, Math.round(count));
 	return safe > max ? `${max}+` : String(safe);
 }
+
+/** The locale the template is built in, from `@nxgt/mail-i18n`, else `en`. */
+export function localeOf(globals: Record<string, unknown>): string {
+	return typeof globals.locale === 'string' ? globals.locale : 'en';
+}
+
+/** material-vue's `AttributeType`: what kind of value an attribute holds. */
+export type AttributeType =
+	| 'STRING'
+	| 'TEXT'
+	| 'COLOR'
+	| 'NUMBER'
+	| 'DATE'
+	| 'DATETIME'
+	| 'TIME'
+	| 'SELECT'
+	| 'MULTI_SELECT'
+	| 'RICH_TEXT';
+
+/** A value `NxAttributes` writes: a list is joined with commas. */
+export type AttributeValue =
+	| string
+	| number
+	| readonly (string | number)[]
+	| null
+	| undefined;
+
+/**
+ * material-vue's `Attribute`. `NxAttributes` reads its `name`, `label`,
+ * `unit` and `defaultValue`; the other fields are accepted, so the same
+ * data can be passed, and not read.
+ */
+export interface Attribute {
+	readonly name: string;
+	readonly label: string;
+	readonly description?: string | null;
+	readonly type?: AttributeType;
+	readonly unit?: string | null;
+	readonly options?: readonly string[] | null;
+	readonly defaultValue?: AttributeValue;
+	readonly priority?: number | null;
+}
+
+/** A file of `NxFileList`, as material-vue's `FileListItem`. */
+export interface FileListItem {
+	readonly id: string;
+	readonly name: string;
+	/** In bytes, written by locale; a string (a placeholder) is written as given. */
+	readonly size?: number | string;
+	readonly href?: string;
+	/** The MIME type, as `application/pdf`. */
+	readonly type?: string;
+	readonly disabled?: boolean;
+}
+
+/** material-vue's `PostalAddressFieldValue`. */
+export interface PostalAddress {
+	readonly street?: string | null;
+	readonly locality?: string | null;
+	readonly region?: string | null;
+	readonly postalCode?: string | null;
+	/** An ISO 3166-1 alpha-2 code, as `FR`, named in the template's locale; anything else is written as given. */
+	readonly country?: string | null;
+}
+
+/** A day of `NxOpeningHours`, as material-vue's `OpeningHour`. */
+export interface OpeningHour {
+	/** `0` for Sunday to `6` for Saturday. */
+	readonly dayOfWeek: number;
+	/** As written, as `09:00`. */
+	readonly openTime?: string;
+	readonly closeTime?: string;
+	readonly isClosed?: boolean;
+}
+
+/** material-vue's `ContactType`, as its values. */
+export type ContactType = 'EMAIL' | 'FAX' | 'MOBILE' | 'PHONE' | 'WEBSITE';
+
+/** A contact of `NxContacts`, as material-vue's `Contact`. */
+export interface Contact {
+	readonly type: ContactType;
+	/** The address, number or URL, as written. */
+	readonly value: string;
+	readonly label?: string | null;
+}
