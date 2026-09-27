@@ -2,8 +2,9 @@
  * An e-mail address: bare (`ada@example.com`), or with the name a mail client
  * shows beside it.
  *
- * A string is **only** an address — `"Ada <ada@example.com>"` is refused — so a
- * transport never has to parse one. A name is free text (`Doe, John` is a
+ * A string is **only** an address — `"Ada <ada@example.com>"` is refused, and
+ * so is a string holding whitespace, `,`, `;` or `:` — so a transport never
+ * has to parse one, and a parser that does finds one mailbox. A name is free text (`Doe, John` is a
  * name), refused only when it holds a line break; **quoting or encoding it
  * is the transport's job**, and the conformance case `send.hostileName`
  * fails a transport whose name lets a second recipient through.
@@ -36,7 +37,10 @@ export interface MailMessage extends Rendered {
 	readonly replyTo?: Address;
 	/**
 	 * Extra headers, such as `List-Unsubscribe`. A name is letters, digits and
-	 * hyphens; neither a name nor a value may hold a line break.
+	 * hyphens; neither a name nor a value may hold a line break. What the
+	 * transport writes from the message — `To`, `Cc`, `Bcc`, `From`, `Sender`,
+	 * `Reply-To`, `Return-Path`, `Subject`, `MIME-Version`, `Content-*`, in any
+	 * case — is refused.
 	 */
 	readonly headers?: Readonly<Record<string, string>>;
 }

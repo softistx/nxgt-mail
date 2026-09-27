@@ -14,8 +14,9 @@ export type MailErrorCode =
 	 * timeout, a 5xx from the provider, an expired credential. The transport's
 	 * own error is the `cause`.
 	 *
-	 * **Nothing was sent.** Retry later, or tell the user it failed. Never
-	 * report it as sent.
+	 * **Nothing is known to have been sent** — after a timeout or a dropped
+	 * connection, the provider may have taken it all the same. Retry later,
+	 * or tell the user it failed. Never report it as sent.
 	 */
 	| 'MAIL_FAILED'
 	/**

@@ -54,6 +54,7 @@ How the messages are shaped:
 - [`send: subject must not hold a line break`](#send-subject-must-not-hold-a-line-break)
 - [`send: a header name must be letters, digits and hyphens`](#send-a-header-name-must-be-letters-digits-and-hyphens)
 - [`send: header <name> must be a string without a line break`](#send-header-name-must-be-a-string-without-a-line-break)
+- [`send: header <name> is reserved — addresses, the subject and the MIME structure are never custom headers`](#send-header-name-is-reserved--addresses-the-subject-and-the-mime-structure-are-never-custom-headers)
 - [`send: the memory mailer was told to fail this send`](#send-the-memory-mailer-was-told-to-fail-this-send)
 
 **Locale**
@@ -388,8 +389,10 @@ timeout, a 5xx from the provider, an expired credential. The message is the
 transport's; the transport's own error is `error.cause`.
 **Why:** the invariant of the port: a failure throws. `send` resolves only
 once the transport has accepted the message.
-**Fix:** **nothing was sent** — never report it as sent. Retry later, or tell
-the user it failed:
+**Fix:** **nothing is known to have been sent** — never report it as sent.
+After a timeout or a dropped connection the provider may have taken it all
+the same, so a retry can deliver it twice; weigh that, then retry later, or
+tell the user it failed:
 
 ```ts
 import { MailError, type Mailer, type MailMessage } from '@nxgt/mail';
@@ -403,7 +406,7 @@ try {
   if (!(error instanceof MailError)) throw error;
   switch (error.code) {
     case 'MAIL_FAILED':
-      // Nothing was sent: queue a retry, or tell the user it failed.
+      // Nothing is known to have been sent: queue a retry, or tell the user it failed.
       break;
     case 'MAIL_REFUSED':
       // The message itself is wrong: sending it again fails again.
@@ -466,9 +469,13 @@ display name written into the string: `'Ada <ada@example.com>'`. Also a
 recipient that is `undefined` or `null` inside the list — `to: [undefined]`
 answers `send: to[0] is not an e-mail address` — typically a user lookup that
 found no one.
+Also a string holding a `,`, a `;` or a `:` — `'root,ada@example.com'`,
+`'group:ada@example.com'` — often addresses joined into one string.
 **Why:** a string is **only** an address — one `@`, something on each side,
-no whitespace and no angle bracket — so no transport ever parses one, and a
-name can never smuggle a second address into a header.
+no whitespace, no angle bracket, no `,` `;` or `:` — so no transport ever
+parses one, and a string can never smuggle a second address in: a provider
+parsing `'root,ada@example.com'` would send to two mailboxes, or to `ada`
+alone. Pass several recipients as a list, `to: ['a@example.com', 'b@example.com']`.
 **Fix:** put the name in an object:
 
 ```ts
@@ -559,6 +566,31 @@ const message: MailMessage = {
 `\n`. The message names the header, never its value.
 **Why:** a line break in a header value starts a new header.
 **Fix:** pass a single-line string; convert a number with `String(value)`.
+
+### `send: header <name> is reserved — addresses, the subject and the MIME structure are never custom headers`
+
+**When:** `send`, with a key in `headers` that names what the transport
+writes from the message: `To`, `Cc`, `Bcc`, `From`, `Sender`, `Reply-To`,
+`Return-Path`, `Subject`, `MIME-Version` or any `Content-*` — in any case,
+`bcc` as well as `Bcc`. The message names the header, never its value.
+**Why:** a header set there bypasses every check on the message. A `Bcc`
+reaches an SMTP envelope as a recipient no address check saw, a second `To`
+or `From` contradicts the one the transport writes, and a `Content-Type`
+changes how the parts are read.
+**Fix:** use the message's own fields — `to` (a list for several
+recipients), `from`, `replyTo`, `subject` — and send a separate e-mail to a
+recipient who must not appear to the others:
+
+```ts
+import type { Mailer, Rendered } from '@nxgt/mail';
+
+declare const mailer: Mailer;
+declare const rendered: Rendered;
+
+// ✗ headers: { Bcc: 'audit@example.com' }
+await mailer.send({ ...rendered, to: 'ada@example.com' });
+await mailer.send({ ...rendered, to: 'audit@example.com' }); // ✓ the copy, on its own
+```
 
 ### `send: the memory mailer was told to fail this send`
 
@@ -1155,8 +1187,8 @@ simulated, so the skip is on purpose and visible.
 ### `conformance: <send> resolved; it must reject`
 
 `<send>` is, for example, `a send during an outage`, `a refused send`,
-`a send with no recipient`, `a send with a line break in the subject` or
-`a send to something that is not an address`.
+`a send with no recipient`, `a send with a line break in the subject`,
+`a send with a Bcc header` or `a send to something that is not an address`.
 
 **When:** a `failure.*` or `send.refuses*` case.
 **Why:** the transport answered where it had to throw: it caught the
@@ -1283,7 +1315,8 @@ test title:
 | `conformance: a send with no recipient must throw MailRefused` | `send.refusesNoRecipient` | call `checkMessage` |
 | `conformance: a line break in the subject must throw MailRefused` | `send.refusesLineBreakInSubject` | call `checkMessage` |
 | `conformance: a malformed address must throw MailRefused` | `send.refusesWithoutTheValue` | call `checkMessage` |
-| `conformance: the refusal message holds the refused value` | `send.refusesWithoutTheValue` | name where the problem is, never the value |
+| `conformance: a Bcc header must throw MailRefused` | `send.refusesAddressHeader` | call `checkMessage`, from a version of `@nxgt/mail` that refuses reserved headers |
+| `conformance: the refusal message holds the refused value` | `send.refusesWithoutTheValue`, `send.refusesAddressHeader` | name where the problem is, never the value |
 | `conformance: the send after a failure was not delivered` | `failure.recovers` | do not leave the transport broken after a failure: reopen the connection on the next send |
 | `conformance: faults are required` | a `failure.*` case whose `run` you called yourself | pass `faults` in the context, or go through `runMailerCase`, which skips the case instead |
 

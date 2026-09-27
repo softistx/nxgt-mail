@@ -72,10 +72,34 @@ function resendAnswer(
 	);
 }
 
+/**
+ * Settles with `work`, or rejects with the signal's reason once it aborts —
+ * so the timeout holds even with an injected `fetch` that ignores the signal.
+ */
+function beforeAbort<T>(work: Promise<T>, signal: AbortSignal): Promise<T> {
+	return new Promise<T>((resolve, reject) => {
+		const abort = () => reject(signal.reason);
+		if (signal.aborted) return abort();
+		signal.addEventListener('abort', abort, { once: true });
+		work.then(
+			(value) => {
+				signal.removeEventListener('abort', abort);
+				resolve(value);
+			},
+			(error: unknown) => {
+				signal.removeEventListener('abort', abort);
+				reject(error);
+			},
+		);
+	});
+}
+
+/** The JSON body of an answer, or `{}` when it is not JSON or never ends. */
 async function readAnswer(
 	response: Response,
+	signal: AbortSignal,
 ): Promise<Record<string, unknown>> {
-	const body: unknown = await response.json().then(
+	const body: unknown = await beforeAbort(response.json(), signal).then(
 		(value: unknown) => value,
 		() => null,
 	);
@@ -83,6 +107,9 @@ async function readAnswer(
 		? (body as Record<string, unknown>)
 		: {};
 }
+
+/** The largest delay a timer takes, 2³¹ − 1 ms — about 24.8 days. */
+const MAX_TIMEOUT_MS = 2_147_483_647;
 
 const text = (value: unknown) =>
 	typeof value === 'string' && value !== '' ? value : null;
@@ -123,6 +150,13 @@ function checkOptions(options: ResendMailerOptions): void {
 	) {
 		throw new TypeError(
 			'createResendMailer: timeoutMs must be a positive integer',
+		);
+	}
+	if (options.timeoutMs !== undefined && options.timeoutMs > MAX_TIMEOUT_MS) {
+		// A timer's delay is a signed 32-bit integer: above it, the runtime
+		// fires at once, and every send would time out.
+		throw new TypeError(
+			`createResendMailer: timeoutMs must be at most ${MAX_TIMEOUT_MS} — a longer timer fires at once`,
 		);
 	}
 	if (options.from !== undefined) {
@@ -170,17 +204,21 @@ export function createResendMailer(options: ResendMailerOptions): Mailer {
 				...(message.headers === undefined ? {} : { headers: message.headers }),
 			};
 
+			const signal = AbortSignal.timeout(timeoutMs);
 			let response: Response;
 			try {
-				response = await post(endpoint, {
-					method: 'POST',
-					headers: {
-						authorization: `Bearer ${options.apiKey}`,
-						'content-type': 'application/json',
-					},
-					body: JSON.stringify(body),
-					signal: AbortSignal.timeout(timeoutMs),
-				});
+				response = await beforeAbort(
+					post(endpoint, {
+						method: 'POST',
+						headers: {
+							authorization: `Bearer ${options.apiKey}`,
+							'content-type': 'application/json',
+						},
+						body: JSON.stringify(body),
+						signal,
+					}),
+					signal,
+				);
 			} catch (error) {
 				if (error instanceof DOMException && error.name === 'TimeoutError') {
 					throw new MailFailure(
@@ -193,7 +231,7 @@ export function createResendMailer(options: ResendMailerOptions): Mailer {
 				});
 			}
 
-			const answer = await readAnswer(response);
+			const answer = await readAnswer(response, signal);
 			if (response.ok) return { messageId: text(answer.id) };
 
 			const cause = resendAnswer(

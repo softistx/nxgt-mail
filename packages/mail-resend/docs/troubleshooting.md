@@ -37,6 +37,7 @@ A `send: …` message not on this page comes from `checkMessage` in
 - [`createResendMailer: baseUrl must be an http: or https: URL`](#createresendmailer-baseurl-must-be-an-http-or-https-url)
 - [`createResendMailer: fetch must be a function`](#createresendmailer-fetch-must-be-a-function)
 - [`createResendMailer: timeoutMs must be a positive integer`](#createresendmailer-timeoutms-must-be-a-positive-integer)
+- [`createResendMailer: timeoutMs must be at most 2147483647 — a longer timer fires at once`](#createresendmailer-timeoutms-must-be-at-most-2147483647--a-longer-timer-fires-at-once)
 - [`createResendMailer: from must be an e-mail address, as noreply@example.com or { name, address }`](#createresendmailer-from-must-be-an-e-mail-address-as-noreplyexamplecom-or--name-address-)
 
 **Install and types**
@@ -80,7 +81,9 @@ try {
 
 ### `send: Resend could not take the message`
 
-A `MailFailure`, code `MAIL_FAILED`. **Nothing was sent.**
+A `MailFailure`, code `MAIL_FAILED`. **Nothing is known to have been sent**:
+Resend answered that it did not take the message, but a `5xx` can come from
+a server that accepted it before failing.
 
 **When:** Resend answered with a status that is neither `2xx` nor a refusal:
 
@@ -96,7 +99,8 @@ it.
 
 ### `send: Resend could not be reached`
 
-A `MailFailure`. **Nothing was sent.**
+A `MailFailure`. **Nothing is known to have been sent**: a connection that
+dropped after the request left may have delivered it to Resend.
 
 **When:** `fetch` threw before any answer: DNS, a refused connection, TLS, a
 proxy in the way, or a `baseUrl` pointing nowhere. `cause` is the `fetch`
@@ -109,7 +113,8 @@ error.
 
 A `MailFailure`. `cause` is the `TimeoutError` that aborted the request.
 
-**When:** no answer within `timeoutMs` (30 seconds by default).
+**When:** no answer within `timeoutMs` (30 seconds by default) — whatever
+`fetch` is used: one that ignores the signal is no longer waited for.
 
 **Why:** the request was aborted: Resend may still have accepted the e-mail,
 but the transport cannot know, and does not say it was sent.
@@ -193,6 +198,20 @@ Promise<Response>`, or leave it out for the global `fetch`.
 
 A `TypeError`. `timeoutMs` is `0`, negative, a fraction or not a number. It is
 milliseconds: `10_000` for ten seconds.
+
+### `createResendMailer: timeoutMs must be at most 2147483647 — a longer timer fires at once`
+
+A `TypeError`. `timeoutMs` is above 2³¹ − 1 milliseconds, about 24.8 days —
+often a value in microseconds, or a duration meant as "never". A timer that
+long fires at once, and every send would time out.
+
+**Fix:** a timeout in milliseconds, far below the bound; leave it out for the
+default, 30 seconds:
+
+```ts
+createResendMailer({ apiKey, timeoutMs: Number.MAX_SAFE_INTEGER }); // ✗
+createResendMailer({ apiKey, timeoutMs: 60_000 }); // ✓ — one minute
+```
 
 ### `createResendMailer: from must be an e-mail address, as noreply@example.com or { name, address }`
 

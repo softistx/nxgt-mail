@@ -340,7 +340,7 @@ each refusal has its `@ts-expect-error` in `packages/mail/test/types/` (13 to
 before the rewrite and paused; they depend only on `@nxgt/mail`.
 
 **Done when:** both pass the conformance suite, and an outage in each ends in
-`MailFailure` with `cause`. ✅ — all ten cases in each package's
+`MailFailure` with `cause`. ✅ — all eleven cases in each package's
 `src/index.spec.ts`; SMTP's outage is a `421` and a server not listening,
 Resend's a `503`, a server not listening and a timeout.
 

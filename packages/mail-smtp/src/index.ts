@@ -26,8 +26,23 @@ import {
 	type SentMail,
 } from '@nxgt/mail';
 
-/** An address as nodemailer takes it: it quotes and encodes the name itself. */
-type NodemailerAddress = string | { name: string; address: string };
+/**
+ * An address as nodemailer takes it: always an object, so nodemailer never
+ * parses a string — it quotes and encodes the name itself.
+ */
+type NodemailerAddress = { name: string; address: string };
+
+/**
+ * What nodemailer answers once the server took the message: its id, and the
+ * recipients it refused while accepting others — nodemailer resolves then.
+ */
+export interface SmtpSentInfo {
+	readonly messageId?: string;
+	readonly accepted?: readonly unknown[] | undefined;
+	readonly rejected?: readonly unknown[] | undefined;
+	/** One nodemailer error per refused recipient, with its `responseCode`. */
+	readonly rejectedErrors?: readonly unknown[] | undefined;
+}
 
 /**
  * The part of a nodemailer transporter this transport calls — what
@@ -44,7 +59,7 @@ export interface SmtpTransporter {
 		headers?: Record<string, string>;
 		disableFileAccess: boolean;
 		disableUrlAccess: boolean;
-	}): Promise<{ readonly messageId?: string }>;
+	}): Promise<SmtpSentInfo>;
 }
 
 export interface SmtpMailerOptions {
@@ -56,27 +71,86 @@ export interface SmtpMailerOptions {
 
 const toNodemailer = (address: Address): NodemailerAddress =>
 	typeof address === 'string'
-		? address
+		? { name: '', address }
 		: { name: address.name, address: address.address };
 
+interface SmtpError {
+	readonly code?: unknown;
+	readonly responseCode?: unknown;
+	readonly command?: unknown;
+	readonly message?: unknown;
+	readonly rejectedErrors?: unknown;
+}
+
+const fieldsOf = (error: unknown): SmtpError =>
+	typeof error === 'object' && error !== null ? (error as SmtpError) : {};
+
 /**
- * Whether nodemailer's error is the server refusing **this message** — a
- * permanent `5xx` on a recipient or on the content — rather than the server,
- * the network or the credentials failing. Authentication (`530`–`539`) is a
- * failure: the next message would be refused the same way.
+ * Whether one nodemailer error is the server refusing **this message** for
+ * good — a permanent `5xx` on a recipient or on the content, or nodemailer
+ * refusing a message larger than the `SIZE` the server advertised — rather
+ * than the server, the network or the wiring failing. Two `5xx` are
+ * failures: authentication (`530`–`539`), and a sender refused at
+ * `MAIL FROM` — the next message would be refused the same way.
  */
-function isRefusal(error: unknown): boolean {
-	if (typeof error !== 'object' || error === null) return false;
-	const { code, responseCode } = error as {
-		readonly code?: unknown;
-		readonly responseCode?: unknown;
-	};
+function isPermanentRefusal(error: unknown): boolean {
+	const { code, responseCode, command, message } = fieldsOf(error);
+	if (
+		code === 'EMESSAGE' &&
+		responseCode === undefined &&
+		typeof message === 'string' &&
+		message.startsWith('Message size larger than allowed')
+	) {
+		return true;
+	}
 	return (
 		(code === 'EENVELOPE' || code === 'EMESSAGE') &&
+		command !== 'MAIL FROM' &&
 		typeof responseCode === 'number' &&
 		responseCode >= 500 &&
 		responseCode < 600 &&
 		(responseCode < 530 || responseCode > 539)
+	);
+}
+
+/**
+ * Whether a rejected send is a refusal of the message. When every recipient
+ * was refused, nodemailer's error carries the code of the **last** one only:
+ * each refusal is read instead, and it is a refusal only if every one is.
+ */
+function isRefusal(error: unknown): boolean {
+	const { rejectedErrors } = fieldsOf(error);
+	if (Array.isArray(rejectedErrors) && rejectedErrors.length > 0) {
+		return rejectedErrors.every(isPermanentRefusal);
+	}
+	return isPermanentRefusal(error);
+}
+
+/**
+ * Throws when nodemailer resolved with some recipients refused: the server
+ * took the message for the others, so it may already have reached them.
+ */
+function throwOnPartialRejection(info: SmtpSentInfo): void {
+	const errors = Array.isArray(info.rejectedErrors) ? info.rejectedErrors : [];
+	const rejected = Array.isArray(info.rejected) ? info.rejected : [];
+	const refusedCount = Math.max(errors.length, rejected.length);
+	if (refusedCount === 0) return;
+	const accepted = Array.isArray(info.accepted) ? info.accepted.length : 0;
+	const counted = `${refusedCount} of ${refusedCount + accepted} recipients`;
+	const cause =
+		errors[0] ??
+		Object.assign(new Error('the SMTP server refused some recipients'), {
+			rejected,
+		});
+	if (errors.length > 0 && errors.every(isPermanentRefusal)) {
+		throw new MailRefused(
+			`send: the SMTP server refused ${counted}, and may have delivered to the others`,
+			{ cause },
+		);
+	}
+	throw new MailFailure(
+		`send: the SMTP server could not take ${counted}, and may have delivered to the others`,
+		{ cause },
 	);
 }
 
@@ -118,7 +192,7 @@ export function createSmtpMailer(options: SmtpMailerOptions): Mailer {
 				);
 			}
 			const to = Array.isArray(message.to) ? message.to : [message.to];
-			let info: { readonly messageId?: string };
+			let info: SmtpSentInfo;
 			try {
 				info = await transporter.sendMail({
 					from: toNodemailer(sender),
@@ -149,6 +223,7 @@ export function createSmtpMailer(options: SmtpMailerOptions): Mailer {
 					},
 				);
 			}
+			throwOnPartialRejection(info ?? {});
 			const messageId =
 				typeof info?.messageId === 'string' && info.messageId !== ''
 					? info.messageId

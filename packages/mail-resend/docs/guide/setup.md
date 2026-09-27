@@ -34,10 +34,10 @@ interface ResendMailerOptions {
 | `from` | `Address` | none | The sender of a message that has no `from`. Without it, such a message is refused with `MailRefused` |
 | `baseUrl` | `string` | `https://api.resend.com` | An `http:` or `https:` URL; `/emails` is appended, a trailing `/` dropped |
 | `fetch` | `(url, init) => Promise<Response>` | the global `fetch` | Every request goes through it |
-| `timeoutMs` | `number` | `30000` | A positive integer. A send that has no answer by then is aborted and fails with `MailFailure` |
+| `timeoutMs` | `number` | `30000` | A positive integer, at most `2147483647`. A send that has no answer by then is aborted and fails with `MailFailure` |
 
 Options are checked when the mailer is created, and a mistake is a bare
-`TypeError` — see [Errors — wiring](errors.md#wiring-a-typeerror).
+`TypeError` — see [Errors — wiring](errors.md#wiring--a-typeerror).
 
 ## The key
 
@@ -120,14 +120,20 @@ const timed = createResendMailer({
 ```
 
 A `fetch` you pass receives the `AbortSignal` of the timeout in `init.signal`:
-pass `init` on, and the timeout holds.
+pass `init` on, and the request is aborted when it fires. The timeout holds
+either way — the send stops waiting for a `fetch` that ignores the signal and
+fails with `MailFailure` — but only a `fetch` that passes the signal on
+stops the request itself.
 
 ## The timeout
 
 `timeoutMs` (30 seconds by default) bounds the request: past it, the request
 is aborted and the send fails with `MailFailure` —
 `send: Resend did not answer within 30000 ms`. Resend may still have accepted
-the message; the id is simply unknown. A send awaited in a request handler
+the message; the id is simply unknown. The bound covers the answer's body
+too: a `2xx` whose body never ends answers `{ messageId: null }` once the
+timeout passes. It is a timer, so at most `2147483647` ms — a longer one
+would fire at once, and is refused at wiring. A send awaited in a request handler
 usually wants less:
 
 ```ts

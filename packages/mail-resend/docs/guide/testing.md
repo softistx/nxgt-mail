@@ -19,6 +19,7 @@ refusal — so the suite proves the transport's reading of Resend's answers,
 not a wrapper's:
 
 ```ts
+// local-resend.ts
 import type { DeliveredMail } from '@nxgt/mail/conformance';
 
 export const API_KEY = 're_test';
@@ -101,9 +102,10 @@ describeMailer({
 });
 ```
 
-All ten cases pass: a send answers `SentMail`, the message arrives byte for
+All eleven cases pass: a send answers `SentMail`, the message arrives byte for
 byte (accents, an emoji, `&amp;` in a link), every recipient is delivered to,
-a hostile name reaches only its own address, the refusals, and the three
+a hostile name reaches only its own address, the refusals — a `Bcc` among the
+custom headers included — and the three
 failure cases — an outage is a `MailFailure` with its `cause` and one attempt,
 a refusal a `MailRefused`, and the next send goes through.
 
@@ -118,14 +120,16 @@ add what the suite does not ask of every transport:
 - a server that is not listening ends in `MailFailure` —
   `send: Resend could not be reached` — with the `fetch` error as `cause`;
 - a server that does not answer within `timeoutMs` ends in `MailFailure`, a
-  `TimeoutError` as `cause`;
+  `TimeoutError` as `cause` — and so does a `fetch` that ignores the signal
+  and never settles; an answer whose body never ends answers
+  `{ messageId: null }` once the timeout passes;
 - no message — the error's nor its cause's — holds the key, a recipient's
   address or what Resend said;
 - the request: `POST /emails`, the bearer key, JSON, a quoted name,
   `reply_to` and `headers`;
 - a `2xx` with no id, or with a body that is not JSON, answers
   `{ messageId: null }`;
-- every `TypeError` at wiring.
+- every `TypeError` at wiring, a `timeoutMs` above `2147483647` included.
 
 A `fetch` of your own needs no server at all, when a test only needs to see
 the request:

@@ -84,13 +84,14 @@ Throws `MailRefused`, naming **where** the problem is and never the value:
 | --- | --- |
 | not an object | `send: the message must be an object` |
 | no `to`, or `to: []` | `send: to must hold at least one address` |
-| a recipient that is not an address, `undefined` included | `send: to is not an e-mail address`, `send: to[0] is not an e-mail address` |
+| a recipient that is not a bare address — a display name, whitespace, `,`, `;` or `:` in a string — `undefined` included | `send: to is not an e-mail address`, `send: to[0] is not an e-mail address` |
 | an address object with a bad address | `send: from.address is not an e-mail address` |
 | a line break in a name | `send: from.name must be a string without a line break` |
 | a part that is not a string | `send: text must be a string` |
 | a line break in the subject | `send: subject must not hold a line break` |
 | a header name that is not letters, digits and hyphens | `send: a header name must be letters, digits and hyphens` |
 | a line break in a header value | `send: header X-Ref must be a string without a line break` |
+| a header the transport writes from the message — `To`, `Cc`, `Bcc`, `From`, `Sender`, `Reply-To`, `Return-Path`, `Subject`, `MIME-Version`, `Content-*`, in any case | `send: header Bcc is reserved — addresses, the subject and the MIME structure are never custom headers` |
 
 Two helpers turn addresses into what a provider wants:
 
@@ -205,13 +206,14 @@ and when `skip` names a case that does not exist
 | `send.hostileName` | a name holding `<…>`, a comma and quotes — `Ada <mallory@example.test>, "Eve" <eve@example.test>;` — reaches only its own address: quoting the name is the transport's job | no |
 | `send.refusesNoRecipient` | no recipient throws `MailRefused`, and nothing is delivered | no |
 | `send.refusesLineBreakInSubject` | a line break in the subject throws `MailRefused`, and nothing is delivered | no |
+| `send.refusesAddressHeader` | a `Bcc` among the custom headers throws `MailRefused` without the address in its message, and nothing is delivered: it would add a recipient no check saw | no |
 | `send.refusesWithoutTheValue` | a refusal's `message` does not hold the refused value | no |
 | `failure.outage` | an outage throws `MailFailure` — **the class from `@nxgt/mail`** — with code `MAIL_FAILED` and a `cause`; one attempt; nothing delivered | yes |
 | `failure.refusal` | a provider's refusal throws `MailRefused` with code `MAIL_REFUSED` and a `cause`; one attempt | yes |
 | `failure.recovers` | after a failure, the next send goes through | yes |
 
 The message they send is exported as `sampleMessage`, and the cases as data:
-`sendCases` (the seven `send.*`), `failureCases` (the three `failure.*`) and
+`sendCases` (the eight `send.*`), `failureCases` (the three `failure.*`) and
 `allMailerCases` (both, in the order above). A transport's own tests can reuse
 them — send the sample through your transport, or run only the cases that
 need no faults:
@@ -324,7 +326,7 @@ export function fakeProvider() {
 ```
 
 With the transport and the fake above, the example at the top of this page
-passes all ten cases.
+passes all eleven cases.
 
 ### Without faults
 

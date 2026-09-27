@@ -53,6 +53,7 @@ Peers, all required:
 | `createSmtpMailer(options)` | A `Mailer` that hands each message to your nodemailer transporter |
 | `SmtpMailerOptions` | `{ transporter, from? }` |
 | `SmtpTransporter` | The part of a nodemailer transporter it calls: `sendMail` |
+| `SmtpSentInfo` | What `sendMail` resolves with: the id, and the recipients refused while others were accepted |
 
 ## Usage
 
@@ -96,8 +97,9 @@ await mailer.send({
 
 | When | Throws | `cause` |
 | --- | --- | --- |
-| The server cannot be reached, a timeout, a `4xx` (try later), credentials refused (`530`–`539`) | `MailFailure` — `send: the SMTP server could not take the message` | nodemailer's error, with its `code` and `responseCode` |
-| A permanent `5xx` on a recipient or on the content (`550`, `552`, `554`) | `MailRefused` — `send: the SMTP server refused the message` | nodemailer's error |
+| The server cannot be reached, a timeout, a `4xx` (try later), credentials refused (`530`–`539`), the sender refused (`5xx` on `MAIL FROM`) | `MailFailure` — `send: the SMTP server could not take the message` | nodemailer's error, with its `code` and `responseCode` |
+| A permanent `5xx` on every recipient or on the content (`550`, `552`, `554`), a message over the server's `SIZE` | `MailRefused` — `send: the SMTP server refused the message` | nodemailer's error |
+| Some recipients refused, the others accepted — **they may have the message** | `MailRefused` — `send: the SMTP server refused <n> of <total> recipients, and may have delivered to the others` — or `MailFailure` — `send: the SMTP server could not take <n> of <total> recipients, …` when a refusal is not permanent | nodemailer's error for the first refused recipient |
 | No sender, on the message or as a default | `MailRefused` — `send: from is missing — give the message a from, or createSmtpMailer a default one` | — |
 | A bad option | `TypeError` from `createSmtpMailer` | — |
 
@@ -110,7 +112,7 @@ try {
 	if (error instanceof MailRefused) {
 		// sending it again unchanged fails again: fix the address or the content
 	} else if (error instanceof MailFailure) {
-		// nothing was sent: retry later, from a queue you can see
+		// nothing is known to have been sent: retry later, from a queue you can see
 	}
 	throw error;
 }
@@ -138,12 +140,24 @@ connection by default; a send in a request handler should not. Set
 A timeout ends in `MailFailure`.
 
 **A `4xx` is a failure, a `5xx` a refusal** — except authentication (`530`–
-`539`): the next message would be refused the same way, so it is a failure
-of the wiring, not of the message.
+`539`) and a sender refused at `MAIL FROM`: the next message would be refused
+the same way, so it is a failure of the wiring, not of the message.
+
+**Some recipients refused still throws, after the others got it.** The
+server may accept one recipient and refuse another; the message then went out
+to the accepted one. Retrying it whole sends it to them twice — send to one
+recipient per `send` when every result must be all or nothing.
+
+**A custom header cannot set an address.** `headers: { Bcc: '…' }` would add
+an envelope recipient no check saw: `checkMessage` refuses `To`, `Cc`, `Bcc`,
+`From`, `Sender`, `Reply-To`, `Return-Path`, `Subject`, `MIME-Version` and
+`Content-*` in `headers`, in any case.
 
 **A string address is only an address.** `'Acme <noreply@acme.test>'` as
 `from` is a `TypeError` at wiring and a `MailRefused` on a message; write
-`{ name: 'Acme', address: 'noreply@acme.test' }`.
+`{ name: 'Acme', address: 'noreply@acme.test' }`. A string holding whitespace,
+`,`, `;` or `:` is refused too, and nodemailer is handed every address as
+`{ name, address }`, so it never parses one.
 
 ## Type safety, counted
 

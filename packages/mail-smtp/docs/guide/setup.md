@@ -42,21 +42,30 @@ hand-written object, and nodemailer is never imported:
 ```ts
 interface SmtpTransporter {
 	sendMail(mail: {
-		from: string | { name: string; address: string };
-		to: (string | { name: string; address: string })[];
-		replyTo?: string | { name: string; address: string };
+		from: { name: string; address: string };
+		to: { name: string; address: string }[];
+		replyTo?: { name: string; address: string };
 		subject: string;
 		html: string;
 		text: string;
 		headers?: Record<string, string>;
 		disableFileAccess: boolean;
 		disableUrlAccess: boolean;
-	}): Promise<{ readonly messageId?: string }>;
+	}): Promise<SmtpSentInfo>;
+}
+
+// What nodemailer resolves with. `rejected` and `rejectedErrors` are the
+// recipients the server refused while it accepted others: `send` throws then.
+interface SmtpSentInfo {
+	readonly messageId?: string;
+	readonly accepted?: readonly unknown[] | undefined;
+	readonly rejected?: readonly unknown[] | undefined;
+	readonly rejectedErrors?: readonly unknown[] | undefined;
 }
 ```
 
 Options are checked when the mailer is created, and a mistake is a bare
-`TypeError` — see [Errors — wiring](errors.md#wiring-a-typeerror).
+`TypeError` — see [Errors — wiring](errors.md#wiring--a-typeerror).
 
 ## The transporter
 
@@ -157,6 +166,7 @@ A string is only an address: `'Acme <noreply@acme.test>'` is refused. Write
 | `MailMessage` | Handed to nodemailer as |
 | --- | --- |
 | `to` — one address or several | `to`, always a list |
+| a string address | `{ name: '', address }`: nodemailer never parses a string, so the address it sends to is the one `checkMessage` checked |
 | an `{ name, address }` | the same object: nodemailer quotes and encodes the name, so `Doe, John` or `Ada <mallory@example.test>` stays one recipient's name |
 | `from`, `replyTo` | `from`, `replyTo` |
 | `subject`, `html`, `text` | the same, as strings — the e-mail is `multipart/alternative` |
@@ -165,7 +175,8 @@ A string is only an address: `'Acme <noreply@acme.test>'` is refused. Write
 
 Before any of it, `checkMessage` from `@nxgt/mail` refuses what no transport
 hands over — no recipient, something that is not an address, a line break in
-the subject or a header. Its messages are listed in
+the subject or a header, a custom header that would set an address, the
+subject or the MIME structure (`Bcc`, `To`, `Content-Type`…). Its messages are listed in
 [`@nxgt/mail`'s troubleshooting](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/troubleshooting.md#sending).
 
 `send` answers `{ messageId }`: nodemailer's `Message-ID` (`<…@acme.test>`), or

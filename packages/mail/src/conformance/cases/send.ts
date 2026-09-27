@@ -122,6 +122,32 @@ export const sendCases: readonly MailerCase[] = [
 		},
 	},
 	{
+		id: 'send.refusesAddressHeader',
+		title:
+			'a Bcc among the custom headers is refused with MailRefused: it would add an unchecked recipient',
+		async run(context) {
+			// A custom header named Bcc, To or Cc reaches the envelope of an SMTP
+			// transport, and writes a line no address check ever saw.
+			const error = await rejection(
+				context.mailer.send({
+					...sampleMessage,
+					// biome-ignore lint/style/useNamingConvention: a header's name, as a mail client writes it.
+					headers: { Bcc: 'eve@example.test' },
+				}),
+				'a send with a Bcc header',
+			);
+			check(
+				error instanceof MailRefused,
+				'a Bcc header must throw MailRefused',
+			);
+			check(
+				!error.message.includes('eve@example.test'),
+				'the refusal message holds the refused value',
+			);
+			await nothingDelivered(context, 'the message was refused');
+		},
+	},
+	{
 		id: 'send.refusesWithoutTheValue',
 		title: 'a refusal names where the problem is, never the value',
 		async run({ mailer }) {

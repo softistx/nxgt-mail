@@ -8,8 +8,9 @@ application wires:
 - **`MailRefused`** (`code: 'MAIL_REFUSED'`) — Resend refused the message
   itself. Sending it again unchanged fails again.
 - **`MailFailure`** (`code: 'MAIL_FAILED'`) — Resend could not take it:
-  unreachable, too slow, rate-limited, or the key refused. Nothing was sent
-  (after a timeout, nothing is known to have been sent).
+  unreachable, too slow, rate-limited, or the key refused. Nothing is known
+  to have been sent: after a timeout or a dropped connection, Resend may have
+  accepted it all the same.
 
 Nothing is retried. Whether and when to retry is yours to decide, where you
 can see it.
@@ -43,8 +44,8 @@ Resend answers an error as `{ statusCode, name, message }`:
 
 | Resend answers | Typical `name` | Throws |
 | --- | --- | --- |
-| `400` | `validation_error`, `invalid_idempotency_key` | `MailRefused` |
-| `422` | `validation_error`, `missing_required_field`, `invalid_attachment` | `MailRefused` |
+| `400` | `validation_error` | `MailRefused` |
+| `422` | `validation_error`, `missing_required_field` | `MailRefused` |
 | `401`, `403` | `missing_api_key`, `invalid_api_key`, an unverified domain | `MailFailure` |
 | `429` | `rate_limit_exceeded`, `daily_quota_exceeded` | `MailFailure` |
 | `5xx` | `internal_server_error` | `MailFailure` |
@@ -115,6 +116,7 @@ prints the value:
 | `createResendMailer: baseUrl must be an http: or https: URL` | `baseUrl` without its scheme, or not a string |
 | `createResendMailer: fetch must be a function` | `fetch` that is not a function |
 | `createResendMailer: timeoutMs must be a positive integer` | `0`, a negative number, a fraction |
+| `createResendMailer: timeoutMs must be at most 2147483647 — a longer timer fires at once` | A `timeoutMs` above 2³¹ − 1 ms, about 24.8 days |
 | `createResendMailer: from must be an e-mail address, as noreply@example.com or { name, address }` | A default `from` that is not an address — `'Acme <noreply@acme.test>'` included |
 
 ## See also

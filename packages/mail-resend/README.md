@@ -61,7 +61,7 @@ no Node built-in.
 | `from` | `Address` | none | The sender of a message that names none |
 | `baseUrl` | `string` | `https://api.resend.com` | Where `POST /emails` goes: a proxy, or a test server |
 | `fetch` | `(url, init) => Promise<Response>` | the global `fetch` | For a proxy agent, or a test |
-| `timeoutMs` | `number` | `30000` | A send taking longer fails with `MailFailure` |
+| `timeoutMs` | `number` | `30000` | A send taking longer fails with `MailFailure`, whatever `fetch` does with the signal. At most `2147483647` |
 
 ```ts
 import { createResendMailer } from '@nxgt/mail-resend';
@@ -93,7 +93,7 @@ await mailer.send({
 | `400`, `422` — Resend refuses the message | `MailRefused` — `send: Resend refused the message` | an `Error` with `status`, `errorName` and Resend's `detail` |
 | `401`, `403`, `429`, `5xx`, any other status | `MailFailure` — `send: Resend could not take the message` | the same |
 | A network error | `MailFailure` — `send: Resend could not be reached` | the `fetch` error |
-| No answer within `timeoutMs` | `MailFailure` — `send: Resend did not answer within 30000 ms` | the `TimeoutError` |
+| No answer within `timeoutMs` | `MailFailure` — `send: Resend did not answer within <timeoutMs> ms` | the `TimeoutError` |
 | No sender, on the message or as a default | `MailRefused` — `send: from is missing — give the message a from, or createResendMailer a default one` | — |
 | A bad option | `TypeError` from `createResendMailer` | — |
 
@@ -106,7 +106,7 @@ try {
 	if (error instanceof MailRefused) {
 		// sending it again unchanged fails again: fix the address or the content
 	} else if (error instanceof MailFailure) {
-		// nothing was sent: a bad key, a rate limit, an outage — retry later, from a queue
+		// nothing is known to have been sent: a bad key, a rate limit, an outage — retry later, from a queue
 	}
 	throw error;
 }
@@ -137,6 +137,10 @@ sending domain refuses every message alike: it is the wiring that is wrong.
 
 **A `429` is a failure.** Resend rate-limits per second; slow down or queue.
 The transport does not wait and retry for you.
+
+**A timeout does not mean nothing was sent.** After `timeoutMs`, or a
+connection dropped mid-request, Resend may have accepted the e-mail: a retry
+can send it twice. Weigh that before retrying.
 
 ## Type safety, counted
 

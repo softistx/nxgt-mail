@@ -23,6 +23,7 @@ fails** — a `421` for an outage, a `554` for a refusal — so the suite proves
 the transport's reading of nodemailer's errors, not a wrapper's:
 
 ```ts
+// smtp-server.ts
 import type { AddressInfo } from 'node:net';
 import type { DeliveredMail } from '@nxgt/mail/conformance';
 import { simpleParser } from 'mailparser';
@@ -119,9 +120,10 @@ describeMailer({
 });
 ```
 
-All ten cases pass: a send answers `SentMail`, the message arrives byte for
+All eleven cases pass: a send answers `SentMail`, the message arrives byte for
 byte (accents, an emoji, `&amp;` in a link), every recipient is delivered to,
-a hostile name reaches only its own address, the refusals, and the three
+a hostile name reaches only its own address, the refusals — a `Bcc` among the
+custom headers included — and the three
 failure cases — an outage is a `MailFailure` with its `cause` and one attempt,
 a refusal a `MailRefused`, and the next send goes through.
 
@@ -134,8 +136,15 @@ add what the suite does not ask of every transport:
 - a server that is not listening ends in `MailFailure`, `ESOCKET` on `cause`;
 - a recipient refused for good (`550`) is a `MailRefused`, one refused for now
   (`450`) a `MailFailure`;
-- credentials refused (`535`, `EAUTH`) and authentication required (`530`)
-  are a `MailFailure`;
+- one recipient refused while another is accepted still throws — the
+  accepted one has the message — and every recipient refused is a
+  `MailRefused` only when every refusal is permanent, whatever their order;
+- credentials refused (`535`, `EAUTH`), authentication required (`530`) and
+  a sender refused at `MAIL FROM` (`550`) are a `MailFailure`;
+- a message larger than the server's `SIZE`, which nodemailer refuses itself
+  with no SMTP code, is a `MailRefused`;
+- a string address is handed to nodemailer as `{ name: '', address }`, so it
+  never parses one;
 - no error message holds the password or a recipient's address;
 - the default `from`, `replyTo` and `headers` reach the server, and the id is
   nodemailer's;

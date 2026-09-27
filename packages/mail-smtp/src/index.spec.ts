@@ -12,12 +12,26 @@ import nodemailer from 'nodemailer';
 import { SMTPServer } from 'smtp-server';
 import { createSmtpMailer, type SmtpTransporter } from './index';
 
-type Fault = 'outage' | 'refusal' | 'auth' | 'rcptRefused' | 'rcptLater';
+type Fault =
+	| 'outage'
+	| 'refusal'
+	| 'auth'
+	| 'rcptRefused'
+	| 'rcptLater'
+	| 'senderRefused';
 
 const PASSWORD = 'smtp-5ecr3t';
 
 /** A local SMTP server that keeps what it receives, and fails on demand. */
-async function startServer(options: { readonly auth?: boolean } = {}) {
+async function startServer(
+	options: {
+		readonly auth?: boolean;
+		/** The largest message it takes, advertised as `SIZE`. */
+		readonly size?: number;
+		/** The code it answers to `RCPT TO` for these recipients, every time. */
+		readonly refuse?: Readonly<Record<string, number>>;
+	} = {},
+) {
 	const delivered: DeliveredMail[] = [];
 	const faults: Fault[] = [];
 	let attempts = 0;
@@ -29,12 +43,17 @@ async function startServer(options: { readonly auth?: boolean } = {}) {
 		allowInsecureAuth: true,
 		disabledCommands: ['STARTTLS'],
 		logger: false,
+		...(options.size === undefined ? {} : { size: options.size }),
 		onAuth(auth, _session, callback) {
 			if (auth.password === PASSWORD)
 				return callback(null, { user: auth.username });
 			callback(smtpError('Authentication credentials invalid', 535));
 		},
-		onRcptTo(_address, _session, callback) {
+		onRcptTo(address, _session, callback) {
+			const code = options.refuse?.[address.address];
+			if (code !== undefined) {
+				return callback(smtpError('Mailbox refused', code));
+			}
 			const fault = faults[0];
 			if (fault === 'rcptRefused') {
 				faults.shift();
@@ -56,6 +75,10 @@ async function startServer(options: { readonly auth?: boolean } = {}) {
 			if (fault === 'auth') {
 				faults.shift();
 				return callback(smtpError('Authentication required', 530));
+			}
+			if (fault === 'senderRefused') {
+				faults.shift();
+				return callback(smtpError('Sender address rejected', 550));
 			}
 			callback();
 		},
@@ -327,5 +350,147 @@ describe('createSmtpMailer, beyond the suite', () => {
 				'createSmtpMailer: from must be an e-mail address, as noreply@example.com or { name, address }',
 			),
 		);
+	});
+	/** Sends to ada and grace through a server that answers `refuse` for some. */
+	async function sendToTwo(refuse: Readonly<Record<string, number>>) {
+		const server = await startServer({ refuse });
+		const transporter = transporterFor(server.port);
+		try {
+			const error = await createSmtpMailer({ transporter })
+				.send({
+					...sampleMessage,
+					to: ['ada@example.test', 'grace@example.test'],
+				})
+				.then(
+					() => null,
+					(caught: unknown) => caught as Error,
+				);
+			return { error, delivered: server.delivered };
+		} finally {
+			transporter.close();
+			await server.close();
+		}
+	}
+
+	test('one recipient refused for good (550) while another is accepted: MailRefused, though the other may have it', async () => {
+		const { error, delivered } = await sendToTwo({
+			'grace@example.test': 550,
+		});
+		expect(error).toBeInstanceOf(MailRefused);
+		expect(error?.message).toBe(
+			'send: the SMTP server refused 1 of 2 recipients, and may have delivered to the others',
+		);
+		expect(error?.cause).toMatchObject({
+			code: 'EENVELOPE',
+			responseCode: 550,
+			command: 'RCPT TO',
+		});
+		// Not "nothing was sent": the accepted recipient got it.
+		expect(delivered.map((mail) => mail.to)).toEqual([['ada@example.test']]);
+	});
+
+	test('one recipient refused for now (450) while another is accepted: MailFailure', async () => {
+		const { error, delivered } = await sendToTwo({
+			'grace@example.test': 450,
+		});
+		expect(error).toBeInstanceOf(MailFailure);
+		expect(error?.message).toBe(
+			'send: the SMTP server could not take 1 of 2 recipients, and may have delivered to the others',
+		);
+		expect(error?.cause).toMatchObject({ responseCode: 450 });
+		expect(delivered).toHaveLength(1);
+	});
+
+	test('every recipient refused, one for good and the last for now: MailFailure, whatever the order', async () => {
+		for (const refuse of [
+			{ 'ada@example.test': 450, 'grace@example.test': 550 },
+			{ 'ada@example.test': 550, 'grace@example.test': 450 },
+		]) {
+			const { error, delivered } = await sendToTwo(refuse);
+			expect(error).toBeInstanceOf(MailFailure);
+			expect(error?.message).toBe(
+				'send: the SMTP server could not take the message',
+			);
+			expect(delivered).toHaveLength(0);
+		}
+	});
+
+	test('every recipient refused for good: MailRefused', async () => {
+		const { error } = await sendToTwo({
+			'ada@example.test': 550,
+			'grace@example.test': 553,
+		});
+		expect(error).toBeInstanceOf(MailRefused);
+		expect(error?.message).toBe('send: the SMTP server refused the message');
+	});
+
+	test('the sender refused for good (550 on MAIL FROM) is a failure: every message would be', async () => {
+		const { error } = await sendWith('senderRefused');
+		expect(error).toBeInstanceOf(MailFailure);
+		expect(error?.cause).toMatchObject({
+			command: 'MAIL FROM',
+			responseCode: 550,
+		});
+	});
+
+	test('a message larger than the SIZE the server advertises is a refusal, though nodemailer answers no code', async () => {
+		const server = await startServer({ size: 100 });
+		const smtp = transporterFor(server.port);
+		// nodemailer compares the SIZE the server advertises with the envelope's
+		// size, and refuses before DATA — with its own error and no SMTP code.
+		const transporter: SmtpTransporter = {
+			sendMail: (mail) =>
+				smtp.sendMail({
+					...mail,
+					envelope: {
+						from: 'noreply@example.test',
+						to: ['ada@example.test'],
+						size: 10_000,
+					},
+				} as Parameters<typeof smtp.sendMail>[0]),
+		};
+		try {
+			const error = await createSmtpMailer({ transporter })
+				.send(sampleMessage)
+				.then(
+					() => null,
+					(caught: unknown) => caught as Error,
+				);
+			expect(error).toBeInstanceOf(MailRefused);
+			expect(error?.cause).toMatchObject({ code: 'EMESSAGE' });
+			expect(error?.cause).not.toHaveProperty('responseCode');
+			expect(server.delivered).toHaveLength(0);
+		} finally {
+			smtp.close();
+			await server.close();
+		}
+	});
+
+	test('hands a string address to nodemailer as an object, so it never parses it', async () => {
+		let options: Record<string, unknown> = {};
+		await createSmtpMailer({
+			transporter: {
+				async sendMail(mail) {
+					options = mail;
+					return {};
+				},
+			},
+		}).send({
+			...sampleMessage,
+			to: [
+				'ada@example.test',
+				{ name: 'Grace', address: 'grace@example.test' },
+			],
+			from: 'noreply@example.test',
+			replyTo: 'support@example.test',
+		});
+		expect(options).toMatchObject({
+			to: [
+				{ name: '', address: 'ada@example.test' },
+				{ name: 'Grace', address: 'grace@example.test' },
+			],
+			from: { name: '', address: 'noreply@example.test' },
+			replyTo: { name: '', address: 'support@example.test' },
+		});
 	});
 });

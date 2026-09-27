@@ -262,6 +262,40 @@ describe('createResendMailer, refusals and failures', () => {
 		expect(((error as MailFailure).cause as Error).name).toBe('TimeoutError');
 	});
 
+	test('the timeout holds with a fetch that ignores the signal', async () => {
+		let calls = 0;
+		const error = await createResendMailer({
+			apiKey: API_KEY,
+			timeoutMs: 50,
+			fetch: () => {
+				calls += 1;
+				return new Promise<Response>(() => {});
+			},
+		})
+			.send(sampleMessage)
+			.then(
+				() => null,
+				(caught: unknown) => caught,
+			);
+		expect(error).toBeInstanceOf(MailFailure);
+		expect((error as MailFailure).message).toBe(
+			'send: Resend did not answer within 50 ms',
+		);
+		expect(((error as MailFailure).cause as Error).name).toBe('TimeoutError');
+		expect(calls).toBe(1);
+	});
+
+	test('the timeout holds while the answer body never ends', async () => {
+		const sent = await createResendMailer({
+			apiKey: API_KEY,
+			timeoutMs: 50,
+			fetch: async () =>
+				new Response(new ReadableStream({ start() {} }), { status: 200 }),
+		}).send(sampleMessage);
+		// Resend took the message: only its id is missing.
+		expect(sent).toEqual({ messageId: null });
+	});
+
 	test('no error message holds the API key, a recipient, or what Resend said', async () => {
 		for (const fault of ['refusal', 'outage', 'keyRefused'] as const) {
 			const { error } = await sendWith(fault);
@@ -418,6 +452,13 @@ describe('createResendMailer, wiring', () => {
 			{ apiKey: API_KEY, timeoutMs: 0 },
 			'createResendMailer: timeoutMs must be a positive integer',
 		);
+		refused(
+			{ apiKey: API_KEY, timeoutMs: 2_147_483_648 },
+			'createResendMailer: timeoutMs must be at most 2147483647 — a longer timer fires at once',
+		);
+		expect(() =>
+			createResendMailer({ apiKey: API_KEY, timeoutMs: 2_147_483_647 }),
+		).not.toThrow();
 		refused(
 			{ apiKey: API_KEY, from: 'Acme <noreply@acme.test>' },
 			'createResendMailer: from must be an e-mail address, as noreply@example.com or { name, address }',

@@ -107,8 +107,61 @@ describe('checkMessage', () => {
 			{ ...message, headers: { 'X-Ref': 'a\r\nb' } },
 			'send: header X-Ref must be a string without a line break',
 		],
+		[
+			'two addresses in one string, split by a comma',
+			{ ...message, to: 'root,ada@example.test' },
+			'send: to is not an e-mail address',
+		],
+		[
+			'two addresses in one string, split by a semicolon',
+			{ ...message, to: ['ada@example.test', 'root;eve@example.test'] },
+			'send: to[1] is not an e-mail address',
+		],
+		[
+			'a group in one string, opened by a colon',
+			{ ...message, replyTo: 'group:eve@example.test' },
+			'send: replyTo is not an e-mail address',
+		],
+		[
+			'a comma in an object address',
+			{ ...message, from: { name: 'A', address: 'root,ada@example.test' } },
+			'send: from.address is not an e-mail address',
+		],
 	])('refuses %s with MailRefused, naming where', (_, input, text) => {
 		expect(refusal(input).message).toBe(text);
+	});
+
+	it.each([
+		'To',
+		'cc',
+		'BCC',
+		'From',
+		'Sender',
+		'reply-to',
+		'Return-Path',
+		'Subject',
+		'MIME-Version',
+		'Content-Type',
+		'content-transfer-encoding',
+		'Content-Disposition',
+	])('refuses the header %s, which only the message sets', (name) => {
+		const error = refusal({
+			...message,
+			headers: { [name]: 'eve@example.test' },
+		});
+		expect(error.message).toBe(
+			`send: header ${name} is reserved — addresses, the subject and the MIME structure are never custom headers`,
+		);
+		expect(error.message).not.toContain('eve@example.test');
+	});
+
+	it('accepts a header that only starts like a reserved one', () => {
+		expect(() =>
+			checkMessage({
+				...message,
+				headers: { 'X-To': 'a', 'To-Do': 'b', 'Contentful-Id': 'c' },
+			}),
+		).not.toThrow();
 	});
 
 	it('never puts the refused value in the message', () => {

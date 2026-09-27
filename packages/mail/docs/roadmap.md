@@ -69,7 +69,8 @@ the only number.
   components an e-mail needs (`<NxButton>`, `<NxHeading>`, `<NxText>`…), and
   shared messages in English and French. Replace one component or one message
   by name in your project, and keep the rest.
-- **The first release, 0.1.0** — every package above on npm, installable into
+- **The first release, 0.1.0** — every package on this page on npm, the SMTP
+  and Resend transports included, installable into
   an empty project that builds and sends an e-mail with the README's own
   snippet.
 
