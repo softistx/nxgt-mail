@@ -54,7 +54,7 @@ function ui(options: UiOptions): MailPlugin;
 The plugin it answers, named `ui`, does four things:
 
 - registers every component of the package's `components/` folder under the
-  prefix `Nx` (`NxButton.vue` is `<NxButton>`); Maizzle's own stay
+  prefix `Nx` (`card-header.vue` is `<NxCardHeader>`); Maizzle's own stay
   available (`<Button>`, `<Spacer>`);
 - gives every template `brand`, the brand as passed;
 - provides the brand and the theme's CSS to the components, under
@@ -185,11 +185,11 @@ edit it — see
 
 ## Replacing a component
 
-A file in your project's `components/` named like one of ours replaces it, in
-every template:
+A file in your project's `components/` named as one of our tags,
+`nx-badge.vue` for `<NxBadge>`, replaces it in every template:
 
 ```vue
-<!-- components/NxBadge.vue -->
+<!-- components/nx-badge.vue -->
 <template>
   <span class="rounded-sm bg-primary px-2 text-xs text-primary-foreground"><slot /></span>
 </template>
@@ -204,6 +204,12 @@ import { COMPONENTS_DIR } from '@nxgt/mail-ui';
 
 console.log(COMPONENTS_DIR); // /…/node_modules/@nxgt/mail-ui/components
 ```
+
+Ours are named without the prefix, which `ui()` adds: `badge.vue` is
+`<NxBadge>` (`nx-button.vue` keeps it, being built on Maizzle's `<Button>`).
+Your `components/` has no prefix, so **rename the copy with the tag's whole
+name**, `nx-badge.vue`: a `components/badge.vue` is `<Badge>`, a component of
+its own, and replaces nothing.
 
 A copied component imports `./ui` for its shared types; copy `ui.ts` from the
 same folder beside it, or inline what it uses.
@@ -220,13 +226,14 @@ build would pass.
 `.vue` file under `node_modules`, Maizzle's own excepted. It looks a tag up in
 this order:
 
-1. your project's `components/<Tag>.vue` — so a component you replace is
-   replaced in a package's templates too;
-2. ours, in `COMPONENTS_DIR`;
+1. your project's `components/`: the file Maizzle names as the tag,
+   `nx-badge.vue` or `NxBadge.vue` for `<NxBadge>` — so a component you
+   replace is replaced in a package's templates too;
+2. ours, in `COMPONENTS_DIR`, named without the prefix (`badge.vue`);
 3. Maizzle's built-ins (`Container`, `Spacer`, `Button`, …).
 
 Only the top level of your `components/` counts there: a component in a
-subfolder (`components/brand/Logo.vue`, `<BrandLogo>`) or in a
+subfolder (`components/brand/logo.vue`, `<BrandLogo>`) or in a
 `components.source` folder is found in your own templates, not inside an
 installed one. Put a component that replaces ours at the top of
 `components/`. Under `maizzle serve`, restart after adding one.
@@ -267,12 +274,12 @@ component; list the plugin that brings it, as ui()`.
 
 ## Your own layout — `UI_CONTEXT`
 
-Replace `<NxLayout>` the same way, with `components/NxLayout.vue`. Read the
+Replace `<NxLayout>` the same way, with `components/nx-layout.vue`. Read the
 brand and the theme's CSS from `UI_CONTEXT`, so `ui({ theme })` still applies
 to every component inside:
 
 ```vue
-<!-- components/NxLayout.vue -->
+<!-- components/nx-layout.vue -->
 <script setup lang="ts">
 import { type UiContext, UI_CONTEXT } from '@nxgt/mail-ui';
 import { inject } from 'vue';

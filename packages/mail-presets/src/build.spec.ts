@@ -196,7 +196,7 @@ describe('the presets, installed from npm', () => {
 		await buildIn(packaged);
 		mkdirSync(`${packaged}/components`);
 		await Bun.write(
-			`${packaged}/components/NxButton.vue`,
+			`${packaged}/components/nx-button.vue`,
 			'<template><a data-project-button><slot /></a></template>\n',
 		);
 		await buildIn(packaged, '-c', 'maizzle.config.project.ts');
@@ -217,7 +217,7 @@ describe('the presets, installed from npm', () => {
 		}
 	});
 
-	test("the project's components/NxButton.vue replaces ours in an installed template", async () => {
+	test("the project's components/nx-button.vue replaces ours in an installed template", async () => {
 		expect(
 			await Bun.file(`${packaged}/dist-project/en/magic-link.html`).text(),
 		).toContain('data-project-button');

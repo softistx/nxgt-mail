@@ -46,7 +46,7 @@ What the research proved, on Maizzle 6.1.7, before this plan was written:
 - There are no environments any more: `maizzle build -c
   maizzle.config.production.ts`.
 - `components.source` can point into `node_modules`, with a `prefix`
-  (`<NxButton>`); a project's `components/NxButton.vue` then replaces the
+  (`<NxButton>`); a project's `components/nx-button.vue` then replaces the
   package's, and Maizzle's own `<Button>` stays available.
 - A package can ship a Tailwind 4 `@theme`; a layout imports it **in the same
   `<style>` as a literal `@import "@maizzle/tailwindcss"`**, or Maizzle scans
@@ -218,7 +218,7 @@ inlined styles. No dependency on material-vue.
   `NxCardFooter`, `NxBadge`, `NxAlert`, `NxBanner`, `NxStatusIndicator`,
   `NxSummaryData`, and `NxCode` (a one-time code, e-mail's own). Maizzle's
   `Spacer` stands for the planned `NxSpacer`. A project's
-  `components/NxButton.vue` replaces ours.
+  `components/nx-button.vue` replaces ours.
 - **`theme.css`:** material-vue's light tokens, in oklch — Maizzle writes each
   as hex with a `lab()` after it. material-vue's `bg-primary/15` is
   `bg-primary-15`: a `color-mix` in sRGB over the background, flattened to

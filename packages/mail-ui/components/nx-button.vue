@@ -5,7 +5,8 @@ import type { Color } from './ui';
 
 /**
  * material-vue's Button as a link: its variants, colours and sizes, on
- * Maizzle's `<Button>`, which pads it for Outlook.
+ * Maizzle's `<Button>`, which pads it for Outlook. Named `nx-button.vue`,
+ * not `button.vue`: there, Vue would read `<Button>` as this file itself.
  */
 type Variant = 'filled' | 'tonal' | 'outlined' | 'ghost' | 'link';
 type Size = 'xs' | 'sm' | 'default' | 'lg';

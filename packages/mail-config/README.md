@@ -155,7 +155,7 @@ export const brand = defineMailPlugin({
 });
 ```
 
-`components/Footer.vue` next to that file is `<BrandFooter>` in every template.
+`components/footer.vue` next to that file is `<BrandFooter>` in every template.
 See [Writing a plugin](docs/guide/plugins.md).
 
 ### A production build — `productionConfig`

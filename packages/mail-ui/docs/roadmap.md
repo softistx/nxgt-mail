@@ -9,7 +9,7 @@ no dates here, and the version something shipped in is the only number.
   `defineMailConfig`'s `plugins`: the `Nx*` components available in every
   template, the brand (name, link, logo by absolute URL) in the layout's
   header and footer, and a wrong option refused where the config is written.
-  A project's `components/NxButton.vue` replaces ours by name. Built, not yet
+  A project's `components/nx-button.vue` replaces ours by name. Built, not yet
   published.
 - **The first set of components, in the style of `@nxgt/material-vue`** —
   `NxLayout`, `NxTypography`, `NxButton`, `NxLink`, `NxSeparator`, `NxCard`

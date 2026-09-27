@@ -128,7 +128,7 @@ describe('watchTemplates', () => {
 		listeners.get('add')?.('/project/emails/welcome.vue');
 		listeners.get('unlink')?.('/project/emails/auth/reset.vue');
 		listeners.get('add')?.('/project/emails/notes.md');
-		listeners.get('add')?.('/project/components/Button.vue');
+		listeners.get('add')?.('/project/components/button.vue');
 		expect(calls).toBe(2);
 	});
 
