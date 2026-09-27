@@ -114,7 +114,7 @@ presets();                        // every preset
 
 **When:** loading `maizzle.config.ts`, when `only` names an e-mail the
 package does not ship. Common causes are a typo, a name in camelCase
-(`'verify-email'`), a name with `.vue`, or a name of your own template such as
+(`'verifyEmail'`), a name with `.vue`, or a name of your own template such as
 `'sign-in'`.
 **Why:** `only` names the package's templates, by the name of their file and
 of their built file (`dist/en/verify-email.html`). The message lists them.
@@ -124,7 +124,7 @@ TypeScript refuses such a name too, where the config is type-checked.
 ```ts
 import { PRESETS, presets } from '@nxgt/mail-presets';
 
-presets({ only: ['verify-email', 'sign-in-code'] });   // not 'verify-email', not 'sign-in'
+presets({ only: ['verify-email', 'sign-in-code'] });   // not 'verifyEmail', not 'sign-in'
 console.log(PRESETS);                                   // every name
 ```
 

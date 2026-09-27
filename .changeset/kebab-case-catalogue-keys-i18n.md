@@ -17,3 +17,13 @@ a capital. `emailKey('verify-email')` was `'verifyEmail'`; it is now
 catalogue that wrote the old camelCase form for such a name moves its
 top-level key to match the file; a single-word template (`welcome`,
 `invitation`) is unaffected, since it has no `-` to keep.
+
+**The manifest is not affected.** `emailKey` only finds a message to
+translate at build time; the manifest's `emails` keys stay the template's
+own path (`verify-email`, `auth/reset-password`), its `variables` stay
+placeholder names, and its `subject` values are the translated text — none
+of which is a catalogue key. `formatVersion`/`MANIFEST_FORMAT` stays 1, and
+the fixture manifest this package's build is checked against
+(`test/fixture/mail-manifest.golden.json`) is unchanged, byte for byte, by
+this release: a manifest built after upgrading still reads with `@nxgt/mail`
+0.1.0's renderer.
