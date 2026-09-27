@@ -63,16 +63,31 @@ than generated per template.
 
 `@nxgt/material-vue`'s `.dark` class only recolours **background,
 foreground, card, card-foreground, accent, accent-foreground and border** —
-**primary, secondary, muted, success, info, warning and error keep the same
-value in both modes there**. `@nxgt/mail-ui` mirrors exactly that split: the
-first group has a `-dark` token (`color-background-dark`, …), the second has
-none. A project overriding `color-primary` (a brand colour) reaches dark
-mode with it unchanged, for free — nothing to derive, since primary is never
-recoloured either way.
+**secondary, muted, success, info, warning and error keep the same value in
+both modes there**. `@nxgt/mail-ui` mirrors exactly that split: that first
+group has a `-dark` token (`color-background-dark`, …), the second has none.
+
+**`primary` keeps its value too, unless you set one for dark mode.**
+`color-primary-dark` and `color-primary-foreground-dark` default to their
+light value — a project that never sets them reaches dark mode with
+`color-primary` unchanged, for free, exactly as before this pair of tokens
+existed. Set them when the default does not work: a brand whose primary is
+near-black, `#27272a`, is a crisp button on a white card, but melts into
+`color-card-dark` (`oklch(0.208 0.042 265.755)`, close to it in luminance) on
+a dark one — that project gives primary a lighter dark twin, and a dark
+foreground to keep its text readable on it.
+
+Every place primary paints carries the matching `nx-dark-*` class, at
+whatever strength it is used: `NxButton`, `NxLinkButton`, `NxIconButton` and
+`NxChip` (`filled`, `tonal` and `outlined`, and the `link` variant),
+`NxBadge`'s default variant, `NxProgress`'s track and fill, and `NxTimeline`'s
+`primary` marker. A tint used only as a decorative ground — `NxHero`'s,
+`NxListTile`'s, `NxEventChip`'s — keeps material-vue's original behaviour, the
+same value in both modes, unconditionally: it says so where it is used.
 
 `color-paper` (the page behind the layout's card, mail-ui's own token, not
-material-vue's) gets a `color-paper-dark` computed the same way: primary
-mixed 5% over the dark background.
+material-vue's) gets a `color-paper-dark` computed the same way: primary — its
+dark value, if you set one — mixed 5% over the dark background.
 
 ## Overriding a dark token
 
@@ -82,7 +97,9 @@ The same `theme` option, one more entry — no different shape:
 ui({
 	brand: { name: 'Acme' },
 	theme: {
-		'color-primary': '#0f766e', // both modes, since primary carries no -dark token
+		'color-primary': '#27272a', // both modes, unless you also set the dark twin below
+		'color-primary-dark': '#a1a1aa', // dark mode only — keeps it off the dark card
+		'color-primary-foreground-dark': '#18181b', // text on the button above, in dark mode
 		'color-background-dark': '#0b1220', // dark mode only
 	},
 });

@@ -79,22 +79,33 @@ const token = (color: Color) => (color === 'default' ? 'foreground' : color);
 
 /**
  * The classes of a `variant` in a `color`, as material-vue's Button colours
- * them: `NxButton`'s and `NxChip`'s, which each add their own.
+ * them: `NxButton`'s and `NxChip`'s, which each add their own. `primary` is
+ * the one colour with an optional dark value (`color-primary-dark`,
+ * `color-primary-foreground-dark`; see theme.css and
+ * docs/guide/dark-mode.md), so it is the one that carries a `nx-dark-*`
+ * twin alongside its light class.
  */
 export function colourVariant(variant: ColourVariant, color: Color): string {
 	switch (variant) {
 		case 'filled':
-			return color === 'default'
-				? 'bg-foreground text-background'
+			if (color === 'default') return 'bg-foreground text-background';
+			return color === 'primary'
+				? 'bg-primary nx-dark-bg-primary text-primary-foreground nx-dark-text-primary-foreground'
 				: `bg-${color} text-${color}-foreground`;
 		case 'tonal':
-			return `bg-${token(color)}-15 text-${token(color)}`;
+			return color === 'primary'
+				? 'bg-primary-15 nx-dark-bg-primary-15 text-primary nx-dark-text-primary'
+				: `bg-${token(color)}-15 text-${token(color)}`;
 		case 'outlined':
-			return `border border-solid border-${token(color)}-50 text-${token(color)}`;
+			return color === 'primary'
+				? 'border border-solid border-primary-50 nx-dark-border-primary-50 text-primary nx-dark-text-primary'
+				: `border border-solid border-${token(color)}-50 text-${token(color)}`;
 		case 'ghost':
 			return 'text-foreground';
 		case 'link':
-			return `text-${token(color)}`;
+			return color === 'primary'
+				? 'text-primary nx-dark-text-primary'
+				: `text-${token(color)}`;
 	}
 }
 

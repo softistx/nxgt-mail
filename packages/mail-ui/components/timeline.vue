@@ -22,7 +22,8 @@ const props = defineProps<{ items: readonly TimelineItem[]; empty?: string }>();
 
 const MARKER: Record<TimelineTone, string> = {
 	default: 'border-border nx-dark-border-border bg-muted text-muted-foreground',
-	primary: 'border-primary-40 bg-primary-15 text-primary',
+	primary:
+		'border-primary-40 nx-dark-border-primary-40 bg-primary-15 nx-dark-bg-primary-15 text-primary nx-dark-text-primary',
 	success: 'border-success-40 bg-success-15 text-success',
 	info: 'border-info-40 bg-info-15 text-info',
 	warning: 'border-warning-40 bg-warning-15 text-warning',

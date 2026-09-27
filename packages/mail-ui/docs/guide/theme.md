@@ -60,6 +60,7 @@ Name a token in `theme` without its `--`: `--color-primary` is
 | `color-paper` | 5% primary over background | The page behind the layout's card |
 | `color-<colour>-5`, `-10`, `-15`, `-20`, `-25`, `-40`, `-50` | the colour mixed over background | Tints — see below |
 | `color-background-dark`, `color-foreground-dark`, `color-card-dark`, `color-card-foreground-dark`, `color-accent-dark`, `color-accent-foreground-dark`, `color-border-dark`, `color-paper-dark` | `@nxgt/material-vue`'s dark values | Shown under dark mode — see [Dark mode](dark-mode.md) |
+| `color-primary-dark`, `color-primary-foreground-dark` | their light value | **Optional.** Shown under dark mode once set — see [Dark mode](dark-mode.md#which-tokens-have-a-dark-value) |
 
 The exact values are in the file itself:
 
@@ -125,6 +126,10 @@ ui({ brand: { name: 'Acme' }, theme: { 'color-primary': '#0f766e' } });
   `color-primary` above makes the tonal button `#dbeae9` and `paper`
   `#f3f8f8`, with no other token to change.
 - **A tint can be overridden alone**: `{ 'color-primary-15': '#e0f2f1' }`.
+- **`color-primary` reaches dark mode unchanged unless you also set
+  `color-primary-dark`.** The one above shows `#0f766e` in both modes; add
+  `'color-primary-dark': '#5eead4'` to show a different one under dark mode —
+  see [Dark mode](dark-mode.md#which-tokens-have-a-dark-value).
 - **Any CSS colour works**, `oklch()` included: Maizzle turns it into hex,
   as it does the theme's own.
 - **The value is trimmed**, and refused if it is empty or holds `;`, `{`,
