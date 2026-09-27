@@ -11,9 +11,10 @@ the only number.
   twice — delivers it once where the transport can deduplicate; a transport
   that cannot ignores it. `checkMessage` refuses a key that is not 1 to 256
   visible ASCII characters, never quoting it. The memory mailer honours it as
-  Resend does: a key it already delivered answers that delivery's `messageId`
-  and delivers nothing more, a failed send leaves its key free, and `clear()`
-  forgets the keys. Built, not yet published.
+  Resend does: the same message under a key it already delivered answers
+  that delivery's `messageId` and delivers nothing more, a different message
+  under it is a `MailRefused`, a failed send leaves its key free, and
+  `clear()` forgets the keys. Built, not yet published.
 
 ## Next
 

@@ -1,6 +1,6 @@
 import { type MailError, MailFailure, MailRefused } from './errors';
 import { checkMessage } from './message';
-import type { Mailer, MailMessage, SentMail } from './types';
+import type { Address, Mailer, MailMessage, SentMail } from './types';
 
 /** One message the memory mailer accepted, with the id it gave it. */
 export interface MemoryMail extends MailMessage {
@@ -59,33 +59,39 @@ function copyOf(message: MailMessage): MailMessage {
 	};
 }
 
+/** Bytes as hex: short to compare, whatever holds them. */
+const hexOf = (bytes: Uint8Array) =>
+	Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+
 /**
- * What makes two messages the same one, for an idempotency key: what they
- * would deliver, however the object was written — keys in any order, `to` as
- * one address or a list of one, no `attachments` or an empty list, bytes in a
- * `Buffer` or a plain `Uint8Array`.
+ * What makes two messages the same one, for an idempotency key: the fields of
+ * the port, read by name as `checkMessage` reads them — so a field on a
+ * prototype counts and a field the port does not know does not — in one
+ * form, however the object was written: `to` as one address or a list of
+ * one, no `headers` or `attachments` or an empty one, headers in any order,
+ * bytes in a `Buffer` or a plain `Uint8Array`.
  */
 function fingerprintOf(message: MailMessage): string {
-	const canonical = (value: unknown): unknown => {
-		if (value instanceof Uint8Array) return Array.from(value);
-		if (Array.isArray(value)) return value.map(canonical);
-		if (typeof value !== 'object' || value === null) return value;
-		return Object.fromEntries(
-			Object.keys(value)
-				.sort()
-				.map((key) => [
-					key,
-					canonical((value as Record<string, unknown>)[key]),
-				]),
-		);
-	};
-	return JSON.stringify(
-		canonical({
-			...message,
-			to: Array.isArray(message.to) ? message.to : [message.to],
-			attachments: message.attachments ?? [],
-		}),
+	const address = (value: Address | undefined) =>
+		typeof value === 'object' ? [value.name, value.address] : value;
+	const to = Array.isArray(message.to) ? message.to : [message.to];
+	const headers = Object.entries(message.headers ?? {}).sort(([a], [b]) =>
+		a < b ? -1 : a > b ? 1 : 0,
 	);
+	return JSON.stringify([
+		to.map(address),
+		address(message.from),
+		address(message.replyTo),
+		message.subject,
+		message.html,
+		message.text,
+		headers,
+		(message.attachments ?? []).map((file) => [
+			file.filename,
+			file.contentType,
+			hexOf(file.content),
+		]),
+	]);
 }
 
 /** Creates a {@link MemoryMailer}. Message ids are `memory-1`, `memory-2`, … */

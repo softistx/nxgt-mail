@@ -479,14 +479,15 @@ describe('createResendMailer, the request', () => {
 		}
 	});
 
-	test('sends no attachments field for an empty list', async () => {
+	test('sends no attachments or headers field when they are empty', async () => {
 		const resend = startResend();
 		try {
 			await createResendMailer({
 				apiKey: API_KEY,
 				baseUrl: resend.baseUrl,
-			}).send({ ...sampleMessage, attachments: [] });
+			}).send({ ...sampleMessage, attachments: [], headers: {} });
 			expect('attachments' in (resend.received[0]?.body ?? {})).toBe(false);
+			expect('headers' in (resend.received[0]?.body ?? {})).toBe(false);
 		} finally {
 			await resend.close();
 		}

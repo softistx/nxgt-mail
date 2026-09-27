@@ -141,7 +141,10 @@ function bodyOf(
 					// biome-ignore lint/style/useNamingConvention: Resend's wire format names the field, not us.
 					reply_to: formatAddress(message.replyTo),
 				}),
-		...(message.headers === undefined ? {} : { headers: message.headers }),
+		...(message.headers === undefined ||
+		Object.keys(message.headers).length === 0
+			? {}
+			: { headers: message.headers }),
 		...(message.attachments === undefined || message.attachments.length === 0
 			? {}
 			: {

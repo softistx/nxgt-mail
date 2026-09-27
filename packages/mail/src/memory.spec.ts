@@ -219,11 +219,48 @@ describe('createMemoryMailer', () => {
 			...message,
 			idempotencyKey: 'u',
 			attachments: [],
+			headers: {},
 		});
+		const ordered = await mailer.send({
+			...message,
+			idempotencyKey: 'h',
+			headers: { 'X-A': '1', 'X-B': '2' },
+		});
+		const reordered = await mailer.send({
+			...message,
+			idempotencyKey: 'h',
+			headers: { 'X-B': '2', 'X-A': '1' },
+			// Not a field of the port: never part of the message, and never walked.
+			extra: (() => {
+				const loop: Record<string, unknown> = {};
+				loop.self = loop;
+				return loop;
+			})(),
+		} as MailMessage);
 
 		expect(retried).toEqual(first);
 		expect(emptied).toEqual(unattached);
-		expect(mailer.sent).toHaveLength(2);
+		expect(reordered).toEqual(ordered);
+		expect(mailer.sent).toHaveLength(3);
+	});
+
+	it('sees a field the message inherits, as checkMessage does', async () => {
+		const mailer = createMemoryMailer();
+		const inherited = (subject: string) =>
+			Object.assign(Object.create({ subject }), {
+				to: message.to,
+				html: message.html,
+				text: message.text,
+				idempotencyKey: 'k',
+			}) as MailMessage;
+
+		await mailer.send(inherited('one'));
+		const error = await mailer.send(inherited('two')).then(
+			() => null,
+			(e: unknown) => e,
+		);
+
+		expect(error).toBeInstanceOf(MailRefused);
 	});
 
 	it('leaves the key of a failed send free, so the retry delivers', async () => {

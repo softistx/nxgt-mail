@@ -498,8 +498,11 @@ whether the e-mail is still worth sending.
 the transport's message when the provider answered that the message is
 malformed or too large.
 **Why:** something in the message would break a header, has no valid
-recipient, or is an attachment that is not bytes or is badly named — or the
-whole message is over the provider's size limit. Sending it again unchanged fails again.
+recipient, is an attachment that is not bytes or is badly named, or is an
+`idempotencyKey` that is malformed or already used for a different message
+(the memory mailer's refusal, or Resend's `409 invalid_idempotent_request`) —
+or the whole message is over the provider's size limit. Sending it again
+unchanged fails again.
 **Fix:** read `error.message` for where the problem is, and fix the message;
 the entries below cover each one. Handle the code as in the
 [`MAIL_FAILED`](#mail_failed--mailfailure-the-transport-could-not-hand-the-message-over)
@@ -785,7 +788,8 @@ const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(or
 const hex = [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('');
 const hashed = `order-${hex}/receipt`; // 64 hex digits, on any runtime
 
-await mailer.send({ ...message, idempotencyKey: key });
+// Pick one, and build it the same way on every attempt:
+await mailer.send({ ...message, idempotencyKey: hashed });
 ```
 
 ### `send: idempotencyKey was already used for a different message — a key names one e-mail`

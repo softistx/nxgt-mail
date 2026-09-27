@@ -396,7 +396,7 @@ gives a test file `describe` and `it` as bare identifiers, not on `globalThis`.
 
 ## Type safety, counted
 
-**21 plausible mistakes, 21 refused** at compile time, each measured by a
+**22 plausible mistakes, 22 refused** at compile time, each measured by a
 `@ts-expect-error` in
 [`test/types/refusals.ts`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/test/types/refusals.ts)
 that fails the typecheck the moment it stops holding:
@@ -432,6 +432,11 @@ And an attachment:
 19. A `path` instead of the bytes: no transport reads a file for you.
 20. No `contentType`: nothing guesses it from the file name.
 21. One attachment, not in a list.
+
+And the idempotency key:
+
+22. A number (`idempotencyKey: order.id`): the key is a string, as
+    `order-42/receipt`.
 
 The same file holds the calls that must keep compiling: a refusal that refuses
 the correct call is a bug.
