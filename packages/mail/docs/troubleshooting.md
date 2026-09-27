@@ -116,6 +116,10 @@ How the messages are shaped:
 - [`render: <email>: <key> must be an http:, https: or mailto: URL`](#render-email-key-must-be-an-http-https-or-mailto-url)
 - [A link breaks when its value holds `&`, `+`, `#` or `/`: `?token={{ token }}` is not percent-encoded](#a-link-breaks-when-its-value-holds----or--token-token--is-not-percent-encoded)
 
+**Observability**
+- [`Cannot find package '@opentelemetry/api'`, or `Cannot find module '@opentelemetry/api'`](#cannot-find-package-opentelemetryapi-or-cannot-find-module-opentelemetryapi)
+- [A `mail.send` or `mail.render` span never appears, with `@opentelemetry/api` installed](#a-mailsend-or-mailrender-span-never-appears-with-opentelemetryapi-installed)
+
 **Conformance (transport authors)**
 - [A transport that translates its failures](#a-transport-that-translates-its-failures)
 - [`describeMailer: no test runner found — pass runner: { describe, it } from your test framework`](#describemailer-no-test-runner-found--pass-runner--describe-it--from-your-test-framework)
@@ -1700,6 +1704,42 @@ mails.render('verify-email', { name: 'Ada', token: encodeURIComponent(token) });
 Or make the whole URL the placeholder (`href="{{ link }}"`) and build it with
 `URL`, as in the entry above: it is then encoded by `URL` and checked by the
 renderer.
+
+---
+
+## Observability
+
+`@nxgt/mail/telemetry` throws nothing of its own: `withTelemetry` and
+`withRendererTelemetry` only observe, and rethrow whatever the wrapped
+`Mailer` or `MailRenderer` throws, unchanged. The two entries below are not a
+message this package prints — they are what happens around it.
+
+### `Cannot find package '@opentelemetry/api'`, or `Cannot find module '@opentelemetry/api'`
+
+**When:** importing `@nxgt/mail/telemetry`, in a project that has not
+installed `@opentelemetry/api`.
+**Why:** it is an **optional peer** of `@nxgt/mail` — not installed unless
+something imports this subpath, so a project that never uses
+`withTelemetry` or `withRendererTelemetry` never needs it.
+**Fix:** `bun add @opentelemetry/api` (or `npm install`, `pnpm add`). No
+SDK is required to run: with none registered, every span and every metric
+here is a no-op, and `mailer.send` or `render` behaves exactly as unwrapped.
+
+### A `mail.send` or `mail.render` span never appears, with `@opentelemetry/api` installed
+
+**When:** `withTelemetry` or `withRendererTelemetry` wraps a `Mailer` or a
+`MailRenderer`, sends and renders happen, and nothing shows up in your
+backend.
+**Why:** `@opentelemetry/api`'s own tracer and meter answer no-ops until a
+`TracerProvider` and a `MeterProvider` are **registered** — installing the
+package is not the same as configuring an SDK.
+**Fix:** register both before the first send, as your platform's OTel setup
+does — `@opentelemetry/sdk-trace-base`'s `BasicTracerProvider` with an
+exporter and `trace.setGlobalTracerProvider(provider)`,
+`@opentelemetry/sdk-metrics`' `MeterProvider` with a reader and
+`metrics.setGlobalMeterProvider(provider)` — the same two calls
+`telemetry.spec.ts` makes with the in-memory exporters, before any
+`withTelemetry`-wrapped mailer is created.
 
 ---
 

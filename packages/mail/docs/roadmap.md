@@ -65,6 +65,15 @@ Nothing yet.
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **Observability, v0.8.0** — `@nxgt/mail/telemetry`: `withTelemetry(mailer,
+  { transport })` wraps a `Mailer` with a span `mail.send` per send, kind
+  `CLIENT`; `withRendererTelemetry(renderer)` wraps a `MailRenderer` with a
+  span `mail.render` per render, staying synchronous. Both record a
+  duration histogram and a counter by outcome (`ok`, `refused`, `failure`),
+  `error.type` on the codes this package throws, and never an address, a
+  subject, a body or a placeholder's value — only a shape: a transport's
+  name, a recipient count, a tag's name. `@opentelemetry/api` is an optional
+  peer, imported only from this subpath.
 - **Scheduled send, v0.7.0** — `scheduledAt` on a `MailMessage`, a `Date` that
   sends the e-mail later instead of now. `checkMessage` refuses a value that
   is not a valid `Date`, one in the past (a small tolerance for clock skew),
@@ -133,6 +142,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   hand the message over, `MailRefused` (`MAIL_REFUSED`) when the message itself
   was refused. A send resolves only once the transport has accepted the
   e-mail; it never answers `false`.
-- **A memory transport for tests, v0.1.0** — `createMemoryMailer()`: an outbox you can
-  read (`mailer.sent`), and a next send you can make fail, to test the path
-  where an e-mail does not go.

@@ -35,6 +35,8 @@ Nothing planned yet. Say what you need in an issue.
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **`@nxgt/mail` 0.8, v0.5.1** — the peer moves to `^0.8.0`, the version with
+  `@nxgt/mail/telemetry`. No change here.
 - **Scheduled send refused, v0.5.0** — a message's `scheduledAt` is refused
   with `MailRefused` — `send: scheduledAt is not supported — SMTP has no way
   to schedule a send, and sending it now would be wrong` — rather than sent
@@ -71,6 +73,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   sender is a `MailFailure`, nodemailer's error on `cause`. Some recipients
   refused while others were accepted throws too, and says the others may
   have the message. The classes are `@nxgt/mail`'s, so `instanceof` holds.
-- **Proven against a real server, v0.1.0** — the `@nxgt/mail/conformance` suite
-  passes against a local `smtp-server`, what arrived read back with
-  `mailparser`.

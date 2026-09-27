@@ -33,6 +33,8 @@ Nothing yet.
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **`@nxgt/mail` 0.8, v0.5.1** — the peer moves to `^0.8.0`, the version with
+  `@nxgt/mail/telemetry`. No change here.
 - **Scheduled send, v0.5.0** — a message's `scheduledAt` is sent as Resend's
   `scheduled_at`, ISO 8601: Resend answers an id right away, and sends the
   e-mail itself later. The `@nxgt/mail` peer moves to `^0.7.0`.
@@ -68,5 +70,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   a rate limit, an outage, a network error or a timeout is a `MailFailure`,
   what Resend answered on `cause`. The classes are `@nxgt/mail`'s, so
   `instanceof` holds.
-- **Proven against Resend's API shape, v0.1.0** — the `@nxgt/mail/conformance` suite
-  passes against a local server answering as Resend does.
