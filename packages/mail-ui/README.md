@@ -31,9 +31,7 @@ The components from `NxLayout` to `NxCode` in one e-mail, with the brand
 `Acme` and the default theme —
 [in French](https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-ui/previews/components-fr.png).
 
-> **Not published yet.** The package is `private` while the rest of the
-> repository — a starter — is written. It is published at
-> `0.1.0` with the other packages; the surface below is the one that will ship.
+> **0.x.** A minor version may still change the surface; the changelog says how.
 
 ## Install
 
