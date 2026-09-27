@@ -231,5 +231,12 @@ export function createRetryingMailer(
  * to turn retrying off for a mailer built on it.
  */
 export function withRetry(mailer: Mailer, options?: RetryOptions): Mailer {
-	return createRetryingMailer(mailer, options ?? {}, DEFAULT_RETRY_HOOKS);
+	// Not `options ?? {}`: an explicit `null` must still reach checkOptions
+	// and be refused, as `undefined` (omitted) does not — createRetryingMailer's
+	// own default parameter only applies to `undefined`.
+	return createRetryingMailer(
+		mailer,
+		options === undefined ? {} : options,
+		DEFAULT_RETRY_HOOKS,
+	);
 }

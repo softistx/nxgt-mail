@@ -2,7 +2,7 @@ import { describe, expect, it } from 'bun:test';
 import { describeMailer } from './conformance/describe';
 import { MailFailure, MailRefused } from './errors';
 import { createMemoryMailer } from './memory';
-import { createRetryingMailer, type RetryHooks } from './retry';
+import { createRetryingMailer, type RetryHooks, withRetry } from './retry';
 import type { MailMessage } from './types';
 
 const message: MailMessage = {
@@ -189,6 +189,12 @@ describe('createRetryingMailer', () => {
 		expect(() => createRetryingMailer(null as never, {}, fakeHooks())).toThrow(
 			TypeError,
 		);
+	});
+
+	it('refuses an explicit null through withRetry itself, unlike omitting options', () => {
+		const memory = createMemoryMailer();
+		expect(() => withRetry(memory, null as never)).toThrow(TypeError);
+		expect(() => withRetry(memory)).not.toThrow();
 	});
 
 	describeMailer({

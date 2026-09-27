@@ -706,8 +706,10 @@ retried, with exponential backoff and full jitter, and the second reaches the
 caller at once, unchanged:
 
 ```ts
-import { withRetry } from '@nxgt/mail';
+import { type MailMessage, withRetry } from '@nxgt/mail';
 import { createResendMailer } from '@nxgt/mail-resend';
+
+declare const receipt: MailMessage;
 
 const mailer = withRetry(createResendMailer({ apiKey: process.env.RESEND_API_KEY ?? '' }));
 
@@ -785,21 +787,26 @@ it caught — still `instanceof MailFailure`, its `cause` still the transport's
 own error — with `attempts` added, the number of tries made:
 
 ```ts
-import { MailError, MailFailure, type Mailer } from '@nxgt/mail';
+import { MailError, MailFailure, type Mailer, type MailMessage, type RetryExhausted } from '@nxgt/mail';
 
 declare const mailer: Mailer; // wrapped in withRetry
+declare const receipt: MailMessage;
 
 try {
 	await mailer.send(receipt);
 } catch (error) {
 	if (error instanceof MailFailure) {
-		const attempts = (error as MailFailure & { attempts: number }).attempts;
+		const attempts = (error as RetryExhausted).attempts;
 		console.error(`send failed after ${attempts} attempts`, error.cause);
 	}
 	if (!(error instanceof MailError)) throw error;
 	// tell the caller the e-mail did not go out
 }
 ```
+
+`RetryExhausted` is `MailFailure & { readonly attempts: number }` — still a
+`MailFailure`, `instanceof` and all, with `attempts` added; it is not a class
+of its own.
 
 ### A provider's own retry-after
 
@@ -815,13 +822,16 @@ nothing here reads a header for you.
 `signal` stops retrying between attempts — the pending wait rejects with
 `signal.reason`, and `send` never tries again. A `send` already in flight is
 not cancelled: the `Mailer` port takes no signal, so an attempt under way
-runs to its own conclusion regardless.
+runs to its own conclusion regardless. A `signal` already aborted when `send`
+is called rejects at once, with `signal.reason`, before the wrapped mailer is
+ever called — zero attempts, not one.
 
 ```ts
-import type { Mailer } from '@nxgt/mail';
+import type { Mailer, MailMessage } from '@nxgt/mail';
 
 declare const mailer: Mailer; // wrapped in withRetry, with { signal: controller.signal }
 declare const controller: AbortController;
+declare const receipt: MailMessage;
 
 setTimeout(() => controller.abort(), 5000); // give up on retrying after 5 s
 

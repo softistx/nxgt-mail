@@ -8,7 +8,7 @@ mailer, transport, hand-over, refusal, failure — are defined once, in the
 | Page | Read it when |
 | --- | --- |
 | [Rendering](guide/rendering.md) | You are turning a Maizzle build of `@nxgt/mail-i18n` into an e-mail with `createMailRenderer`: its options, which builds it reads (`MANIFEST_FORMAT`), typing it with the build's `MailEmails`, choosing the locale, escaping, URL variables, deploying the build, and every error |
-| [Sending](guide/sending.md) | You are calling `mailer.send`: the `MailMessage` shape, addresses, headers, one-click unsubscribe with `listUnsubscribe` (the headers, DKIM, the endpoint), attachments, the idempotency key, scheduling a send with `scheduledAt`, what `send` answers, and turning `MailFailure` and `MailRefused` into a response |
+| [Sending](guide/sending.md) | You are calling `mailer.send`: the `MailMessage` shape, addresses, headers, one-click unsubscribe with `listUnsubscribe` (the headers, DKIM, the endpoint), attachments, the idempotency key, retrying a `MailFailure` with `withRetry`, scheduling a send with `scheduledAt`, what `send` answers, and turning `MailFailure` and `MailRefused` into a response |
 | [Testing](guide/testing.md) | You are testing code that sends e-mail with `createMemoryMailer`: reading the outbox and its attachments, making a send fail, counting attempts, a retry under an idempotency key, a scheduled send's `scheduledAt` |
 | [Locales](guide/locales.md) | You are choosing the locale an e-mail is rendered in, with `pickLocale` and `parseAcceptLanguage` |
 | [Writing a transport](guide/transports.md) | You are implementing the `Mailer` port for a provider — the idempotency key and scheduling included — and running `@nxgt/mail/conformance` against it |

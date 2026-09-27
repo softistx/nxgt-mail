@@ -248,8 +248,10 @@ instead of reaching the caller on the first one. A `MailRefused` never is:
 sending it again fails again.
 
 ```ts
-import { withRetry } from '@nxgt/mail';
+import { type MailMessage, withRetry } from '@nxgt/mail';
 import { createResendMailer } from '@nxgt/mail-resend';
+
+declare const receipt: MailMessage;
 
 const mailer = withRetry(createResendMailer({ apiKey: process.env.RESEND_API_KEY ?? '' }));
 
@@ -262,12 +264,15 @@ message that already carries a key keeps it. Once every attempt has failed,
 the error is the last `MailFailure`, with `attempts` on it:
 
 ```ts
-import { MailFailure } from '@nxgt/mail';
+import { MailFailure, type Mailer, type MailMessage, type RetryExhausted } from '@nxgt/mail';
+
+declare const mailer: Mailer; // wrapped in withRetry
+declare const receipt: MailMessage;
 
 try {
 	await mailer.send(receipt);
 } catch (error) {
-	if (error instanceof MailFailure) console.error(`gave up after ${(error as MailFailure & { attempts: number }).attempts} attempts`, error.cause);
+	if (error instanceof MailFailure) console.error(`gave up after ${(error as RetryExhausted).attempts} attempts`, error.cause);
 	throw error;
 }
 ```
