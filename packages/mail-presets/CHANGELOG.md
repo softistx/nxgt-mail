@@ -1,5 +1,20 @@
 # @nxgt/mail-presets
 
+## 0.4.0
+
+### Minor Changes
+
+- [#64](https://github.com/softistx/nxgt-mail/pull/64) [`50d84ca`](https://github.com/softistx/nxgt-mail/commit/50d84ca65aa63be3a3d47b26e28f1136ac48f2f6) Thanks [@SteveGT96](https://github.com/SteveGT96)! - Four more presets, written with `@nxgt/mail-ui` components in `en` and `fr`, beside the existing nine: `two-factor-enabled` and `two-factor-disabled` (security, `name` and `link`), `account-deleted` (accounts, `name`, `link` and a required `expiresIn` for the restoration link — required for the same reason as `invitation.expires`: the server that grants the grace period knows its length, the build does not), and `invitation-accepted` (lifecycle, tells the inviter with `invitee`, `organization` and `link`). `PRESETS` now lists thirteen names; `only` accepts any of them.
+
+### Patch Changes
+
+- [#65](https://github.com/softistx/nxgt-mail/pull/65) [`a82da58`](https://github.com/softistx/nxgt-mail/commit/a82da58284b6a525c238081b84de907d8acd849e) Thanks [@SteveGT96](https://github.com/SteveGT96)! - The `@nxgt/mail-i18n` peer moves to `^0.5.0`: upgrade `@nxgt/mail-i18n` with it.
+
+- [#62](https://github.com/softistx/nxgt-mail/pull/62) [`05c1795`](https://github.com/softistx/nxgt-mail/commit/05c17958f5daff004cbc9c4f18b0e66e8c41e52b) Thanks [@SteveGT96](https://github.com/SteveGT96)! - The `@nxgt/mail-ui` peer moves to `^0.4.0`: upgrade `@nxgt/mail-ui` with it.
+- Updated dependencies [[`469d92f`](https://github.com/softistx/nxgt-mail/commit/469d92f0bafbac3a042dd6c28ea5c310e0df62e4), [`05c1795`](https://github.com/softistx/nxgt-mail/commit/05c17958f5daff004cbc9c4f18b0e66e8c41e52b), [`a82da58`](https://github.com/softistx/nxgt-mail/commit/a82da58284b6a525c238081b84de907d8acd849e), [`a524cec`](https://github.com/softistx/nxgt-mail/commit/a524cec715d74e973c9df62cd7686c88a99e0ab7), [`a82da58`](https://github.com/softistx/nxgt-mail/commit/a82da58284b6a525c238081b84de907d8acd849e)]:
+  - @nxgt/mail-i18n@0.5.0
+  - @nxgt/mail-ui@0.4.0
+
 ## 0.3.0
 
 ### Minor Changes

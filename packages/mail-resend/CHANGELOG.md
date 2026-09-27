@@ -1,5 +1,16 @@
 # @nxgt/mail-resend
 
+## 0.5.0
+
+### Minor Changes
+
+- [#60](https://github.com/softistx/nxgt-mail/pull/60) [`5f9c8b8`](https://github.com/softistx/nxgt-mail/commit/5f9c8b8cf031b7654731dabfe3c6746c274fcd23) Thanks [@SteveGT96](https://github.com/SteveGT96)! - Scheduled send: a message's `scheduledAt` is sent as Resend's `scheduled_at`, ISO 8601. Resend still answers an id right away; the e-mail itself goes out later. The `@nxgt/mail` peer moves to `^0.7.0`: upgrade `@nxgt/mail` with it.
+
+### Patch Changes
+
+- Updated dependencies [[`5f9c8b8`](https://github.com/softistx/nxgt-mail/commit/5f9c8b8cf031b7654731dabfe3c6746c274fcd23)]:
+  - @nxgt/mail@0.7.0
+
 ## 0.4.0
 
 ### Minor Changes

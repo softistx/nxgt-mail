@@ -1,6 +1,6 @@
 {
 	"name": "@nxgt/mail-i18n",
-	"version": "0.4.0",
+	"version": "0.5.0",
 	"description": "An i18n plugin for a Maizzle project: ICU catalogues checked at build time, t() in templates, one output per locale, and the manifest the renderer reads. createTranslator for use outside templates.",
 	"license": "MIT",
 	"type": "module",
