@@ -3,7 +3,9 @@ import { mkdir, mkdtemp, utimes, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
+	builtinImports,
 	duplicateClasses,
+	importTarget,
 	licenseProblems,
 	manifestShapeProblems,
 	NOT_A_BUILD_INPUT,
@@ -209,5 +211,94 @@ describe('staleBuilds', () => {
 		expect(NOT_A_BUILD_INPUT.test('identities/create.spec.ts')).toBe(true);
 		expect(NOT_A_BUILD_INPUT.test('__snapshots__/a.snap')).toBe(true);
 		expect(NOT_A_BUILD_INPUT.test('identities/create.ts')).toBe(false);
+	});
+});
+
+describe('builtinImports — what an edge runtime refuses', () => {
+	const files = (entries: Record<string, string>) =>
+		new Map(Object.entries(entries));
+
+	test('finds a built-in reached through a chunk the entry shares', () => {
+		expect(
+			builtinImports(
+				'dist/index.js',
+				files({
+					'dist/index.js': 'import { a } from "./chunks/a.js";',
+					'dist/chunks/a.js':
+						'import { b } from "./b.js";\nexport const a = 1;',
+					'dist/chunks/b.js': 'import { readFileSync } from "node:fs";',
+				}),
+			),
+		).toEqual(['dist/chunks/b.js: node:fs']);
+	});
+
+	test('counts a bare built-in, a subpath of one, bun:, a re-export and a dynamic import', () => {
+		expect(
+			builtinImports(
+				'index.js',
+				files({
+					'index.js': [
+						"import 'fs';",
+						"export { join } from 'path/posix';",
+						"const t = await import('bun:test');",
+						"const u = await import ('node:url');",
+					].join('\n'),
+				}),
+			),
+		).toEqual([
+			'index.js: fs',
+			'index.js: path/posix',
+			'index.js: bun:test',
+			'index.js: node:url',
+		]);
+	});
+
+	test('does not follow a dependency, nor count one', () => {
+		expect(
+			builtinImports(
+				'index.js',
+				files({
+					'index.js': 'import { Resend } from "resend";\nimport "@nxgt/mail";',
+				}),
+			),
+		).toEqual([]);
+	});
+
+	test('passes what @nxgt/mail builds: the root free, the renderer not', () => {
+		const built = files({
+			'dist/index.js': 'import { x } from "./chunks/errors.js";',
+			'dist/renderer.js':
+				'import { x } from "./chunks/errors.js";\nimport { join } from "node:path";',
+			'dist/chunks/errors.js': 'export class MailError extends Error {}',
+		});
+		expect(builtinImports('dist/index.js', built)).toEqual([]);
+		expect(builtinImports('./dist/renderer.js', built)).toEqual([
+			'dist/renderer.js: node:path',
+		]);
+	});
+
+	test('survives an import cycle', () => {
+		expect(
+			builtinImports(
+				'a.js',
+				files({ 'a.js': 'import "./b.js";', 'b.js': 'import "./a.js";' }),
+			),
+		).toEqual([]);
+	});
+});
+
+describe('importTarget', () => {
+	test('reads the import condition, then default, then a bare string', () => {
+		expect(
+			importTarget({ types: './dist/i.d.ts', import: './dist/i.js' }),
+		).toBe('dist/i.js');
+		expect(importTarget({ default: './dist/d.js' })).toBe('dist/d.js');
+		expect(importTarget('./dist/s.js')).toBe('dist/s.js');
+	});
+
+	test('is null for what is not JavaScript, or not there', () => {
+		expect(importTarget('./package.json')).toBeNull();
+		expect(importTarget('./dist/theme.css')).toBeNull();
+		expect(importTarget(undefined)).toBeNull();
 	});
 });
