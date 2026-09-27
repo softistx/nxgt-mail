@@ -33,8 +33,16 @@ Nothing yet.
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
-- **`@nxgt/mail` 0.8, v0.5.1** — the peer moves to `^0.8.0`, the version with
-  `@nxgt/mail/telemetry`. No change here.
+- **Webhooks — delivery events, v0.6.0** — `createResendWebhook({ secret })`
+  from the new `@nxgt/mail-resend/webhooks` subpath verifies Resend's Svix
+  signature (`svix-id`, `svix-timestamp`, `svix-signature`, several during
+  secret rotation, a 5-minute timestamp tolerance) with Web Crypto only, and
+  maps `email.delivered`, `email.bounced`, `email.complained`,
+  `email.delivery_delayed`, `email.opened` and `email.clicked` to
+  `@nxgt/mail`'s neutral `MailEvent`. An event type it does not map is
+  `null`; a bad or old signature throws `MailWebhookRefused`. The
+  `@nxgt/mail` peer moves to `^0.8.0`, also the version with
+  `@nxgt/mail/telemetry` — no change here for that part.
 - **Scheduled send, v0.5.0** — a message's `scheduledAt` is sent as Resend's
   `scheduled_at`, ISO 8601: Resend answers an id right away, and sends the
   e-mail itself later. The `@nxgt/mail` peer moves to `^0.7.0`.

@@ -145,6 +145,7 @@ How the messages are shaped:
 - [`conformance: expected 1 delivered attachment, got <n>`](#conformance-expected-1-delivered-attachment-got-n)
 - [`conformance: the attachment was not delivered byte for byte`](#conformance-the-attachment-was-not-delivered-byte-for-byte)
 - [Other `conformance:` messages](#other-conformance-messages)
+- [`checkMailEvent` refusals](#checkmailevent-refusals)
 - [A bug in `@nxgt/mail` itself](#a-bug-in-nxgtmail-itself)
 
 ---
@@ -2213,6 +2214,22 @@ test title:
 | `conformance: a tag was written into the e-mail` | `send.tags` | send the tags to the provider's own field (Resend's `tags`), or leave them out — never in the recipients, subject, HTML or text |
 | `conformance: the send after a failure was not delivered` | `failure.recovers` | do not leave the transport broken after a failure: reopen the connection on the next send |
 | `conformance: faults are required` | a `failure.*` case whose `run` you called yourself | pass `faults` in the context, or go through `runMailerCase`, which skips the case instead |
+
+### `checkMailEvent` refusals
+
+For a package mapping a **second** provider's webhook to `MailEvent` — see
+[Delivery events — writing a second provider's mapping](guide/events.md#writing-a-second-providers-mapping).
+Each names the field the mapping got wrong:
+
+| Message | Fix |
+| --- | --- |
+| `conformance: messageId must be a non-empty string` | map the provider's own message id, never `''` |
+| `conformance: recipient must be a non-empty string` | map the address the provider reports the event for |
+| `conformance: timestamp must be a valid Date` | `new Date(providersTimestamp)`, checked with `Number.isNaN` |
+| `conformance: tags must be a record of strings` | every value a string, or leave the key out |
+| `conformance: a bounced event's bounceType must be 'hard' or 'soft'` | classify the provider's own bounce code into one of the two |
+| `` conformance: a opened event's tracking must be true `` / `` a clicked event's tracking must be true `` | set `tracking: true` on both |
+| `conformance: a clicked event's url must be a string or null` | the link clicked, or `null` when the provider reports none |
 
 ### A bug in `@nxgt/mail` itself
 

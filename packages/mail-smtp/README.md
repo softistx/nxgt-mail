@@ -212,6 +212,19 @@ test this transport against a real server, see [Testing](docs/guide/testing.md):
 a local `smtp-server`, `mailparser` to read back what arrived, and
 `describeMailer`.
 
+### Delivery events — out of scope
+
+SMTP has no webhook: `send` only hands the message to the relay, which then
+does its own delivery over SMTP to every recipient's server, one hop at a
+time. What happened next — delivered, bounced, deferred — lives in the
+**receiving MTA's own logs**, which this package has no access to, or comes
+back as a **DSN** (delivery status notification, RFC 3464): a bounce e-mail
+sent to the envelope sender, which your application would have to receive
+and parse itself, out of scope here. A provider transport that has a
+webhook — [`@nxgt/mail-resend/webhooks`](https://github.com/softistx/nxgt-mail/tree/develop/packages/mail-resend#webhooks--delivery-events) —
+answers `@nxgt/mail`'s neutral `MailEvent` instead; see
+[its guide to delivery events](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/guide/events.md).
+
 ## Traps
 
 **Close a pooled transporter when the process stops.** With `pool: true`,

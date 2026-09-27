@@ -13,5 +13,6 @@ mailer, transport, hand-over, refusal, failure — are defined once, in the
 | [Locales](guide/locales.md) | You are choosing the locale an e-mail is rendered in, with `pickLocale` and `parseAcceptLanguage` |
 | [Writing a transport](guide/transports.md) | You are implementing the `Mailer` port for a provider — the idempotency key and scheduling included — and running `@nxgt/mail/conformance` against it |
 | [Observability](guide/observability.md) | You are tracing a `Mailer` or a `MailRenderer` with `withTelemetry` and `withRendererTelemetry`: the attributes, what is never recorded, the outcome rule, and composing with a retry decorator |
+| [Delivery events](guide/events.md) | You are handling what a provider reports after `send` — delivered, bounced, complained, delayed, opened, clicked — the `MailEvent` shape, `MailWebhookRefused`, and mapping a second provider's webhook |
 | [Troubleshooting](troubleshooting.md) | You have an error message and want its cause and its fix |
 | [Roadmap](roadmap.md) | You want to know what is coming, what shipped, and what is deliberately not planned |
