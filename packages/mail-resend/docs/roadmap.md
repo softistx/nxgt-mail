@@ -5,23 +5,11 @@ no dates here, and the version something shipped in is the only number.
 
 ## Now
 
-- **A Resend transport over `fetch`** — `createResendMailer({ apiKey, from })`:
-  one `POST /emails` per message, no SDK, no dependency, no Node built-in, so
-  it runs on an edge runtime too. Each message is checked as every transport
-  checks it, and a name is sent quoted so it names one recipient. Built, not
-  yet published.
-- **Errors you can act on** — a `400` or `422` is a `MailRefused`; a bad key,
-  a rate limit, an outage, a network error or a timeout is a `MailFailure`,
-  what Resend answered on `cause`. The classes are `@nxgt/mail`'s, so
-  `instanceof` holds. Built, not yet published.
-- **Proven against Resend's API shape** — the `@nxgt/mail/conformance` suite
-  passes against a local server answering as Resend does. Built, not yet
-  published.
+Nothing between releases.
 
 ## Next
 
-- **The first release, 0.1.0** — on npm with `@nxgt/mail` and the other
-  packages.
+Nothing yet.
 
 ## Later
 
@@ -43,6 +31,16 @@ no dates here, and the version something shipped in is the only number.
 
 ## Shipped
 
-Nothing yet: everything under **Now** ships with the first release, 0.1.0.
-From then on, the last ten items are listed here, newest first, and
-`CHANGELOG.md` holds the rest.
+The last ten, newest first, each with the version it came in. Everything
+before is in the [CHANGELOG](../CHANGELOG.md).
+
+- **A Resend transport over `fetch`, v0.1.0** — `createResendMailer({ apiKey, from })`:
+  one `POST /emails` per message, no SDK, no dependency, no Node built-in, so
+  it runs on an edge runtime too. Each message is checked as every transport
+  checks it, and a name is sent quoted so it names one recipient.
+- **Errors you can act on, v0.1.0** — a `400` or `422` is a `MailRefused`; a bad key,
+  a rate limit, an outage, a network error or a timeout is a `MailFailure`,
+  what Resend answered on `cause`. The classes are `@nxgt/mail`'s, so
+  `instanceof` holds.
+- **Proven against Resend's API shape, v0.1.0** — the `@nxgt/mail/conformance` suite
+  passes against a local server answering as Resend does.

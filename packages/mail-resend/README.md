@@ -23,9 +23,7 @@ const { messageId } = await mailer.send({
 }); // Resend's id — or it throws
 ```
 
-> **Not published yet.** The package is `private` while the rest of the
-> repository — a starter — is written. It is published at `0.1.0` with the
-> other packages; the surface below is the one that will ship.
+> **0.x.** A minor version may still change the surface; the changelog says how.
 
 ## Install
 
