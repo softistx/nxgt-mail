@@ -21,9 +21,7 @@ export default defineMailConfig({
 Your project stays a Maizzle project: `emails/`, `components/`, `public/`,
 `maizzle serve`, `maizzle build`. Nothing here replaces a Maizzle command.
 
-> **Not published yet.** The package is `private` while the rest of the
-> repository — a starter — is written. It is published at
-> `0.1.0` with the other packages; the surface below is the one that will ship.
+> **0.x.** A minor version may still change the surface; the changelog says how.
 
 ## Install
 
