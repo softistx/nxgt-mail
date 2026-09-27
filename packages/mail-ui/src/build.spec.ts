@@ -276,7 +276,7 @@ describe('a project built with the ui plugin', () => {
 		expect(bar('30').cells[0]).toContain('height: 4px;');
 		// Nothing of a bar is in the plain-text version.
 		expect(await read('dist/en/sequence.txt')).toStartWith(
-			'Your setup, step by step\n\nhttps://acme.example\n\nSetup 1 Create your account Done',
+			'Your setup, step by step\n\nhttps://acme.example\n\nSetup\n\n1\n\nCreate your account\n\nDone',
 		);
 	});
 
@@ -335,7 +335,9 @@ describe('a project built with the ui plugin', () => {
 			/color: #62748e;[^>]*>\s*<span aria-hidden="true">–<\/span> flat</,
 		);
 		const text = await read('dist/en/summary.txt');
-		expect(text).toContain('Revenue $12,400 +12 vs last month Refunds 3 -2');
+		expect(text).toContain(
+			'Revenue\n\n$12,400\n\n+12 vs last month\n\nRefunds\n\n3\n\n-2',
+		);
 		expect(text).not.toMatch(/[▲▼↗]/);
 	});
 
@@ -345,7 +347,7 @@ describe('a project built with the ui plugin', () => {
 		expect(html).toContain('>Your month at Acme</h1>');
 		expect(html).toContain('background-color: #f6f6fa;');
 		expect(await read('dist/en/summary.txt')).toContain(
-			'🏢 Acme Labs Active Plan: Pro Seats: 12 Settings',
+			'🏢\n\nAcme Labs Active\n\nPlan: Pro Seats: 12\n\nSettings',
 		);
 	});
 

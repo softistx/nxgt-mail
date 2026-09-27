@@ -48,6 +48,7 @@ How the messages are shaped:
 - [A hook's change is lost](#a-hooks-change-is-lost)
 - [A plugin's component tag stays in the HTML, unresolved](#a-plugins-component-tag-stays-in-the-html-unresolved)
 - [One of two configs' hooks never runs](#one-of-two-configs-hooks-never-runs)
+- [The plain-text part is one long line again](#the-plain-text-part-is-one-long-line-again)
 - [A bug in `@nxgt/mail-config` itself](#a-bug-in-nxgtmail-config-itself)
 
 ---
@@ -487,6 +488,30 @@ export default defineMailConfig({
   ],
 });
 ```
+
+### The plain-text part is one long line again
+
+**When:** `maizzle build` succeeds, the `.txt` parts have no invisible
+character and each link once, but the paragraphs run together on one line —
+the code or the link buried in the middle of a sentence.
+**Why:** your config (or a plugin) sets `plaintext: true`. The base sets
+`plaintext` to an object that holds the `cb` laying the text out in
+paragraphs, and configs merge as Maizzle merges them: a boolean over an object
+**replaces** it, `cb` included. The base's `afterBuild` still tidies the file,
+so only the paragraphs are lost.
+**Fix:** leave `plaintext` out — the base already writes a text part — or set
+an object that keeps the `cb`:
+
+```ts
+import { breakBlocks, defineMailConfig } from '@nxgt/mail-config';
+
+export default defineMailConfig({
+  plaintext: { extension: 'text', options: { cb: breakBlocks } },   // not plaintext: true
+});
+```
+
+An object without `cb` — `plaintext: { extension: 'text' }` — keeps the
+base's too, since objects merge key by key.
 
 ### A bug in `@nxgt/mail-config` itself
 

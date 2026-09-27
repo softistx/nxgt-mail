@@ -2,6 +2,7 @@ import { describe, expect, test } from 'bun:test';
 import type { MaizzleConfig } from '@maizzle/framework';
 import {
 	baseConfig,
+	breakBlocks,
 	defineMailConfig,
 	defineMailPlugin,
 	type MailPlugin,
@@ -17,7 +18,7 @@ const fire = (config: MaizzleConfig, event: string, params: any) =>
 describe('defineMailConfig — the layers', () => {
 	test('answers the base config for a project with nothing', () => {
 		expect(defineMailConfig()).toEqual(baseConfig);
-		expect(defineMailConfig({})).toEqual({ plaintext: true });
+		expect(defineMailConfig({})).toEqual({ ...baseConfig });
 	});
 
 	test('layers base, then each plugin in order, then the project', () => {
@@ -33,7 +34,7 @@ describe('defineMailConfig — the layers', () => {
 			output: { path: 'project' },
 		});
 		expect(config).toEqual({
-			plaintext: true,
+			...baseConfig,
 			output: { path: 'project', extension: 'htm' },
 			css: { purge: false },
 		});
@@ -49,7 +50,7 @@ describe('defineMailConfig — the layers', () => {
 				plugins: [{ name: 'a', plaintext: false }],
 				plaintext: { extension: 'text' },
 			}).plaintext,
-		).toEqual({ extension: 'text' });
+		).toEqual({ extension: 'text', options: { cb: breakBlocks } });
 	});
 
 	test("an array replaces the one under it, as in Maizzle's own merge", () => {
@@ -130,14 +131,14 @@ describe('defineMailConfig — the layers', () => {
 
 	test('passes neither plugins nor a name to Maizzle', () => {
 		const config = defineMailConfig({ plugins: [{ name: 'a', root: 'src' }] });
-		expect(config).toEqual({ plaintext: true, root: 'src' });
+		expect(config).toEqual({ ...baseConfig, root: 'src' });
 	});
 });
 
 describe('defineMailConfig — the build events', () => {
 	test('a single handler is handed to Maizzle as it is', () => {
-		const afterBuild = () => undefined;
-		expect(defineMailConfig({ afterBuild }).afterBuild).toBe(afterBuild);
+		const afterRender = () => undefined;
+		expect(defineMailConfig({ afterRender }).afterRender).toBe(afterRender);
 	});
 
 	test('beforeRender: each string replaces template.source for the next one', async () => {
@@ -310,7 +311,7 @@ describe('productionConfig', () => {
 	test('minifies the HTML over the project config, then applies the overrides', () => {
 		const config = defineMailConfig({ output: { path: 'dist' } });
 		expect(productionConfig(config)).toEqual({
-			plaintext: true,
+			...baseConfig,
 			output: { path: 'dist' },
 			html: { minify: true },
 		});
@@ -320,7 +321,7 @@ describe('productionConfig', () => {
 				html: { minify: { lineLengthLimit: 1000 } },
 			}),
 		).toEqual({
-			plaintext: true,
+			...baseConfig,
 			output: { path: 'dist-production' },
 			html: { minify: { lineLengthLimit: 1000 } },
 		});

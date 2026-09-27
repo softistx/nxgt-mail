@@ -66,6 +66,17 @@ describe('a project built with maizzle build', () => {
 		expect(text).not.toContain('<');
 	});
 
+	test('the plain-text part reads as one: paragraphs, line breaks, no invisible character, a link once', async () => {
+		const text = await read('dist/hello.txt');
+		expect(text).toContain('alpha then beta\n\n');
+		expect(text).toContain('line one\nline two');
+		expect(text).not.toMatch(/[\u200B-\u200D\uFEFF]/);
+		expect(text).not.toMatch(/\n{3}/);
+		expect(text.match(/https:\/\/example\.test\/go/g)).toHaveLength(1);
+		expect(text).toEndWith('\n');
+		expect(text).not.toStartWith('\n');
+	});
+
 	test('the production config minifies, and keeps every hook', () => {
 		expect(html).toContain('</p> <p>');
 		expect(production).not.toContain('</p> <p>');
