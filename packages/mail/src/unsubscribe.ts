@@ -30,6 +30,8 @@ export type ListUnsubscribeHeaders = {
 // quote, a backtick, a backslash, braces, `|`, `^`). Percent-encode it.
 const URL_ALLOWED = /^https:\/\/[\x21-\x7E]+$/;
 const URL_REFUSED = /[<>,"`\\{}|^]/;
+// A `%` that does not start an escape: no URI parser reads it as intended.
+const BAD_ESCAPE = /%(?![0-9A-Fa-f]{2})/;
 // RFC 6068 reads `?`, `&`, `=`, `#` and `%` inside a mailto: as structure — a
 // subject, a second recipient — so the address is plain ASCII without them.
 const MAILTO = /^[A-Za-z0-9._~!$'*+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+$/;
@@ -71,6 +73,7 @@ export function listUnsubscribe(
 	if (
 		!URL_ALLOWED.test(options.url) ||
 		URL_REFUSED.test(options.url) ||
+		BAD_ESCAPE.test(options.url) ||
 		!URL.canParse(options.url) ||
 		// A user and a password in a header every relay and recipient reads.
 		new URL(options.url).username !== '' ||
@@ -87,8 +90,11 @@ export function listUnsubscribe(
 	}
 	const mailto =
 		options.mailto === undefined ? '' : `, <mailto:${options.mailto}>`;
+	// The URL as a parser reads it: `https:///host` and an empty `@` are gone,
+	// the host lowered, and the value written is the value checked.
+	const url = new URL(options.url).href;
 	return {
-		'List-Unsubscribe': `<${options.url}>${mailto}`,
+		'List-Unsubscribe': `<${url}>${mailto}`,
 		'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
 	};
 }

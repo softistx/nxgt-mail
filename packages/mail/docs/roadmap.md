@@ -6,13 +6,13 @@ the only number.
 
 ## Now
 
-- **One-click unsubscribe** — `listUnsubscribe({ url, mailto? })` answers
-  RFC 8058's `List-Unsubscribe` and `List-Unsubscribe-Post` headers, to
-  spread into a message's `headers`, so Gmail and Yahoo offer their
-  one-click unsubscribe. A `url` that is not `https:`, or that would break
-  the header, and a `mailto` that is not a bare address are refused with
-  `MailRefused`, never quoting the value. No transport changes: the headers
-  travel as any other. Built, not yet published.
+- **The conformance suite checks the idempotency key** — a fourteenth case,
+  `send.idempotencyKey`: a message with a key is delivered, never refused
+  for it, and the key is written nowhere in the e-mail. Built, not yet
+  published.
+- **`listUnsubscribe` writes the URL a parser reads** — `new URL(url).href`,
+  so the value written is the value checked, and a `%` that starts no escape
+  is refused. Built, not yet published.
 
 ## Next
 
@@ -69,6 +69,12 @@ Nothing yet.
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **One-click unsubscribe, v0.4.0** — `listUnsubscribe({ url, mailto? })`
+  answers RFC 8058's `List-Unsubscribe` and `List-Unsubscribe-Post` headers,
+  to spread into a message's `headers`, so Gmail and Yahoo offer their
+  one-click unsubscribe. A `url` that is not an ASCII `https://` URL, or that
+  would break the header, and a `mailto` that is not a bare address are
+  refused with `MailRefused`, never quoting the value. No transport changes.
 - **An idempotency key per send, v0.3.0** — `idempotencyKey` on a `MailMessage`
   names the send, so sending it again — a retry after a timeout, a job run
   twice — delivers it once where the transport can deduplicate; a transport
@@ -125,10 +131,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   local server answering as Resend does — and throwing `@nxgt/mail`'s errors.
   See [the SMTP roadmap](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-smtp/docs/roadmap.md)
   and [the Resend roadmap](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-resend/docs/roadmap.md).
-- **The Maizzle side, `@nxgt/mail-config`, `@nxgt/mail-i18n`, `@nxgt/mail-ui`
-  and `@nxgt/mail-presets` v0.1.0** — packages for a normal Maizzle 6 project:
-  `defineMailConfig({ plugins })` with every plugin's build hooks chained;
-  one template per e-mail, its text keys into ICU catalogues checked at build
-  time, one output per locale and the manifest this renderer reads; e-mail
-  components in the style of `@nxgt/material-vue`, with shared messages in
-  `en` and `fr`; and nine ready e-mails built with your own brand.

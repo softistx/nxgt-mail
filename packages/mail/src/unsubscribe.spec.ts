@@ -49,8 +49,18 @@ describe('listUnsubscribe', () => {
 	it('keeps a percent-encoded comma, a port, and what encodeURIComponent leaves', () => {
 		const encoded = `https://example.test:8443/u?list=a%2Cb&t=${encodeURIComponent("o'brien(1)*")}`;
 		expect(listUnsubscribe({ url: encoded })['List-Unsubscribe']).toBe(
-			`<${encoded}>`,
+			`<${new URL(encoded).href}>`,
 		);
+		expect(new URL(encoded).href).toContain('list=a%2Cb');
+	});
+
+	it.each([
+		['extra slashes', 'https:///example.test/u', 'https://example.test/u'],
+		['an empty user', 'https://@example.test/u', 'https://example.test/u'],
+		['a host in capitals', 'https://EXAMPLE.test/u', 'https://example.test/u'],
+		['a bare origin', 'https://example.test', 'https://example.test/'],
+	])('writes the URL as a parser reads it: %s', (_, url, written) => {
+		expect(listUnsubscribe({ url })['List-Unsubscribe']).toBe(`<${written}>`);
 	});
 
 	it.each([
@@ -63,6 +73,8 @@ describe('listUnsubscribe', () => {
 		['an angle bracket', 'https://example.test/u>, <https://evil.test'],
 		['a raw comma', 'https://example.test/u?list=a,b'],
 		['a tab', 'https://example.test/u\t'],
+		['a % that starts no escape', 'https://example.test/u?t=%'],
+		['a % before what is not hex', 'https://example.test/u?t=%zz'],
 		['a URL outside ASCII', 'https://exämple.test/ü?t=é'],
 		['an invisible format character', 'https://example.test/u\u202E'],
 		['backslashes for slashes', 'https:\\\\example.test\\u'],
