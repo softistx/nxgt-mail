@@ -98,7 +98,10 @@ that does not format), and of the renderer's `render` (an unknown e-mail or
 locale, a missing or unknown variable): each is a mistake in the code or the
 catalogues, never a condition a caller would `switch` on. An argument of the
 wrong type at call time (variables that are not an object, a value that is
-not text) is a `TypeError`, as at wiring. The one `render` refusal a caller
+not text) is a `TypeError`, as at wiring. **`send` is the exception**: a message
+field of the wrong type is a `MailRefused`, as every other refusal of the
+message is, because a transport's caller handles one class for "this message
+cannot go" and the conformance cases hold every transport to it. The one `render` refusal a caller
 handles is a URL value it will not write: `MailRefused`, since the URL may
 come from outside and sending it again unchanged fails again. Given the
 build's `MailEmails`, the same mistakes but the URL's value are compile errors
