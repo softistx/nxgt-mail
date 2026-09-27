@@ -51,7 +51,7 @@ describe('writeWrappers', () => {
 		return (layout: 'nested' | 'flat' = 'nested') =>
 			writeWrappers({
 				folders: [{ dir: join(root, 'emails'), label: 'emails' }],
-				wrappersDir: join(root, '.maizzle/i18n'),
+				wrappersDir: join(root, '.maizzle/emails'),
 				locales: ['en', 'fr'],
 				layout,
 			});
@@ -61,20 +61,20 @@ describe('writeWrappers', () => {
 		const write = project(['welcome', 'auth/reset-password']);
 		expect(write()).toEqual(['auth/reset-password', 'welcome']);
 		const wrapper = readFileSync(
-			join(root, '.maizzle/i18n/fr/auth/reset-password.vue'),
+			join(root, '.maizzle/emails/fr/auth/reset-password.vue'),
 			'utf8',
 		);
 		expect(wrapper).toContain(
 			"import Email from '../../../../emails/auth/reset-password.vue';",
 		);
 		expect(wrapper).toContain('<template><Email /></template>');
-		expect(existsSync(join(root, '.maizzle/i18n/en/welcome.vue'))).toBe(true);
+		expect(existsSync(join(root, '.maizzle/emails/en/welcome.vue'))).toBe(true);
 	});
 
 	test('rewrites a wrapper only when its text changed', async () => {
 		const write = project(['welcome']);
 		write();
-		const file = join(root, '.maizzle/i18n/en/welcome.vue');
+		const file = join(root, '.maizzle/emails/en/welcome.vue');
 		const before = statSync(file).mtimeMs;
 		await Bun.sleep(20);
 		write();
@@ -86,9 +86,13 @@ describe('writeWrappers', () => {
 		write();
 		rmSync(join(root, 'emails/goodbye.vue'));
 		write('flat');
-		expect(existsSync(join(root, '.maizzle/i18n/en/goodbye.vue'))).toBe(false);
-		expect(existsSync(join(root, '.maizzle/i18n/en/welcome.vue'))).toBe(false);
-		expect(existsSync(join(root, '.maizzle/i18n/welcome.fr.vue'))).toBe(true);
+		expect(existsSync(join(root, '.maizzle/emails/en/goodbye.vue'))).toBe(
+			false,
+		);
+		expect(existsSync(join(root, '.maizzle/emails/en/welcome.vue'))).toBe(
+			false,
+		);
+		expect(existsSync(join(root, '.maizzle/emails/welcome.fr.vue'))).toBe(true);
 	});
 
 	test('answers no e-mail for a project with no templates folder', () => {
@@ -174,14 +178,14 @@ describe('writeWrappers — a package folder under the project', () => {
 					...(only && { only }),
 				},
 			],
-			wrappersDir: join(root, '.maizzle/i18n'),
+			wrappersDir: join(root, '.maizzle/emails'),
 			locales: ['en'],
 			layout: 'nested',
 		});
 	};
 
 	const importOf = (email: string) =>
-		readFileSync(join(root, `.maizzle/i18n/en/${email}.vue`), 'utf8');
+		readFileSync(join(root, `.maizzle/emails/en/${email}.vue`), 'utf8');
 
 	test("builds the package's templates, the project's replacing one of the same name", () => {
 		root = mkdtempSync(join(tmpdir(), 'mail-i18n-'));
@@ -209,7 +213,7 @@ describe('writeWrappers — a package folder under the project', () => {
 	const writeFolders = (...folders: TemplateFolder[]) =>
 		writeWrappers({
 			folders,
-			wrappersDir: join(root, '.maizzle/i18n'),
+			wrappersDir: join(root, '.maizzle/emails'),
 			locales: ['en'],
 			layout: 'nested',
 		});

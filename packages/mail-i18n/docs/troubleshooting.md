@@ -635,7 +635,7 @@ emails/auth/reset-password.vue   → messages under auth.resetPassword
 **When:** `maizzle build`, on the first template, when the project sets
 `content` itself.
 **Why:** the plugin builds each template through one generated wrapper per
-locale, under `.maizzle/i18n/`, and lists those in `content`. A `content`
+locale, under `.maizzle/emails/`, and lists those in `content`. A `content`
 set in the project **replaces** the plugin's — arrays are not joined — so
 Maizzle builds the templates directly, with no locale.
 **Fix:** leave `content` out, and put every template in the `emails` folder
@@ -1006,7 +1006,7 @@ export default defineMailConfig({
 ### `.maizzle/` shows up in `git status`
 
 **When:** after the first `maizzle build` or `maizzle serve`, `git status`
-lists `.maizzle/i18n/en/verify-email.vue` and one file per template and
+lists `.maizzle/emails/en/verify-email.vue` and one file per template and
 locale.
 **Why:** those are the wrappers the plugin generates, one per template and
 locale, so that one build writes every locale. They are rewritten on every
@@ -1026,7 +1026,7 @@ Never edit a wrapper: the change is lost on the next build.
 thread, such as a job runner or a Vitest `threads` pool. The build prints
 `No templates found`, or builds templates that were since renamed or
 removed, without the ones added.
-**Why:** the plugin writes the wrappers under `.maizzle/i18n/` only on the
+**Why:** the plugin writes the wrappers under `.maizzle/emails/` only on the
 main thread, so that the workers of a parallel build never write the same
 file twice. From a worker thread it writes none, and the build finds whatever
 wrappers are already there, or none at all.

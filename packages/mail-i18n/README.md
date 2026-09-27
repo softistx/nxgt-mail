@@ -51,7 +51,7 @@ Peers:
 ```
 
 The plugin writes one generated file per template and locale under
-`.maizzle/i18n/`. They are rewritten on every run, never edited, and never
+`.maizzle/emails/`. They are rewritten on every run, never edited, and never
 committed.
 
 ```css
@@ -88,7 +88,7 @@ file is how the editor learns them. See
 | `createTranslator(catalogues, getLanguage)` | `t(key, args?, language?)` outside templates, shaped like `@nxgt/i18n`, but it throws on a missing key |
 | `emailKey(email)` | Where an e-mail's messages live: `auth/reset-password` → `auth.resetPassword` |
 | `MANIFEST_FILE` | `'mail-manifest.json'`, the manifest's name in the output folder |
-| `WRAPPERS_DIR` | `'.maizzle/i18n'`, where the generated files go |
+| `WRAPPERS_DIR` | `'.maizzle/emails'`, where the generated files go |
 | `I18nOptions`, `Layout`, `TemplateSource` | The plugin's options, `'nested' \| 'flat'`, and a package's folder of templates for `templates` |
 | `Catalogue`, `Catalogues`, `ArgumentKind` | A catalogue as written, catalogues by locale, and `'string' \| 'number' \| 'date'` |
 | `Translate`, `LanguageProvider`, `MessageArgs` | What `createTranslator` answers and takes |
@@ -380,7 +380,7 @@ not affected. See [Editor and type checking](docs/guide/editor.md).
 `content` in your config replaces that, and each template then fails with
 `… is not built through the i18n plugin`.
 
-**Run `maizzle` from the project root.** `dir`, `emails` and `.maizzle/i18n`
+**Run `maizzle` from the project root.** `dir`, `emails` and `.maizzle/emails`
 are resolved against the directory `maizzle` runs in.
 
 **Nest keys; never dot them.** `{ "verifyEmail": { "title": "…" } }`, not

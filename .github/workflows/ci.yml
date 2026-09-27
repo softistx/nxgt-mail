@@ -97,10 +97,10 @@ jobs:
           done
           [ -n "$list" ] || { echo "maizzle serve never answered"; exit 1; }
           for email in en/verify-email fr/verify-email en/sign-in-code fr/sign-in-code; do
-            grep -q "\"/.maizzle/i18n/$email\"" <<< "$list" \
+            grep -q "\"/.maizzle/emails/$email\"" <<< "$list" \
               || { echo "maizzle serve does not list $email"; exit 1; }
           done
-          curl -sf http://localhost:3999/__maizzle/render/.maizzle/i18n/fr/verify-email \
+          curl -sf http://localhost:3999/__maizzle/render/.maizzle/emails/fr/verify-email \
             | grep -q 'Bonjour {{ name }}' \
             || { echo "maizzle serve does not render fr/verify-email in French"; exit 1; }
           echo "maizzle serve lists every e-mail in en and fr, and renders one"

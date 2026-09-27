@@ -153,13 +153,13 @@ describe('a project built with the i18n plugin', () => {
 					.catch(() => Bun.sleep(500).then(() => []));
 			}
 			expect(list.map((template) => template.path).sort()).toEqual([
-				'.maizzle/i18n/en/auth/reset-password.vue',
-				'.maizzle/i18n/en/verify-email.vue',
-				'.maizzle/i18n/fr/auth/reset-password.vue',
-				'.maizzle/i18n/fr/verify-email.vue',
+				'.maizzle/emails/en/auth/reset-password.vue',
+				'.maizzle/emails/en/verify-email.vue',
+				'.maizzle/emails/fr/auth/reset-password.vue',
+				'.maizzle/emails/fr/verify-email.vue',
 			]);
 			const fr = await fetch(
-				`http://localhost:${port}/__maizzle/render/.maizzle/i18n/fr/verify-email`,
+				`http://localhost:${port}/__maizzle/render/.maizzle/emails/fr/verify-email`,
 			).then((response) => response.text());
 			expect(fr).toContain('Bonjour {{ name }},');
 		} finally {
