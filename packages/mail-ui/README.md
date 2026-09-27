@@ -238,6 +238,23 @@ Override a dark value the same way you override a light one — the same
 ui({ brand: { name: 'Acme' }, theme: { 'color-background-dark': '#0b1220' } });
 ```
 
+`color-primary` and `color-primary-foreground` are the one pair with no
+dark value by default — a project that never sets `color-primary-dark` and
+`color-primary-foreground-dark` reaches dark mode with `color-primary`
+unchanged, exactly as before this pair of tokens existed. Set them when a
+near-black brand primary would otherwise melt into the dark card:
+
+```ts
+ui({
+	brand: { name: 'Acme' },
+	theme: {
+		'color-primary': '#27272a',
+		'color-primary-dark': '#a1a1aa',
+		'color-primary-foreground-dark': '#18181b',
+	},
+});
+```
+
 A dark logo disappears on a dark background: give `brand.logo.darkSrc` (or
 `<NxFigure :dark-src>`) a light-background version, and it shows instead
 under dark mode.

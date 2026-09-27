@@ -163,6 +163,30 @@ describe('a project built with the ui plugin', () => {
 		);
 	});
 
+	test('primary keeps its light value in the dark rules, unless a project sets a dark one', async () => {
+		const html = await read('dist/en/welcome.html');
+		expect(html).toContain(
+			'.nx-dark-bg-primary {\n  background-color: #485096 !important;\n  background-color: lab(36.0601% 12.8744 -40.3318) !important;\n}',
+		);
+		expect(html).toContain(
+			'.nx-dark-text-primary-foreground {\n  color: #f8fafc !important;\n  color: lab(98.1434% -.369519 -1.05966) !important;\n}',
+		);
+	});
+
+	test('shows a project-set dark primary in the dark rules, not the light one', async () => {
+		const html = await read('dist-override/en/welcome.html');
+		expect(html).toContain(
+			'.nx-dark-bg-primary {\n  background-color: #f4f4f5 !important;\n}',
+		);
+		expect(html).toContain(
+			'.nx-dark-text-primary-foreground {\n  color: #18181b !important;\n}',
+		);
+		// The light value, from `color-primary`, is unaffected by the dark one.
+		expect(styleOf(html, 'Open my account', 'a ')).toContain(
+			'background-color: #0f766e;',
+		);
+	});
+
 	test('shows the name, unlinked, for a brand without a URL or logo', async () => {
 		const html = await read('dist-override/en/welcome.html');
 		expect(html).toMatch(
@@ -564,7 +588,7 @@ describe('a project built with the ui plugin', () => {
 			'padding',
 		);
 		expect(html).toContain(
-			'href="https://acme.example/preferences">Manage your preferences</a>',
+			'href="https://acme.example/preferences" class="nx-dark-text-primary">Manage your preferences</a>',
 		);
 		expect(styleOf(html, 'Unsubscribe', 'span')).toBe('mso-text-raise: 8px;');
 		expect(html).toMatch(

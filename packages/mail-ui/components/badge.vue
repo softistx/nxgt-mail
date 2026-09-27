@@ -21,7 +21,8 @@ const props = withDefaults(defineProps<{ variant?: Variant }>(), {
 });
 
 const VARIANT: Record<Variant, string> = {
-	default: 'border-primary bg-primary text-primary-foreground',
+	default:
+		'border-primary nx-dark-border-primary bg-primary nx-dark-bg-primary text-primary-foreground nx-dark-text-primary-foreground',
 	secondary: 'border-secondary bg-secondary text-secondary-foreground',
 	destructive: 'border-error bg-error text-white',
 	error: 'border-error bg-error text-error-foreground',

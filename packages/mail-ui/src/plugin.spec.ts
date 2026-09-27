@@ -109,6 +109,28 @@ describe('ui — the plugin', () => {
 		);
 	});
 
+	test('defaults primary-dark to primary, and refuses it like any other token', () => {
+		const provided = new Map<unknown, unknown>();
+		const plugins = ui({ brand }).vue?.plugins as {
+			install(app: unknown): void;
+		}[];
+		for (const plugin of plugins) {
+			plugin.install({
+				config: {},
+				provide: (key: unknown, value: unknown) => provided.set(key, value),
+			});
+		}
+		const { css } = provided.get('nxgt:mail-ui') as { css: string };
+		expect(css).toContain('--color-primary-dark: var(--color-primary);');
+		expect(css).toContain(
+			'--color-primary-foreground-dark: var(--color-primary-foreground);',
+		);
+		refuses(
+			{ brand, theme: { 'color-primary-dark': 'red; } body { color: red' } },
+			'ui: theme.color-primary-dark must be a CSS value, as #0f766e or 8px',
+		);
+	});
+
 	test('makes an error while rendering fail the build under NODE_ENV=production too', () => {
 		const config: Record<string, unknown> = {};
 		const plugins = ui({ brand }).vue?.plugins as {

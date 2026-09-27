@@ -49,7 +49,10 @@ const cell = computed(
 		`height: ${props.height}px; line-height: ${props.height}px; font-size: ${props.height}px; mso-line-height-rule: exactly;`,
 );
 const classes = computed(() =>
-	twMerge('mb-4 w-full rounded-full bg-primary-20', attrs.class as string),
+	twMerge(
+		'mb-4 w-full rounded-full bg-primary-20 nx-dark-bg-primary-20',
+		attrs.class as string,
+	),
 );
 </script>
 
@@ -58,7 +61,7 @@ const classes = computed(() =>
   <div data-maizzle-html-only>
   <table v-bind="{ ...attrs, class: undefined }" :class="classes" role="progressbar" :aria-valuenow="modelValue" aria-valuemin="0" :aria-valuemax="max" cellpadding="0" cellspacing="0">
     <tr>
-      <td v-if="percent > 0" class="rounded-full bg-primary" :height="height" :style="`width: ${percent}%; ${cell}`">&zwj;</td>
+      <td v-if="percent > 0" class="rounded-full bg-primary nx-dark-bg-primary" :height="height" :style="`width: ${percent}%; ${cell}`">&zwj;</td>
       <td v-if="percent < 100" :height="height" :style="cell">&zwj;</td>
     </tr>
   </table>

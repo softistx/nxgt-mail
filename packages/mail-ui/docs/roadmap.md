@@ -58,6 +58,13 @@ Nothing yet. A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **Optional dark primary, v0.5.0** — `color-primary-dark` and
+  `color-primary-foreground-dark`, defaulting to their light value, so a
+  project that never sets them is unaffected. Set them when a brand's
+  near-black primary would otherwise melt into the dark card: `NxButton`,
+  `NxLinkButton`, `NxIconButton`, `NxChip`, `NxBadge`'s default variant,
+  `NxProgress` and `NxTimeline`'s `primary` marker all carry it, and
+  `color-paper-dark` mixes it in place of the light value.
 - **A placeholder where a number is computed fails the build, v0.4.0** —
   `NxAvatar`'s `size`, `NxLayout`'s `width` and `NxAvatarGroup`'s `max`
   given a placeholder failed silently (a truncated style, every avatar
@@ -107,8 +114,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   every `components.source` folder count there too.
 - **`@nxgt/mail-config` 0.2, v0.1.1** — the peer moves to `^0.2.0`, whose text
   part is laid out in paragraphs. The components do not change.
-- **UI components as a plugin, v0.1.0** — `ui({ brand, theme })`, listed in
-  `defineMailConfig`'s `plugins`: the `Nx*` components available in every
-  template, the brand (name, link, logo by absolute URL) in the layout's
-  header and footer, and a wrong option refused where the config is written.
-  A project's `components/nx-button.vue` replaces ours by name.
