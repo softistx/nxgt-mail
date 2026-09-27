@@ -54,7 +54,7 @@ function ui(options: UiOptions): MailPlugin;
 The plugin it answers, named `ui`, does four things:
 
 - registers every component of the package's `components/` folder under the
-  prefix `Nx` (`button.vue` is `<NxButton>`); Maizzle's own stay
+  prefix `Nx` (`card-header.vue` is `<NxCardHeader>`); Maizzle's own stay
   available (`<Button>`, `<Spacer>`);
 - gives every template `brand`, the brand as passed;
 - provides the brand and the theme's CSS to the components, under
@@ -185,8 +185,8 @@ edit it — see
 
 ## Replacing a component
 
-A file in your project's `components/` named like one of ours replaces it, in
-every template:
+A file in your project's `components/` named as one of our tags,
+`nx-badge.vue` for `<NxBadge>`, replaces it in every template:
 
 ```vue
 <!-- components/nx-badge.vue -->
@@ -206,9 +206,10 @@ console.log(COMPONENTS_DIR); // /…/node_modules/@nxgt/mail-ui/components
 ```
 
 Ours are named without the prefix, which `ui()` adds: `badge.vue` is
-`<NxBadge>` (`nx-button.vue` keeps it, being built on Maizzle's `<Button>`). Your `components/` has no prefix, so **rename the copy with the
-tag's whole name**, `nx-badge.vue`: a `components/badge.vue` is `<Badge>`, a
-component of its own, and replaces nothing.
+`<NxBadge>` (`nx-button.vue` keeps it, being built on Maizzle's `<Button>`).
+Your `components/` has no prefix, so **rename the copy with the tag's whole
+name**, `nx-badge.vue`: a `components/badge.vue` is `<Badge>`, a component of
+its own, and replaces nothing.
 
 A copied component imports `./ui` for its shared types; copy `ui.ts` from the
 same folder beside it, or inline what it uses.

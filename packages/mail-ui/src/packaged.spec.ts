@@ -1,7 +1,14 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import {
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { fileForTag } from './packaged';
+import { COMPONENTS_DIR } from './plugin';
 
 const root = fileURLToPath(new URL('../test/.packaged', import.meta.url));
 const project = { path: `${root}/project` };
@@ -75,5 +82,23 @@ describe('fileForTag, which finds the file of a tag in an installed template', (
 			`${ours.path}/2fa.vue`,
 		);
 		expect(fileForTag(folders, 'NxUnknown')).toBeUndefined();
+	});
+});
+
+describe("the package's components", () => {
+	test('none uses its own name as a tag, which Vue would read as the file itself', () => {
+		const offenders = readdirSync(COMPONENTS_DIR)
+			.filter((file) => file.endsWith('.vue'))
+			.filter((file) => {
+				const self = file
+					.slice(0, -'.vue'.length)
+					.replace(/(^|-)(.)/g, (_, _dash: string, c: string) =>
+						c.toUpperCase(),
+					);
+				return new RegExp(`<${self}[\\s/>]`).test(
+					readFileSync(`${COMPONENTS_DIR}/${file}`, 'utf8'),
+				);
+			});
+		expect(offenders).toEqual([]);
 	});
 });

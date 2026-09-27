@@ -225,9 +225,12 @@ if the editor does not know `brand`.
 `components/NxBadge.vue` works as well: Maizzle names a component the same
 from either case.
 
-A file in your `components/` with the name of one of ours wins over it — in
-your templates, in ours, and in a package's. See
-[The plugin](docs/guide/plugin.md#replacing-a-component).
+A file in your `components/` named as one of our tags wins over ours — in
+your templates, in ours, and in a package's. A copy of ours must be renamed:
+ours are named without the prefix `ui()` adds, so a copied `badge.vue` is
+`<Badge>` and replaces nothing until it is `nx-badge.vue`. See
+[The plugin](docs/guide/plugin.md#replacing-a-component) and
+[A project's own component does not replace the package's](docs/troubleshooting.md#a-projects-own-component-does-not-replace-the-packages).
 
 ## Traps
 
