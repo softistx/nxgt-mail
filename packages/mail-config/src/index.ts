@@ -19,6 +19,9 @@
 
 import type { MaizzleConfig } from '@maizzle/framework';
 import { EVENTS, layer } from './layer';
+import { breakBlocks, tidyPlaintextFiles } from './plaintext';
+
+export { breakBlocks, tidyPlaintext } from './plaintext';
 
 /** A partial Maizzle config a package hands to {@link defineMailConfig}. */
 export interface MailPlugin extends MaizzleConfig {
@@ -36,11 +39,16 @@ export interface MailConfig extends MaizzleConfig {
 
 /**
  * What a project gets without asking: a plain-text part next to each HTML
- * file. Everything else — `dist/`, `public/`, CSS inlined and purged — is
- * already Maizzle's default.
+ * file, that reads as one — a blank line between paragraphs, a line break
+ * for each `<br>`, no invisible characters from a spacer or a divider, and a
+ * link's address written once. Everything else — `dist/`, `public/`, CSS
+ * inlined and purged — is already Maizzle's default.
  */
 export const baseConfig: Readonly<MaizzleConfig> = Object.freeze({
-	plaintext: true,
+	plaintext: Object.freeze({ options: Object.freeze({ cb: breakBlocks }) }),
+	afterBuild({ files, config }) {
+		tidyPlaintextFiles(files, config.plaintext);
+	},
 });
 
 const isObject = (value: unknown): value is Record<string, unknown> =>

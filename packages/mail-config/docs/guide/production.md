@@ -64,7 +64,7 @@ import { defineMailConfig, productionConfig } from '@nxgt/mail-config';
 const config = defineMailConfig({ output: { path: 'dist' } });
 
 productionConfig(config);
-// { plaintext: true, output: { path: 'dist' }, html: { minify: true } }
+// { ...baseConfig, output: { path: 'dist' }, html: { minify: true } }
 ```
 
 When the project config already sets `html.minify` to an object of options,
@@ -90,7 +90,7 @@ productionConfig(config, {
 	output: { path: 'dist-production' },
 	html: { minify: { lineLengthLimit: 1000 } },
 });
-// { plaintext: true, output: { path: 'dist-production' }, html: { minify: { lineLengthLimit: 1000 } } }
+// { ...baseConfig, output: { path: 'dist-production' }, html: { minify: { lineLengthLimit: 1000 } } }
 ```
 
 A list in `overrides` is added to the project's, never replaces it — a Vite

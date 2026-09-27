@@ -59,7 +59,9 @@ resolve.
 | `defineMailConfig(config?)` | Your `maizzle.config.ts`: base, plugins, then your config |
 | `defineMailPlugin(plugin)` | Checks a plugin and answers it unchanged |
 | `productionConfig(config, overrides?)` | `maizzle.config.production.ts`: minified HTML over your config |
-| `baseConfig` | The lowest layer, `{ plaintext: true }`, frozen |
+| `baseConfig` | The lowest layer, frozen: a plain-text part that reads as one (`plaintext` with `breakBlocks`, and an `afterBuild` that tidies it) |
+| `breakBlocks` | The `string-strip-html` `cb` the base hands Maizzle: a blank line after a paragraph, a line break after a `<br>` |
+| `tidyPlaintext(text)` | The text tidied: no invisible characters, one blank line at most, a link's address once |
 | `MailConfig` | The type `defineMailConfig` takes: a `MaizzleConfig` with `plugins` |
 | `MailPlugin` | The type of a plugin: a `MaizzleConfig` with a `name`, and no `plugins` |
 
@@ -81,9 +83,10 @@ export default defineMailConfig({
 
 The layers, lowest first:
 
-1. **`baseConfig`** — `{ plaintext: true }`: a `.txt` part next to each
-   `.html`. Everything else a project needs (`dist/`, `public/` copied, CSS
-   inlined and purged) is already Maizzle's default.
+1. **`baseConfig`** — a `.txt` part next to each `.html`, laid out in
+   paragraphs ([below](#the-plain-text-part)). Everything else a project needs
+   (`dist/`, `public/` copied, CSS inlined and purged) is already Maizzle's
+   default.
 2. **Each plugin, in the order listed** — a later plugin wins over an earlier
    one.
 3. **The rest of your config** — it wins over every plugin.
@@ -131,6 +134,40 @@ export default defineMailConfig({ plugins: [alpha, beta] }); // [[mark]] → alp
 A handler that returns nothing leaves the source or the HTML as it was. A
 handler that **throws stops the chain**: the handlers after it do not run, and
 the error reaches Maizzle, which fails the build.
+
+### The plain-text part
+
+Without asking, each template gets a `.txt` part that reads as one: a blank
+line between paragraphs, a line break for each `<br>`, row or list item, a
+button's address on its own line, no invisible character from a `<Spacer>`,
+an `<Hr>` or the preheader's padding, and a link whose text is its address
+written once. `maizzle serve`'s plain-text preview does not show it: only
+`maizzle build` writes it.
+
+```text
+Confirm my address
+
+{{ link }}
+
+The link expires in 15 minutes.
+
+Or paste this link into your browser: {{ link }}
+```
+
+To change the text part's options, set `plaintext` to an **object**: it is
+merged key by key over the base's, so the base's `cb` stays. The two functions
+behind it are exported, for a text part built elsewhere:
+
+```ts
+import { createPlaintext } from '@maizzle/framework';
+import { breakBlocks, tidyPlaintext } from '@nxgt/mail-config';
+
+const html = '<p>Hello,</p><p>Your code is <b>123456</b>.</p>';
+tidyPlaintext(createPlaintext(html, { cb: breakBlocks }));
+// 'Hello,\n\nYour code is 123456.\n'
+```
+
+See [The plain-text part](docs/guide/config.md#the-plain-text-part).
 
 ### A plugin — `defineMailPlugin`
 
@@ -192,6 +229,10 @@ would in your own config.
 **Do not set a build event by spreading configs yourself.** `{ ...a, ...b }`
 keeps `b`'s `beforeRender` and drops `a`'s without a word; list both in
 `plugins`.
+
+**`plaintext: true` in your config drops the base's paragraphs.** A boolean
+replaces the base's object, `cb` included; leave `plaintext` out, or set an
+object: `plaintext: { extension: 'text' }`.
 
 **Pass `productionConfig` what `defineMailConfig` answered**, not its argument,
 and list every plugin in the project config: `plugins` in either argument of

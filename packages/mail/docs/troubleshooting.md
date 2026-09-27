@@ -1268,8 +1268,11 @@ comes after `@nxgt/mail-config`'s base.
 **Why:** every e-mail is sent with a text part — `Rendered` and `MailMessage`
 require one — and the renderer only fills it; it does not derive it from the
 HTML at send time.
-**Fix:** remove the `plaintext: false`. `defineMailConfig` sets
-`plaintext: true`; keep it, then run `maizzle build` again.
+**Fix:** remove the `plaintext: false`, then run `maizzle build` again.
+`defineMailConfig`'s base turns the text part on, laid out in paragraphs.
+Leave `plaintext` out rather than writing `plaintext: true`: `true` replaces
+the base's options, and the text part runs onto one line again — see
+[@nxgt/mail-config's troubleshooting](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-config/docs/troubleshooting.md#the-plain-text-part-is-one-long-line-again).
 
 ### `Could not resolve "node:fs"`, or `No such module "node:fs"`, on an edge runtime
 

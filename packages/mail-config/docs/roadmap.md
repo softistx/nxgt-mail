@@ -5,7 +5,11 @@ no dates here, and the version something shipped in is the only number.
 
 ## Now
 
-Nothing between releases.
+- **A plain-text part that reads as one** — paragraphs separated by a blank
+  line, a line break for each `<br>`, row or list item, none of the invisible
+  characters a spacer or a divider holds, and a link whose text is its
+  address written once. `breakBlocks` and `tidyPlaintext` are exported for a
+  project that sets its own `plaintext` options. Built, not yet published.
 
 ## Next
 
