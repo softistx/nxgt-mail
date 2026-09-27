@@ -41,7 +41,7 @@ export default defineMailConfig({ plugins: [brand] });
 </template>
 ```
 
-`<BrandFooter>` is the package's `components/Footer.vue`; `{{ company }}` is
+`<BrandFooter>` is the package's `components/footer.vue`; `{{ company }}` is
 the global property; every built file ends with `<!-- brand -->`.
 
 ## The signature
@@ -100,7 +100,7 @@ export const brand = defineMailPlugin({
   directory `maizzle` runs in — the project, where `./components` is the
   project's own folder, not the package's. `new URL(…, import.meta.url)` is
   relative to the plugin's file wherever the package is installed.
-- **Prefixed.** `prefix: 'Brand'` makes `Footer.vue` `<BrandFooter>`, so the
+- **Prefixed.** `prefix: 'Brand'` makes `footer.vue` `<BrandFooter>`, so the
   package never shadows Maizzle's own components (`<Button>`) or the project's.
 - **Joined, not replaced.** Every plugin's `components.source` is kept, in the
   order of `plugins`, then the project's — see

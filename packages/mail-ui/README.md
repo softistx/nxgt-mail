@@ -222,6 +222,9 @@ if the editor does not know `brand`.
 </template>
 ```
 
+`components/NxBadge.vue` works as well: Maizzle names a component the same
+from either case.
+
 A file in your `components/` with the name of one of ours wins over it — in
 your templates, in ours, and in a package's. See
 [The plugin](docs/guide/plugin.md#replacing-a-component).
