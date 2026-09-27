@@ -728,7 +728,7 @@ describe('a tag that resolves to no component', () => {
 		}, 60_000);
 	}
 
-	test("passes Maizzle's own components, and one the app registers", async () => {
+	test("passes Maizzle's own components, one the app registers, and HTML Vue does not know", async () => {
 		write({
 			'maizzle.config.ts': config(
 				", vue: { plugins: [{ install: (app) => app.component('Greeting', { render: () => 'Hello from the app' }) }] }",
@@ -736,6 +736,7 @@ describe('a tag that resolves to no component', () => {
 			'emails/welcome.vue': [
 				'<template><NxLayout><NxCard>',
 				'<Button href="https://acme.example">Maizzle</Button><Spacer size="8" /><Greeting />',
+				'<center><big>Old HTML</big></center>',
 				'</NxCard></NxLayout></template>',
 			].join(''),
 		});
@@ -744,5 +745,6 @@ describe('a tag that resolves to no component', () => {
 		const html = await Bun.file(`${root}/dist/welcome.html`).text();
 		expect(html).toContain('https://acme.example');
 		expect(html).toContain('Hello from the app');
+		expect(html).toContain('<center>');
 	}, 60_000);
 });

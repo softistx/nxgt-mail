@@ -46,4 +46,43 @@ describe('guardUnresolved', () => {
 			'const b = __nxgtResolved(_resolveComponent1("NxCard"), "NxCard")',
 		);
 	});
+
+	test('leaves HTML Vue does not know, and namespaced tags, as Maizzle writes them', () => {
+		for (const tag of ['center', 'font', 'big', 'o:p', 'v:rect', 'div']) {
+			expect(
+				guardUnresolved(
+					`const _component = _resolveComponent("${tag}")\nconst _d = _resolveDynamicComponent("${tag}")`,
+					'emails/a.vue',
+				),
+			).toBeNull();
+		}
+	});
+
+	test('guards a kebab-case tag, and the literal is of <component>', () => {
+		for (const call of [
+			'_resolveComponent("nx-buton")',
+			'_resolveDynamicComponent("NxButon")',
+		]) {
+			const code = guardUnresolved(
+				`const _component = ${call}`,
+				'emails/a.vue',
+			) as string;
+			expect(() =>
+				render(
+					code.replace('_resolveDynamicComponent', '_resolveComponent'),
+					{},
+				),
+			).toThrow('is no component');
+		}
+	});
+
+	test('does not run past a self-reference into the next call on its line', () => {
+		const code = guardUnresolved(
+			'const a = _resolveComponent("Tree", true), b = _resolveComponent("NxCard")',
+			'components/tree.vue',
+		) as string;
+		expect(code.split('\n')[0]).toBe(
+			'const a = _resolveComponent("Tree", true), b = __nxgtResolved(_resolveComponent("NxCard"), "NxCard")',
+		);
+	});
 });

@@ -9,9 +9,18 @@ type VitePlugin = NonNullable<
 /**
  * A tag the compiled template still asks Vue for by name: what
  * unplugin-vue-components matches, and leaves as is when no file answers to
- * it. A self-reference (`_resolveComponent("Tree", true)`) is not matched.
+ * it, and the literal `is` of `<component>`. A self-reference
+ * (`_resolveComponent("Tree", true)`) is not matched.
  */
-const RESOLVE = /\b_resolveComponent\d*\("(.+?)"\)/g;
+const RESOLVE = /\b_resolve(?:Dynamic)?Component\d*\("([^"]+)"\)/g;
+
+/**
+ * A name only a component can have, as Maizzle names them: `NxButton`, or
+ * `nx-button`. A lowercase tag Vue does not know (`center`, `font`, `big`)
+ * is HTML an e-mail still uses, which Vue writes as it is, and so does a
+ * namespaced one (`o:p`, `v:rect`): neither is guarded.
+ */
+const COMPONENT_NAME = /^(?:[A-Z]|[a-z][\w]*-)[\w-]*$/;
 
 /** A Vue file, a Markdown template, or one of their sub-requests. */
 const TEMPLATE = /\.(vue|md)($|\?)/;
@@ -32,6 +41,7 @@ const GUARD = '__nxgtResolved';
 export function guardUnresolved(code: string, file: string): string | null {
 	let found = false;
 	const guarded = code.replace(RESOLVE, (call, tag: string) => {
+		if (!COMPONENT_NAME.test(tag)) return call;
 		found = true;
 		return `${GUARD}(${call}, ${JSON.stringify(tag)})`;
 	});

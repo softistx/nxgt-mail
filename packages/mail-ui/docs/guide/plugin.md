@@ -369,7 +369,10 @@ Error: ui: <NxButon> in emails/welcome.vue is no component — check its name, o
 
 Vue would render it as an unknown element, or as nothing, and warn only in
 development. A component registered on the app (`app.component(…)` in a
-plugin of `vue.plugins`) and Maizzle's own components resolve, and pass. An
+plugin of `vue.plugins`) and Maizzle's own components resolve, and pass.
+Only a name a component can have is checked — PascalCase, or kebab-case with
+a `-`: an old HTML tag such as `<center>` and a namespaced one such as
+`<o:p>` are written as they are. An
 error thrown while a template renders fails the build under
 `NODE_ENV=production` as in development: `ui()` sets Vue's
 `app.config.throwUnhandledErrorInProduction`, where Vue would otherwise log

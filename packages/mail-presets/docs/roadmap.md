@@ -13,6 +13,8 @@ are no dates here, and the version something shipped in is the only number.
   Breaking: a send without it no longer compiles against `MailEmails`, and
   throws [`render: <email> needs the variable expiresIn`](troubleshooting.md#render-reset-password-needs-the-variable-expiresin).
   Built, not yet published.
+- **`@nxgt/mail-ui` 0.2** — the peer moves to `^0.2.0`, where a tag that
+  resolves to no component fails the build. Built, not yet published.
 
 ## Next
 
