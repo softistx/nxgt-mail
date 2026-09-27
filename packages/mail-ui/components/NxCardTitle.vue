@@ -15,5 +15,6 @@ const classes = computed(() =>
 </script>
 
 <template>
+  <!-- biome-ignore lint/a11y/useHeadingContent: the heading's text is the slot, which Biome cannot see. -->
   <h3 v-bind="{ ...attrs, class: undefined }" :class="classes"><slot /></h3>
 </template>

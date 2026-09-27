@@ -191,6 +191,12 @@ through untouched, and never branches or computes on it
 - `bunfig.toml` carries the npm token, **never `.npmrc`**.
 - **A new package starts `"private": true`.** Removing the flag is a
   deliberate commit of its own, with the changeset that versions it.
+- **Biome parses the Vue templates** (`html.experimentalFullSupportEnabled`).
+  Without it, Biome 2.5's language server re-parses a `.vue` file with no
+  `<script>` as JavaScript from the first edit on, and an editor fills with
+  `parse` errors on `{{ t('…') }}` that `biome check` never shows. A rule
+  that cannot see a slot's content is silenced on its element, with the
+  reason.
 - `*.spec.ts` colocated in `src/`; `test/` holds helpers; `test/types/` is
   typechecked and never run.
 - Settle an expected rejection where it is created, with `.then(ok, ko)`.
