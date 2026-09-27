@@ -3,38 +3,25 @@ import {
 	parse,
 	TYPE,
 } from '@formatjs/icu-messageformat-parser';
+import type {
+	ArgumentKind,
+	Catalogue,
+	Catalogues,
+	Message,
+	Messages,
+} from '@nxgt/i18n-vue/core';
+import { layerCatalogues } from '@nxgt/i18n-vue/core';
 
-/**
- * A catalogue as written: nested objects whose leaves are ICU messages, the
- * conventions of `@nxgt/i18n`.
- *
- * ```json
- * { "verify-email": { "subject": "Confirm your e-mail address" } }
- * ```
- */
-export interface Catalogue {
-	readonly [key: string]: string | Catalogue;
-}
-
-/** A catalogue per locale: `{ en: {...}, fr: {...} }`. */
-export type Catalogues = Readonly<Record<string, Catalogue>>;
-
-/**
- * What an argument is, from the way a message uses it: `{n, number}` and
- * `{n, plural, …}` a number, `{at, date}` a date, anything else a string.
- */
-export type ArgumentKind = 'string' | 'number' | 'date';
-
-/** One message, checked, with the kind of each argument it uses. */
-export interface Message {
-	readonly text: string;
-	readonly args: ReadonlyMap<string, ArgumentKind>;
-	/** The arguments a `{x, select, …}` chooses on: a placeholder would always choose `other`. */
-	readonly selects: ReadonlySet<string>;
-}
-
-/** Every message of one locale, by dotted key: `verify-email.subject`. */
-export type Messages = ReadonlyMap<string, Message>;
+// The catalogue and message shapes, and `layerCatalogues`, are `@nxgt/i18n`'s
+// conventions verbatim: `@nxgt/i18n-vue/core` publishes them, so this
+// package uses those instead of its own copies. `checkCatalogues` stays
+// below, unchanged: `@nxgt/i18n-vue`'s own version has grown a check this
+// package does not want yet (two conventions of the same key collide) and a
+// reworded message, which would change what `docs/troubleshooting.md`
+// documents as silently accepted in the fallback locale — see the
+// changeset for the full comparison.
+export type { ArgumentKind, Catalogue, Catalogues, Message, Messages };
+export { layerCatalogues };
 
 const CAMEL_SEGMENT = /^[a-z][a-zA-Z0-9]*$/;
 const KEBAB_SEGMENT = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
@@ -46,43 +33,6 @@ const isArgSegment = (segment: string) => CAMEL_SEGMENT.test(segment);
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
 	typeof value === 'object' && value !== null && !Array.isArray(value);
-
-/** `over` merged into `under` key by key: an object is merged, anything else replaces. */
-function mergeCatalogue(under: Catalogue, over: Catalogue): Catalogue {
-	const out: Record<string, string | Catalogue> = { ...under };
-	for (const [key, value] of Object.entries(over)) {
-		const below = Object.hasOwn(out, key) ? out[key] : undefined;
-		// Defined, not assigned: `out.__proto__ = …` would set the prototype and
-		// hide the key from the check that refuses it.
-		Object.defineProperty(out, key, {
-			value:
-				isObject(below) && isObject(value)
-					? mergeCatalogue(below, value)
-					: value,
-			enumerable: true,
-			writable: true,
-			configurable: true,
-		});
-	}
-	return out;
-}
-
-/**
- * Each of `project`'s locales, with `sources` merged under it in order: a
- * source's locale the project does not have is left out.
- */
-export function layerCatalogues(
-	sources: readonly Catalogues[],
-	project: Record<string, Catalogue>,
-): Record<string, Catalogue> {
-	const out: Record<string, Catalogue> = {};
-	for (const [locale, catalogue] of Object.entries(project)) {
-		out[locale] = [...sources.map((source) => source[locale]), catalogue]
-			.filter((layer): layer is Catalogue => layer !== undefined)
-			.reduce(mergeCatalogue, {});
-	}
-	return out;
-}
 
 function flatten(
 	catalogue: unknown,

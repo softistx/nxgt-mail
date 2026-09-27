@@ -1,4 +1,4 @@
-import type { MessageArgs } from './translator';
+import type { ArgsOf, KeyOf } from '@nxgt/i18n-vue/core';
 
 /**
  * Every key a template may pass to `t`, with its arguments. Empty here; the
@@ -9,32 +9,8 @@ import type { MessageArgs } from './translator';
 // biome-ignore lint/suspicious/noEmptyInterface: augmented by the generated file.
 export interface TemplateMessages {}
 
-type Declared = keyof TemplateMessages;
-
 /** A key of the catalogues once the types are generated; any string while none is. */
-export type TemplateKey = [Declared] extends [never] ? string : Declared;
-
-type Names<K> = K extends Declared ? keyof TemplateMessages[K] : never;
-
-/** The keys of `K` whose argument names are not all of `All`'s. */
-type Uneven<K, All = K> = K extends Declared
-	? [Names<All>] extends [keyof TemplateMessages[K]]
-		? never
-		: K
-	: never;
-
-type Both<U> = (U extends unknown ? (u: U) => void : never) extends (
-	i: infer I,
-) => void
-	? I
-	: never;
-
-/** Whether `K` is every declared key, when there are several. */
-type Every<K> = [Declared] extends [K]
-	? [Declared] extends [Both<Declared>]
-		? false
-		: true
-	: false;
+export type TemplateKey = KeyOf<TemplateMessages>;
 
 /**
  * The arguments of `key`: none, its declared ones, or any while no key is
@@ -43,16 +19,12 @@ type Every<K> = [Declared] extends [K]
  * message does not use, so they must all use the same names. A key that may
  * be any message takes any arguments: TypeScript reads an unknown key as
  * every key, and the key is then what it reports.
+ *
+ * `@nxgt/i18n-vue/core`'s `ArgsOf`, generic over the same shape of
+ * declaration `@nxgt/i18n-vue`'s own `I18nMessages` uses, parametrised over
+ * `TemplateMessages` instead.
  */
-export type TemplateArgs<K> = [K] extends [Declared]
-	? Every<K> extends true
-		? [args?: MessageArgs]
-		: [Uneven<K>] extends [never]
-			? [Names<K>] extends [never]
-				? [args?: Readonly<Record<string, never>>]
-				: [args: Readonly<Both<TemplateMessages[K]>>]
-			: [args: never]
-	: [args?: MessageArgs];
+export type TemplateArgs<K> = ArgsOf<TemplateMessages, K>;
 
 /**
  * What a template gets from the i18n plugin, typed for Vue's template

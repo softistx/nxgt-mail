@@ -987,9 +987,20 @@ this is not a format refusal — but a specific key that moved, such as
 `verifyEmail` becoming `verify-email` in `@nxgt/mail-presets` 0.3 and
 `@nxgt/mail-ui` 0.3, is gone under its old name. An override under the old
 key in `locales/<locale>.json` is not an error by itself: it becomes a key
-of its own, unread by any template, so the build succeeds and your override
-is silently ignored — until a template still calls the old key, which then
-**is** reported as this build failure, naming the key that does not exist.
+of its own, unread by any template. **This is silent only in the fallback
+locale**: an override under the old key in the fallback locale's own file
+(`locales/en.json`, with the default `fallbackLocale`) builds without
+complaint, until a template still calls the old key, which then **is**
+reported as this build failure, naming the key that does not exist. The
+same override in another locale's file is not silent — the fallback
+locale's catalogue never gained the old key, so that locale now holds a key
+the fallback does not, and the build fails immediately, naming the locale
+and the key:
+
+```
+i18n: fr: presets.linkExpires is not a key of en, the fallback locale
+```
+
 **Fix:** rename the key, in your override and in every template that calls
 it, from its old `camelCase` form to the new one — see the package's
 changeset for the full old → new list:
