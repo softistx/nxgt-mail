@@ -5,30 +5,7 @@ no dates here, and the version something shipped in is the only number.
 
 ## Now
 
-Built, not yet published:
-
-- **Layout and content components** — `NxSpacer` (vertical space in the
-  theme's steps, on Maizzle's `<Spacer>`), `NxExtendedLabel`,
-  `NxHighlightText`, `NxKbd`, `NxCountBadge`, `NxActionCard`, `NxFigure`,
-  `NxLinkButton`, `NxIconButton` (its icon an image by URL or a character)
-  and `NxButtonGroup`, with material-vue's names and props, and the shared
-  message `common.countBadge.label` in `en` and `fr`. A count, a query or
-  an icon given as a placeholder fails the build.
-- **A tag that resolves to no component fails the build** — `<NxButon>` for
-  `<NxButton>`, nested anywhere in a template, a component or an installed
-  template, fails `maizzle build`, naming the tag and the file, where Vue
-  rendered it as an unknown element or as nothing and the build passed. An
-  error while rendering fails the build under `NODE_ENV=production` too.
-- **Details components** — `NxEventChip` for an invitation's date and time,
-  `NxAttributes`, `NxPostalAddress` (its country named in each locale),
-  `NxOpeningHours`, `NxContacts` (linked with `mailto:` and `tel:`),
-  `NxFileList` for attachments or downloads, with the size written by locale,
-  and `NxRating`, read only or as a row of review links: material-vue's names
-  and props, with their words in the shared messages in `en` and `fr`.
-- **Installed files resolve as the project's do** — a template or component
-  installed from npm resolves its tags with Maizzle's own resolver, so the
-  project's `components/` subfolders (`<BrandLogo>`) and every
-  `components.source` folder count there too.
+Nothing between releases.
 
 ## Next
 
@@ -84,6 +61,30 @@ Nothing yet. A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **Layout and content components, v0.2.0** — `NxSpacer` (vertical space in
+  the theme's steps, on Maizzle's `<Spacer>`), `NxExtendedLabel`,
+  `NxHighlightText`, `NxKbd`, `NxCountBadge`, `NxActionCard`, `NxFigure`,
+  `NxLinkButton`, `NxIconButton` (its icon an image by URL or a character)
+  and `NxButtonGroup`, with material-vue's names and props, and the shared
+  message `common.countBadge.label` in `en` and `fr`. A count, a query or
+  an icon given as a placeholder fails the build.
+- **A tag that resolves to no component fails the build, v0.2.0** —
+  `<NxButon>` for `<NxButton>`, nested anywhere in a template, a component or
+  an installed template, fails `maizzle build`, naming the tag and the file,
+  where Vue rendered it as an unknown element or as nothing and the build
+  passed. An error while rendering fails the build under
+  `NODE_ENV=production` too.
+- **Details components, v0.2.0** — `NxEventChip` for an invitation's date and
+  time, `NxAttributes`, `NxPostalAddress` (its country named in each
+  locale), `NxOpeningHours`, `NxContacts` (linked with `mailto:` and
+  `tel:`), `NxFileList` for attachments or downloads, with the size written
+  by locale, and `NxRating`, read only or as a row of review links:
+  material-vue's names and props, with their words in the shared messages
+  in `en` and `fr`.
+- **Installed files resolve as the project's do, v0.2.0** — a template or
+  component installed from npm resolves its tags with Maizzle's own
+  resolver, so the project's `components/` subfolders (`<BrandLogo>`) and
+  every `components.source` folder count there too.
 - **`@nxgt/mail-config` 0.2, v0.1.1** — the peer moves to `^0.2.0`, whose text
   part is laid out in paragraphs. The components do not change.
 - **UI components as a plugin, v0.1.0** — `ui({ brand, theme })`, listed in
@@ -114,20 +115,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   ours, and a package's templates such as `@nxgt/mail-presets`', render the
   same installed as in the workspace, with your `components/` still replacing
   ours by name.
-- **`brand` typed in the editor, v0.1.0** — `ui()` writes
-  `.maizzle/nxgt-mail-ui.d.ts`, which a Maizzle project's `tsconfig.json`
-  includes, so templates see `brand` without importing anything.
-- **The second set, first part, v0.1.0** — `NxTable` and its parts (a footer on the
-  muted background, a caption, an empty row), `NxDescription`, `NxListTile`,
-  `NxChip` (static) and `NxAvatar`/`NxAvatarGroup`, with material-vue's props,
-  checked against the same support data.
-- **The second set, second part, v0.1.0** — `NxProgress`, `NxSteps`/`NxStepsItem`
-  and `NxTimeline`: a bar, numbered steps and toned events joined by a line
-  that runs as far as their text in every client, the time of an event
-  written as you give it.
-- **The second set, third part, v0.1.0** — `NxHero`, `NxEntityHeader`, the metric
-  cards `NxStatCard`, `NxGoalCard`, `NxRatioCard`, `NxCompareCard` and
-  `NxBreakdownCard`, and `NxSeeAlso`: a summary e-mail's header, figures with
-  a toned delta and its arrow, bars and links, checked against the same
-  support data. With it, every material-vue component that fits an e-mail —
-  one that is read, not used — has its `Nx` counterpart.

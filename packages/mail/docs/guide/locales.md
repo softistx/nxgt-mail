@@ -128,10 +128,10 @@ export function localeOfVisitor(request: Request, stored: string | null): Locale
 export async function invite(
 	mailer: Mailer,
 	invitee: { email: string; locale: string | null },
-	link: string,
+	invite: { organization: string; inviter: string; link: string; expiresIn: string },
 ): Promise<void> {
 	const locale = pickLocale(invitee.locale, supported, 'en');
-	await mailer.send({ to: invitee.email, ...mails.render('invitation', { link }, { locale }) });
+	await mailer.send({ to: invitee.email, ...mails.render('invitation', invite, { locale }) });
 }
 ```
 

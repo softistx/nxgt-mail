@@ -6,23 +6,7 @@ the only number.
 
 ## Now
 
-### Built, not yet published
-
-- **Inline images (`cid:`)** — `contentId` on a `MailAttachment` makes it an
-  image the HTML shows as `<img src="cid:…">`. `checkMessage` refuses an id
-  that is not 1 to 127 letters, digits and `.` `_` `~` `+` `-` with at most
-  one `@`, two attachments under one id, and a `cid:` the HTML uses — an
-  attribute value or a CSS `url()` — that no attachment names, before a
-  broken image goes out. A `cid:` is written in the template: a URL variable holding one
-  is refused. The memory mailer keeps the id; the conformance suite gains
-  `send.inlineImage`, fifteen cases in all. The SMTP transport sends it as
-  nodemailer's `cid`, Resend's as `content_id`.
-- **Tags** — `tags` on a `MailMessage`, a record of names to values, label a
-  send for the provider's dashboard and webhooks, never part of the e-mail.
-  `checkMessage` holds each name and value to 1 to 256 ASCII letters, digits,
-  `_` or `-`, the rule Resend and Amazon SES share. Resend sends them as its
-  `tags`; SMTP ignores them. The memory mailer keeps them, and the conformance
-  suite gains `send.tags`, sixteen cases in all.
+Nothing between releases.
 
 ## Next
 
@@ -77,6 +61,21 @@ Nothing yet.
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **Inline images (`cid:`), v0.6.0** — `contentId` on a `MailAttachment` makes
+  it an image the HTML shows as `<img src="cid:…">`. `checkMessage` refuses an
+  id that is not 1 to 127 letters, digits and `.` `_` `~` `+` `-` with at most
+  one `@`, two attachments under one id, and a `cid:` the HTML uses — an
+  attribute value or a CSS `url()` — that no attachment names, before a
+  broken image goes out. A `cid:` is written in the template: a URL variable
+  holding one is refused. The memory mailer keeps the id; the conformance
+  suite gains `send.inlineImage`, fifteen cases in all. The SMTP transport
+  sends it as nodemailer's `cid`, Resend's as `content_id`.
+- **Tags, v0.6.0** — `tags` on a `MailMessage`, a record of names to values,
+  label a send for the provider's dashboard and webhooks, never part of the
+  e-mail. `checkMessage` holds each name and value to 1 to 256 ASCII letters,
+  digits, `_` or `-`, the rule Resend and Amazon SES share. Resend sends them
+  as its `tags`; SMTP ignores them. The memory mailer keeps them, and the
+  conformance suite gains `send.tags`, sixteen cases in all.
 - **A build read by any later renderer, v0.5.1** — within 0.x,
   `createMailRenderer` reads every manifest format up to its own
   (`MANIFEST_FORMAT`, exported from `@nxgt/mail/renderer`), checked before any
@@ -127,15 +126,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
 - **Choosing the recipient's locale, v0.1.0** — `pickLocale(wanted, supported,
   fallback)` and `parseAcceptLanguage()`: a stored preference first, then the
   browser's languages, `fr-CA` matching `fr`, the fallback when nothing does.
-- **A conformance suite for transport authors, v0.1.0** — `@nxgt/mail/conformance`:
-  `describeMailer(harness)` checks that a send answers `SentMail`, that an
-  outage throws a `MailFailure` which `instanceof` recognises, that an e-mail
-  arrives byte for byte, and that nothing is retried in secret. Runs under
-  bun:test, Vitest or Jest.
-- **The run-time renderer, v0.1.0** — `createMailRenderer`, from `@nxgt/mail/renderer`:
-  `mails.render('verify-email', { name, link })` answers `Rendered` from the
-  built files of the recipient's locale, every `{{ placeholder }}` filled.
-  Values are HTML-escaped in `html`; a link that is not `http:`, `https:` or
-  `mailto:` is refused with `MailRefused`; a missing variable, an unknown
-  e-mail or locale throws. Its own entry because it reads files with
-  `node:fs`: `@nxgt/mail` itself runs anywhere.

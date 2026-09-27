@@ -5,14 +5,7 @@ no dates here, and the version something shipped in is the only number.
 
 ## Now
 
-### Built, not yet published
-
-- **Inline images (`cid:`)** — an attachment's `contentId` is sent as Resend's
-  `content_id`, so the HTML shows it as `<img src="cid:…">`. The `@nxgt/mail`
-  peer moves to `^0.6.0`.
-- **Tags** — a message's `tags` are sent as Resend's `tags`, to group sends
-  in its dashboard and webhooks; more than 75 is a `MailRefused` before
-  sending.
+Nothing between releases.
 
 ## Next
 
@@ -39,6 +32,12 @@ Nothing planned yet. Say what you need in an issue.
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **Inline images (`cid:`), v0.4.0** — an attachment's `contentId` is sent as
+  Resend's `content_id`, so the HTML shows it as `<img src="cid:…">`. The
+  `@nxgt/mail` peer moves to `^0.6.0`.
+- **Tags, v0.4.0** — a message's `tags` are sent as Resend's `tags`, to group
+  sends in its dashboard and webhooks; more than 75 is a `MailRefused` before
+  sending.
 - **`@nxgt/mail` 0.5, v0.3.2** — the peer moves to `^0.5.0`, whose conformance
   suite also checks that a message with an idempotency key is delivered. This
   transport passes it unchanged.
