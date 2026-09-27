@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { type MaizzleServer, serveMaizzle } from '../test/maizzle-serve';
 
 const fixture = fileURLToPath(new URL('../test/fixture', import.meta.url));
 const cases = fileURLToPath(new URL('../test/.cases', import.meta.url));
@@ -694,65 +695,57 @@ describe('a project built with the ui plugin', () => {
 		expect(text).not.toContain('★');
 	});
 
-	test.each([
-		['welcome.vue', ['html-align', 'html-aria-hidden']],
-		// The caption's caption-side falls back on its align="bottom".
-		['gallery.vue', ['css-caption-side', 'html-align', 'html-align']],
-		['sequence.vue', ['html-align', 'html-aria-hidden']],
-		// An action card's indicator, hidden from a reader; an icon button named by its aria-label.
-		['content.vue', ['html-align', 'html-aria-hidden', 'html-aria-label']],
-		// A delta's arrow in each card, and a see-also's, hidden from a reader.
-		[
-			'summary.vue',
+	describe('under maizzle serve', () => {
+		let server: MaizzleServer;
+		beforeAll(async () => {
+			server = await serveMaizzle(maizzle, fixture);
+		}, 120_000);
+		afterAll(() => server?.stop());
+
+		test.each([
+			['welcome.vue', ['html-align', 'html-aria-hidden']],
+			// The caption's caption-side falls back on its align="bottom".
+			['gallery.vue', ['css-caption-side', 'html-align', 'html-align']],
+			['sequence.vue', ['html-align', 'html-aria-hidden']],
+			// An action card's indicator, hidden from a reader; an icon button named by its aria-label.
+			['content.vue', ['html-align', 'html-aria-hidden', 'html-aria-label']],
+			// A delta's arrow in each card, and a see-also's, hidden from a reader.
 			[
-				'html-align',
-				'html-aria-hidden',
-				'html-aria-hidden',
-				'html-aria-hidden',
+				'summary.vue',
+				[
+					'html-align',
+					'html-aria-hidden',
+					'html-aria-hidden',
+					'html-aria-hidden',
+				],
 			],
-		],
-		['details.vue', ['html-align', 'html-aria-hidden']],
-	])(
-		'caniemail reports for Gmail, Outlook and Apple Mail only the known partial support of %s',
-		async (email, known) => {
-			const port = 39_000 + Math.floor(Math.random() * 900);
-			const child = Bun.spawn([maizzle, 'serve', '--port', String(port)], {
-				cwd: fixture,
-				stdout: 'ignore',
-				stderr: 'ignore',
-			});
-			try {
-				const url = `http://localhost:${port}/__maizzle/compatibility/emails/${email}`;
-				let issues:
-					| {
-							kind: string;
-							slug: string;
-							severity?: string;
-							supportLevel?: string;
-					  }[]
-					| null = null;
-				for (let attempt = 0; attempt < 60 && issues === null; attempt++) {
-					issues = await fetch(url)
-						.then((response) => (response.ok ? response.json() : null))
-						.catch(() => Bun.sleep(500).then(() => null));
-				}
+			['details.vue', ['html-align', 'html-aria-hidden']],
+		])(
+			'caniemail reports for Gmail, Outlook and Apple Mail only the known partial support of %s',
+			async (email, known) => {
+				const response = await fetch(
+					`${server.origin}/__maizzle/compatibility/emails/${email}`,
+				);
+				expect(response.status).toBe(200);
+				const issues: {
+					kind: string;
+					slug: string;
+					severity?: string;
+					supportLevel?: string;
+				}[] = await response.json();
 				// Everything reported is partial support with a fallback, and known:
 				// a new finding shows up here as a diff.
-				expect(issues?.map((issue) => issue.slug).sort()).toEqual(known);
+				expect(issues.map((issue) => issue.slug).sort()).toEqual(known);
 				expect(
-					issues?.filter(
+					issues.filter(
 						(issue) =>
 							issue.supportLevel === 'unsupported' ||
 							issue.severity === 'error',
 					),
 				).toEqual([]);
-			} finally {
-				child.kill();
-				await child.exited;
-			}
-		},
-		60_000,
-	);
+			},
+		);
+	});
 });
 
 describe.each([
