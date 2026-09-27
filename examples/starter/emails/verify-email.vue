@@ -1,14 +1,14 @@
 <template>
-  <NxLayout :preheader="t('verifyEmail.preheader')">
-    <NxTypography variant="headline-small">{{ t('verifyEmail.title') }}</NxTypography>
+  <NxLayout :preheader="t('verify-email.preheader')">
+    <NxTypography variant="headline-small">{{ t('verify-email.title') }}</NxTypography>
     <NxTypography>{{ t('common.greeting', { name: placeholder('name') }) }}</NxTypography>
-    <NxTypography>{{ t('verifyEmail.body', { brand: brand.name }) }}</NxTypography>
-    <NxButton :href="placeholder('link')">{{ t('verifyEmail.action') }}</NxButton>
+    <NxTypography>{{ t('verify-email.body', { brand: brand.name }) }}</NxTypography>
+    <NxButton :href="placeholder('link')">{{ t('verify-email.action') }}</NxButton>
     <Spacer height="24px" />
-    <NxAlert variant="warning" :title="t('verifyEmail.expires', { expiresIn: placeholder('expiresIn') })" />
+    <NxAlert variant="warning" :title="t('verify-email.expires', { expiresIn: placeholder('expiresIn') })" />
     <Spacer height="24px" />
     <NxTypography variant="body-small">
-      {{ t('verifyEmail.linkFallback') }}
+      {{ t('verify-email.link-fallback') }}
       <NxLink :href="placeholder('link')">{{ placeholder('link') }}</NxLink>
     </NxTypography>
     <NxSeparator />

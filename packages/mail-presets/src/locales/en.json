@@ -1,53 +1,53 @@
 {
 	"presets": {
-		"codeExpires": "This code expires in {expiresIn}.",
-		"linkExpires": "This link expires in {expiresIn}.",
-		"linkFallback": "If the button does not work, open this link:",
-		"notYou": "If this was not you, secure your account now."
+		"code-expires": "This code expires in {expiresIn}.",
+		"link-expires": "This link expires in {expiresIn}.",
+		"link-fallback": "If the button does not work, open this link:",
+		"not-you": "If this was not you, secure your account now."
 	},
-	"verifyEmail": {
+	"verify-email": {
 		"subject": "Confirm your e-mail address",
 		"preheader": "One click to confirm your address.",
 		"title": "Confirm your e-mail address",
 		"body": "Confirm that this address is yours to finish setting up your {brand} account.",
 		"action": "Confirm my address"
 	},
-	"resetPassword": {
+	"reset-password": {
 		"subject": "Reset your password",
 		"preheader": "Choose a new password for your account.",
 		"title": "Reset your password",
 		"body": "Someone asked to reset the password of your {brand} account. Choose a new one with the button below.",
 		"action": "Choose a new password"
 	},
-	"passwordChanged": {
+	"password-changed": {
 		"subject": "Your password was changed",
 		"preheader": "The password of your account was just changed.",
 		"title": "Your password was changed",
 		"body": "The password of your {brand} account was just changed.",
 		"action": "Secure my account"
 	},
-	"emailChanged": {
+	"email-changed": {
 		"subject": "Your e-mail address was changed",
 		"preheader": "Your account now signs in with a new address.",
 		"title": "Your e-mail address was changed",
 		"body": "Your {brand} account now uses {newEmail}. We send this notice to your former address.",
 		"action": "Undo this change"
 	},
-	"signInCode": {
+	"sign-in-code": {
 		"subject": "Your sign-in code: {code}",
 		"preheader": "Enter this code to sign in.",
 		"title": "Your sign-in code",
 		"body": "Enter this code to sign in to {brand}. It works once.",
 		"ignore": "If you did not try to sign in, you can ignore this e-mail: no one can sign in without the code."
 	},
-	"magicLink": {
+	"magic-link": {
 		"subject": "Your sign-in link",
 		"preheader": "One click to sign in.",
 		"title": "Sign in to {brand}",
 		"body": "Click the button below to sign in. The link works once.",
 		"action": "Sign in"
 	},
-	"newSignIn": {
+	"new-sign-in": {
 		"subject": "New sign-in to your account",
 		"preheader": "Your account was signed in from a new device.",
 		"title": "New sign-in to your account",

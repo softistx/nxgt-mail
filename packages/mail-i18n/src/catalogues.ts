@@ -9,7 +9,7 @@ import {
  * conventions of `@nxgt/i18n`.
  *
  * ```json
- * { "verifyEmail": { "subject": "Confirm your e-mail address" } }
+ * { "verify-email": { "subject": "Confirm your e-mail address" } }
  * ```
  */
 export interface Catalogue {
@@ -33,10 +33,16 @@ export interface Message {
 	readonly selects: ReadonlySet<string>;
 }
 
-/** Every message of one locale, by dotted key: `verifyEmail.subject`. */
+/** Every message of one locale, by dotted key: `verify-email.subject`. */
 export type Messages = ReadonlyMap<string, Message>;
 
-const SEGMENT = /^[a-z][a-zA-Z0-9]*$/;
+const CAMEL_SEGMENT = /^[a-z][a-zA-Z0-9]*$/;
+const KEBAB_SEGMENT = /^[a-z][a-z0-9]*(-[a-z0-9]+)*$/;
+/** A catalogue key's segment: camelCase, kebab-case, or a single word (both at once). */
+const isKeySegment = (segment: string) =>
+	CAMEL_SEGMENT.test(segment) || KEBAB_SEGMENT.test(segment);
+/** An argument's name: `{firstName}` — camelCase only, never kebab-case. */
+const isArgSegment = (segment: string) => CAMEL_SEGMENT.test(segment);
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
 	typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -91,9 +97,9 @@ function flatten(
 	}
 	for (const [segment, value] of Object.entries(catalogue)) {
 		const key = prefix === '' ? segment : `${prefix}.${segment}`;
-		if (!SEGMENT.test(segment)) {
+		if (!isKeySegment(segment)) {
 			throw new Error(
-				`i18n: ${locale}: ${key} is not camelCase — every segment of a key is camelCase, and nested rather than dotted, as verifyEmail.title`,
+				`i18n: ${locale}: ${key} is not camelCase or kebab-case — every segment of a key is one or the other, and nested rather than dotted, as verify-email.title`,
 			);
 		}
 		if (typeof value === 'string') into.set(key, value);
@@ -146,7 +152,7 @@ function analyse(text: string, locale: string, key: string): Message {
 	const args = new Map<string, ArgumentKind>();
 	const selects = new Set<string>();
 	for (const [name, kinds] of uses) {
-		if (!SEGMENT.test(name)) {
+		if (!isArgSegment(name)) {
 			throw new Error(
 				`i18n: ${locale}: ${key} uses {${name}}, which is not camelCase — an argument is a camelCase name, as {firstName}`,
 			);

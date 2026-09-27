@@ -1,13 +1,13 @@
 <template>
-  <NxLayout :preheader="t('emailChanged.preheader')">
-    <NxTypography variant="headline-small">{{ t('emailChanged.title') }}</NxTypography>
+  <NxLayout :preheader="t('email-changed.preheader')">
+    <NxTypography variant="headline-small">{{ t('email-changed.title') }}</NxTypography>
     <NxTypography>{{ t('common.greeting', { name: placeholder('name') }) }}</NxTypography>
-    <NxTypography>{{ t('emailChanged.body', { brand: brand.name, newEmail: placeholder('newEmail') }) }}</NxTypography>
-    <NxAlert variant="warning" :description="t('presets.notYou')" />
-    <NxButton :href="placeholder('link')">{{ t('emailChanged.action') }}</NxButton>
+    <NxTypography>{{ t('email-changed.body', { brand: brand.name, newEmail: placeholder('newEmail') }) }}</NxTypography>
+    <NxAlert variant="warning" :description="t('presets.not-you')" />
+    <NxButton :href="placeholder('link')">{{ t('email-changed.action') }}</NxButton>
     <Spacer class="h-6" />
     <NxTypography variant="body-small" class="text-muted-foreground">
-      {{ t('presets.linkFallback') }}
+      {{ t('presets.link-fallback') }}
       <NxLink :href="placeholder('link')">{{ placeholder('link') }}</NxLink>
     </NxTypography>
   </NxLayout>

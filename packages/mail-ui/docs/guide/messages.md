@@ -41,23 +41,23 @@ because you have an account with Acme.`
 | `common.greeting` | `Hello {name},` | `Bonjour {name},` | `name` |
 | `common.footer.why` | `You received this e-mail because you have an account with {brand}.` | `Vous recevez cet e-mail parce que vous avez un compte chez {brand}.` | `brand` |
 | `common.footer.ignore` | `If you did not ask for this, you can ignore this e-mail.` | `Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet e-mail.` | — |
-| `common.avatarGroup.more` | `{count, plural, other {# more}}` | `{count, plural, one {# autre} other {# autres}}` | `count`, a number |
+| `common.avatar-group.more` | `{count, plural, other {# more}}` | `{count, plural, one {# autre} other {# autres}}` | `count`, a number |
 | `common.timeline.empty` | `No activity yet` | `Aucune activité pour le moment` | — |
-| `common.metrics.ofTarget` | `of {target}` | `sur {target}` | `target` |
-| `common.metrics.thisPeriod` | `This period` | `Cette période` | — |
-| `common.metrics.lastPeriod` | `Last period` | `Période précédente` | — |
-| `common.seeAlso` | `See also` | `Voir aussi` | — |
-| `common.countBadge.label` | `{count, plural, one {# notification} other {# notifications}}` | `{count, plural, one {# notification} other {# notifications}}` | `count`, a number |
+| `common.metrics.of-target` | `of {target}` | `sur {target}` | `target` |
+| `common.metrics.this-period` | `This period` | `Cette période` | — |
+| `common.metrics.last-period` | `Last period` | `Période précédente` | — |
+| `common.see-also` | `See also` | `Voir aussi` | — |
+| `common.count-badge.label` | `{count, plural, one {# notification} other {# notifications}}` | `{count, plural, one {# notification} other {# notifications}}` | `count`, a number |
 | `common.attributes` | `Attributes` | `Attributs` | — |
-| `common.postalAddress` | `Address` | `Adresse` | — |
-| `common.openingHours.label` | `Opening hours` | `Horaires d'ouverture` | — |
-| `common.openingHours.closed` | `Closed all day` | `Fermé toute la journée` | — |
-| `common.openingHours.days.sunday` … `.saturday` | `Sunday` … `Saturday` | `Dimanche` … `Samedi` | — |
+| `common.postal-address` | `Address` | `Adresse` | — |
+| `common.opening-hours.label` | `Opening hours` | `Horaires d'ouverture` | — |
+| `common.opening-hours.closed` | `Closed all day` | `Fermé toute la journée` | — |
+| `common.opening-hours.days.sunday` … `.saturday` | `Sunday` … `Saturday` | `Dimanche` … `Samedi` | — |
 | `common.contacts.label` | `Contacts` | `Contacts` | — |
 | `common.contacts.types.email`, `.fax`, `.mobile`, `.phone`, `.website` | `E-mail`, `Fax`, `Mobile`, `Phone`, `Website` | `E-mail`, `Fax`, `Mobile`, `Téléphone`, `Site web` | — |
-| `common.fileList.empty` | `No files` | `Aucun fichier` | — |
-| `common.fileList.download` | `Download` | `Télécharger` | — |
-| `common.fileList.size` | `{size} {unit, select, kb {KB} mb {MB} gb {GB} other {B}}` | `{size} {unit, select, kb {Ko} mb {Mo} gb {Go} other {o}}` | `size`, the number written in the locale; `unit`, `b`, `kb`, `mb` or `gb` |
+| `common.file-list.empty` | `No files` | `Aucun fichier` | — |
+| `common.file-list.download` | `Download` | `Télécharger` | — |
+| `common.file-list.size` | `{size} {unit, select, kb {KB} mb {MB} gb {GB} other {B}}` | `{size} {unit, select, kb {Ko} mb {Mo} gb {Go} other {o}}` | `size`, the number written in the locale; `unit`, `b`, `kb`, `mb` or `gb` |
 | `common.rating.star` | `{value} of {max}` | `{value} sur {max}` | `value`, `max` |
 
 ```ts
@@ -68,21 +68,21 @@ const shared: Catalogues = uiCatalogues; // { en: { common: {…} }, fr: { commo
 ```
 
 `common.footer.why` is the one `<NxLayout>` writes itself, in its footer,
-with the brand's name; `common.avatarGroup.more` is the label `<NxAvatarGroup>`
+with the brand's name; `common.avatar-group.more` is the label `<NxAvatarGroup>`
 gives its `+N`, for a screen reader; `common.timeline.empty` is what
 `<NxTimeline>` writes for no events, unless given `empty`;
-`common.metrics.ofTarget` is `<NxGoalCard>`'s `of 24`, with its `target`;
-`common.metrics.thisPeriod` and `common.metrics.lastPeriod` label
-`<NxCompareCard>`'s two boxes, unless given their `label`; `common.seeAlso`
-heads `<NxSeeAlso>`, unless given `label`; `common.countBadge.label` is what
+`common.metrics.of-target` is `<NxGoalCard>`'s `of 24`, with its `target`;
+`common.metrics.this-period` and `common.metrics.last-period` label
+`<NxCompareCard>`'s two boxes, unless given their `label`; `common.see-also`
+heads `<NxSeeAlso>`, unless given `label`; `common.count-badge.label` is what
 a screen reader hears for `<NxCountBadge>`'s badge. `common.attributes`,
-`common.postalAddress`, `common.openingHours.label` and
+`common.postal-address`, `common.opening-hours.label` and
 `common.contacts.label` head `<NxAttributes>`, `<NxPostalAddress>`,
 `<NxOpeningHours>` and `<NxContacts>`, unless given `label`; the days,
-`common.openingHours.closed` and the contact types are the titles and text
-of their tiles. `common.fileList.empty` is what `<NxFileList>` writes for no
-files, unless given `empty`, `common.fileList.download` its link, and
-`common.fileList.size` a size in bytes; `common.rating.star` is how
+`common.opening-hours.closed` and the contact types are the titles and text
+of their tiles. `common.file-list.empty` is what `<NxFileList>` writes for no
+files, unless given `empty`, `common.file-list.download` its link, and
+`common.file-list.size` a size in bytes; `common.rating.star` is how
 `<NxRating>` reads a star and its row, `4 of 5`. The other two,
 `common.greeting` and `common.footer.ignore`, are for your templates.
 
@@ -151,18 +151,18 @@ Error: i18n: de: common.footer.ignore is missing — en, the fallback locale, ha
 			"why": "Sie erhalten diese E-Mail, weil Sie ein Konto bei {brand} haben.",
 			"ignore": "Wenn Sie dies nicht angefordert haben, können Sie diese E-Mail ignorieren."
 		},
-		"avatarGroup": { "more": "{count, plural, other {# weitere}}" },
+		"avatar-group": { "more": "{count, plural, other {# weitere}}" },
 		"timeline": { "empty": "Noch keine Aktivität" },
 		"metrics": {
-			"ofTarget": "von {target}",
-			"thisPeriod": "Dieser Zeitraum",
-			"lastPeriod": "Vorheriger Zeitraum"
+			"of-target": "von {target}",
+			"this-period": "Dieser Zeitraum",
+			"last-period": "Vorheriger Zeitraum"
 		},
-		"seeAlso": "Siehe auch",
-		"countBadge": { "label": "{count, plural, one {# Benachrichtigung} other {# Benachrichtigungen}}" },
+		"see-also": "Siehe auch",
+		"count-badge": { "label": "{count, plural, one {# Benachrichtigung} other {# Benachrichtigungen}}" },
 		"attributes": "Attribute",
-		"postalAddress": "Adresse",
-		"openingHours": {
+		"postal-address": "Adresse",
+		"opening-hours": {
 			"label": "Öffnungszeiten",
 			"closed": "Ganztägig geschlossen",
 			"days": {
@@ -185,7 +185,7 @@ Error: i18n: de: common.footer.ignore is missing — en, the fallback locale, ha
 				"website": "Website"
 			}
 		},
-		"fileList": {
+		"file-list": {
 			"empty": "Keine Dateien",
 			"download": "Herunterladen",
 			"size": "{size} {unit, select, kb {KB} mb {MB} gb {GB} other {B}}"
@@ -197,9 +197,9 @@ Error: i18n: de: common.footer.ignore is missing — en, the fallback locale, ha
 ```
 
 `<NxLayout>` passes `{brand}` to `common.footer.why`, the brand's name, and
-`<NxGoalCard>` `{target}` to `common.metrics.ofTarget`, `<NxCountBadge>`
-`{count}` to `common.countBadge.label`, `<NxFileList>` `{size}` and `{unit}`
-to `common.fileList.size`, and `<NxRating>` `{value}` and `{max}` to
+`<NxGoalCard>` `{target}` to `common.metrics.of-target`, `<NxCountBadge>`
+`{count}` to `common.count-badge.label`, `<NxFileList>` `{size}` and `{unit}`
+to `common.file-list.size`, and `<NxRating>` `{value}` and `{max}` to
 `common.rating.star`. A translation may
 leave one out; it cannot add another argument.
 

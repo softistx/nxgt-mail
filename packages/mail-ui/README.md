@@ -111,10 +111,10 @@ in the starter's `.gitignore`. See
 ```vue
 <!-- emails/verify-email.vue -->
 <template>
-  <NxLayout :preheader="t('verifyEmail.title')">
-    <NxTypography variant="headline-small">{{ t('verifyEmail.title') }}</NxTypography>
+  <NxLayout :preheader="t('verify-email.title')">
+    <NxTypography variant="headline-small">{{ t('verify-email.title') }}</NxTypography>
     <NxTypography>{{ t('common.greeting', { name: placeholder('name') }) }}</NxTypography>
-    <NxButton :href="placeholder('link')">{{ t('verifyEmail.action') }}</NxButton>
+    <NxButton :href="placeholder('link')">{{ t('verify-email.action') }}</NxButton>
     <NxSpacer />
     <NxAlert variant="warning" title="The link expires in 15 minutes." />
     <NxTypography variant="caption">{{ t('common.footer.ignore') }}</NxTypography>
@@ -226,12 +226,12 @@ i18n({ locales: ['en', 'fr'], catalogues: [uiCatalogues] });
 ```
 
 `common.greeting` (`Hello {name},`), `common.footer.why`,
-`common.footer.ignore`, `common.avatarGroup.more`, `common.timeline.empty`,
-`common.metrics.ofTarget`, `common.metrics.thisPeriod`,
-`common.metrics.lastPeriod`, `common.seeAlso`, `common.countBadge.label`,
+`common.footer.ignore`, `common.avatar-group.more`, `common.timeline.empty`,
+`common.metrics.of-target`, `common.metrics.this-period`,
+`common.metrics.last-period`, `common.see-also`, `common.count-badge.label`,
 and the words of the details components (`common.attributes`,
-`common.postalAddress`, `common.openingHours.*`, `common.contacts.*`,
-`common.fileList.*`, `common.rating.star`), in `en` and `fr`. Your
+`common.postal-address`, `common.opening-hours.*`, `common.contacts.*`,
+`common.file-list.*`, `common.rating.star`), in `en` and `fr`. Your
 `locales/<locale>.json`
 overrides any of them, key by key:
 
@@ -306,10 +306,10 @@ key.
 
 **Another locale writes the `common` keys itself.** `uiCatalogues` has `en`
 and `fr` only: a project in `de` adds its ten keys — `common.greeting`,
-`common.footer.why`, `common.footer.ignore`, `common.avatarGroup.more`,
-`common.timeline.empty`, `common.metrics.ofTarget`,
-`common.metrics.thisPeriod`, `common.metrics.lastPeriod` and
-`common.seeAlso` and `common.countBadge.label` — to `locales/de.json`.
+`common.footer.why`, `common.footer.ignore`, `common.avatar-group.more`,
+`common.timeline.empty`, `common.metrics.of-target`,
+`common.metrics.this-period`, `common.metrics.last-period` and
+`common.see-also` and `common.count-badge.label` — to `locales/de.json`.
 
 **Icons are slots.** An e-mail has no icon font: pass an `<img>` with an
 absolute URL, or a character, to `#icon` — or to `NxIconButton`'s `icon`.

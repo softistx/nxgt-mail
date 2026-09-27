@@ -42,8 +42,14 @@ describe('presets — what it answers', () => {
 			only: ['sign-in-code'],
 		});
 		expect(templates).toEqual({ dir: TEMPLATES_DIR, emails: ['sign-in-code'] });
-		expect(Object.keys(catalogues.en ?? {})).toEqual(['presets', 'signInCode']);
-		expect(Object.keys(catalogues.fr ?? {})).toEqual(['presets', 'signInCode']);
+		expect(Object.keys(catalogues.en ?? {})).toEqual([
+			'presets',
+			'sign-in-code',
+		]);
+		expect(Object.keys(catalogues.fr ?? {})).toEqual([
+			'presets',
+			'sign-in-code',
+		]);
 	});
 
 	test('a template and a group of messages for every preset, in every locale', async () => {

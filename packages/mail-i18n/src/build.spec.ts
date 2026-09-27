@@ -114,8 +114,8 @@ describe('a project built with the i18n plugin', () => {
 
 	test('writes the types of t for the editor, in .maizzle/ where the starter looks', async () => {
 		const types = await read('.maizzle/nxgt-mail-i18n.d.ts');
-		expect(types).toContain("'verifyEmail.expires': { minutes: number };");
-		expect(types).toContain("'verifyEmail.title': { };");
+		expect(types).toContain("'verify-email.expires': { minutes: number };");
+		expect(types).toContain("'verify-email.title': { };");
 	});
 
 	test('a parallel build writes the same manifest: the workers write no wrapper', async () => {
@@ -170,14 +170,14 @@ describe('a project built with the i18n plugin', () => {
 });
 
 const en = {
-	verifyEmail: {
+	'verify-email': {
 		subject: 'Confirm your address, {name}',
 		title: 'Confirm your address',
 		expires: 'In {minutes, plural, one {# minute} other {# minutes}}.',
 	},
 };
 const fr = {
-	verifyEmail: {
+	'verify-email': {
 		subject: 'Confirmez votre adresse, {name}',
 		title: 'Confirmez votre adresse',
 		expires: 'Dans {minutes, plural, one {# minute} other {# minutes}}.',
@@ -200,7 +200,7 @@ async function failure(
 		'locales/en.json': en,
 		'locales/fr.json': fr,
 		'emails/verify-email.vue':
-			"<template><p>{{ t('verifyEmail.title') }}</p></template>",
+			"<template><p>{{ t('verify-email.title') }}</p></template>",
 		...files,
 	};
 	for (const [path, content] of Object.entries(all)) {
@@ -226,25 +226,25 @@ describe('a build failure names the locale, the template and the key', () => {
 	test.each([
 		[
 			'unknown-key',
-			template("{{ t('verifyEmail.titel') }}"),
-			"i18n: <locale>: verify-email calls t('verifyEmail.titel'), which is not a key of the catalogues",
+			template("{{ t('verify-email.titel') }}"),
+			"i18n: <locale>: verify-email calls t('verify-email.titel'), which is not a key of the catalogues",
 		],
 		[
 			'missing-argument',
-			template("{{ t('verifyEmail.expires') }}"),
-			"i18n: <locale>: verify-email calls t('verifyEmail.expires') without {minutes}",
+			template("{{ t('verify-email.expires') }}"),
+			"i18n: <locale>: verify-email calls t('verify-email.expires') without {minutes}",
 		],
 		[
 			'placeholder-as-number',
 			template(
-				"{{ t('verifyEmail.expires', { minutes: placeholder('minutes') }) }}",
+				"{{ t('verify-email.expires', { minutes: placeholder('minutes') }) }}",
 			),
-			'i18n: <locale>: verify-email passes {minutes} to verifyEmail.expires as a string — the message uses it as a number',
+			'i18n: <locale>: verify-email passes {minutes} to verify-email.expires as a string — the message uses it as a number',
 		],
 		[
 			'unused-argument',
-			template("{{ t('verifyEmail.title', { name: 'Ada' }) }}"),
-			'i18n: <locale>: verify-email passes {name} to verifyEmail.title, which does not use it',
+			template("{{ t('verify-email.title', { name: 'Ada' }) }}"),
+			'i18n: <locale>: verify-email passes {name} to verify-email.title, which does not use it',
 		],
 		[
 			'placeholder-name',
@@ -276,41 +276,44 @@ describe('a build failure names the locale, the template and the key', () => {
 			'subject-number',
 			{
 				'locales/en.json': {
-					verifyEmail: { ...en.verifyEmail, subject: '{n, number} to confirm' },
+					'verify-email': {
+						...en['verify-email'],
+						subject: '{n, number} to confirm',
+					},
 				},
 				'locales/fr.json': {
-					verifyEmail: {
-						...fr.verifyEmail,
+					'verify-email': {
+						...fr['verify-email'],
 						subject: '{n, number} à confirmer',
 					},
 				},
 			},
-			"i18n: <locale>: verifyEmail.subject uses {n} as a number — a subject's arguments are placeholders, filled at send time as strings",
+			"i18n: <locale>: verify-email.subject uses {n} as a number — a subject's arguments are placeholders, filled at send time as strings",
 		],
 		[
 			'arguments-not-an-object',
-			template("{{ t('verifyEmail.title', null) }}"),
-			"i18n: <locale>: verify-email calls t('verifyEmail.title') with arguments that are not an object, as { name: placeholder('name') }",
+			template("{{ t('verify-email.title', null) }}"),
+			"i18n: <locale>: verify-email calls t('verify-email.title') with arguments that are not an object, as { name: placeholder('name') }",
 		],
 		[
 			'placeholder-to-select',
 			{
 				'locales/en.json': {
-					verifyEmail: {
-						...en.verifyEmail,
+					'verify-email': {
+						...en['verify-email'],
 						title: '{plan, select, pro {Pro} other {Free}}',
 					},
 				},
 				'locales/fr.json': {
-					verifyEmail: {
-						...fr.verifyEmail,
+					'verify-email': {
+						...fr['verify-email'],
 						title: '{plan, select, pro {Pro} other {Gratuit}}',
 					},
 				},
 				'emails/verify-email.vue':
-					"<template><p>{{ t('verifyEmail.title', { plan: placeholder('plan') }) }}</p></template>",
+					"<template><p>{{ t('verify-email.title', { plan: placeholder('plan') }) }}</p></template>",
 			},
-			'i18n: <locale>: verify-email passes a placeholder to {plan}, which verifyEmail.title chooses on with a select — a placeholder always chooses other',
+			'i18n: <locale>: verify-email passes a placeholder to {plan}, which verify-email.title chooses on with a select — a placeholder always chooses other',
 		],
 		[
 			'no-catalogue',
@@ -326,10 +329,10 @@ describe('a build failure names the locale, the template and the key', () => {
 			'missing-key',
 			{
 				'locales/fr.json': {
-					verifyEmail: { ...fr.verifyEmail, title: undefined },
+					'verify-email': { ...fr['verify-email'], title: undefined },
 				},
 			},
-			'i18n: fr: verifyEmail.title is missing — en, the fallback locale, has it',
+			'i18n: fr: verify-email.title is missing — en, the fallback locale, has it',
 		],
 	])(
 		'%s',

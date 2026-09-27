@@ -6,7 +6,7 @@ import { formatCount, sharedMessage } from './ui';
  * material-vue's CountBadge: what it counts, then a small `NxBadge` with the
  * count, `99+` past `max`, and nothing at 0. The badge follows the content
  * on its line: a mail client does not position it over a corner. A reader
- * hears the shared `common.countBadge.label` in its place, and the plain-text
+ * hears the shared `common.count-badge.label` in its place, and the plain-text
  * version reads the count in brackets: `Unread (3)`.
  *
  * The count is written when the e-mail is built: a value that is not a
@@ -48,7 +48,7 @@ const shown = computed(() => formatCount(props.count, props.max));
 const label = computed(() =>
 	sharedMessage(
 		globals,
-		'common.countBadge.label',
+		'common.count-badge.label',
 		`${props.count} notification${props.count === 1 ? '' : 's'}`,
 		{ count: props.count },
 	),

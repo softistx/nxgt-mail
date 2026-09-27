@@ -90,9 +90,9 @@ export default defineMailConfig({
 <!-- emails/verify-email.vue -->
 <template>
   <NxLayout>
-    <NxHeading>{{ t('verifyEmail.title') }}</NxHeading>
+    <NxHeading>{{ t('verify-email.title') }}</NxHeading>
     <NxText>{{ t('common.greeting', { name: placeholder('name') }) }}</NxText>
-    <NxButton :href="placeholder('link')">{{ t('verifyEmail.action') }}</NxButton>
+    <NxButton :href="placeholder('link')">{{ t('verify-email.action') }}</NxButton>
   </NxLayout>
 </template>
 ```

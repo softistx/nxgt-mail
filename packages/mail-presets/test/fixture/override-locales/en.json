@@ -1,1 +1,5 @@
-{ "signInCode": { "title": "Here is your code" } }
+{
+	"sign-in-code": {
+		"title": "Here is your code"
+	}
+}

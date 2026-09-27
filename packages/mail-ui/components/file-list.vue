@@ -29,10 +29,10 @@ const FALLBACK_UNITS = { b: 'B', kb: 'KB', mb: 'MB', gb: 'GB' } as const;
 const globals: Record<string, unknown> =
 	getCurrentInstance()?.appContext.config.globalProperties ?? {};
 const emptyText = computed(
-	() => props.empty ?? sharedMessage(globals, 'common.fileList.empty', 'No files'),
+	() => props.empty ?? sharedMessage(globals, 'common.file-list.empty', 'No files'),
 );
 const download = computed(() =>
-	sharedMessage(globals, 'common.fileList.download', 'Download'),
+	sharedMessage(globals, 'common.file-list.download', 'Download'),
 );
 
 /** material-vue's `formatFileSize`, in the template's locale. */
@@ -51,7 +51,7 @@ function sizeOf(size: number | string | undefined): string | undefined {
 	}).format(size / 1024 ** exponent);
 	return sharedMessage(
 		globals,
-		'common.fileList.size',
+		'common.file-list.size',
 		`${value} ${FALLBACK_UNITS[unit]}`,
 		{ size: value, unit },
 	);

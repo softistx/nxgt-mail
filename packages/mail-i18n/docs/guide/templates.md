@@ -10,11 +10,11 @@ what fails the build, and what `maizzle serve` and `maizzle build` do with it.
   <Html :lang="locale">
     <Body>
       <Container>
-        <Heading>{{ t('verifyEmail.title') }}</Heading>
-        <Text>{{ t('verifyEmail.greeting', { name: placeholder('name') }) }}</Text>
-        <Text>{{ t('verifyEmail.expires', { minutes: 15 }) }}</Text>
-        <Text>{{ t('verifyEmail.sentOn', { at: new Date(Date.UTC(2026, 0, 2, 12)) }) }}</Text>
-        <Button :href="placeholder('link')">{{ t('verifyEmail.action') }}</Button>
+        <Heading>{{ t('verify-email.title') }}</Heading>
+        <Text>{{ t('verify-email.greeting', { name: placeholder('name') }) }}</Text>
+        <Text>{{ t('verify-email.expires', { minutes: 15 }) }}</Text>
+        <Text>{{ t('verify-email.sent-on', { at: new Date(Date.UTC(2026, 0, 2, 12)) }) }}</Text>
+        <Button :href="placeholder('link')">{{ t('verify-email.action') }}</Button>
       </Container>
     </Body>
   </Html>
@@ -74,7 +74,7 @@ against the fallback locale's message, which declares every argument:
   [Arguments](catalogues.md#arguments).
 
 ```vue
-<Text>{{ t('verifyEmail.expires', { minutes: 15 }) }}</Text>
+<Text>{{ t('verify-email.expires', { minutes: 15 }) }}</Text>
 <!-- 'The link expires in 15 minutes.' / 'Le lien expire dans 15 minutes.' -->
 ```
 
@@ -110,7 +110,7 @@ name, a link, a code. `name` is `camelCase`.
 **In an attribute** — bind it, with `:`:
 
 ```vue
-<Button :href="placeholder('link')">{{ t('verifyEmail.action') }}</Button>
+<Button :href="placeholder('link')">{{ t('verify-email.action') }}</Button>
 <!-- <a href="{{ link }}"> -->
 ```
 
@@ -127,7 +127,7 @@ variables.
 **As an argument** of a message, where the message uses it as a string:
 
 ```vue
-<Text>{{ t('verifyEmail.greeting', { name: placeholder('name') }) }}</Text>
+<Text>{{ t('verify-email.greeting', { name: placeholder('name') }) }}</Text>
 <!-- <p>Bonjour {{ name }},</p> -->
 ```
 
@@ -152,7 +152,7 @@ is `verify-email`, and `emails/auth/reset-password.vue` is
 `auth/reset-password`. Every segment is kebab-case: lower-case letters and
 digits, joined by single dashes.
 
-The name also gives the key of its subject, `verifyEmail.subject`, through
+The name also gives the key of its subject, `verify-email.subject`, through
 [`emailKey`](catalogues.md#the-subject).
 
 ## Templates from a package
@@ -293,14 +293,14 @@ the template or the catalogues, to fix, not a condition to catch.
 
 | Build failure | Cause |
 | --- | --- |
-| `i18n: fr: verify-email calls t('verifyEmail.titel'), which is not a key of the catalogues` | A key that does not exist |
-| `i18n: en: verify-email calls t('verifyEmail.expires') without {minutes}` | An argument the message declares, not passed |
-| `i18n: fr: verify-email passes {minutes} to verifyEmail.expires as a string — the message uses it as a number` | An argument of the wrong kind; here, a placeholder where a plural needs a number |
-| `i18n: en: verify-email passes {name} to verifyEmail.title, which does not use it` | An argument the message does not use |
-| `i18n: en: verify-email passes a placeholder to {plan}, which verifyEmail.title chooses on with a select — a placeholder always chooses other` | `placeholder()` passed to an argument the message chooses on with a `select`: it would always choose `other`. Pass a value the build knows |
-| `i18n: en: verify-email calls t('verifyEmail.title') with arguments that are not an object, as { name: placeholder('name') }` | `t('verifyEmail.greeting', placeholder('name'))`: the arguments go in an object |
+| `i18n: fr: verify-email calls t('verify-email.titel'), which is not a key of the catalogues` | A key that does not exist |
+| `i18n: en: verify-email calls t('verify-email.expires') without {minutes}` | An argument the message declares, not passed |
+| `i18n: fr: verify-email passes {minutes} to verify-email.expires as a string — the message uses it as a number` | An argument of the wrong kind; here, a placeholder where a plural needs a number |
+| `i18n: en: verify-email passes {name} to verify-email.title, which does not use it` | An argument the message does not use |
+| `i18n: en: verify-email passes a placeholder to {plan}, which verify-email.title chooses on with a select — a placeholder always chooses other` | `placeholder()` passed to an argument the message chooses on with a `select`: it would always choose `other`. Pass a value the build knows |
+| `i18n: en: verify-email calls t('verify-email.title') with arguments that are not an object, as { name: placeholder('name') }` | `t('verify-email.greeting', placeholder('name'))`: the arguments go in an object |
 | `i18n: fr: verify-email calls placeholder() with a name that is not camelCase — as placeholder('firstName')` | `placeholder('first name')`, `placeholder('first_name')` |
-| `i18n: fr: verifyEmail.sentOn could not be formatted` | The formatter refused the value, such as a date that is `NaN`; its error is the `cause` |
+| `i18n: fr: verify-email.sent-on could not be formatted` | The formatter refused the value, such as a date that is `NaN`; its error is the `cause` |
 | `i18n: templates[0] has no template sign-in.vue — name one of its e-mails` | A [package's source](#templates-from-a-package) lists, in `emails`, a template its folder does not have; checked when the config loads |
 | `i18n: templates[0] holds no template — is /…/emails the folder of a package's e-mails?` | A package's source whose `dir` is missing or has no template; checked when the config loads |
 | `i18n: templates[0] and templates[1] both have welcome.vue — keep one with emails: [...], or write the project's own in its folder` | Two package sources ship the same e-mail; checked when the config loads |
@@ -407,8 +407,8 @@ Vue's language tools complete a key of `t` and flag an unknown key or a wrong
 argument in the editor and in `vue-tsc`:
 
 ```vue
-<Text>{{ t('verifyEmail.titel') }}</Text>
-<!-- Argument of type '"verifyEmail.titel"' is not assignable to parameter of type 'keyof TemplateMessages'. -->
+<Text>{{ t('verify-email.titel') }}</Text>
+<!-- Argument of type '"verify-email.titel"' is not assignable to parameter of type 'keyof TemplateMessages'. -->
 ```
 
 The setup, what the file holds, and each kind of argument are in

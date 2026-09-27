@@ -21,7 +21,7 @@ Nothing yet. A request is welcome as an
 - **Answering the key on a missing message** — `@nxgt/i18n` answers the key
   when a message is missing; here a missing key, a language with no catalogue
   or a formatting failure throws, in templates and in `createTranslator`
-  alike. An e-mail must never go out with `verifyEmail.title` or `{link}` in
+  alike. An e-mail must never go out with `verify-email.title` or `{link}` in
   it, so the failure belongs at build time.
 - **A template engine at run time** — templates are built by `maizzle build`;
   at send time only `{{ name }}` placeholders are filled in the built files.

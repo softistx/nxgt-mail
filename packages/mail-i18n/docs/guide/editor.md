@@ -32,13 +32,13 @@ then checked against its keys and arguments:
 ```vue
 <!-- emails/verify-email.vue -->
 <template>
-  <p>{{ t('verifyEmail.titel') }}</p>
-  <!-- Argument of type '"verifyEmail.titel"' is not assignable to parameter of type 'keyof TemplateMessages'. -->
-  <p>{{ t('verifyEmail.greeting') }}</p>
+  <p>{{ t('verify-email.titel') }}</p>
+  <!-- Argument of type '"verify-email.titel"' is not assignable to parameter of type 'keyof TemplateMessages'. -->
+  <p>{{ t('verify-email.greeting') }}</p>
   <!-- Expected 2 arguments, but got 1. -->
-  <p>{{ t('verifyEmail.title', { name: 'Ada' }) }}</p>
+  <p>{{ t('verify-email.title', { name: 'Ada' }) }}</p>
   <!-- Type 'string' is not assignable to type 'never'. -->
-  <p>{{ t('verifyEmail.expires', { minutes: placeholder('minutes') }) }}</p>
+  <p>{{ t('verify-email.expires', { minutes: placeholder('minutes') }) }}</p>
   <!-- Type 'string' is not assignable to type 'number'. -->
 </template>
 ```
@@ -70,12 +70,12 @@ import type {} from '@nxgt/mail-i18n';
 
 declare module '@nxgt/mail-i18n' {
 	interface TemplateMessages {
-		'verifyEmail.action': { };
-		'verifyEmail.expires': { minutes: number };
-		'verifyEmail.greeting': { name: string | number };
-		'verifyEmail.sentOn': { at: Date | number };
-		'verifyEmail.subject': { name: string | number };
-		'verifyEmail.title': { };
+		'verify-email.action': { };
+		'verify-email.expires': { minutes: number };
+		'verify-email.greeting': { name: string | number };
+		'verify-email.sent-on': { at: Date | number };
+		'verify-email.subject': { name: string | number };
+		'verify-email.title': { };
 	}
 }
 ```
@@ -119,7 +119,7 @@ type TemplateArgs<K> = [K] extends [keyof TemplateMessages]
 
 When the catalogues have more than one key, TypeScript reads a key they do not
 have as *every* key, so a key that may be any message takes any arguments:
-the error it reports is then the key's, `Argument of type '"verifyEmail.titel"' is not assignable to parameter
+the error it reports is then the key's, `Argument of type '"verify-email.titel"' is not assignable to parameter
 of type 'keyof TemplateMessages'`, rather than one about the arguments. A key
 typed as every key on purpose is checked by the build alone, and so is a key
 that may be every message — `ok ? 'a' : 'b'` in catalogues of only those two
@@ -136,7 +136,7 @@ const reason = 'security.reason.newDevice' as TemplateKey; // any message: any a
 ```
 
 A key that may be one of several messages, as
-`t(ok ? 'verifyEmail.greeting' : 'verifyEmail.subject', { name })`, compiles
+`t(ok ? 'verify-email.greeting' : 'verify-email.subject', { name })`, compiles
 when every one of them uses the same argument names, and takes arguments all
 of them accept. Otherwise no call fits: the build refuses an argument a
 message does not use, and one it leaves out.
@@ -150,9 +150,9 @@ Each kind of argument, as the catalogue declares it, takes:
 | `{at, date}`, `{at, time}` | date | `Date \| number` (a timestamp) |
 
 ```vue
-<Text>{{ t('verifyEmail.greeting', { name: placeholder('name') }) }}</Text>
-<Text>{{ t('verifyEmail.expires', { minutes: 15 }) }}</Text>
-<Text>{{ t('verifyEmail.sentOn', { at: Date.UTC(2026, 0, 2) }) }}</Text>
+<Text>{{ t('verify-email.greeting', { name: placeholder('name') }) }}</Text>
+<Text>{{ t('verify-email.expires', { minutes: 15 }) }}</Text>
+<Text>{{ t('verify-email.sent-on', { at: Date.UTC(2026, 0, 2) }) }}</Text>
 ```
 
 What the types do not see, the build still refuses: a placeholder passed to an

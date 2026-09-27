@@ -1,20 +1,20 @@
 <template>
-  <NxLayout :preheader="t('newSignIn.preheader')">
-    <NxTypography variant="headline-small">{{ t('newSignIn.title') }}</NxTypography>
+  <NxLayout :preheader="t('new-sign-in.preheader')">
+    <NxTypography variant="headline-small">{{ t('new-sign-in.title') }}</NxTypography>
     <NxTypography>{{ t('common.greeting', { name: placeholder('name') }) }}</NxTypography>
-    <NxBanner tone="warning" :title="t('newSignIn.banner')" />
+    <NxBanner tone="warning" :title="t('new-sign-in.banner')" />
     <NxSummaryData
       :data="[
-        { label: t('newSignIn.device'), value: placeholder('device') },
-        { label: t('newSignIn.location'), value: placeholder('location') },
-        { label: t('newSignIn.time'), value: placeholder('time') },
+        { label: t('new-sign-in.device'), value: placeholder('device') },
+        { label: t('new-sign-in.location'), value: placeholder('location') },
+        { label: t('new-sign-in.time'), value: placeholder('time') },
       ]"
     />
-    <NxTypography>{{ t('newSignIn.body') }} {{ t('presets.notYou') }}</NxTypography>
-    <NxButton :href="placeholder('link')">{{ t('newSignIn.action') }}</NxButton>
+    <NxTypography>{{ t('new-sign-in.body') }} {{ t('presets.not-you') }}</NxTypography>
+    <NxButton :href="placeholder('link')">{{ t('new-sign-in.action') }}</NxButton>
     <Spacer class="h-6" />
     <NxTypography variant="body-small" class="text-muted-foreground">
-      {{ t('presets.linkFallback') }}
+      {{ t('presets.link-fallback') }}
       <NxLink :href="placeholder('link')">{{ placeholder('link') }}</NxLink>
     </NxTypography>
   </NxLayout>

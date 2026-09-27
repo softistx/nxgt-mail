@@ -55,6 +55,9 @@ The samples below use the locales `en` and `fr`, the template
 - [`NxOpeningHours: dayOfWeek must be a whole number from 0 (Sunday) to 6 (Saturday)`](#nxopeninghours-dayofweek-must-be-a-whole-number-from-0-sunday-to-6-saturday)
 - [`NxContacts: type must be EMAIL, FAX, MOBILE, PHONE or WEBSITE`](#nxcontacts-type-must-be-email-fax-mobile-phone-or-website)
 
+**Upgrading**
+- [`i18n: en: welcome calls t('common.avatarGroup.more'), which is not a key of the catalogues`](#i18n-en-welcome-calls-tcommonavatargroupmore-which-is-not-a-key-of-the-catalogues)
+
 **Traps: a build that succeeds and is wrong**
 - [A tint written with an alpha (`bg-primary/15`) is missing in Outlook](#a-tint-written-with-an-alpha-bg-primary15-is-missing-in-outlook)
 - [A side border (`border-b`) is gone, and the style ends with `border: 0`](#a-side-border-border-b-is-gone-and-the-style-ends-with-border-0)
@@ -352,13 +355,13 @@ The message names your locale and template; the key starts `common.`.
 
 **When:** `maizzle build`, on the first template that uses `<NxLayout>` (its
 footer calls `t('common.footer.why')`), or an `<NxAvatarGroup>` hiding avatars
-past its `max` (its `+N` calls `t('common.avatarGroup.more')`), an
+past its `max` (its `+N` calls `t('common.avatar-group.more')`), an
 `<NxTimeline>` with no events and no `empty`
 (`t('common.timeline.empty')`), an `<NxGoalCard>`
-(`t('common.metrics.ofTarget')`), an `<NxCompareCard>` whose boxes have no
-`label` (`t('common.metrics.thisPeriod')`, `t('common.metrics.lastPeriod')`),
-an `<NxSeeAlso>` with links and no `label` (`t('common.seeAlso')`), an
-`<NxCountBadge>` above 0 (`t('common.countBadge.label')`), or that calls
+(`t('common.metrics.of-target')`), an `<NxCompareCard>` whose boxes have no
+`label` (`t('common.metrics.this-period')`, `t('common.metrics.last-period')`),
+an `<NxSeeAlso>` with links and no `label` (`t('common.see-also')`), an
+`<NxCountBadge>` above 0 (`t('common.count-badge.label')`), or that calls
 `t('common.greeting')` or another `common.` key, when `@nxgt/mail-i18n` is in the plugins without
 the package's messages.
 **Why:** the `common.*` messages ship in `uiCatalogues`, not in the
@@ -538,6 +541,36 @@ contact a `label` and the closest type — `WEBSITE` for a profile page:
 <template>
   <NxContacts :data="[{ type: 'WEBSITE', value: 'https://www.linkedin.com/company/acme', label: 'LinkedIn' }]" />
 </template>
+```
+
+## Upgrading
+
+### `i18n: en: welcome calls t('common.avatarGroup.more'), which is not a key of the catalogues`
+
+**When:** after upgrading `@nxgt/mail-ui` to a version whose shared
+`common.*` messages moved to `kebab-case` keys (0.3), on your own override in
+`locales/<locale>.json`, or a template of your own that still calls the old
+`camelCase` key.
+**Why:** `@nxgt/mail-i18n` accepts a `camelCase` or a `kebab-case` key, so
+this is not a format refusal — but the specific key moved, `avatarGroup`
+becoming `avatar-group` (and the same for `ofTarget`, `thisPeriod`,
+`lastPeriod`, `seeAlso`, `countBadge`, `fileList`, `postalAddress`,
+`openingHours`). An override under the old key is not an error by itself —
+it becomes a key of its own that no component reads, so the build succeeds
+with your override silently ignored — until a component's own call to the
+new key finds nothing under the old one.
+**Fix:** rename the key in your override, from `common.avatarGroup.more` to
+`common.avatar-group.more` and so on for the others — see the package's
+changeset for the full old → new list:
+
+```json
+// locales/en.json — before
+{ "common": { "avatarGroup": { "more": "+{count}" } } }
+```
+
+```json
+// locales/en.json — after
+{ "common": { "avatar-group": { "more": "+{count}" } } }
 ```
 
 ## Traps: a build that succeeds and is wrong

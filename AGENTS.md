@@ -151,11 +151,16 @@ it has. So, within 0.x:
 
 ## No `snake_case`, anywhere
 
-Every key is `camelCase`: options, variables, catalogue keys
-(`verifyEmail.title`, not `verify_email.title`), theme tokens. Held by
-Biome's `useNamingConvention`, as in `nxgt-janus`. Error codes are data values,
-`SCREAMING_SNAKE`, and that is not an exception. A provider's wire format
-(Resend's `reply_to`) is written where it is sent, with a comment.
+Every key is `camelCase`: options, variables, theme tokens. Held by Biome's
+`useNamingConvention`, as in `nxgt-janus`. **Catalogue keys are the
+exception**: each dotted segment is `camelCase` or `kebab-case`
+(`verify-email.link-expires`, not `verify_email.link_expires`) — `@nxgt/mail-i18n`
+checks it, since a catalogue key is data (a JSON property, or a quoted object
+key), never a JS identifier `useNamingConvention` sees. Our convention for a
+new key is `kebab-case`; `camelCase` stays accepted so a project migrates on
+its own schedule. Error codes are data values, `SCREAMING_SNAKE`, and that is
+not an exception. A provider's wire format (Resend's `reply_to`) is written
+where it is sent, with a comment.
 
 **File names are `kebab-case`**, Vue components included, and without the
 prefix: mail-ui's `card-header.vue` is `<NxCardHeader>` in a template, because

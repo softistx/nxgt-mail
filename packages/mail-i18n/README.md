@@ -86,7 +86,7 @@ file is how the editor learns them. See
 | --- | --- |
 | `i18n(options)` | The plugin, for `defineMailConfig({ plugins })` |
 | `createTranslator(catalogues, getLanguage)` | `t(key, args?, language?)` outside templates, shaped like `@nxgt/i18n`, but it throws on a missing key |
-| `emailKey(email)` | Where an e-mail's messages live: `auth/reset-password` → `auth.resetPassword` |
+| `emailKey(email)` | Where an e-mail's messages live: `auth/reset-password` → `auth.reset-password` |
 | `MANIFEST_FILE` | `'mail-manifest.json'`, the manifest's name in the output folder |
 | `MANIFEST_FORMAT` | `1`, the manifest format this version writes as `formatVersion`: it changes only with the manifest's shape, and `@nxgt/mail`'s renderer reads every format up to its own within 0.x |
 | `WRAPPERS_DIR` | `'.maizzle/emails'`, where the generated files go |
@@ -100,12 +100,12 @@ file is how the editor learns them. See
 
 ### A project in two languages
 
-A catalogue per locale, nested, `camelCase` keys:
+A catalogue per locale, nested, `camelCase` or `kebab-case` keys:
 
 ```json
 // locales/en.json — locales/fr.json has the same keys
 {
-	"verifyEmail": {
+	"verify-email": {
 		"subject": "Confirm your e-mail address, {name}",
 		"title": "Confirm your e-mail address",
 		"greeting": "Hello {name},",
@@ -123,10 +123,10 @@ One template, every language:
   <Html :lang="locale">
     <Body>
       <Container>
-        <Heading>{{ t('verifyEmail.title') }}</Heading>
-        <Text>{{ t('verifyEmail.greeting', { name: placeholder('name') }) }}</Text>
-        <Text>{{ t('verifyEmail.expires', { minutes: 15 }) }}</Text>
-        <Button :href="placeholder('link')">{{ t('verifyEmail.action') }}</Button>
+        <Heading>{{ t('verify-email.title') }}</Heading>
+        <Text>{{ t('verify-email.greeting', { name: placeholder('name') }) }}</Text>
+        <Text>{{ t('verify-email.expires', { minutes: 15 }) }}</Text>
+        <Button :href="placeholder('link')">{{ t('verify-email.action') }}</Button>
       </Container>
     </Body>
   </Html>
@@ -247,8 +247,8 @@ Every e-mail needs a subject, in every locale: the message
 ```ts
 import { emailKey } from '@nxgt/mail-i18n';
 
-emailKey('verify-email'); // 'verifyEmail'         → verifyEmail.subject
-emailKey('auth/reset-password'); // 'auth.resetPassword' → auth.resetPassword.subject
+emailKey('verify-email'); // 'verify-email'         → verify-email.subject
+emailKey('auth/reset-password'); // 'auth.reset-password' → auth.reset-password.subject
 ```
 
 The template does not write the subject. The build formats it once per locale
@@ -335,8 +335,8 @@ declare const user: { locale: string | null };
 
 const t = createTranslator({ en, fr }, () => pickLocale(user.locale, ['en', 'fr'], 'en'));
 
-t('verifyEmail.expires', { minutes: 15 }); // in the user's locale
-t('verifyEmail.expires', { minutes: 15 }, 'fr'); // 'Le lien expire dans 15 minutes.'
+t('verify-email.expires', { minutes: 15 }); // in the user's locale
+t('verify-email.expires', { minutes: 15 }, 'fr'); // 'Le lien expire dans 15 minutes.'
 ```
 
 `pickLocale` comes from `@nxgt/mail` (`bun add @nxgt/mail`); `getLanguage`
@@ -346,7 +346,7 @@ can be any function that returns one of the catalogues' locales.
 have the shape of `@nxgt/i18n`, with one difference: this `t` **throws**
 where `@nxgt/i18n` would answer the key. It throws on a key the catalogue
 does not have, on a language with no catalogue, and on a message that does
-not format. An e-mail never goes out with `verifyEmail.title` or `{link}` in
+not format. An e-mail never goes out with `verify-email.title` or `{link}` in
 it. See [Translating outside templates](docs/guide/translator.md).
 
 ### Editor and type checking
@@ -358,11 +358,11 @@ call the build would refuse:
 ```vue
 <!-- emails/verify-email.vue, with the catalogue above -->
 <template>
-  <p>{{ t('verifyEmail.titel') }}</p>
-  <!-- Argument of type '"verifyEmail.titel"' is not assignable to parameter of type 'keyof TemplateMessages'. -->
-  <p>{{ t('verifyEmail.greeting') }}</p>
+  <p>{{ t('verify-email.titel') }}</p>
+  <!-- Argument of type '"verify-email.titel"' is not assignable to parameter of type 'keyof TemplateMessages'. -->
+  <p>{{ t('verify-email.greeting') }}</p>
   <!-- Expected 2 arguments, but got 1. -->
-  <p>{{ t('verifyEmail.expires', { minutes: placeholder('minutes') }) }}</p>
+  <p>{{ t('verify-email.expires', { minutes: placeholder('minutes') }) }}</p>
   <!-- Type 'string' is not assignable to type 'number'. -->
 </template>
 ```
@@ -388,8 +388,8 @@ not affected. See [Editor and type checking](docs/guide/editor.md).
 **Run `maizzle` from the project root.** `dir`, `emails` and `.maizzle/emails`
 are resolved against the directory `maizzle` runs in.
 
-**Nest keys; never dot them.** `{ "verifyEmail": { "title": "…" } }`, not
-`{ "verifyEmail.title": "…" }`, which fails the build as not camelCase.
+**Nest keys; never dot them.** `{ "verify-email": { "title": "…" } }`, not
+`{ "verifyEmail.title": "…" }`, which fails the build as not camelCase or kebab-case.
 
 **Never write `{{ name }}` by hand in a template.** Vue would evaluate it.
 Write `{{ placeholder('name') }}`.
@@ -451,13 +451,13 @@ catalogues, each measured by a `@vue-expect-error` in
 [`test/fixture/types/refusals.vue`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-i18n/test/fixture/types/refusals.vue),
 checked by `vue-tsc` after `maizzle prepare` (`bun run typecheck:templates`):
 
-1. A key the catalogues do not have (`t('verifyEmail.titel')`).
+1. A key the catalogues do not have (`t('verify-email.titel')`).
 2. A message's argument left out.
 3. An argument the message does not use.
 4. A plural's count given as a placeholder, which is text.
 5. A key written in `snake_case` (`t('verify_email.title')`).
 6. A key that may be a message without arguments or one with
-   (`t(ok ? 'verifyEmail.title' : 'verifyEmail.expires')`).
+   (`t(ok ? 'verify-email.title' : 'verify-email.expires')`).
 7. The same, given the arguments of only one of them.
 
 The same file holds the template calls that must keep compiling. The build

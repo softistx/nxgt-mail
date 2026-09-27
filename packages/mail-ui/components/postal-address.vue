@@ -27,7 +27,7 @@ const globals: Record<string, unknown> =
 	getCurrentInstance()?.appContext.config.globalProperties ?? {};
 const heading = computed(
 	() =>
-		props.label ?? sharedMessage(globals, 'common.postalAddress', 'Address'),
+		props.label ?? sharedMessage(globals, 'common.postal-address', 'Address'),
 );
 
 /** `FR` in the template's locale; anything else as given. */

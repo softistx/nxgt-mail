@@ -1,14 +1,14 @@
 {
-	"verifyEmail": {
+	"verify-email": {
 		"subject": "Confirm your e-mail address, {name}",
 		"title": "Confirm your e-mail address",
 		"greeting": "Hello {name},",
 		"expires": "The link expires in {minutes, plural, one {# minute} other {# minutes}}.",
-		"sentOn": "Sent on {at, date, long}.",
+		"sent-on": "Sent on {at, date, long}.",
 		"action": "Confirm my address"
 	},
 	"auth": {
-		"resetPassword": {
+		"reset-password": {
 			"subject": "Reset your password",
 			"body": "Someone asked to reset the password of {email}."
 		}

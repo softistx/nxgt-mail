@@ -65,7 +65,7 @@ export function createFormatter(prefix: string) {
  * import fr from './locales/fr.json';
  *
  * const t = createTranslator({ en, fr }, () => pickLocale(user.locale, ['en', 'fr'], 'en'));
- * t('verifyEmail.subject');
+ * t('verify-email.subject');
  * ```
  */
 export function createTranslator(

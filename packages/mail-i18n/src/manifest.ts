@@ -55,14 +55,8 @@ export const placeholderMark = (name: string) => `{{ ${name} }}`;
 const placeholdersIn = (text: string) =>
 	[...text.matchAll(PLACEHOLDER)].map((match) => match[1] as string);
 
-/** `auth/reset-password` → `auth.resetPassword`: where its messages live. */
-export const emailKey = (email: string) =>
-	email
-		.split('/')
-		.map((segment) =>
-			segment.replace(/-([a-z0-9])/g, (_, char: string) => char.toUpperCase()),
-		)
-		.join('.');
+/** `auth/reset-password` → `auth.reset-password`: where its messages live. */
+export const emailKey = (email: string) => email.split('/').join('.');
 
 /**
  * The subject of `email` in `locale`: the message `<emailKey>.subject`, each

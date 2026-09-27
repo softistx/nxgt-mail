@@ -15,7 +15,7 @@ declare const user: { locale: string | null };
 
 const t = createTranslator({ en, fr }, () => pickLocale(user.locale, ['en', 'fr'], 'en'));
 
-t('verifyEmail.expires', { minutes: 15 }); // 'The link expires in 15 minutes.' for an English user
+t('verify-email.expires', { minutes: 15 }); // 'The link expires in 15 minutes.' for an English user
 ```
 
 `pickLocale` comes from `@nxgt/mail` (`bun add @nxgt/mail`, a package with
@@ -46,16 +46,16 @@ function createTranslator(catalogues: Catalogues, getLanguage: LanguageProvider)
 
 | Argument | Effect |
 | --- | --- |
-| `key` | The dotted key, `verifyEmail.title` |
+| `key` | The dotted key, `verify-email.title` |
 | `args` | The message's arguments: a string, a number or a `Date` each |
 | `language` | This call's language, a locale or a function: overrides `getLanguage` |
 
 ```ts
 const t = createTranslator({ en, fr }, 'fr');
 
-t('verifyEmail.expires', { minutes: 1 }); // 'Le lien expire dans 1 minute.'
-t('verifyEmail.expires', { minutes: 1 }, 'en'); // 'The link expires in 1 minute.'
-t('verifyEmail.expires', { minutes: 1 }, () => 'en'); // 'The link expires in 1 minute.'
+t('verify-email.expires', { minutes: 1 }); // 'Le lien expire dans 1 minute.'
+t('verify-email.expires', { minutes: 1 }, 'en'); // 'The link expires in 1 minute.'
+t('verify-email.expires', { minutes: 1 }, () => 'en'); // 'The link expires in 1 minute.'
 ```
 
 Compiled messages are cached per locale and key, so calling `t` in a loop is
@@ -70,7 +70,7 @@ right:
 
 | Situation | `@nxgt/i18n` | `@nxgt/mail-i18n` |
 | --- | --- | --- |
-| A key the language's catalogue does not have | Answers the key, `'verifyEmail.titel'` | **Throws** `t: fr: verifyEmail.titel is not a key`. So does a key that names a group of messages, `verifyEmail` |
+| A key the language's catalogue does not have | Answers the key, `'verify-email.titel'` | **Throws** `t: fr: verify-email.titel is not a key`. So does a key that names a group of messages, `verify-email` |
 | A language with no catalogue | Answers the key | **Throws** `t: the language is not a locale of the catalogues — pick one with pickLocale` |
 | A message that does not format (an argument missing) | Logs, and answers the raw message with `{name}` in it | **Throws** `t: en: common.greeting could not be formatted`, the formatter's error as `cause` |
 
@@ -103,7 +103,7 @@ for debugging, and a catalogue's text is not a secret.
 ```ts
 const t = createTranslator({ en, fr }, () => 'de');
 
-t('verifyEmail.title'); // Error: t: the language is not a locale of the catalogues — pick one with pickLocale
+t('verify-email.title'); // Error: t: the language is not a locale of the catalogues — pick one with pickLocale
 ```
 
 ## What it does not check
@@ -137,7 +137,7 @@ interface User {
 
 export function reminderText(user: User, minutes: number): string {
 	const language = pickLocale(user.locale, locales, 'en');
-	return t('verifyEmail.expires', { minutes }, language);
+	return t('verify-email.expires', { minutes }, language);
 }
 ```
 
@@ -159,7 +159,7 @@ const t = createTranslator({ en, fr }, 'en');
 
 test.each(['en', 'fr'])('the %s verification e-mail says when the link expires', (locale) => {
 	const html = readFileSync(`dist/${locale}/verify-email.html`, 'utf8');
-	expect(html).toContain(t('verifyEmail.expires', { minutes: 15 }, locale));
+	expect(html).toContain(t('verify-email.expires', { minutes: 15 }, locale));
 });
 ```
 

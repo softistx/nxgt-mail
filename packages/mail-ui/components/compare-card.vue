@@ -18,12 +18,12 @@ const globals: Record<string, unknown> =
 const currentLabel = computed(
 	() =>
 		props.current.label ??
-		sharedMessage(globals, 'common.metrics.thisPeriod', 'This period'),
+		sharedMessage(globals, 'common.metrics.this-period', 'This period'),
 );
 const previousLabel = computed(
 	() =>
 		props.previous.label ??
-		sharedMessage(globals, 'common.metrics.lastPeriod', 'Last period'),
+		sharedMessage(globals, 'common.metrics.last-period', 'Last period'),
 );
 /** The two boxes: this period's, then the last one's, muted. */
 const points = computed(() => [

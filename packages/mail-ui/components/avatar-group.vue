@@ -32,7 +32,7 @@ const rest = computed(() => avatars.value.length - shown.value.length);
 const globals: Record<string, unknown> =
 	getCurrentInstance()?.appContext.config.globalProperties ?? {};
 const moreLabel = computed(() =>
-	sharedMessage(globals, 'common.avatarGroup.more', `${rest.value} more`, {
+	sharedMessage(globals, 'common.avatar-group.more', `${rest.value} more`, {
 		count: rest.value,
 	}),
 );

@@ -17,7 +17,7 @@ const props = defineProps<{ items: readonly SeeAlsoItem[]; label?: string }>();
 const globals: Record<string, unknown> =
 	getCurrentInstance()?.appContext.config.globalProperties ?? {};
 const heading = computed(
-	() => props.label ?? sharedMessage(globals, 'common.seeAlso', 'See also'),
+	() => props.label ?? sharedMessage(globals, 'common.see-also', 'See also'),
 );
 const attrs = useAttrs();
 const classes = computed(() =>
