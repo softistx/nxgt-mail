@@ -591,4 +591,13 @@ describe('a messages module that cannot be read', () => {
 			'i18n: ./i18n/messages.ts is missing the fr locale',
 		);
 	}, 60_000);
+
+	test('a default export that is not a resources object', async () => {
+		const output = await messagesFailure('not-an-object', {
+			'i18n/messages.ts': 'export default 42;\n',
+		});
+		expect(output).toContain(
+			"i18n: ./i18n/messages.ts's default export must be a resources object ({ en: {...}, fr: {...} }) or a function that returns one",
+		);
+	}, 60_000);
 });
