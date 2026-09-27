@@ -224,8 +224,11 @@ export async function sendNewsletter(
 ```
 
 The URL must start with `https://`, be printable ASCII, carry no user or
-password, and hold no `<`, `>`, double quote or raw comma (percent-encode
-it: `%2C`), and `mailto` must be a bare ASCII address; anything else is a
+password, and hold no `<`, `>`, double quote, raw comma (percent-encode
+it: `%2C`) or `%` that starts no escape, and `mailto` must be a bare ASCII
+address. The URL is written as a parser reads it (`new URL(url).href`: the
+host lowered, an empty `@` or extra slashes dropped), and checked again:
+`https://a%2Cb.test/` writes a raw comma, so it is refused. Anything else is a
 `MailRefused` that never quotes the URL — its token is a credential. Your
 endpoint must unsubscribe on a `POST` with the body
 `List-Unsubscribe=One-Click`, with no login and no confirmation. It belongs on

@@ -30,9 +30,14 @@ export type ListUnsubscribeHeaders = {
 // quote, a backtick, a backslash, braces, `|`, `^`). Percent-encode it.
 const URL_ALLOWED = /^https:\/\/[\x21-\x7E]+$/;
 const URL_REFUSED = /[<>,"`\\{}|^]/;
+// A `%` that does not start an escape: no URI parser reads it as intended.
+const BAD_ESCAPE = /%(?![0-9A-Fa-f]{2})/;
 // RFC 6068 reads `?`, `&`, `=`, `#` and `%` inside a mailto: as structure — a
 // subject, a second recipient — so the address is plain ASCII without them.
 const MAILTO = /^[A-Za-z0-9._~!$'*+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+$/;
+
+const fitsTheHeader = (url: string): boolean =>
+	URL_ALLOWED.test(url) && !URL_REFUSED.test(url) && !BAD_ESCAPE.test(url);
 
 /**
  * The headers that give an e-mail Gmail's and Yahoo's one-click unsubscribe
@@ -49,8 +54,10 @@ const MAILTO = /^[A-Za-z0-9._~!$'*+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+$/;
  *
  * Refuses, with a {@link MailRefused} that never quotes the value, a `url`
  * that is not `https://` — RFC 8058 requires it — or is not printable ASCII,
- * carries a user or a password, or holds `<`, `>`, a double quote or a raw `,`; and
- * a `mailto` that is not a bare ASCII address. The URL is
+ * carries a user or a password, holds `<`, `>`, a double quote or a raw `,`,
+ * or a `%` that starts no escape — before or after parsing — and a `mailto`
+ * that is not a bare ASCII address. The URL is written as a parser reads it
+ * (`new URL(url).href`: the host lowered, a `'` in the query as `%27`). It is
  * often built from a token, and a token is a credential: the message names
  * the rule, not the link.
  */
@@ -68,13 +75,16 @@ export function listUnsubscribe(
 	if (options.mailto !== undefined && typeof options.mailto !== 'string') {
 		throw new TypeError('listUnsubscribe: mailto must be a string');
 	}
+	// The URL as a parser reads it: `https:///host` and an empty `@` are gone,
+	// the host lowered. The parser also decodes a host's escapes — `a%2Cb`
+	// comes back as `a,b` — so what is written is checked as well.
+	const parsed = URL.canParse(options.url) ? new URL(options.url) : null;
 	if (
-		!URL_ALLOWED.test(options.url) ||
-		URL_REFUSED.test(options.url) ||
-		!URL.canParse(options.url) ||
+		parsed === null ||
 		// A user and a password in a header every relay and recipient reads.
-		new URL(options.url).username !== '' ||
-		new URL(options.url).password !== ''
+		parsed.username !== '' ||
+		parsed.password !== '' ||
+		![options.url, parsed.href].every(fitsTheHeader)
 	) {
 		throw new MailRefused(
 			'listUnsubscribe: url must be an https:// URL in printable ASCII, without credentials, <, >, quotes or a raw comma',
@@ -88,7 +98,7 @@ export function listUnsubscribe(
 	const mailto =
 		options.mailto === undefined ? '' : `, <mailto:${options.mailto}>`;
 	return {
-		'List-Unsubscribe': `<${options.url}>${mailto}`,
+		'List-Unsubscribe': `<${parsed.href}>${mailto}`,
 		'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
 	};
 }

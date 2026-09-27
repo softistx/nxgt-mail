@@ -384,13 +384,17 @@ listUnsubscribe({ url: url.href });
 ### Refusals
 
 The URL and the address are checked when the headers are built, before
-anything is sent. A `MailRefused` names the rule, never the value:
+anything is sent, and the URL is written as a parser reads it —
+`new URL(url).href`: the host lowered, `https:///host` or an empty `@`
+dropped, and any character a query cannot hold as is percent-encoded
+(a `'` in the query becomes `%27`). A host's escapes are decoded, so the URL
+written is checked as well: `https://a%2Cb.test/` is refused. A `MailRefused` names the rule, never the value:
 
 | Written | Answer |
 | --- | --- |
 | `url: 'https://example.com/u?token=…'`, `'https://example.com:8443/u?list=a%2Cb'` | accepted |
 | `url: 'http://example.com/u'`, `'mailto:u@example.com'`, `'/unsubscribe'`, `''`, `'https://user:pass@example.com/u'`, `'https://exämple.com/u'` | `MailRefused`: `listUnsubscribe: url must be an https:// URL in printable ASCII, without credentials, <, >, quotes or a raw comma` |
-| a `url` holding a space, a tab, a line break, a character outside ASCII, `<`, `>`, a double quote, a backtick, a backslash, a brace, `|`, `^` or a raw `,` | `MailRefused`: the same message |
+| a `url` holding a space, a tab, a line break, a character outside ASCII, `<`, `>`, a double quote, a backtick, a backslash, a brace, `|`, `^`, a raw `,`, or a `%` that starts no escape | `MailRefused`: the same message |
 | `mailto: 'Unsub <u@example.com>'`, `'u@example.com, v@example.com'`, `'unsubscribe'`, `'mailto:u@example.com'`, `'u@example.com?subject=x'`, `'ü@example.com'` | `MailRefused`: `listUnsubscribe: mailto must be a bare e-mail address, as unsubscribe@example.com` |
 | `listUnsubscribe(null)` | `TypeError`: `listUnsubscribe: options must be an object, as { url }` |
 | `url: new URL(…)` | a compile error; at run time `TypeError`: `listUnsubscribe: url must be a string` |

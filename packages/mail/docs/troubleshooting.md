@@ -896,8 +896,10 @@ A `MailRefused`, `code: 'MAIL_REFUSED'`.
 **When:** `listUnsubscribe({ url })`, with a `url` that does not start with
 `https://` (`http:`, `mailto:`, relative, empty, `HTTPS://` in capitals), that
 carries a user or a password (`https://user:pass@…`), or that holds a space,
-a line break, a character outside ASCII, `<`, `>`, a double quote, a backtick, a backslash, a
-brace, `|`, `^` or a `,` as it is: typically a token or a list name pasted
+a line break, a character outside ASCII, `<`, `>`, a double quote, a backtick,
+a backslash, a brace, `|`, `^`, a `,` as it is, or a `%` that starts no
+escape (`%`, `%zz`) — or an escape in the host that the parser decodes into
+one of those (`https://a%2Cb.test/`): typically a token or a list name pasted
 into a template string without being encoded, or an `http:` URL from a
 development configuration.
 **Why:** RFC 8058 accepts only an `https:` URL for one-click unsubscribe, and
@@ -1802,6 +1804,8 @@ test title:
 | `conformance: a Bcc header must throw MailRefused` | `send.refusesAddressHeader` | call `checkMessage`, from a version of `@nxgt/mail` that refuses reserved headers |
 | `conformance: an attachment named with a path must throw MailRefused` | `send.refusesAttachmentPath` | call `checkMessage`, from a version of `@nxgt/mail` that checks attachments (0.2 on) |
 | `conformance: the refusal message holds the refused value` | `send.refusesWithoutTheValue`, `send.refusesAddressHeader`, `send.refusesAttachmentPath` | name where the problem is, never the value |
+| `conformance: a send with an idempotency key did not answer SentMail` | `send.idempotencyKey` | accept the key, and resolve as for any message: a provider that cannot deduplicate is no reason to refuse |
+| `conformance: the idempotency key was written into the e-mail` | `send.idempotencyKey` | the recipients, subject, HTML or text read back hold the key: keep it out of what builds the e-mail, and send it as the provider's header (Resend's `Idempotency-Key`), or leave it out |
 | `conformance: the message with an attachment was not delivered` | `send.attachment` | a message with attachments is a message: deliver it |
 | `conformance: the attachment was not delivered with its file name` | `send.attachment` | pass the name as is; the name `reçu n° 42.pdf` needs RFC 2231 encoding in a raw header — nodemailer and a JSON API do it for you |
 | `conformance: the attachment was not delivered with its content type` | `send.attachment` | pass `contentType` through; do not guess it from the name |
