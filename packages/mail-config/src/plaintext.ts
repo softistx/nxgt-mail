@@ -102,19 +102,26 @@ const INVISIBLE = /\u034F|[\u00AD\u2007\u200B-\u200D\u2060\uFEFF]/g;
 const ADDRESS = /^(?:[a-z][\w+.-]*:\S+|\{\{\s*[\w.-]+\s*\}\})$/i;
 
 // A `<pre>`'s content, still bracketed by `breakBlocks`'s pair.
-const VERBATIM_BLOCK = /\uE000([\s\S]*?)\uE001/g;
+const VERBATIM_BLOCK = new RegExp(
+	`${VERBATIM_START}([\\s\\S]*?)${VERBATIM_END}`,
+	'g',
+);
+
+// Either mark `breakBlocks` writes, built from the same constants: one
+// pattern to keep them in step, however many places read one.
+const MARK_CLASS = `[${PARAGRAPH_MARK}${LINE_MARK}]`;
 
 /**
  * A real line break `breakBlocks` never wrote: a source line Maizzle
  * wrapped, unless it only pushes a `<pre>`'s content off, or leaves a link's
  * address on its own line — `dumpLinkHrefsNearby`'s doing, kept nearby.
  */
-const HAS_MARK = /[\ue002\ue003]/;
+const HAS_MARK = new RegExp(MARK_CLASS);
 
 /** The line a marker-bounded chunk ends with (or starts with), trimmed. */
 function edgeLine(chunk: string, edge: 'start' | 'end'): string {
 	if (edge === 'start') {
-		const at = chunk.search(/[\ue002\ue003]/);
+		const at = chunk.search(MARK_CLASS);
 		return (at === -1 ? chunk : chunk.slice(0, at)).trim();
 	}
 	const at = Math.max(
