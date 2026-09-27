@@ -108,3 +108,18 @@ export function slotComponents(nodes: readonly unknown[] | undefined): VNode[] {
 		return typeof node.type === 'symbol' ? [] : [node];
 	});
 }
+
+/**
+ * `t(key, args)` when `@nxgt/mail-i18n` is listed, else `fallback`: a shared
+ * message a component writes, in English without the i18n plugin.
+ */
+export function sharedMessage(
+	globals: Record<string, unknown>,
+	key: string,
+	fallback: string,
+	args?: Record<string, unknown>,
+): string {
+	return typeof globals.t === 'function'
+		? (globals.t(key, args) as string)
+		: fallback;
+}

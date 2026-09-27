@@ -92,10 +92,10 @@ reads. They need no JavaScript and no web font.
 | `NxAvatarImage` | `AvatarImage` | `src` (required), `alt` | — |
 | `NxAvatarFallback` | `AvatarFallback` | — | default |
 | `NxAvatarGroup` | `AvatarGroup` | `max`, `size` (`'md'`) | default: `NxAvatar`s |
-| [`NxProgress`](#nxprogress) | `Progress` | `value` (`0`), `max` (`100`) | — |
+| [`NxProgress`](#nxprogress) | `Progress` | `modelValue` (`0`), `max` (`100`), `height` (`8`) | — |
 | [`NxSteps`](#nxsteps-and-nxstepsitem) | `Steps` | — | default: `NxStepsItem`s |
-| `NxStepsItem` | `StepsItem` | `title`, `index` (its place) | default, `index` |
-| [`NxTimeline`](#nxtimeline) | `Timeline` | `items` (required), `empty` | — |
+| `NxStepsItem` | `StepsItem` | `title`, `index` (its place), `last` (set by `NxSteps`) | default, `index` |
+| [`NxTimeline`](#nxtimeline) | `Timeline` | `items` (required), `empty` (a shared message) | — |
 
 ## NxLayout
 
@@ -596,29 +596,32 @@ Outlook on Windows ignores the width and height of an inline box: there,
 
 ## NxProgress
 
-material-vue's `Progress`, still: a bar filled to `value` out of `max`, on a
-rounded track at 20% of the primary colour.
+material-vue's `Progress`, still: a bar filled to `modelValue` out of `max`,
+on a rounded track at 20% of the primary colour.
 
 ```vue
 <template>
   <NxTypography>2 of 3 steps done</NxTypography>
-  <NxProgress :value="2" :max="3" />
+  <NxProgress :model-value="2" :max="3" />
 </template>
 ```
 
 | Prop | Type | Default | Effect |
 | --- | --- | --- | --- |
-| `value` | `number` | `0` | How much is done |
-| `max` | `number` | `100` | What `value` is out of |
+| `modelValue` | `number` | `0` | How much is done — material-vue's name, passed one way: an e-mail has no `v-model` |
+| `max` | `number` | `100` | What `modelValue` is out of |
+| `height` | `number` | `8` | The bar's height in pixels; an addition, where material-vue sets a class such as `h-1.5` |
 
-The fill is `value / max`, rounded to a whole percent and kept between 0 and
+The fill is `modelValue / max`, rounded to a whole percent and kept between 0 and
 100. It is a table cell of that width, which every client draws: material-vue's
 `transform` and pulse are not. The table carries `role="progressbar"` and the
 `aria-value*` attributes.
 
-The share is computed when the e-mail is built, so `value` is a number, never
-a placeholder: an e-mail that shows a different share per recipient is one
-template per share, or text.
+The share is computed when the e-mail is built, so each prop is a number,
+never a placeholder: one that is not
+[fails the build](../troubleshooting.md#nxprogress-modelvalue-must-be-a-number-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent).
+A share that differs per recipient is written as text. The bar is left out of
+the plain-text version, where it says nothing.
 
 ## NxSteps and NxStepsItem
 
@@ -638,10 +641,12 @@ title and its text, joined by a line.
 | Part | Props | Slots | Renders |
 | --- | --- | --- | --- |
 | `NxSteps` | — | default: `NxStepsItem`s | A table of its items, `mb-4`; numbers them 1, 2, 3… |
-| `NxStepsItem` | `title?: string`, `index?: number` (its place in `NxSteps`) | default (the text), `index` (in the circle, in place of the number) | A 32px circle, `border-primary-25`, the number in `text-primary`; the title `text-base` semibold; the text `text-sm` muted; a line down to the next item |
+| `NxStepsItem` | `title?: string`, `index?: number` (its place in `NxSteps`), `last?: boolean` (set by `NxSteps`) | default (the text), `index` (in the circle, in place of the number) | A 32px circle, `border-primary-25`, the number in `text-primary`; the title `text-base` semibold; the text `text-sm` muted; a line down to the next item |
 
-**Only `NxStepsItem`s go directly inside `NxSteps`**, as a `v-for` or one by
-one: `NxSteps` numbers them and draws the line under every item but the last.
+**Only `NxStepsItem`s go directly inside `NxSteps`, and an `NxStepsItem` only
+inside `NxSteps`**, as a `v-for` or one by one: `NxSteps` numbers them and
+tells each whether it is the `last`, which draws no line under it. An item is
+table rows: alone, it is broken HTML with an empty circle.
 An `index` you give wins over the item's place. The item's `class` goes on its
 text's cell.
 
@@ -668,10 +673,10 @@ a line, its title, a time on the right, and a description.
 
 | Prop | Type | Default | Effect |
 | --- | --- | --- | --- |
-| `items` | `{ id: string; title: string; description?: string; timestampLabel?: string; tone?: Tone }[]` | required | The events, in order |
-| `empty` | `string` | none | The text shown, centred and muted, when `items` is empty; without it, nothing is written |
+| `items` | `{ id: string; title: string; description?: string; timestampLabel?: string; tone?: TimelineTone }[]` | required | The events, in order; each `id` unique |
+| `empty` | `string` | the shared message `common.timeline.empty` (`No activity yet`) | The text shown, centred and muted, when `items` is empty |
 
-`Tone` is `'default' | 'primary' | 'success' | 'info' | 'warning' | 'error'`:
+`TimelineTone` is `'default' | 'primary' | 'success' | 'info' | 'warning' | 'error'`:
 the marker's border at 40% of the tone, its ground at 15%, and its dot in the
 tone; `default` is `border`, `muted` and muted text.
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { twMerge } from '@maizzle/framework';
-import { computed, useAttrs } from 'vue';
-import type { TimelineItem, TimelineTone } from './ui';
+import { computed, getCurrentInstance, useAttrs } from 'vue';
+import { sharedMessage, type TimelineItem, type TimelineTone } from './ui';
 
 /**
  * material-vue's Timeline: events one under the other, each a toned marker
@@ -24,6 +24,13 @@ const MARKER: Record<TimelineTone, string> = {
 	error: 'border-error-40 bg-error-15 text-error',
 };
 
+const globals: Record<string, unknown> =
+	getCurrentInstance()?.appContext.config.globalProperties ?? {};
+const emptyText = computed(
+	() =>
+		props.empty ??
+		sharedMessage(globals, 'common.timeline.empty', 'No activity yet'),
+);
 const attrs = useAttrs();
 const classes = computed(() => twMerge('mb-4 w-full', attrs.class as string));
 const emptyClasses = computed(() =>
@@ -39,7 +46,7 @@ const emptyClasses = computed(() =>
     <template v-for="(item, position) in props.items" :key="item.id">
       <tr>
         <td colspan="2" class="w-8 align-top">
-          <span :class="`block h-8 w-8 rounded-full border border-solid text-center text-[12px] leading-[30px] ${MARKER[item.tone ?? 'default']}`" aria-hidden="true">&#9679;</span>
+          <span :class="`block h-8 w-8 rounded-full border border-solid text-center text-[12px] leading-[30px] ${MARKER[item.tone ?? 'default']}`" aria-hidden="true"><span data-maizzle-html-only>&#9679;</span></span>
         </td>
         <td class="pl-3 align-top">
           <table class="w-full" role="presentation" cellpadding="0" cellspacing="0">
@@ -51,13 +58,13 @@ const emptyClasses = computed(() =>
         </td>
       </tr>
       <tr>
-        <td :class="['w-4 text-[0px] leading-none', position < props.items.length - 1 && 'border-r [border-right-style:solid] border-border']">&#8203;</td>
-        <td class="w-4 text-[0px] leading-none">&#8203;</td>
+        <td :class="['w-4 text-[1px] leading-px', position < props.items.length - 1 && 'border-r [border-right-style:solid] border-border']"><span data-maizzle-html-only>&zwj;</span></td>
+        <td class="w-4 text-[1px] leading-px"><span data-maizzle-html-only>&zwj;</span></td>
         <td :class="['pl-3 align-top', position < props.items.length - 1 && 'pb-6']">
           <p v-if="item.description" class="m-0 text-sm text-muted-foreground">{{ item.description }}</p>
         </td>
       </tr>
     </template>
   </table>
-  <p v-else-if="empty" v-bind="{ ...attrs, class: undefined }" :class="emptyClasses">{{ empty }}</p>
+  <p v-else v-bind="{ ...attrs, class: undefined }" :class="emptyClasses">{{ emptyText }}</p>
 </template>

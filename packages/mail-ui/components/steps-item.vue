@@ -35,12 +35,12 @@ const classes = computed(() =>
       <span class="block h-8 w-8 rounded-full border border-solid border-primary-25 bg-background text-center text-xs font-semibold leading-[30px] text-primary"><slot name="index">{{ index }}</slot></span>
     </td>
     <td class="pl-3 align-top">
-      <p v-if="title" class="m-0 pt-1 text-base font-semibold text-foreground">{{ title }}</p>
+      <p v-if="title" class="m-0 pt-1 text-base font-semibold tracking-tight text-foreground">{{ title }}</p>
     </td>
   </tr>
   <tr>
-    <td :class="['w-4 text-[0px] leading-none', !last && 'border-r [border-right-style:solid] border-border']">&#8203;</td>
-    <td class="w-4 text-[0px] leading-none">&#8203;</td>
+    <td :class="['w-4 text-[1px] leading-px', !last && 'border-r [border-right-style:solid] border-border']"><span data-maizzle-html-only>&zwj;</span></td>
+    <td class="w-4 text-[1px] leading-px"><span data-maizzle-html-only>&zwj;</span></td>
     <td v-bind="{ ...attrs, class: undefined }" :class="classes">
       <div v-if="slots.default" class="mt-2 text-sm leading-6 text-muted-foreground"><slot /></div>
     </td>
