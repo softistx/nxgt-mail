@@ -1,7 +1,6 @@
 {
 	"name": "@nxgt/mail-ui",
 	"version": "0.0.0",
-	"private": true,
 	"description": "E-mail components for a Maizzle project in the style of @nxgt/material-vue: NxLayout, NxButton, NxCard, NxBadge, NxAlert… with its variants, colours and tokens, rendered with tables and inlined styles.",
 	"license": "MIT",
 	"type": "module",

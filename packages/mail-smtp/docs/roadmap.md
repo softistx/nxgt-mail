@@ -5,26 +5,11 @@ no dates here, and the version something shipped in is the only number.
 
 ## Now
 
-- **An SMTP transport on your nodemailer** — `createSmtpMailer({ transporter,
-  from })`: every SMTP option is nodemailer's, set where you create the
-  transporter. Each message is checked as every transport checks it, a name is
-  quoted by nodemailer so it names one recipient, and nothing is read from a
-  file or a URL. Built, not yet published.
-- **Errors you can act on** — a permanent `5xx` on the recipients or the
-  content (`552` for a message too large) is a `MailRefused`; an
-  unreachable server, a timeout, a `4xx`, refused credentials or a refused
-  sender is a `MailFailure`, nodemailer's error on `cause`. Some recipients
-  refused while others were accepted throws too, and says the others may
-  have the message. The classes are `@nxgt/mail`'s, so `instanceof` holds.
-  Built, not yet published.
-- **Proven against a real server** — the `@nxgt/mail/conformance` suite
-  passes against a local `smtp-server`, what arrived read back with
-  `mailparser`. Built, not yet published.
+Nothing between releases.
 
 ## Next
 
-- **The first release, 0.1.0** — on npm with `@nxgt/mail` and the other
-  packages.
+Nothing yet.
 
 ## Later
 
@@ -46,6 +31,20 @@ Nothing planned yet. Say what you need in an issue.
 
 ## Shipped
 
-Nothing yet: everything under **Now** ships with the first release, 0.1.0.
-From then on, the last ten items are listed here, newest first, and
-`CHANGELOG.md` holds the rest.
+The last ten, newest first, each with the version it came in. Everything
+before is in the [CHANGELOG](../CHANGELOG.md).
+
+- **An SMTP transport on your nodemailer, v0.1.0** — `createSmtpMailer({ transporter,
+  from })`: every SMTP option is nodemailer's, set where you create the
+  transporter. Each message is checked as every transport checks it, a name is
+  quoted by nodemailer so it names one recipient, and nothing is read from a
+  file or a URL.
+- **Errors you can act on, v0.1.0** — a permanent `5xx` on the recipients or the
+  content (`552` for a message too large) is a `MailRefused`; an
+  unreachable server, a timeout, a `4xx`, refused credentials or a refused
+  sender is a `MailFailure`, nodemailer's error on `cause`. Some recipients
+  refused while others were accepted throws too, and says the others may
+  have the message. The classes are `@nxgt/mail`'s, so `instanceof` holds.
+- **Proven against a real server, v0.1.0** — the `@nxgt/mail/conformance` suite
+  passes against a local `smtp-server`, what arrived read back with
+  `mailparser`.

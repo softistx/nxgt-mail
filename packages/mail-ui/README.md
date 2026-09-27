@@ -25,15 +25,13 @@ Your project stays a Maizzle project: `emails/`, `components/`, `public/`,
 `maizzle serve`, `maizzle build`. Maizzle's own components (`<Button>`,
 `<Spacer>`) stay available; ours carry the `Nx` prefix and never shadow them.
 
-<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-ui/previews/components-en.png" width="420" alt="An e-mail using the first Nx components: layout, typography, code, buttons, separator, card with badge, summary data and status, alert, banner, link">
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-ui@0.1.0/packages/mail-ui/previews/components-en.png" width="420" alt="An e-mail using the first Nx components: layout, typography, code, buttons, separator, card with badge, summary data and status, alert, banner, link">
 
 The components from `NxLayout` to `NxCode` in one e-mail, with the brand
 `Acme` and the default theme —
-[in French](https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-ui/previews/components-fr.png).
+[in French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-ui@0.1.0/packages/mail-ui/previews/components-fr.png).
 
-> **Not published yet.** The package is `private` while the rest of the
-> repository — a starter — is written. It is published at
-> `0.1.0` with the other packages; the surface below is the one that will ship.
+> **0.x.** A minor version may still change the surface; the changelog says how.
 
 ## Install
 

@@ -6,79 +6,11 @@ the only number.
 
 ## Now
 
-- **The run-time core** — `@nxgt/mail`, with no dependency: the `Mailer` port
-  a transport implements, the `Rendered` and `MailMessage` shapes it sends, and
-  its two errors — `MailFailure` (`MAIL_FAILED`) when the transport could not
-  hand the message over, `MailRefused` (`MAIL_REFUSED`) when the message itself
-  was refused. A send resolves only once the transport has accepted the
-  e-mail; it never answers `false`. Built, not yet published.
-- **A memory transport for tests** — `createMemoryMailer()`: an outbox you can
-  read (`mailer.sent`), and a next send you can make fail, to test the path
-  where an e-mail does not go. Built, not yet published.
-- **Choosing the recipient's locale** — `pickLocale(wanted, supported,
-  fallback)` and `parseAcceptLanguage()`: a stored preference first, then the
-  browser's languages, `fr-CA` matching `fr`, the fallback when nothing does.
-  Built, not yet published.
-- **A conformance suite for transport authors** — `@nxgt/mail/conformance`:
-  `describeMailer(harness)` checks that a send answers `SentMail`, that an
-  outage throws a `MailFailure` which `instanceof` recognises, that an e-mail
-  arrives byte for byte, and that nothing is retried in secret. Runs under
-  bun:test, Vitest or Jest. Built, not yet published.
-- **The run-time renderer** — `createMailRenderer`, from `@nxgt/mail/renderer`:
-  `mails.render('verify-email', { name, link })` answers `Rendered` from the
-  built files of the recipient's locale, every `{{ placeholder }}` filled.
-  Values are HTML-escaped in `html`; a link that is not `http:`, `https:` or
-  `mailto:` is refused with `MailRefused`; a missing variable, an unknown
-  e-mail or locale throws. Its own entry because it reads files with
-  `node:fs`: `@nxgt/mail` itself runs anywhere. Built, not yet published.
-- **A renderer typed by the build** — `createMailRenderer<MailEmails>(…)`,
-  with the `MailEmails` that `@nxgt/mail-i18n` writes in `generated/mail.ts`:
-  an unknown e-mail, a variable missing or unknown, the variables left out, or
-  a number for a URL is a compile error rather than a throw at the send, in a
-  call written out. The
-  type parameter is optional; untyped, the renderer is unchanged, and the
-  run-time checks hold either way. Built, not yet published.
-- **An SMTP transport** — `@nxgt/mail-smtp`, on the `nodemailer` you install,
-  passing the conformance suite against a local SMTP server. Built, not yet
-  published — see
-  [its roadmap](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-smtp/docs/roadmap.md).
-- **A Resend transport** — `@nxgt/mail-resend`, over `fetch` with no SDK,
-  passing the conformance suite against a local server answering as Resend
-  does. Built, not yet published — see
-  [its roadmap](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-resend/docs/roadmap.md).
-
-- **A starter that sends** — `examples/starter`'s `send.ts` renders its
-  e-mails in `en` and `fr` through `createMailRenderer<MailEmails>` and
-  hands them to `createMemoryMailer()`, run in CI:
-  [`examples/starter`](https://github.com/softistx/nxgt-mail/tree/develop/examples/starter).
-  In the repository; the packages it installs are not yet published.
+Nothing between releases.
 
 ## Next
 
-- **A base Maizzle config** — `@nxgt/mail-config`: `defineMailConfig({ plugins,
-  ...project })` for the `maizzle.config.ts` of a normal Maizzle 6 project
-  (`maizzle serve`, `maizzle build`, unchanged): output to `dist`, CSS inlined
-  and purged, plain text on. Plugins merge in order and every build hook they
-  set is chained, so two plugins never drop each other's. Your own config keys
-  win.
-- **i18n with one build per locale** — `@nxgt/mail-i18n`: one template per
-  e-mail, its text as keys into ICU catalogues (`locales/en.json`,
-  `locales/fr.json`), `t()` in templates, and one output per locale from a
-  single `maizzle build` (`dist/en/verify-email.html`,
-  `dist/fr/verify-email.html`). A catalogue that does not parse, a key missing
-  in one locale or an argument declared differently fails the build.
-  `placeholder('name')` leaves a value only known at send time as
-  `{{ name }}`, and the build writes a manifest of each e-mail's variables and
-  its subject per locale. `maizzle serve` shows every e-mail in every locale
-  and reloads when a catalogue changes.
-- **UI components** — `@nxgt/mail-ui`: a neutral theme, a layout and the
-  components an e-mail needs (`<NxButton>`, `<NxHeading>`, `<NxText>`…), and
-  shared messages in English and French. Replace one component or one message
-  by name in your project, and keep the rest.
-- **The first release, 0.1.0** — every package on this page on npm, the SMTP
-  and Resend transports included, installable into
-  an empty project that builds and sends an e-mail with the README's own
-  snippet.
+Nothing yet.
 
 ## Later
 
@@ -126,6 +58,55 @@ the only number.
 
 ## Shipped
 
-Nothing yet: the run-time core under **Now** is the first thing to ship, with
-the first release, 0.1.0. From then on, the last ten items are listed here,
-newest first, and `CHANGELOG.md` holds the rest.
+The last ten, newest first, each with the version it came in. Everything
+before is in the [CHANGELOG](../CHANGELOG.md).
+
+- **The run-time core, v0.1.0** — `@nxgt/mail`, with no dependency: the `Mailer` port
+  a transport implements, the `Rendered` and `MailMessage` shapes it sends, and
+  its two errors — `MailFailure` (`MAIL_FAILED`) when the transport could not
+  hand the message over, `MailRefused` (`MAIL_REFUSED`) when the message itself
+  was refused. A send resolves only once the transport has accepted the
+  e-mail; it never answers `false`.
+- **A memory transport for tests, v0.1.0** — `createMemoryMailer()`: an outbox you can
+  read (`mailer.sent`), and a next send you can make fail, to test the path
+  where an e-mail does not go.
+- **Choosing the recipient's locale, v0.1.0** — `pickLocale(wanted, supported,
+  fallback)` and `parseAcceptLanguage()`: a stored preference first, then the
+  browser's languages, `fr-CA` matching `fr`, the fallback when nothing does.
+- **A conformance suite for transport authors, v0.1.0** — `@nxgt/mail/conformance`:
+  `describeMailer(harness)` checks that a send answers `SentMail`, that an
+  outage throws a `MailFailure` which `instanceof` recognises, that an e-mail
+  arrives byte for byte, and that nothing is retried in secret. Runs under
+  bun:test, Vitest or Jest.
+- **The run-time renderer, v0.1.0** — `createMailRenderer`, from `@nxgt/mail/renderer`:
+  `mails.render('verify-email', { name, link })` answers `Rendered` from the
+  built files of the recipient's locale, every `{{ placeholder }}` filled.
+  Values are HTML-escaped in `html`; a link that is not `http:`, `https:` or
+  `mailto:` is refused with `MailRefused`; a missing variable, an unknown
+  e-mail or locale throws. Its own entry because it reads files with
+  `node:fs`: `@nxgt/mail` itself runs anywhere.
+- **A renderer typed by the build, v0.1.0** — `createMailRenderer<MailEmails>(…)`,
+  with the `MailEmails` that `@nxgt/mail-i18n` writes in `generated/mail.ts`:
+  an unknown e-mail, a variable missing or unknown, the variables left out, or
+  a number for a URL is a compile error rather than a throw at the send, in a
+  call written out. The
+  type parameter is optional; untyped, the renderer is unchanged, and the
+  run-time checks hold either way.
+- **Two transports, `@nxgt/mail-smtp` and `@nxgt/mail-resend` v0.1.0** —
+  SMTP on the `nodemailer` you install, and Resend over `fetch` with no SDK,
+  each passing the conformance suite — against a local SMTP server, and a
+  local server answering as Resend does — and throwing `@nxgt/mail`'s errors.
+  See [the SMTP roadmap](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-smtp/docs/roadmap.md)
+  and [the Resend roadmap](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-resend/docs/roadmap.md).
+- **The Maizzle side, `@nxgt/mail-config`, `@nxgt/mail-i18n`, `@nxgt/mail-ui`
+  and `@nxgt/mail-presets` v0.1.0** — packages for a normal Maizzle 6 project:
+  `defineMailConfig({ plugins })` with every plugin's build hooks chained;
+  one template per e-mail, its text keys into ICU catalogues checked at build
+  time, one output per locale and the manifest this renderer reads; e-mail
+  components in the style of `@nxgt/material-vue`, with shared messages in
+  `en` and `fr`; and nine ready e-mails built with your own brand.
+- **A starter that sends, with v0.1.0** — `examples/starter`'s `send.ts` renders its
+  e-mails in `en` and `fr` through `createMailRenderer<MailEmails>` and
+  hands them to `createMemoryMailer()`, run in CI:
+  [`examples/starter`](https://github.com/softistx/nxgt-mail/tree/develop/examples/starter).
+  In the repository; its README says how to start your own from npm.

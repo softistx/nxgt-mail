@@ -25,9 +25,7 @@ on your nodemailer, or
 [`@nxgt/mail-resend`](https://github.com/softistx/nxgt-mail/tree/develop/packages/mail-resend)
 over `fetch`.
 
-> **Not published yet.** The package is `private` while the rest of the
-> repository — a starter — is written. It is published at
-> `0.1.0` with the other packages; the surface below is the one that will ship.
+> **0.x.** A minor version may still change the surface; the changelog says how.
 
 ## Install
 

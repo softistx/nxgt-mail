@@ -5,65 +5,11 @@ no dates here, and the version something shipped in is the only number.
 
 ## Now
 
-- **UI components as a plugin** — `ui({ brand, theme })`, listed in
-  `defineMailConfig`'s `plugins`: the `Nx*` components available in every
-  template, the brand (name, link, logo by absolute URL) in the layout's
-  header and footer, and a wrong option refused where the config is written.
-  A project's `components/nx-button.vue` replaces ours by name. Built, not yet
-  published.
-- **The first set of components, in the style of `@nxgt/material-vue`** —
-  `NxLayout`, `NxTypography`, `NxButton`, `NxLink`, `NxSeparator`, `NxCard`
-  and its parts, `NxBadge`, `NxAlert`, `NxBanner`, `NxStatusIndicator`,
-  `NxSummaryData`, and `NxCode` for a one-time code: material-vue's names with
-  the `Nx` prefix and its `variant`, `color` and `size` props, rendered with
-  tables and inlined styles, and checked in the package's tests against the
-  support data of Gmail, Outlook and Apple Mail. Built, not yet published.
-- **The theme, `theme.css`** — material-vue's light tokens, overridden by name
-  with `ui({ theme: { 'color-primary': '#0f766e' } })`; its tints
-  (`bg-primary-15`) are flattened to plain colours, and follow a colour you
-  override. Built, not yet published.
-- **Shared messages** — `uiCatalogues`: `common.greeting`,
-  `common.footer.why`, `common.footer.ignore`, `common.avatarGroup.more`,
-  `common.timeline.empty`, `common.metrics.ofTarget`,
-  `common.metrics.thisPeriod`, `common.metrics.lastPeriod` and
-  `common.seeAlso` in `en` and `fr`, given to
-  `@nxgt/mail-i18n` as `i18n({ catalogues: [uiCatalogues] })`, and overridden
-  key by key by your own `locales/<locale>.json`. Built, not yet published.
-
-- **Components and templates installed from npm** — `ui()` resolves the
-  tags of a `.vue` file under `node_modules` itself, since Maizzle does not:
-  ours, and a package's templates such as `@nxgt/mail-presets`', render the
-  same installed as in the workspace, with your `components/` still replacing
-  ours by name. Built, not yet published.
-- **`brand` typed in the editor** — `ui()` writes
-  `.maizzle/nxgt-mail-ui.d.ts`, which a Maizzle project's `tsconfig.json`
-  includes, so templates see `brand` without importing anything. Built, not
-  yet published.
-- **The second set, first part** — `NxTable` and its parts (a footer on the
-  muted background, a caption, an empty row), `NxDescription`, `NxListTile`,
-  `NxChip` (static) and `NxAvatar`/`NxAvatarGroup`, with material-vue's props,
-  checked against the same support data. Built, not yet published.
-- **The second set, second part** — `NxProgress`, `NxSteps`/`NxStepsItem`
-  and `NxTimeline`: a bar, numbered steps and toned events joined by a line
-  that runs as far as their text in every client, the time of an event
-  written as you give it. Built, not yet published.
-- **The second set, third part** — `NxHero`, `NxEntityHeader`, the metric
-  cards `NxStatCard`, `NxGoalCard`, `NxRatioCard`, `NxCompareCard` and
-  `NxBreakdownCard`, and `NxSeeAlso`: a summary e-mail's header, figures with
-  a toned delta and its arrow, bars and links, checked against the same
-  support data. With it, every material-vue component that fits an e-mail —
-  one that is read, not used — has its `Nx` counterpart. Built, not yet
-  published.
-- **A starter project** — the official Maizzle starter with
-  `defineMailConfig`, the i18n and the UI plugins wired in as the READMEs
-  say, built, rendered in `en` and `fr` and served in CI, so the snippets are
-  known to work: [`examples/starter`](https://github.com/softistx/nxgt-mail/tree/develop/examples/starter).
-  In the repository; the packages it installs are not yet published.
+Nothing between releases.
 
 ## Next
 
-- **The first release, 0.1.0** — `@nxgt/mail-ui` on npm, rendering an e-mail
-  in two languages in an empty Maizzle project with the README's own snippet.
+Nothing yet.
 
 ## Later
 
@@ -96,6 +42,56 @@ A request is welcome as an
 
 ## Shipped
 
-Nothing yet: the items under **Now** ship with the first release, 0.1.0. From
-then on, the last ten items are listed here, newest first, and
-`CHANGELOG.md` holds the rest.
+The last ten, newest first, each with the version it came in. Everything
+before is in the [CHANGELOG](../CHANGELOG.md).
+
+- **UI components as a plugin, v0.1.0** — `ui({ brand, theme })`, listed in
+  `defineMailConfig`'s `plugins`: the `Nx*` components available in every
+  template, the brand (name, link, logo by absolute URL) in the layout's
+  header and footer, and a wrong option refused where the config is written.
+  A project's `components/nx-button.vue` replaces ours by name.
+- **The first set of components, in the style of `@nxgt/material-vue`, v0.1.0** —
+  `NxLayout`, `NxTypography`, `NxButton`, `NxLink`, `NxSeparator`, `NxCard`
+  and its parts, `NxBadge`, `NxAlert`, `NxBanner`, `NxStatusIndicator`,
+  `NxSummaryData`, and `NxCode` for a one-time code: material-vue's names with
+  the `Nx` prefix and its `variant`, `color` and `size` props, rendered with
+  tables and inlined styles, and checked in the package's tests against the
+  support data of Gmail, Outlook and Apple Mail.
+- **The theme, `theme.css`, v0.1.0** — material-vue's light tokens, overridden by name
+  with `ui({ theme: { 'color-primary': '#0f766e' } })`; its tints
+  (`bg-primary-15`) are flattened to plain colours, and follow a colour you
+  override.
+- **Shared messages, v0.1.0** — `uiCatalogues`: `common.greeting`,
+  `common.footer.why`, `common.footer.ignore`, `common.avatarGroup.more`,
+  `common.timeline.empty`, `common.metrics.ofTarget`,
+  `common.metrics.thisPeriod`, `common.metrics.lastPeriod` and
+  `common.seeAlso` in `en` and `fr`, given to
+  `@nxgt/mail-i18n` as `i18n({ catalogues: [uiCatalogues] })`, and overridden
+  key by key by your own `locales/<locale>.json`.
+- **Components and templates installed from npm, v0.1.0** — `ui()` resolves the
+  tags of a `.vue` file under `node_modules` itself, since Maizzle does not:
+  ours, and a package's templates such as `@nxgt/mail-presets`', render the
+  same installed as in the workspace, with your `components/` still replacing
+  ours by name.
+- **`brand` typed in the editor, v0.1.0** — `ui()` writes
+  `.maizzle/nxgt-mail-ui.d.ts`, which a Maizzle project's `tsconfig.json`
+  includes, so templates see `brand` without importing anything.
+- **The second set, first part, v0.1.0** — `NxTable` and its parts (a footer on the
+  muted background, a caption, an empty row), `NxDescription`, `NxListTile`,
+  `NxChip` (static) and `NxAvatar`/`NxAvatarGroup`, with material-vue's props,
+  checked against the same support data.
+- **The second set, second part, v0.1.0** — `NxProgress`, `NxSteps`/`NxStepsItem`
+  and `NxTimeline`: a bar, numbered steps and toned events joined by a line
+  that runs as far as their text in every client, the time of an event
+  written as you give it.
+- **The second set, third part, v0.1.0** — `NxHero`, `NxEntityHeader`, the metric
+  cards `NxStatCard`, `NxGoalCard`, `NxRatioCard`, `NxCompareCard` and
+  `NxBreakdownCard`, and `NxSeeAlso`: a summary e-mail's header, figures with
+  a toned delta and its arrow, bars and links, checked against the same
+  support data. With it, every material-vue component that fits an e-mail —
+  one that is read, not used — has its `Nx` counterpart.
+- **A starter project, with v0.1.0** — the official Maizzle starter with
+  `defineMailConfig`, the i18n and the UI plugins wired in as the READMEs
+  say, built, rendered in `en` and `fr` and served in CI, so the snippets are
+  known to work: [`examples/starter`](https://github.com/softistx/nxgt-mail/tree/develop/examples/starter).
+  In the repository; its README says how to start your own from npm.

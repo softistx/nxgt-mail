@@ -358,7 +358,7 @@ nodemailer: it takes the transporter the application creates
 required peer for its tested range. Six and seven `@ts-expect-error` refusals
 in their `test/types/`, each package with its `docs/`.
 
-## Step 8 — A starter, documentation, the first release
+## Step 8 — A starter, documentation, the first release ✅
 
 - `examples/starter`: the official Maizzle starter with the three packages —
   the README's snippet, built in CI.
@@ -375,10 +375,18 @@ catalogues. A workspace, private, on the packages as `workspace:*`. CI builds
 it, checks its committed `generated/mail.ts`, renders every e-mail in both
 locales through `send.ts` (`createMailRenderer<MailEmails>` and the memory
 mailer), and checks that `maizzle serve` lists them; the root `typecheck`
-checks its templates and `send.ts` with `vue-tsc`. Still open: the READMEs'
-"not published yet" notes and the release — `"private"` removed and a
-`0.1.0` changeset, one commit per package — then the same starter installed
-from npm rather than the workspace.
+checks its templates and `send.ts` with `vue-tsc`.
+
+As built: `"private"` removed from the seven packages, one commit each
+(`chore(<package>): Publish the package, v0.1.0`) with its `minor`
+changeset; each README's "not published yet" notice replaced by the 0.x one,
+each roadmap's built items moved to Shipped under v0.1.0, and the README
+pictures pinned to the `@nxgt/mail-ui@0.1.0` and `@nxgt/mail-presets@0.1.0`
+tags. They are published by the release workflow's "Version Packages" pull
+request, whose merge runs `scripts/publish.ts`. The starter stays a
+workspace on `workspace:*`; its README's "Start your own" installs the same
+packages from npm. An empty project installing them from npm is checked by hand
+once the publish has run.
 
 ## Step 9 — Handing over to janus
 

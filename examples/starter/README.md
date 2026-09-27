@@ -17,10 +17,6 @@ generated/mail.ts          written by the build, committed: the e-mails and thei
 
 ## Start your own
 
-**Not published yet**: the packages are not on npm until their first
-release, so the lines below work once it is out. Until then, run the starter
-in this repository — see [Run it](#run-it).
-
 Create the official starter, then add the packages:
 
 ```sh
@@ -39,7 +35,8 @@ Then:
 
 1. **Replace** the starter's `emails/` with this folder's — delete
    Maizzle's example templates: the i18n plugin builds every template, and
-   one without a `<email>.subject` message fails the build.
+   one without its subject message (`verifyEmail.subject` for
+   `verify-email`) fails the build.
 2. Copy `maizzle.config.ts`, `locales/` and `send.ts`, and delete
    `tailwind.css` and `public/`, which nothing reads any more.
 3. Add `"send.ts"` (or your sending code) to `tsconfig.json`'s `include`,

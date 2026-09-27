@@ -5,47 +5,15 @@ are no dates here, and the version something shipped in is the only number.
 
 ## Now
 
-- **Nine ready e-mails** — `verify-email`, `reset-password`,
-  `password-changed` and `email-changed` for accounts; `sign-in-code` and
-  `magic-link` for passwordless sign-in; `new-sign-in` for security; `welcome`
-  and `invitation` for the lifecycle. Each is a template of `@nxgt/mail-ui`
-  components with its messages in `en` and `fr`, and leaves the values only
-  known at send time (`{{ name }}`, `{{ link }}`, …) as placeholders. Built,
-  not yet published.
-- **Presets for the i18n plugin** — `presets({ only })` answers
-  `{ templates, catalogues }` for `i18n({ templates, catalogues })`, so the
-  presets are built by your own Maizzle project, with your
-  `ui({ brand, theme })`, in every locale you list. `only` keeps the presets
-  you name and their messages; a preset that does not exist, or one named
-  twice, is refused. Built, not yet published.
-- **Overriding a preset** — a template of the same name in your project's
-  `emails/` replaces a preset, and your `locales/<locale>.json` overrides any
-  of its messages key by key. Built, not yet published.
-- **Samples** — every preset built in `en` and `fr` with the brand `Acme` and
-  the default theme, in the repository's
-  [`samples/`](https://github.com/softistx/nxgt-mail/tree/develop/packages/mail-presets/samples),
-  checked against a fresh build, so you can see an e-mail before installing
-  anything. Built, not yet published.
-- **A renderer that sends them** — `createMailRenderer` from
-  `@nxgt/mail/renderer` renders the presets' build at send time, each value
-  filled and escaped; the build spec renders every preset with it. Built, not
-  yet published.
-
-- **A starter that uses one** — the official Maizzle starter with
-  `presets({ only: ['sign-in-code'] })` next to its own e-mail, built,
-  rendered in `en` and `fr` and served in CI:
-  [`examples/starter`](https://github.com/softistx/nxgt-mail/tree/develop/examples/starter).
-  In the repository; the packages it installs are not yet published.
+Nothing between releases.
 
 ## Next
 
-- **The first release, 0.1.0** — `@nxgt/mail-presets` on npm, with
-  `@nxgt/mail-config`, `@nxgt/mail-i18n` and `@nxgt/mail-ui`, building every
-  preset in an empty Maizzle project with the README's own snippet.
+Nothing yet.
 
 ## Later
 
-Nothing yet beyond **Next**. A request is welcome as an
+Nothing yet. A request is welcome as an
 [issue](https://github.com/softistx/nxgt-mail/issues).
 
 ## Not planned
@@ -62,6 +30,34 @@ Nothing yet beyond **Next**. A request is welcome as an
 
 ## Shipped
 
-Nothing yet: the items under **Now** ship with the first release, 0.1.0. From
-then on, the last ten items are listed here, newest first, and
-`CHANGELOG.md` holds the rest.
+The last ten, newest first, each with the version it came in. Everything
+before is in the [CHANGELOG](../CHANGELOG.md).
+
+- **Nine ready e-mails, v0.1.0** — `verify-email`, `reset-password`,
+  `password-changed` and `email-changed` for accounts; `sign-in-code` and
+  `magic-link` for passwordless sign-in; `new-sign-in` for security; `welcome`
+  and `invitation` for the lifecycle. Each is a template of `@nxgt/mail-ui`
+  components with its messages in `en` and `fr`, and leaves the values only
+  known at send time (`{{ name }}`, `{{ link }}`, …) as placeholders.
+- **Presets for the i18n plugin, v0.1.0** — `presets({ only })` answers
+  `{ templates, catalogues }` for `i18n({ templates, catalogues })`, so the
+  presets are built by your own Maizzle project, with your
+  `ui({ brand, theme })`, in every locale you list. `only` keeps the presets
+  you name and their messages; a preset that does not exist, or one named
+  twice, is refused.
+- **Overriding a preset, v0.1.0** — a template of the same name in your project's
+  `emails/` replaces a preset, and your `locales/<locale>.json` overrides any
+  of its messages key by key.
+- **Samples, v0.1.0** — every preset built in `en` and `fr` with the brand `Acme` and
+  the default theme, in the repository's
+  [`samples/`](https://github.com/softistx/nxgt-mail/tree/develop/packages/mail-presets/samples),
+  checked against a fresh build, so you can see an e-mail before installing
+  anything.
+- **A renderer that sends them, v0.1.0** — `createMailRenderer` from
+  `@nxgt/mail/renderer` renders the presets' build at send time, each value
+  filled and escaped; the build spec renders every preset with it.
+- **A starter that uses one, with v0.1.0** — the official Maizzle starter with
+  `presets({ only: ['sign-in-code'] })` next to its own e-mail, built,
+  rendered in `en` and `fr` and served in CI:
+  [`examples/starter`](https://github.com/softistx/nxgt-mail/tree/develop/examples/starter).
+  In the repository; its README says how to start your own from npm.
