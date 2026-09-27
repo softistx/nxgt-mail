@@ -197,7 +197,7 @@ ui({
 | --- | --- | --- | --- |
 | `brand.name` | `string` | — (required) | Shown in the header without a logo, and in the footer always |
 | `brand.url` | `string` | none | An absolute `http(s)` URL the header and the footer link to |
-| `brand.logo` | `{ src, width?, alt? }` | none | The header's image: `src` an absolute `http(s)` URL, `width` in pixels (120), `alt` (the brand's name) |
+| `brand.logo` | `{ src, width?, alt?, darkSrc? }` | none | The header's image: `src` an absolute `http(s)` URL, `width` in pixels (120), `alt` (the brand's name), `darkSrc` shown instead of `src` under dark mode |
 | `theme` | `Record<string, string>` | `{}` | Tokens of `theme.css` to override, named without their `--` |
 
 A wrong option is a bare `TypeError` when the config loads:
@@ -218,6 +218,49 @@ ui({ brand: { name: 'Acme' }, theme: { 'color-primary': '#0f766e' } });
 ```
 
 See [The theme](docs/guide/theme.md) for every token.
+
+### Dark mode
+
+`NxLayout` follows the mail client's dark theme, in the clients that support
+one, with `@nxgt/material-vue`'s dark palette. A component that colours by a
+token needing a dark value (`bg-card`, `text-foreground`, `border-border`, …)
+carries the matching class alongside it:
+
+```vue
+<!-- what NxCard writes, roughly -->
+<td class="bg-card nx-dark-bg-card text-card-foreground nx-dark-text-card-foreground ...">
+```
+
+Override a dark value the same way you override a light one — the same
+`theme` option, one more `-dark` token:
+
+```ts
+ui({ brand: { name: 'Acme' }, theme: { 'color-background-dark': '#0b1220' } });
+```
+
+A dark logo disappears on a dark background: give `brand.logo.darkSrc` (or
+`<NxFigure :dark-src>`) a light-background version, and it shows instead
+under dark mode.
+
+```ts
+ui({
+	brand: {
+		name: 'Acme',
+		logo: {
+			src: 'https://acme.example/logo-dark-on-transparent.png',
+			darkSrc: 'https://acme.example/logo-light-on-transparent.png',
+		},
+	},
+});
+```
+
+Gmail cannot be targeted from CSS and always shows the light styles. See
+[Dark mode](docs/guide/dark-mode.md) for the technique, per client, and its
+limits.
+
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-ui/previews/components-en-dark.png" width="420" alt="The first components e-mail under prefers-color-scheme: dark">
+
+The light version is [above](#nxgtmail-ui); [`components-en.png`](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-ui/previews/components-en.png) is the same e-mail without dark mode forced.
 
 ### The shared messages — `uiCatalogues`
 
@@ -334,7 +377,7 @@ the theme or a hex one): write a rating known only at send time as text.
 
 ## Type safety, counted
 
-**8 plausible mistakes, 8 refused** at compile time, each measured by a
+**9 plausible mistakes, 9 refused** at compile time, each measured by a
 `@ts-expect-error` in
 [`test/types/refusals.ts`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-ui/test/types/refusals.ts)
 that fails the typecheck the moment it stops holding:
@@ -347,6 +390,7 @@ that fails the typecheck the moment it stops holding:
 6. A template that assigns `brand`.
 7. A `logo` without its `src`.
 8. A `brand.url` that is not a string.
+9. A logo `darkSrc` that is not a string.
 
 The same file holds the calls that must keep compiling: a refusal that refuses
 the correct call is a bug.

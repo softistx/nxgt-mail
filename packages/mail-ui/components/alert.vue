@@ -41,6 +41,8 @@ const ICON: Record<Variant, string> = {
 	success: 'text-success',
 	info: 'text-info',
 	warning: 'text-warning',
+	// Every variant's ground is a light tint that keeps the same value in dark
+	// mode (see theme.css): its text stays `text-foreground` too, un-flipped.
 	foreground: 'text-foreground',
 };
 

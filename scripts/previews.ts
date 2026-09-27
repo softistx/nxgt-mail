@@ -20,6 +20,13 @@
  * compares them: run `bun run previews` after changing how an e-mail looks,
  * and commit the images. Needs Chromium (`CHROMIUM=/path/to/chrome`, default
  * `chromium`) and ImageMagick 7 (`MAGICK`, default `magick`); tried on Linux.
+ *
+ * One extra shot, `components-en-dark.png`, forces Chromium's
+ * `prefers-color-scheme` to `dark` (`--blink-settings=preferredColorScheme=0`,
+ * this build's `kDark`; Playwright's `colorScheme: 'dark'` sets the same
+ * Blink preference through the DevTools protocol instead) to show
+ * `@nxgt/mail-ui`'s dark styles — the media-query part of the technique
+ * only; a browser has no `[data-ogsc]`/`[data-ogsb]` of its own to shoot.
  */
 
 import {
@@ -141,7 +148,13 @@ function run(command: readonly string[], cwd = root): string {
 
 const scratch = mkdtempSync(join(tmpdir(), 'nxgt-previews-'));
 
-function shoot(html: string, locale: string, email: string, out: string): void {
+function shoot(
+	html: string,
+	locale: string,
+	email: string,
+	out: string,
+	dark = false,
+): void {
 	const values: Record<string, string | undefined> = {
 		...EXAMPLES[locale],
 		...(LINKS[email] && { link: LINKS[email] }),
@@ -174,6 +187,7 @@ function shoot(html: string, locale: string, email: string, out: string): void {
 		'--disable-gpu',
 		'--hide-scrollbars',
 		'--force-device-scale-factor=1',
+		...(dark ? ['--blink-settings=preferredColorScheme=0'] : []),
 		`--user-data-dir=${join(scratch, 'profile')}`,
 		`--window-size=${width},${height}`,
 		`--screenshot=${shot}`,
@@ -241,6 +255,14 @@ try {
 			`${ui}/previews/components-${locale}.png`,
 		);
 	}
+	// Dark mode, English only: what `@media (prefers-color-scheme: dark)` shows.
+	shoot(
+		readFileSync(`${ui}/test/fixture/dist/en/welcome.html`, 'utf8'),
+		'en',
+		'welcome',
+		`${ui}/previews/components-en-dark.png`,
+		true,
+	);
 	// The data, sequence, summary, content and details components' e-mails are in English only.
 	shoot(
 		readFileSync(`${ui}/test/fixture/dist/en/gallery.html`, 'utf8'),

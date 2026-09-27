@@ -24,6 +24,9 @@ export interface Brand {
 		readonly src: string;
 		readonly width?: number;
 		readonly alt?: string;
+		/** Shown instead of `src` under `prefers-color-scheme: dark` and for
+		 * Outlook.com/Outlook's own dark mode. */
+		readonly darkSrc?: string;
 	};
 }
 

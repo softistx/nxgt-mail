@@ -79,7 +79,8 @@ for how plugins merge.
 | `brand.logo.src` | `string` | — (required in `logo`) | The header's image, instead of the name |
 | `brand.logo.width` | `number` | `120` | The image's `width` attribute, in pixels |
 | `brand.logo.alt` | `string` | `brand.name` | The image's `alt` |
-| `theme` | `Record<string, string>` | `{}` | Tokens of `theme.css` to override — see [The theme](theme.md) |
+| `brand.logo.darkSrc` | `string` | none | Shown instead of `src` under dark mode — see [Dark mode](dark-mode.md) |
+| `theme` | `Record<string, string>` | `{}` | Tokens of `theme.css` to override, including a `-dark` one — see [The theme](theme.md) and [Dark mode](dark-mode.md) |
 
 ### `brand.url` and `brand.logo.src` are absolute
 
@@ -334,6 +335,7 @@ result.
 | `ui: brand.logo.src must be an absolute http(s) URL — a mail client loads nothing relative` | `logo: 'logo.png'`, or `logo: { src: 'logo.png' }` |
 | `ui: brand.logo.width must be a width in pixels` | `0`, `1.5`, `'96'` |
 | `ui: brand.logo.alt must be a string` | `alt: 1` |
+| `ui: brand.logo.darkSrc must be an absolute http(s) URL — a mail client loads nothing relative` | `darkSrc: 'logo-dark.png'` |
 | `ui: theme must be an object of tokens, as { 'color-primary': '#0f766e' }` | `theme: ['#0f766e']` |
 | `ui: theme.color-primay is not a token of the theme — name one of theme.css without its --, as color-primary` | A misspelled token, or one written with its `--` |
 | `ui: theme.color-primary must be a CSS value, as #0f766e or 8px` | An empty value, a number, or one holding `;`, `{`, `}`, `<`, `>`, a quote, a backslash, a CSS comment (`/*`, `*/`) or a line break |

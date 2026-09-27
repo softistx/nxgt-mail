@@ -43,6 +43,8 @@ const classes = computed(() =>
         <table class="w-full" role="presentation" cellpadding="0" cellspacing="0">
           <tr>
             <td v-if="slots.icon" :class="`w-4 pr-3 align-top text-${tone}`"><slot name="icon" /></td>
+            <!-- Every tone's ground is a light tint that keeps the same value in
+                 dark mode (see theme.css): its text stays un-flipped too. -->
             <td class="align-top text-foreground">
               <p v-if="title" class="m-0 text-sm font-semibold">{{ title }}</p>
               <p v-if="description" class="m-0 text-sm text-muted-foreground">{{ description }}</p>

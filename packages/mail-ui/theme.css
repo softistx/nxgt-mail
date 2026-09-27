@@ -289,4 +289,152 @@
 		var(--color-foreground) 50%,
 		var(--color-background)
 	);
+
+	/*
+	 * material-vue's `.dark` class recolours only background, foreground,
+	 * card, card-foreground, accent, accent-foreground and border — primary,
+	 * secondary, muted, success, info, warning and error keep the same value
+	 * in both modes there, so they carry no `-dark` token here either: a
+	 * project overriding `color-primary` reaches dark mode with it, unchanged,
+	 * for free. `theme` overrides one of these the same way it overrides a
+	 * light token — `'color-background-dark': '#0b1220'` — so a project can
+	 * replace the shipped dark palette without a different option shape.
+	 */
+	--color-background-dark: oklch(0.14 0.036 258.53);
+	--color-foreground-dark: oklch(0.984 0.003 247.858);
+	--color-card-dark: oklch(0.208 0.042 265.755);
+	--color-card-foreground-dark: oklch(0.984 0.003 247.858);
+	--color-accent-dark: oklch(0.268 0.007 34.298);
+	--color-accent-foreground-dark: oklch(0.985 0.001 106.423);
+	/* material-vue's dark border is white at 10% alpha: mixed solid, as light's tints are. */
+	--color-border-dark: color-mix(
+		in srgb,
+		white 10%,
+		var(--color-background-dark)
+	);
+	--color-paper-dark: color-mix(
+		in srgb,
+		var(--color-primary) 5%,
+		var(--color-background-dark)
+	);
+	/* The one foreground tint a component uses (rating.vue's empty star). */
+	--color-foreground-25-dark: color-mix(
+		in srgb,
+		var(--color-foreground-dark) 25%,
+		var(--color-background-dark)
+	);
+}
+
+/*
+ * The web-facing half of the spec (Outlook.com, Gmail's own webmail):
+ * `<html>` gets it inlined as a plain style, since `:root` is not an element
+ * juice can attach one to.
+ */
+html {
+	color-scheme: light dark;
+}
+
+/*
+ * Dark mode, by client:
+ *
+ * - `prefers-color-scheme` — Apple Mail, iOS Mail, Outlook.com's web app,
+ *   some Android clients: reads it like a browser would.
+ * - `[data-ogsc]` / `[data-ogsb]` — Outlook.com and the Outlook desktop and
+ *   mobile apps: they decide dark mode themselves and mark it on the
+ *   document instead, so `prefers-color-scheme` never fires there. Maizzle's
+ *   purge safelists any selector starting with `[data-ogs`, since no built
+ *   HTML ever carries the attribute for the purge step to match against.
+ * - Gmail (web, iOS, Android) reads neither: every class below is inert
+ *   there, and Gmail always shows the inlined light styles. It cannot be
+ *   targeted from CSS at all — see docs/guide/dark-mode.md.
+ *
+ * `NxLayout` and every component that colours by a token needing one of
+ * these carries the matching class alongside its light one, e.g.
+ * `class="bg-card nx-dark-bg-card"`. Each rule is `!important`: it must win
+ * over the `style` attribute juice inlined from the light utility.
+ */
+@media (prefers-color-scheme: dark) {
+	.nx-dark-bg-paper {
+		/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
+		background-color: var(--color-paper-dark) !important;
+	}
+	.nx-dark-bg-card {
+		/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
+		background-color: var(--color-card-dark) !important;
+	}
+	.nx-dark-bg-background {
+		/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
+		background-color: var(--color-background-dark) !important;
+	}
+	.nx-dark-text-foreground {
+		/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
+		color: var(--color-foreground-dark) !important;
+	}
+	.nx-dark-text-foreground-25 {
+		/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
+		color: var(--color-foreground-25-dark) !important;
+	}
+	.nx-dark-text-card-foreground {
+		/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
+		color: var(--color-card-foreground-dark) !important;
+	}
+	.nx-dark-border-border {
+		/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
+		border-color: var(--color-border-dark) !important;
+	}
+	/* The logo/figure dark-image toggle: docs/guide/dark-mode.md. */
+	.nx-light-only {
+		/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
+		display: none !important;
+	}
+	.nx-dark-only {
+		/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
+		display: inline-block !important;
+	}
+}
+
+[data-ogsc] .nx-dark-bg-paper,
+[data-ogsb] .nx-dark-bg-paper {
+	/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
+	background-color: var(--color-paper-dark) !important;
+}
+[data-ogsc] .nx-dark-bg-card,
+[data-ogsb] .nx-dark-bg-card {
+	/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
+	background-color: var(--color-card-dark) !important;
+}
+[data-ogsc] .nx-dark-bg-background,
+[data-ogsb] .nx-dark-bg-background {
+	/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
+	background-color: var(--color-background-dark) !important;
+}
+[data-ogsc] .nx-dark-text-foreground,
+[data-ogsb] .nx-dark-text-foreground {
+	/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
+	color: var(--color-foreground-dark) !important;
+}
+[data-ogsc] .nx-dark-text-foreground-25,
+[data-ogsb] .nx-dark-text-foreground-25 {
+	/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
+	color: var(--color-foreground-25-dark) !important;
+}
+[data-ogsc] .nx-dark-text-card-foreground,
+[data-ogsb] .nx-dark-text-card-foreground {
+	/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
+	color: var(--color-card-foreground-dark) !important;
+}
+[data-ogsc] .nx-dark-border-border,
+[data-ogsb] .nx-dark-border-border {
+	/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
+	border-color: var(--color-border-dark) !important;
+}
+[data-ogsc] .nx-light-only,
+[data-ogsb] .nx-light-only {
+	/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
+	display: none !important;
+}
+[data-ogsc] .nx-dark-only,
+[data-ogsb] .nx-dark-only {
+	/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
+	display: inline-block !important;
 }

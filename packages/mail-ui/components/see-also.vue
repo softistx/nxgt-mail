@@ -34,7 +34,7 @@ const classes = computed(() =>
       <td class="pt-10">
         <table class="w-full" role="presentation" cellpadding="0" cellspacing="0">
           <tr>
-            <td class="border-t [border-top-style:solid] border-border pt-8">
+            <td class="border-t [border-top-style:solid] border-border nx-dark-border-border pt-8">
               <p :class="`${EYEBROW} mb-3`">{{ heading }}</p>
               <table class="w-full" role="presentation" cellpadding="0" cellspacing="0">
                 <tr v-for="item in items" :key="item.id ?? item.href">

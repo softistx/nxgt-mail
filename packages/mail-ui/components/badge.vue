@@ -28,8 +28,8 @@ const VARIANT: Record<Variant, string> = {
 	success: 'border-success bg-success text-success-foreground',
 	info: 'border-info bg-info text-info-foreground',
 	warning: 'border-warning bg-warning text-warning-foreground',
-	outline: 'border-border text-foreground',
-	outlined: 'border-border text-foreground',
+	outline: 'border-border nx-dark-border-border text-foreground nx-dark-text-foreground',
+	outlined: 'border-border nx-dark-border-border text-foreground nx-dark-text-foreground',
 };
 
 const attrs = useAttrs();

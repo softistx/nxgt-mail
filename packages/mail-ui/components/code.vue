@@ -11,6 +11,8 @@ defineOptions({ inheritAttrs: false });
 const attrs = useAttrs();
 const classes = computed(() =>
 	twMerge(
+		// `bg-muted` keeps the same value in dark mode (see theme.css): its text
+		// stays `text-foreground`, un-flipped, too.
 		'rounded-lg bg-muted px-6 py-4 text-center font-mono text-3xl font-semibold tracking-[0.3em] text-foreground',
 		attrs.class as string,
 	),

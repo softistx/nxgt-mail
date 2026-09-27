@@ -32,14 +32,14 @@ const classes = computed(() =>
 <template>
   <tr>
     <td colspan="2" class="w-8 align-top">
-      <span class="block h-8 w-8 rounded-full border border-solid border-primary-25 bg-background text-center text-xs font-semibold leading-[30px] text-primary"><slot name="index">{{ index }}</slot></span>
+      <span class="block h-8 w-8 rounded-full border border-solid border-primary-25 bg-background nx-dark-bg-background text-center text-xs font-semibold leading-[30px] text-primary"><slot name="index">{{ index }}</slot></span>
     </td>
     <td class="pl-3 align-top">
-      <p v-if="title" class="m-0 pt-1 text-base font-semibold tracking-tight text-foreground">{{ title }}</p>
+      <p v-if="title" class="m-0 pt-1 text-base font-semibold tracking-tight text-foreground nx-dark-text-foreground">{{ title }}</p>
     </td>
   </tr>
   <tr>
-    <td :class="['w-4 text-[1px] leading-px', !last && 'border-r [border-right-style:solid] border-border']"><span data-maizzle-html-only>&zwj;</span></td>
+    <td :class="['w-4 text-[1px] leading-px', !last && 'border-r [border-right-style:solid] border-border nx-dark-border-border']"><span data-maizzle-html-only>&zwj;</span></td>
     <td class="w-4 text-[1px] leading-px"><span data-maizzle-html-only>&zwj;</span></td>
     <td v-bind="{ ...attrs, class: undefined }" :class="classes">
       <div v-if="slots.default" class="mt-2 text-sm leading-6 text-muted-foreground"><slot /></div>

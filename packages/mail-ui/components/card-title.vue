@@ -8,7 +8,7 @@ defineOptions({ inheritAttrs: false });
 const attrs = useAttrs();
 const classes = computed(() =>
 	twMerge(
-		'm-0 text-base font-semibold leading-none text-card-foreground',
+		'm-0 text-base font-semibold leading-none text-card-foreground nx-dark-text-card-foreground',
 		attrs.class as string,
 	),
 );

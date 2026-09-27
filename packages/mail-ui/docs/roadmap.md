@@ -18,9 +18,6 @@ Nothing yet. A request is welcome as an
 
 ## Not planned
 
-- **Dark mode** — an e-mail is light only: `theme.css` holds material-vue's
-  light tokens and no dark ones, so every client starts from the same
-  colours.
 - **Icon fonts** — a mail client loads no icon font. An icon is an image by
   absolute URL or a character, passed through the `icon` slot of the
   components that have one.
@@ -61,6 +58,13 @@ Nothing yet. A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **Dark mode, v0.4.0** — `NxLayout` and the components follow the mail
+  client's dark theme, mirroring `@nxgt/material-vue`'s dark tokens
+  (background, foreground, card, card-foreground, accent, accent-foreground
+  and border); `theme` overrides a dark token the same way it overrides a
+  light one. `brand.logo` and `NxFigure` take a `darkSrc`, shown instead of
+  `src` under dark mode. Gmail cannot be targeted from CSS and always shows
+  the light styles.
 - **Shared messages under `kebab-case` keys, v0.3.0** — `common.avatarGroup.more`
   is `common.avatar-group.more`, and so on for every multi-word key; an
   override under the old key is no longer read. The full list is in the

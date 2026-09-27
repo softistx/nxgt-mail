@@ -11,7 +11,7 @@ defineOptions({ inheritAttrs: false });
 const attrs = useAttrs();
 const classes = computed(() =>
 	twMerge(
-		'rounded-xl border border-solid border-border bg-card py-6 text-card-foreground shadow-sm',
+		'rounded-xl border border-solid border-border nx-dark-border-border bg-card nx-dark-bg-card py-6 text-card-foreground nx-dark-text-card-foreground shadow-sm',
 		attrs.class as string,
 	),
 );

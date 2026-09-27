@@ -24,7 +24,7 @@ const DOT: Record<Tone, string> = {
 const attrs = useAttrs();
 const classes = computed(() =>
 	twMerge(
-		'whitespace-nowrap text-sm font-medium text-foreground',
+		'whitespace-nowrap text-sm font-medium text-foreground nx-dark-text-foreground',
 		attrs.class as string,
 	),
 );

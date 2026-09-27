@@ -16,7 +16,7 @@ defineProps<{
       <template v-for="(item, position) in items" :key="item.label">
         <table :class="['w-full', position === 0 ? 'mt-4' : 'mt-3']" role="presentation" cellpadding="0" cellspacing="0">
           <tr>
-            <td class="align-bottom text-sm font-medium text-foreground">{{ item.label }}</td>
+            <td class="align-bottom text-sm font-medium text-foreground nx-dark-text-foreground">{{ item.label }}</td>
             <td class="whitespace-nowrap pl-3 text-right align-bottom text-sm text-muted-foreground">{{ item.value ?? `${Math.round(item.percent)}%` }}</td>
           </tr>
         </table>

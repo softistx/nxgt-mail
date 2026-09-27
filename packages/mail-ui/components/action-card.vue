@@ -55,7 +55,7 @@ const indicator = computed(() =>
             <table role="presentation" cellpadding="0" cellspacing="0"><tr><td :class="iconBox"><slot name="icon" /></td></tr></table>
           </td>
           <td v-if="variant === 'sm'" class="align-middle">
-            <NxCardTitle v-if="title"><a v-if="href" :href="href" class="text-card-foreground no-underline">{{ title }}</a><template v-else>{{ title }}</template></NxCardTitle>
+            <NxCardTitle v-if="title"><a v-if="href" :href="href" class="text-card-foreground nx-dark-text-card-foreground no-underline">{{ title }}</a><template v-else>{{ title }}</template></NxCardTitle>
             <NxCardDescription v-if="description">{{ description }}</NxCardDescription>
           </td>
           <td v-else-if="!slots.icon">&zwj;</td>
@@ -65,7 +65,7 @@ const indicator = computed(() =>
       <table v-if="variant === 'md'" :class="slots.icon || withIndicator ? 'mt-4 w-full' : 'w-full'" role="presentation" cellpadding="0" cellspacing="0">
         <tr>
           <td>
-            <NxCardTitle v-if="title"><a v-if="href" :href="href" class="text-card-foreground no-underline">{{ title }}</a><template v-else>{{ title }}</template></NxCardTitle>
+            <NxCardTitle v-if="title"><a v-if="href" :href="href" class="text-card-foreground nx-dark-text-card-foreground no-underline">{{ title }}</a><template v-else>{{ title }}</template></NxCardTitle>
             <NxCardDescription v-if="description">{{ description }}</NxCardDescription>
           </td>
         </tr>

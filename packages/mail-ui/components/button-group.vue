@@ -17,7 +17,7 @@ const attrs = useAttrs();
 const slots = useSlots();
 const buttons = computed(() => slotComponents(slots.default?.()));
 const classes = computed(() =>
-	twMerge('bg-background p-2', attrs.class as string),
+	twMerge('bg-background nx-dark-bg-background p-2', attrs.class as string),
 );
 </script>
 
