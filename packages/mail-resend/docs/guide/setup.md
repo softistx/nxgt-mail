@@ -148,7 +148,7 @@ const mailer = createResendMailer({ apiKey: process.env.RESEND_API_KEY ?? '', ti
 await mailer.send({
 	to: ['ada@example.com', { name: 'Doe, "John"', address: 'john@example.com' }],
 	replyTo: 'support@acme.test',
-	headers: { 'List-Unsubscribe': '<https://acme.test/u>' },
+	headers: { 'X-Entity-Ref-ID': 'invoice-42' },
 	subject: 'Hi',
 	html: '<p>Hi</p>',
 	text: 'Hi',
@@ -169,7 +169,7 @@ Content-Type: application/json
   "html": "<p>Hi</p>",
   "text": "Hi",
   "reply_to": "support@acme.test",
-  "headers": { "List-Unsubscribe": "<https://acme.test/u>" },
+  "headers": { "X-Entity-Ref-ID": "invoice-42" },
   "attachments": [
     { "filename": "hello.txt", "content": "SGVsbG8=", "content_type": "text/plain" }
   ]
@@ -189,6 +189,11 @@ Content-Type: application/json
 
 - `replyTo` is sent as `reply_to`, Resend's name for it; `reply_to` and
   `headers` are left out when the message has none.
+- `headers` are sent as written, and Resend DKIM-signs the message with your
+  domain's key — check that the `DKIM-Signature` of a received message names
+  the headers you rely on in `h=`; build `List-Unsubscribe` with `listUnsubscribe` from
+  `@nxgt/mail` — see
+  [one-click unsubscribe](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/guide/sending.md#one-click-unsubscribe).
 - Each attachment is sent as `{ filename, content, content_type }`: its bytes
   as base64, encoded in slices with `btoa` — no `Buffer`, so it runs on an
   edge runtime — and its type as `content_type`, Resend's name for it.

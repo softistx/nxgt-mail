@@ -171,7 +171,7 @@ A string is only an address: `'Acme <noreply@acme.test>'` is refused. Write
 | an `{ name, address }` | the same object: nodemailer quotes and encodes the name, so `Doe, John` or `Ada <mallory@example.test>` stays one recipient's name |
 | `from`, `replyTo` | `from`, `replyTo` |
 | `subject`, `html`, `text` | the same, as strings — the e-mail is `multipart/alternative` |
-| `headers` | `headers`, copied |
+| `headers` | `headers`, copied — `List-Unsubscribe` from [`listUnsubscribe`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/guide/sending.md#one-click-unsubscribe) included, which your relay or nodemailer's `dkim` option must DKIM-sign |
 | `idempotencyKey` | nothing: ignored — see [below](#the-idempotency-key) |
 | `attachments`, each `{ filename, content, contentType }` | `attachments`, each `{ filename, content: Buffer, contentType }` — the bytes copied into a `Buffer`, never a `path` or an `href`; the e-mail is then `multipart/mixed`. Left out when the list is empty |
 | — | `disableFileAccess: true`, `disableUrlAccess: true`: a part or an attachment is never read from a file or fetched from a URL |

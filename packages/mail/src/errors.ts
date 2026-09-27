@@ -25,7 +25,8 @@ export type MailErrorCode =
 	 * subject or a header, an attachment that is not bytes or is badly named,
 	 * a provider answering that the message is malformed or too large, or —
 	 * from `@nxgt/mail/renderer` — a URL variable that is not an `http:`,
-	 * `https:` or `mailto:` URL. Sending it again unchanged fails again.
+	 * `https:` or `mailto:` URL, or, from `listUnsubscribe`, an unsubscribe URL
+	 * or address it will not write. Sending it again unchanged fails again.
 	 */
 	| 'MAIL_REFUSED';
 

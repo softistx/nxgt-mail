@@ -71,7 +71,7 @@ await mailer.send({
 	to: [{ name: 'Doe, John', address: 'john@example.com' }],
 	from: 'billing@acme.test', // required here: this mailer has no default
 	replyTo: 'support@acme.test', // sent as reply_to
-	headers: { 'List-Unsubscribe': '<https://acme.test/unsubscribe>' },
+	headers: { 'X-Entity-Ref-ID': 'invoice-42' },
 	subject: 'Your invoice',
 	html: '<p>…</p>',
 	text: '…',
@@ -84,6 +84,9 @@ await mailer.send({
 - A name is sent as a quoted string — `"Doe, John" <john@example.com>` — so a
   comma or an angle bracket in it never names another recipient.
 - `messageId` is Resend's `id`, or `null` when the answer carries none.
+- For marketing mail, build `List-Unsubscribe` and `List-Unsubscribe-Post`
+  with `listUnsubscribe` from `@nxgt/mail` rather than by hand — see
+  [one-click unsubscribe](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/guide/sending.md#one-click-unsubscribe).
 
 ### Attachments
 

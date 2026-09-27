@@ -5,10 +5,7 @@ no dates here, and the version something shipped in is the only number.
 
 ## Now
 
-- **Messages with an idempotency key** — a message that carries an
-  `idempotencyKey` is accepted, and the key is ignored: SMTP has no
-  idempotency, so a message sent twice is delivered twice. Needs `@nxgt/mail`
-  0.3. Built, not yet published.
+Nothing yet.
 
 ## Next
 
@@ -38,6 +35,10 @@ Nothing planned yet. Say what you need in an issue.
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **Messages with an idempotency key, v0.3.0** — a message that carries an
+  `idempotencyKey` is accepted, and the key is ignored: SMTP has no
+  idempotency, so a message sent twice is delivered twice. Needs `@nxgt/mail`
+  0.3.
 - **Attachments, v0.2.0** — the `attachments` of a message are handed to nodemailer
   as bytes, a `Buffer` copied from each `Uint8Array`, with their file name
   (encoded by nodemailer when it is not ASCII) and their type. Never a `path`

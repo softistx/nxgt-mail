@@ -76,7 +76,7 @@ await mailer.send({
 	to: [{ name: 'Doe, John', address: 'john@example.com' }],
 	from: 'billing@acme.test', // required here: this mailer has no default
 	replyTo: 'support@acme.test',
-	headers: { 'List-Unsubscribe': '<https://acme.test/unsubscribe>' },
+	headers: { 'X-Entity-Ref-ID': 'invoice-42' },
 	subject: 'Your invoice',
 	html: '<p>…</p>',
 	text: '…',
@@ -89,6 +89,10 @@ await mailer.send({
 - A name is handed to nodemailer as `{ name, address }`: nodemailer quotes and
   encodes it, so `Doe, John` names one recipient.
 - `messageId` is nodemailer's id (`<…@host>`), or `null` when it gives none.
+- For marketing mail, build `List-Unsubscribe` and `List-Unsubscribe-Post`
+  with `listUnsubscribe` from `@nxgt/mail` rather than by hand; your relay, or
+  nodemailer's `dkim` option, must DKIM-sign them — see
+  [one-click unsubscribe](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/guide/sending.md#one-click-unsubscribe).
 - The parts are strings and the attachments bytes: nodemailer is told never
   to read a file or a URL (`disableFileAccess`, `disableUrlAccess`).
 - `idempotencyKey` is ignored: SMTP has no such mechanism, so a message sent

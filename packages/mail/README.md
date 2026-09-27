@@ -41,7 +41,7 @@ import without extensions, so `nodenext` is not supported.
 
 | Import | What it holds |
 | --- | --- |
-| `@nxgt/mail` | The port (`Mailer`, `MailMessage`, `Rendered`, `SentMail`, `Address`, `MailAttachment`), the errors (`MailError`, `MailFailure`, `MailRefused`), `createMemoryMailer`, `pickLocale` and `parseAcceptLanguage`, and what a transport calls first: `checkMessage`, `recipientsOf`, `addressOf`. No Node built-in: it runs anywhere |
+| `@nxgt/mail` | The port (`Mailer`, `MailMessage`, `Rendered`, `SentMail`, `Address`, `MailAttachment`), the errors (`MailError`, `MailFailure`, `MailRefused`), `createMemoryMailer`, `pickLocale` and `parseAcceptLanguage`, `listUnsubscribe` with `ListUnsubscribeOptions` and `ListUnsubscribeHeaders`, and what a transport calls first: `checkMessage`, `recipientsOf`, `addressOf`. No Node built-in: it runs anywhere |
 | `@nxgt/mail/renderer` | The renderer: `createMailRenderer`, `MailRenderer`, `MailRendererOptions`, `RenderOptions`, `MailVariables`, and the types that type it with a build's `MailEmails` (`MailEmailsOf`, `AnyMailEmails`, `RenderArguments`). Reads the build with `node:fs` |
 | `@nxgt/mail/conformance` | **For transport authors**: `describeMailer`, its cases as data, `runMailerCase`, the messages they send (`sampleMessage`, `sampleAttachment`), and the memory mailer's harness as a worked example |
 
@@ -192,6 +192,45 @@ sends the key as Resend's `Idempotency-Key`, which Resend keeps for 24 hours;
 twice is delivered twice. A key that is not 1 to 256 visible ASCII characters
 is refused with `MailRefused`. See
 [Sending — idempotency](docs/guide/sending.md#idempotency--sending-once).
+
+### One-click unsubscribe — `listUnsubscribe`
+
+Gmail and Yahoo require bulk senders to offer one-click unsubscribe on
+marketing mail. `listUnsubscribe` answers its two headers, to spread into
+`headers`, with a URL per recipient:
+
+```ts
+import { listUnsubscribe, type Mailer, type Rendered } from '@nxgt/mail';
+
+export async function sendNewsletter(
+	mailer: Mailer,
+	rendered: Rendered,
+	subscriber: { email: string; unsubscribeToken: string },
+): Promise<void> {
+	await mailer.send({
+		...rendered,
+		to: subscriber.email,
+		headers: {
+			...listUnsubscribe({
+				url: `https://example.com/unsubscribe?token=${encodeURIComponent(subscriber.unsubscribeToken)}`,
+				mailto: 'unsubscribe@example.com', // optional
+			}),
+		},
+	});
+}
+// List-Unsubscribe: <https://example.com/unsubscribe?token=…>, <mailto:unsubscribe@example.com>
+// List-Unsubscribe-Post: List-Unsubscribe=One-Click
+```
+
+The URL must start with `https://`, be printable ASCII, carry no user or
+password, and hold no `<`, `>`, double quote or raw comma (percent-encode
+it: `%2C`), and `mailto` must be a bare ASCII address; anything else is a
+`MailRefused` that never quotes the URL — its token is a credential. Your
+endpoint must unsubscribe on a `POST` with the body
+`List-Unsubscribe=One-Click`, with no login and no confirmation. It belongs on
+marketing and bulk mail, not on a password reset or a sign-in code. See
+[Sending — one-click unsubscribe](docs/guide/sending.md#one-click-unsubscribe)
+for the endpoint and DKIM.
 
 ### Errors — switch on `code`
 
@@ -396,7 +435,7 @@ gives a test file `describe` and `it` as bare identifiers, not on `globalThis`.
 
 ## Type safety, counted
 
-**22 plausible mistakes, 22 refused** at compile time, each measured by a
+**23 plausible mistakes, 23 refused** at compile time, each measured by a
 `@ts-expect-error` in
 [`test/types/refusals.ts`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/test/types/refusals.ts)
 that fails the typecheck the moment it stops holding:
@@ -438,6 +477,11 @@ And the idempotency key:
 22. A number (`idempotencyKey: order.id`): the key is a string, as
     `order-42/receipt`.
 
+And one-click unsubscribe:
+
+23. A `URL` object as `listUnsubscribe`'s `url`: the header holds text, so
+    pass `url.href`.
+
 The same file holds the calls that must keep compiling: a refusal that refuses
 the correct call is a bug.
 
@@ -450,6 +494,8 @@ the correct call is a bug.
   planned.
 - [Vocabulary](https://github.com/softistx/nxgt-mail/blob/develop/docs/vocabulary.md)
   — the words these pages use, defined once.
+- [The starter](https://github.com/softistx/nxgt-mail/tree/develop/examples/starter)
+  — a Maizzle project that builds, renders and sends one e-mail, to copy.
 
 ## Licence
 
