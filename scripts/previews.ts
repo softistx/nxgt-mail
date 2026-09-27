@@ -10,10 +10,15 @@
  * the e-mail plus a margin of its background. The fixture's logo points at
  * `acme.example`, which does not exist: it is swapped for an inline wordmark.
  *
+ * It first builds the packages and rewrites mail-presets' `samples/`, so the
+ * pictures are of the current look. A placeholder with no example value, or an
+ * e-mail taller than the window, fails the run rather than drawing a wrong
+ * picture.
+ *
  * Screenshots differ from one machine's fonts to another's, so CI never
  * compares them: run `bun run previews` after changing how an e-mail looks,
- * and commit the images. Needs `chromium` (or `CHROMIUM=/path/to/chrome`) and
- * ImageMagick's `magick`.
+ * and commit the images. Needs Chromium (`CHROMIUM=/path/to/chrome`, default
+ * `chromium`) and ImageMagick 7 (`MAGICK`, default `magick`); tried on Linux.
  */
 
 import {
@@ -26,11 +31,25 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const chromium = process.env.CHROMIUM ?? 'chromium';
+const magick = process.env.MAGICK ?? 'magick';
 const width = 680;
+const height = 4000;
+
+/** The `link` each e-mail shows, by file name; any other gets `example.link`. */
+const LINKS: Readonly<Record<string, string>> = {
+	'verify-email': 'https://acme.example/verify?token=5f2c9e',
+	'reset-password': 'https://acme.example/reset?token=5f2c9e',
+	'password-changed': 'https://acme.example/security',
+	'email-changed': 'https://acme.example/security',
+	'magic-link': 'https://acme.example/sign-in?token=5f2c9e',
+	'new-sign-in': 'https://acme.example/security',
+	welcome: 'https://acme.example/start',
+	invitation: 'https://acme.example/join?invite=5f2c9e',
+};
 
 /** What the placeholders hold in the previews, per locale. */
 const EXAMPLES: Readonly<Record<string, Readonly<Record<string, string>>>> = {
@@ -62,6 +81,10 @@ const LOGO = `data:image/svg+xml,${encodeURIComponent(
 	'<svg xmlns="http://www.w3.org/2000/svg" width="96" height="28"><text x="0" y="22" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#0f766e">Acme</text></svg>',
 )}`;
 
+// The renderer's own filling, copied from packages/mail/src/renderer.ts
+// (PLACEHOLDER and its escaping): change them together.
+const PLACEHOLDER = /\{\{\s*([a-z][a-zA-Z0-9]*)\s*\}\}/g;
+
 const escapeHtml = (value: string): string =>
 	value.replace(
 		/[&<>"']/g,
@@ -83,14 +106,24 @@ function run(command: readonly string[], cwd = root): string {
 
 const scratch = mkdtempSync(join(tmpdir(), 'nxgt-previews-'));
 
-function shoot(html: string, locale: string, out: string): void {
-	const values = EXAMPLES[locale] ?? EXAMPLES.en ?? {};
+function shoot(html: string, locale: string, email: string, out: string): void {
+	const values: Record<string, string | undefined> = {
+		...EXAMPLES[locale],
+		...(LINKS[email] && { link: LINKS[email] }),
+	};
+	const missing = new Set<string>();
 	const filled = html
-		.replace(/\{\{\s*([a-zA-Z][a-zA-Z0-9]*)\s*\}\}/g, (mark, name: string) => {
+		.replace(PLACEHOLDER, (mark, name: string) => {
 			const value = values[name];
+			if (value === undefined) missing.add(name);
 			return value === undefined ? mark : escapeHtml(value);
 		})
 		.replaceAll('https://acme.example/logo.png', LOGO);
+	if (missing.size > 0) {
+		throw new Error(
+			`previews: ${locale}/${email} has placeholders with no example value: ${[...missing].join(', ')} — add them to EXAMPLES`,
+		);
+	}
 	const page = join(scratch, 'page.html');
 	const shot = join(scratch, 'shot.png');
 	writeFileSync(page, filled);
@@ -100,20 +133,33 @@ function shoot(html: string, locale: string, out: string): void {
 		'--disable-gpu',
 		'--hide-scrollbars',
 		'--force-device-scale-factor=1',
-		`--window-size=${width},4000`,
+		`--user-data-dir=${join(scratch, 'profile')}`,
+		`--window-size=${width},${height}`,
 		`--screenshot=${shot}`,
-		`file://${page}`,
+		pathToFileURL(page).href,
 	]);
 	const background = run([
-		'magick',
+		magick,
 		shot,
 		'-format',
 		'%[pixel:p{0,0}]',
 		'info:',
 	]).trim();
+	const bottom = run([
+		magick,
+		shot,
+		'-format',
+		`%[pixel:p{0,${height - 1}}]`,
+		'info:',
+	]).trim();
+	if (bottom !== background) {
+		throw new Error(
+			`previews: ${locale}/${email} is taller than ${height}px — raise the window height`,
+		);
+	}
 	mkdirSync(join(out, '..'), { recursive: true });
 	run([
-		'magick',
+		magick,
 		shot,
 		'-trim',
 		'+repage',
@@ -128,13 +174,17 @@ function shoot(html: string, locale: string, out: string): void {
 }
 
 try {
+	run(['bun', 'run', 'build']);
+	run(['bun', 'run', 'samples'], `${root}packages/mail-presets`);
 	const presets = `${root}packages/mail-presets`;
 	for (const locale of ['en', 'fr']) {
 		for (const file of readdirSync(`${presets}/samples/${locale}`)) {
 			if (!file.endsWith('.html')) continue;
+			const email = file.replace(/\.html$/, '');
 			shoot(
 				readFileSync(`${presets}/samples/${locale}/${file}`, 'utf8'),
 				locale,
+				email,
 				`${presets}/previews/${locale}/${file.replace(/\.html$/, '.png')}`,
 			);
 		}
@@ -146,6 +196,7 @@ try {
 		shoot(
 			readFileSync(`${ui}/test/fixture/dist/${locale}/welcome.html`, 'utf8'),
 			locale,
+			'welcome',
 			`${ui}/previews/components-${locale}.png`,
 		);
 	}
