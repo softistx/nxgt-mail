@@ -357,8 +357,12 @@ and `fr` only: a project in `de` adds its ten keys — `common.greeting`,
 **Icons are slots.** An e-mail has no icon font: pass an `<img>` with an
 absolute URL, or a character, to `#icon` — or to `NxIconButton`'s `icon`.
 
-**Light only.** The layout declares `<meta name="color-scheme" content="light">`;
-there is no dark theme.
+**Dark mode is followed, not opted into.** The layout always declares
+`<meta name="color-scheme" content="light dark">`: a component that colours
+by a token needing a dark value carries the matching class, and shows it in
+every client that reads `prefers-color-scheme` or `[data-ogsc]`/`[data-ogsb]`
+— Gmail excepted, which always shows the light styles. See
+[Dark mode](docs/guide/dark-mode.md).
 
 **Use `NxSpacer` for vertical space**: `<NxSpacer size="lg" />`, on
 Maizzle's `<Spacer>`, which Outlook keeps.

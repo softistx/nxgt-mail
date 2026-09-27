@@ -49,9 +49,10 @@ it in a stylesheet the build keeps.
 `NxLayout` writes the meta tags and the `<style>` block; every component that
 colours by a token needing a dark value carries the matching class
 alongside its light one. The classes are plain (`nx-dark-bg-card`,
-`nx-dark-text-foreground`, `nx-dark-border-border`, `nx-dark-bg-paper`,
-`nx-dark-bg-background`, `nx-dark-text-card-foreground`,
-`nx-light-only`/`nx-dark-only` for the logo/image toggle below), not Tailwind
+`nx-dark-text-foreground`, `nx-dark-text-foreground-25` (a rating's unfilled
+star), `nx-dark-border-border`, `nx-dark-bg-paper`, `nx-dark-bg-background`,
+`nx-dark-text-card-foreground`, `nx-light-only`/`nx-dark-only` for the
+logo/image toggle below), not Tailwind
 utilities: Maizzle's purge keeps a class only while a rule that needs it
 survives, and `[data-ogs*` selectors are the one pattern its purge always
 keeps, since no built HTML ever carries the attribute for the purge step to
