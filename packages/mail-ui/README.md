@@ -24,6 +24,11 @@ Your project stays a Maizzle project: `emails/`, `components/`, `public/`,
 `maizzle serve`, `maizzle build`. Maizzle's own components (`<Button>`,
 `<Spacer>`) stay available; ours carry the `Nx` prefix and never shadow them.
 
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-ui/previews/components-en.png" width="420" alt="An e-mail using every Nx component: layout, typography, code, buttons, separator, card with badge, summary data and status, alert, banner, link">
+
+Every component in one e-mail, with the brand `Acme` and the default theme —
+[in French](https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-ui/previews/components-fr.png).
+
 > **Not published yet.** The package is `private` while the rest of the
 > repository — the transports and a starter — is written. It is published at
 > `0.1.0` with them; the surface below is the one that will ship.
