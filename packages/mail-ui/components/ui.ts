@@ -127,6 +127,13 @@ export function sharedMessage(
 /** Which way a figure moved, as material-vue's StatCard tones its delta. */
 export type DeltaTone = 'up' | 'down' | 'neutral';
 
+/** A tone's arrow and colour. */
+const DELTA_LOOK: Record<DeltaTone, { glyph: string; colour: string }> = {
+	up: { glyph: '\u25B2', colour: 'text-success' },
+	down: { glyph: '\u25BC', colour: 'text-error' },
+	neutral: { glyph: '\u2013', colour: 'text-muted-foreground' },
+};
+
 /**
  * A delta as material-vue's `formatStatDelta` writes it — `+12`, `-3`, `0` —
  * with its tone, a glyph for its arrow (an e-mail has no icon font), and its
@@ -144,12 +151,7 @@ export function deltaOf(
 				: delta < 0
 					? { label: `${delta}`, tone: tone ?? 'down' }
 					: { label: '0', tone: tone ?? 'neutral' };
-	const Look: Record<DeltaTone, { glyph: string; colour: string }> = {
-		up: { glyph: '\u25B2', colour: 'text-success' },
-		down: { glyph: '\u25BC', colour: 'text-error' },
-		neutral: { glyph: '\u2013', colour: 'text-muted-foreground' },
-	};
-	return { ...resolved, ...Look[resolved.tone] };
+	return { ...resolved, ...DELTA_LOOK[resolved.tone] };
 }
 
 /** material-vue's small uppercase label over a figure or a list. */

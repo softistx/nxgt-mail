@@ -5,7 +5,8 @@ import { type DeltaTone, deltaOf } from './ui';
 /**
  * material-vue's StatCard: a label, a figure, and under it a delta and a
  * hint, in an `NxCard`. The delta's arrow is a character (an e-mail has no
- * icon font). There is no loading state: an e-mail does not load.
+ * icon font). There is no loading state: an e-mail does not load. A reader
+ * hears the delta as written, without material-vue's spoken "Up" or "Down".
  */
 const props = defineProps<{
 	label: string;

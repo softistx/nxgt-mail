@@ -3,7 +3,8 @@ import { EYEBROW } from './ui';
 
 /**
  * material-vue's RatioCard: two figures side by side, and a bar of the left
- * one's share, on a track at 15% of the primary.
+ * one's share, on a track at 15% of the primary. The fill is NxProgress's,
+ * rounded at both ends where material-vue's ends square.
  */
 defineProps<{
 	label: string;

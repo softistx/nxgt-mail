@@ -48,13 +48,24 @@ describe('a project built with the ui plugin', () => {
 	}, 120_000);
 
 	test("renders material-vue's colours as hex, with nothing a client must resolve", async () => {
-		const html = await read('dist/en/welcome.html');
-		expect(html).not.toContain('oklch(');
-		expect(html).not.toContain('var(--');
-		expect(html).not.toContain('color-mix(');
-		expect(styleOf(html, 'Open my account', 'a ')).toContain(
-			'background-color: #485096;',
-		);
+		for (const email of ['welcome', 'gallery', 'sequence', 'summary']) {
+			const html = await read(`dist/en/${email}.html`);
+			expect({ email, oklch: html.includes('oklch(') }).toEqual({
+				email,
+				oklch: false,
+			});
+			expect({ email, var: html.includes('var(--') }).toEqual({
+				email,
+				var: false,
+			});
+			expect({ email, mix: html.includes('color-mix(') }).toEqual({
+				email,
+				mix: false,
+			});
+		}
+		expect(
+			styleOf(await read('dist/en/welcome.html'), 'Open my account', 'a '),
+		).toContain('background-color: #485096;');
 	});
 
 	test('writes the types of brand for the editor, in .maizzle/ where the starter looks', async () => {
@@ -326,6 +337,16 @@ describe('a project built with the ui plugin', () => {
 		const text = await read('dist/en/summary.txt');
 		expect(text).toContain('Revenue $12,400 +12 vs last month Refunds 3 -2');
 		expect(text).not.toMatch(/[▲▼↗]/);
+	});
+
+	test('heads an e-mail with a hero, and an entity with its status and metadata', async () => {
+		const html = await read('dist/en/summary.html');
+		expect(html).toContain('text-transform: uppercase;">September</p>');
+		expect(html).toContain('>Your month at Acme</h1>');
+		expect(html).toContain('background-color: #f6f6fa;');
+		expect(await read('dist/en/summary.txt')).toContain(
+			'🏢 Acme Labs Active Plan: Pro Seats: 12 Settings',
+		);
 	});
 
 	test("writes a metric card's shared words in each locale", async () => {
