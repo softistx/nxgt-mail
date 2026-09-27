@@ -98,7 +98,8 @@ function checkOptions(options: ResendWebhookOptions): void {
 	}
 	if (
 		typeof options.secret !== 'string' ||
-		!options.secret.startsWith('whsec_')
+		!options.secret.startsWith('whsec_') ||
+		!isBase64(options.secret.slice('whsec_'.length))
 	) {
 		throw new TypeError(
 			"createResendWebhook: secret must be Resend's signing secret, whsec_… — from the endpoint's settings page",
@@ -112,6 +113,16 @@ function checkOptions(options: ResendWebhookOptions): void {
 			'createResendWebhook: toleranceMs must be a positive integer',
 		);
 	}
+}
+
+// What `atob` accepts: standard base64, optionally padded. Checked before the
+// first `atob` call, so a malformed secret is a TypeError at wiring — never
+// the DOMException `atob` itself throws.
+const BASE64 =
+	/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
+
+function isBase64(value: string): boolean {
+	return value !== '' && BASE64.test(value);
 }
 
 function base64Decode(value: string): Uint8Array<ArrayBuffer> {

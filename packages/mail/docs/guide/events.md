@@ -11,6 +11,8 @@ provider's own package, `@nxgt/mail-resend/webhooks` today.
 ```ts
 import type { MailEvent } from '@nxgt/mail';
 
+declare function suppress(recipient: string): void; // your own: stop sending to this address
+
 function handle(event: MailEvent): void {
 	switch (event.type) {
 		case 'delivered':

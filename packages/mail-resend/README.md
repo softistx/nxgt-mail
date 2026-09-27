@@ -255,6 +255,8 @@ a neutral `MailEvent` from `@nxgt/mail`: what happened to a message after
 import { MailWebhookRefused } from '@nxgt/mail';
 import { createResendWebhook } from '@nxgt/mail-resend/webhooks';
 
+declare function suppress(recipient: string): Promise<void>; // your own: stop sending to this address
+
 const webhook = createResendWebhook({ secret: process.env.RESEND_WEBHOOK_SECRET ?? '' });
 
 export default {
@@ -278,6 +280,8 @@ import { MailWebhookRefused } from '@nxgt/mail';
 import { createResendWebhook } from '@nxgt/mail-resend/webhooks';
 import { Hono } from 'hono';
 
+declare function suppress(recipient: string): Promise<void>; // your own: stop sending to this address
+
 const webhook = createResendWebhook({ secret: process.env.RESEND_WEBHOOK_SECRET ?? '' });
 const app = new Hono();
 
@@ -300,6 +304,7 @@ app.post('/webhooks/resend', async (c) => {
 | `ResendWebhookOptions` | `{ secret, toleranceMs? }` — `toleranceMs` defaults to `300000` (5 minutes) |
 | `ResendWebhookRequest` | `Request`, or `{ headers, body }` when a framework already read the raw body |
 | `ResendWebhook` | `{ verify(request): Promise<MailEvent \| null> }` |
+| `MailWebhookHeaders` | The headers `verify` reads: a `Headers`, or a plain record (case-insensitive; a repeated header answers its first value) |
 
 - **Give `verify` the raw body, never a parsed one.** The signature is an
   HMAC over the exact bytes Resend sent; a body already parsed to JSON and

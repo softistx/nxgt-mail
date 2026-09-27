@@ -90,6 +90,14 @@ describe('createResendWebhook — wiring', () => {
 			createResendWebhook({ secret: SECRET, toleranceMs: 0 }),
 		).toThrow(TypeError);
 	});
+
+	it('refuses a secret whose body is not valid base64', () => {
+		// A TypeError, not the DOMException atob would throw: caught before
+		// anything reads it.
+		expect(() =>
+			createResendWebhook({ secret: 'whsec_not-valid-base64!!!' }),
+		).toThrow(TypeError);
+	});
 });
 
 describe('createResendWebhook — verify', () => {
@@ -196,6 +204,23 @@ describe('createResendWebhook — verify', () => {
 		const webhook = createResendWebhook({ secret: SECRET });
 		const event = await webhook.verify(
 			await requestFor(bodyOf('email.sent', DATA)),
+		);
+		expect(event).toBeNull();
+	});
+
+	it('answers null for a mapped type whose payload is missing data.email_id', async () => {
+		const webhook = createResendWebhook({ secret: SECRET });
+		const { email_id: _emailId, ...rest } = DATA;
+		const event = await webhook.verify(
+			await requestFor(bodyOf('email.delivered', rest)),
+		);
+		expect(event).toBeNull();
+	});
+
+	it('answers null for a mapped type whose payload has an empty data.to', async () => {
+		const webhook = createResendWebhook({ secret: SECRET });
+		const event = await webhook.verify(
+			await requestFor(bodyOf('email.delivered', { ...DATA, to: [] })),
 		);
 		expect(event).toBeNull();
 	});
