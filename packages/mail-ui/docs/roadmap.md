@@ -58,6 +58,13 @@ Nothing yet. A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **Right-to-left languages, v0.4.0** — `NxLayout` writes `dir` on `<html>`,
+  the body and the wrapper table, from `@nxgt/mail-i18n`'s `dir` (or a small
+  built-in fallback list of right-to-left scripts). `NxAlert`, `NxCompareCard`,
+  `NxStatCard`, `NxTimeline` and `NxSeeAlso` mirror their physical CSS — a
+  border side, a padding, an alignment, the see-also arrow — for the
+  direction they build in. See
+  [Right-to-left languages](guide/right-to-left.md).
 - **Dark mode, v0.4.0** — `NxLayout` and the components follow the mail
   client's dark theme, mirroring `@nxgt/material-vue`'s dark tokens
   (background, foreground, card, card-foreground, accent, accent-foreground

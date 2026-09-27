@@ -234,6 +234,67 @@ export function localeOf(globals: Record<string, unknown>): string {
 	return typeof globals.locale === 'string' ? globals.locale : 'en';
 }
 
+/**
+ * The base language subtag of every locale `@nxgt/mail-i18n`'s own fallback
+ * list (`packages/mail-i18n/src/direction.ts`) reads right to left — kept
+ * here too, since mail-ui takes no dependency on mail-i18n and a project may
+ * use `NxLayout` and the other components without it. A last resort, tried
+ * only once `Intl.Locale` itself cannot answer — see {@link dirOf}.
+ */
+const RTL_LANGUAGES = new Set([
+	'ar',
+	'arc',
+	'dv',
+	'fa',
+	'ha',
+	'he',
+	'khw',
+	'ks',
+	'ku',
+	'ps',
+	'sd',
+	'syr',
+	'ug',
+	'ur',
+	'yi',
+]);
+
+interface TextInfoLocale {
+	/** Bun 1.4: a method. */
+	getTextInfo?(): { direction: string };
+	/** Node 22: a getter. */
+	textInfo?: { direction: string };
+}
+
+/**
+ * The direction the template is built in: `globals.dir` from
+ * `@nxgt/mail-i18n`'s `i18n()` plugin when it is listed, else derived from
+ * `localeOf(globals)` the same way `@nxgt/mail-i18n`'s own
+ * `localeDirection` does (`packages/mail-i18n/src/direction.ts`) — asking
+ * the runtime's `Intl.Locale` first (Bun's `getTextInfo()`, Node's
+ * `textInfo`), and only falling back to {@link RTL_LANGUAGES} when neither
+ * answers, so a runtime with accurate data always wins here too. `NxLayout`
+ * writes it on `<html>` and its wrapper table; `NxAlert`, `NxCompareCard`,
+ * `NxStatCard`, `NxTimeline`, `NxSeeAlso` and the other components with a
+ * one-sided padding, border or alignment read it to mirror their physical
+ * CSS — email clients read `padding-left`/`padding-right`/`border-left`/
+ * `border-right`, never the logical `padding-inline-start` and the like.
+ */
+export function dirOf(globals: Record<string, unknown>): 'ltr' | 'rtl' {
+	if (globals.dir === 'ltr' || globals.dir === 'rtl') return globals.dir;
+	const locale = localeOf(globals);
+	try {
+		const info = new Intl.Locale(locale) as Intl.Locale & TextInfoLocale;
+		const direction =
+			info.getTextInfo?.().direction ?? info.textInfo?.direction;
+		if (direction === 'rtl' || direction === 'ltr') return direction;
+	} catch {
+		// Not a locale `Intl` parses: fall through to the fallback list below.
+	}
+	const base = locale.split('-')[0]?.toLowerCase() ?? '';
+	return RTL_LANGUAGES.has(base) ? 'rtl' : 'ltr';
+}
+
 /** material-vue's `AttributeType`: what kind of value an attribute holds. */
 export type AttributeType =
 	| 'STRING'

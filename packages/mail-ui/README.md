@@ -262,6 +262,29 @@ limits.
 
 The light version is [above](#nxgtmail-ui); [`components-en.png`](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-ui/previews/components-en.png) is the same e-mail without dark mode forced.
 
+### Right-to-left languages
+
+`NxLayout` writes `dir` on `<html>`, the body and the wrapper table, from
+`@nxgt/mail-i18n`'s `dir` global (or, without it, a small built-in list of
+right-to-left scripts by locale). Seventeen other components mirror their
+physical CSS for the direction they build in — an alert's accent bar, a
+delta's and a see-also's arrow, a timeline's side, a list tile's trailing
+slot, an entity header's actions, a summary row's alignment, and more (see
+[Right-to-left languages](docs/guide/right-to-left.md) for the full list):
+
+```ts
+i18n({ locales: ['en', 'ar'] }); // dir is 'rtl' for ar, 'ltr' for en
+```
+
+```vue
+<!-- what NxAlert writes, roughly, for an rtl build -->
+<td class="border-0 border-solid p-4 border-r-8 ...">
+```
+
+`@nxgt/mail-ui`'s own shared messages ship `en`/`fr` only; add a right-to-left
+locale's translation of the `common.*` keys you use, the same way you add its
+templates.
+
 ### The shared messages — `uiCatalogues`
 
 ```ts
@@ -363,6 +386,11 @@ by a token needing a dark value carries the matching class, and shows it in
 every client that reads `prefers-color-scheme` or `[data-ogsc]`/`[data-ogsb]`
 — Gmail excepted, which always shows the light styles. See
 [Dark mode](docs/guide/dark-mode.md).
+
+**Right-to-left is followed too, not opted into.** `dir` on `<html>`, the
+body and the wrapper table, and every component's physical CSS, follow the
+locale's direction automatically — nothing to pass. See
+[Right-to-left languages](docs/guide/right-to-left.md).
 
 **Use `NxSpacer` for vertical space**: `<NxSpacer size="lg" />`, on
 Maizzle's `<Spacer>`, which Outlook keeps.

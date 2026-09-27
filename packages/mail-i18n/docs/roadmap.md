@@ -38,6 +38,12 @@ Nothing yet. A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **`dir` beside `locale`, v0.5.0** — every template gets `dir`, `'ltr'` or
+  `'rtl'`, derived from its locale with the runtime's own `Intl.Locale`
+  (Bun's `getTextInfo()`, Node's `textInfo`) and a fallback list of
+  right-to-left scripts. `localeDirection(locale)` is exported for use
+  outside a template. See `@nxgt/mail-ui`'s
+  [Right-to-left languages](../../mail-ui/docs/guide/right-to-left.md).
 - **`kebab-case` catalogue keys, v0.4.0** — a key segment may be
   `kebab-case` (`verify-email.title`) as well as `camelCase`; `kebab-case` is
   the convention. A template's messages are grouped under its file name as it

@@ -9,6 +9,7 @@ import {
 	layerCatalogues,
 	type Messages,
 } from './catalogues';
+import { localeDirection } from './direction';
 import { buildManifest } from './manifest';
 import {
 	checkTemplates,
@@ -244,6 +245,7 @@ export function i18n(options: I18nOptions): MailPlugin {
 				...config.vue.globalProperties,
 				...templateProperties({
 					...entry,
+					dir: localeDirection(entry.locale),
 					messages: messages.get(entry.locale) as Messages,
 					reference,
 					format,

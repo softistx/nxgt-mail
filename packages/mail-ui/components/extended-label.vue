@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { twMerge } from '@maizzle/framework';
-import { computed, useAttrs, useSlots } from 'vue';
+import { computed, getCurrentInstance, useAttrs, useSlots } from 'vue';
+import { dirOf } from './ui';
 
 /**
  * material-vue's ExtendedLabel: a title in a `NxTypography` variant, a short
@@ -31,6 +32,9 @@ const props = withDefaults(
 const CELL =
 	'height: 4px; line-height: 4px; font-size: 4px; mso-line-height-rule: exactly;';
 
+const globals: Record<string, unknown> =
+	getCurrentInstance()?.appContext.config.globalProperties ?? {};
+const dir = computed(() => dirOf(globals));
 const attrs = useAttrs();
 const slots = useSlots();
 const classes = computed(() =>
@@ -42,7 +46,7 @@ const indicator = computed(() =>
 </script>
 
 <template>
-  <table v-bind="{ ...attrs, class: undefined }" :class="classes" role="presentation" cellpadding="0" cellspacing="0">
+  <table v-bind="{ ...attrs, class: undefined }" :class="classes" role="presentation" cellpadding="0" cellspacing="0" :dir="dir">
     <tr>
       <td class="align-bottom">
         <NxTypography :variant="variant" class="mb-0 font-semibold"><slot /></NxTypography>
@@ -54,7 +58,7 @@ const indicator = computed(() =>
         </table>
         </div>
       </td>
-      <td v-if="slots.trailing" class="pl-4 text-right align-bottom"><slot name="trailing" /></td>
+      <td v-if="slots.trailing" :class="`align-bottom ${dir === 'rtl' ? 'pr-4 text-left' : 'pl-4 text-right'}`"><slot name="trailing" /></td>
     </tr>
   </table>
 </template>

@@ -370,7 +370,7 @@ describe('a project built with the ui plugin', () => {
 		expect(text).toContain(
 			'Revenue\n\n$12,400\n\n+12 vs last month\n\nRefunds\n\n3\n\n-2',
 		);
-		expect(text).not.toMatch(/[▲▼↗]/);
+		expect(text).not.toMatch(/[▲▼↗↖]/);
 	});
 
 	test('heads an e-mail with a hero, and an entity with its status and metadata', async () => {
@@ -1098,5 +1098,122 @@ describe('the generic placeholder spec of every component and every prop', () =>
 			},
 			60_000,
 		);
+	});
+});
+
+describe('a right-to-left locale', () => {
+	const root = `${cases}/rtl`;
+	afterAll(() => rmSync(root, { recursive: true, force: true }));
+
+	beforeAll(async () => {
+		rmSync(root, { recursive: true, force: true });
+		const files: Record<string, string> = {
+			'maizzle.config.ts': [
+				"import { defineMailConfig } from '@nxgt/mail-config';",
+				"import { i18n } from '@nxgt/mail-i18n';",
+				"import { ui } from '../../../src/index';",
+				"export default defineMailConfig({ plugins: [ui({ brand: { name: 'Acme' } }), i18n({ locales: ['en', 'ar'] })] });",
+			].join('\n'),
+			// A small catalogue for this fixture alone: mail-ui's shared messages
+			// (uiCatalogues) ship en/fr only — see docs/guide/right-to-left.md —
+			// so this project writes its own common.footer.why, as one adding ar
+			// would too.
+			'locales/en.json': JSON.stringify({
+				welcome: { subject: 'Welcome' },
+				common: { footer: { why: 'You have an account with {brand}.' } },
+			}),
+			'locales/ar.json': JSON.stringify({
+				welcome: { subject: 'أهلا' },
+				common: { footer: { why: 'لديك حساب لدى {brand}.' } },
+			}),
+			'emails/welcome.vue': [
+				'<template>',
+				'  <NxLayout>',
+				'    <NxAlert variant="error" title="Oops"><template #icon>!</template></NxAlert>',
+				'    <NxCompareCard label="Sales" :current="{ value: \'120\', label: \'Now\' }" :previous="{ value: \'100\', label: \'Before\' }" :delta="12" />',
+				'    <NxStatCard label="Users" value="42" :delta="5"><template #icon>i</template></NxStatCard>',
+				"    <NxTimeline :items=\"[{ id: '1', title: 'Signed in', timestampLabel: 'Today' }, { id: '2', title: 'Second' }]\" />",
+				"    <NxSeeAlso label=\"Links\" :items=\"[{ id: 'a', title: 'Docs', href: 'https://acme.example/docs' }]\" />",
+				'    <NxListTile title="Item"><template #trailing>X</template></NxListTile>',
+				'    <NxEntityHeader title="Header"><template #actions>A</template></NxEntityHeader>',
+				"    <NxSummaryData :data=\"[{ label: 'L', value: 'V' }]\" />",
+				'    <NxSteps><NxStepsItem title="Step 1" /><NxStepsItem title="Step 2" /></NxSteps>',
+				'  </NxLayout>',
+				'</template>',
+			].join('\n'),
+		};
+		for (const [path, content] of Object.entries(files)) {
+			mkdirSync(dirname(`${root}/${path}`), { recursive: true });
+			writeFileSync(`${root}/${path}`, content);
+		}
+		await build(root);
+	}, 60_000);
+
+	test('writes dir="rtl" on <html> and the body, dir="ltr" for an ltr locale', async () => {
+		const ar = await Bun.file(`${root}/dist/ar/welcome.html`).text();
+		const en = await Bun.file(`${root}/dist/en/welcome.html`).text();
+		expect(ar).toContain('lang="ar" dir="rtl"');
+		expect(ar).toMatch(/<body[^>]*dir="rtl"/);
+		expect(en).toContain('lang="en" dir="ltr"');
+	});
+
+	test("mirrors an alert's accent bar and icon padding", async () => {
+		const ar = await Bun.file(`${root}/dist/ar/welcome.html`).text();
+		const en = await Bun.file(`${root}/dist/en/welcome.html`).text();
+		expect(ar).toContain('border-right-style: solid; border-right-width: 8px');
+		expect(ar).toContain(
+			'padding-left: 8px; vertical-align: top; color: #e40014',
+		);
+		expect(en).toContain('border-left-style: solid; border-left-width: 8px');
+		expect(en).toContain(
+			'padding-right: 8px; vertical-align: top; color: #e40014',
+		);
+	});
+
+	test("mirrors a compare card's delta and its two boxes", async () => {
+		const ar = await Bun.file(`${root}/dist/ar/welcome.html`).text();
+		expect(ar).toContain('padding-right: 8px; text-align: left');
+		expect(ar).toContain('padding-left: 6px; vertical-align: top');
+		expect(ar).toContain('padding-right: 6px; vertical-align: top');
+	});
+
+	test("mirrors a stat card's icon and delta", async () => {
+		const ar = await Bun.file(`${root}/dist/ar/welcome.html`).text();
+		expect(ar).toContain('padding-right: 12px; text-align: left');
+		expect(ar).toContain('padding-left: 8px; font-weight: 500');
+	});
+
+	test("mirrors a timeline's side: its line, its title's gap and its time", async () => {
+		const ar = await Bun.file(`${root}/dist/ar/welcome.html`).text();
+		const en = await Bun.file(`${root}/dist/en/welcome.html`).text();
+		expect(ar).toContain('border-left-style: solid');
+		expect(en).toContain('border-right-style: solid');
+		expect(ar).toContain('padding-right: 12px; text-align: left');
+		expect(en).toContain('padding-left: 12px; text-align: right');
+	});
+
+	test("mirrors a see-also's arrow, pointing away from the text either way", async () => {
+		const ar = await Bun.file(`${root}/dist/ar/welcome.html`).text();
+		const en = await Bun.file(`${root}/dist/en/welcome.html`).text();
+		expect(ar).toContain('<span aria-hidden="true">↖</span>');
+		expect(en).toContain('<span aria-hidden="true">↗</span>');
+	});
+
+	test("mirrors a list tile's trailing gap, an entity header's actions, a summary row and steps' line", async () => {
+		const ar = await Bun.file(`${root}/dist/ar/welcome.html`).text();
+		const en = await Bun.file(`${root}/dist/en/welcome.html`).text();
+		expect(ar).toContain('padding-right: 16px; text-align: left');
+		expect(en).toContain('padding-left: 16px; text-align: right');
+		expect(ar).toContain('padding-bottom: 8px; text-align: left');
+		expect(en).toContain('padding-bottom: 8px; text-align: right');
+		expect(ar).toContain('border-left-width: 1px; border-left-style: solid');
+		expect(en).toContain('border-right-width: 1px; border-right-style: solid');
+	});
+
+	test('keeps the plain-text part readable, without the mirrored glyph', async () => {
+		const text = await Bun.file(`${root}/dist/ar/welcome.txt`).text();
+		expect(text).toContain('Oops');
+		expect(text).toContain('Signed in');
+		expect(text).not.toMatch(/[▲▼↗↖]/);
 	});
 });

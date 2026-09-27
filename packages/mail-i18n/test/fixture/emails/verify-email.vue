@@ -1,5 +1,5 @@
 <template>
-  <Html :lang="locale">
+  <Html :lang="locale" :dir="dir">
     <Body>
       <Container>
         <Heading>{{ t('verify-email.title') }}</Heading>

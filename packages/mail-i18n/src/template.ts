@@ -1,4 +1,5 @@
 import type { ArgumentKind, Messages } from './catalogues';
+import type { Direction } from './direction';
 import { placeholderMark } from './manifest';
 import type { createFormatter, MessageArgs } from './translator';
 
@@ -17,7 +18,8 @@ const kindOf = (value: unknown) =>
 	value === null ? 'null' : value instanceof Date ? 'date' : typeof value;
 
 /**
- * What one template gets in one locale: `t`, `locale` and `placeholder`.
+ * What one template gets in one locale: `t`, `locale`, `dir` and
+ * `placeholder`.
  *
  * `t` is checked against the fallback locale's message, which declares every
  * argument: an unknown key, an argument left out, one the message does not
@@ -27,14 +29,16 @@ const kindOf = (value: unknown) =>
 export function templateProperties(options: {
 	readonly email: string;
 	readonly locale: string;
+	readonly dir: Direction;
 	readonly messages: Messages;
 	readonly reference: Messages;
 	readonly format: ReturnType<typeof createFormatter>;
 }) {
-	const { email, locale, messages, reference, format } = options;
+	const { email, locale, dir, messages, reference, format } = options;
 	const where = `i18n: ${locale}: ${email}`;
 	return {
 		locale,
+		dir,
 		t(key: string, args: MessageArgs = {}): string {
 			const message = typeof key === 'string' ? messages.get(key) : undefined;
 			const declared = typeof key === 'string' ? reference.get(key) : undefined;

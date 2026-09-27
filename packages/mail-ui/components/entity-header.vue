@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { twMerge } from '@maizzle/framework';
-import { computed, useAttrs, useSlots } from 'vue';
+import { computed, getCurrentInstance, useAttrs, useSlots } from 'vue';
+import { dirOf } from './ui';
 
 /**
  * material-vue's EntityHeader: what an e-mail is about — an icon, a title
@@ -17,6 +18,9 @@ withDefaults(
 	{ metadata: () => [] },
 );
 
+const globals: Record<string, unknown> =
+	getCurrentInstance()?.appContext.config.globalProperties ?? {};
+const dir = computed(() => dirOf(globals));
 const attrs = useAttrs();
 const slots = useSlots();
 const classes = computed(() =>
@@ -31,14 +35,14 @@ const classes = computed(() =>
   <table class="mb-4 w-full" role="presentation" cellpadding="0" cellspacing="0">
     <tr>
       <td v-bind="{ ...attrs, class: undefined }" :class="classes">
-        <table class="w-full" role="presentation" cellpadding="0" cellspacing="0">
+        <table class="w-full" role="presentation" cellpadding="0" cellspacing="0" :dir="dir">
           <tr>
-            <td v-if="slots.icon" class="w-1 whitespace-nowrap pr-4 align-middle text-3xl leading-none"><slot name="icon" /></td>
+            <td v-if="slots.icon" :class="`w-1 whitespace-nowrap align-middle text-3xl leading-none ${dir === 'rtl' ? 'pl-4' : 'pr-4'}`"><slot name="icon" /></td>
             <td class="align-middle">
-              <h2 class="m-0 text-lg font-semibold tracking-tight text-foreground nx-dark-text-foreground">{{ title }} <span v-if="slots.status" class="pl-2 align-middle"><slot name="status" /></span></h2>
+              <h2 class="m-0 text-lg font-semibold tracking-tight text-foreground nx-dark-text-foreground">{{ title }} <span v-if="slots.status" :class="`align-middle ${dir === 'rtl' ? 'pr-2' : 'pl-2'}`"><slot name="status" /></span></h2>
               <NxSummaryData v-if="metadata.length > 0" inline class="mb-0 mt-0.5" :data="metadata" />
             </td>
-            <td v-if="slots.actions" class="w-1 whitespace-nowrap pl-4 text-right align-middle"><slot name="actions" /></td>
+            <td v-if="slots.actions" :class="`w-1 whitespace-nowrap align-middle ${dir === 'rtl' ? 'pr-4 text-left' : 'pl-4 text-right'}`"><slot name="actions" /></td>
           </tr>
         </table>
         <div v-if="slots.default" class="mt-2"><slot /></div>
