@@ -34,12 +34,6 @@ export default defineMailConfig({
 placeholders and subjects in `dist/mail-manifest.json`. See what they look
 like in the [built samples](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/README.md).
 
-> **Not published yet.** The package is `private` while the rest of the
-> repository — the transports and a starter — is written. It is published at
-> `0.1.0` with them; the surface below is the one that will ship.
-
-## Previews
-
 Each preset as it arrives, with the brand `Acme`, the default theme and example
 values in its placeholders. Click one for full size; `fr` is the French build.
 
@@ -48,6 +42,10 @@ values in its placeholders. Click one for full size; `fr` is the French build.
 <tr><td valign="top"><a href="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-presets/previews/en/email-changed.png"><img src="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-presets/previews/en/email-changed.png" width="260" alt="The email-changed e-mail, in English"></a><br><code>email-changed</code> · <a href="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-presets/previews/fr/email-changed.png">fr</a></td><td valign="top"><a href="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-presets/previews/en/sign-in-code.png"><img src="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-presets/previews/en/sign-in-code.png" width="260" alt="The sign-in-code e-mail, in English"></a><br><code>sign-in-code</code> · <a href="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-presets/previews/fr/sign-in-code.png">fr</a></td><td valign="top"><a href="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-presets/previews/en/magic-link.png"><img src="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-presets/previews/en/magic-link.png" width="260" alt="The magic-link e-mail, in English"></a><br><code>magic-link</code> · <a href="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-presets/previews/fr/magic-link.png">fr</a></td></tr>
 <tr><td valign="top"><a href="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-presets/previews/en/new-sign-in.png"><img src="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-presets/previews/en/new-sign-in.png" width="260" alt="The new-sign-in e-mail, in English"></a><br><code>new-sign-in</code> · <a href="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-presets/previews/fr/new-sign-in.png">fr</a></td><td valign="top"><a href="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-presets/previews/en/welcome.png"><img src="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-presets/previews/en/welcome.png" width="260" alt="The welcome e-mail, in English"></a><br><code>welcome</code> · <a href="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-presets/previews/fr/welcome.png">fr</a></td><td valign="top"><a href="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-presets/previews/en/invitation.png"><img src="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-presets/previews/en/invitation.png" width="260" alt="The invitation e-mail, in English"></a><br><code>invitation</code> · <a href="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-presets/previews/fr/invitation.png">fr</a></td></tr>
 </table>
+
+> **Not published yet.** The package is `private` while the rest of the
+> repository — the transports and a starter — is written. It is published at
+> `0.1.0` with them; the surface below is the one that will ship.
 
 ## Install
 
