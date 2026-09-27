@@ -3,12 +3,11 @@
 ---
 
 `@nxgt/mail-i18n` now uses `@nxgt/i18n-vue/core` (a new, regular dependency —
-its `createFormatter`/`createTranslator` and `layerCatalogues` hold no
-module-level state, so nothing calls for a peer) instead of its own copies of
-the catalogue and message types, `layerCatalogues`, `createTranslator` and
-`createFormatter`. Public behaviour is unchanged: every existing test,
-`@ts-expect-error` refusal and `@vue-expect-error` template refusal passes
-without editing.
+its functions hold no module-level state, so nothing calls for a peer)
+instead of its own copies of the catalogue and message types,
+`layerCatalogues` and `createFormatter`. Public behaviour is unchanged: every
+existing test, `@ts-expect-error` refusal and `@vue-expect-error` template
+refusal passes without editing.
 
 `TemplateKey` and `TemplateArgs` are now `@nxgt/i18n-vue/core`'s generic
 `KeyOf`/`ArgsOf`, parametrised over this package's own `TemplateMessages`
@@ -25,6 +24,21 @@ release that documents the silent case. Its message for a key that is
 neither camelCase nor kebab-case also gained a second example
 (`verifyEmail.title or verify-email.title`). Revisit once `@nxgt/mail-i18n`'s
 catalogues no longer need to carry both conventions.
+
+**`createTranslator` and its `Translate` type stay this package's own too**,
+for two more reasons `@nxgt/i18n-vue/core`'s versions do not hold:
+`Translate<K = MessageKey>` defaults its key type from `@nxgt/i18n-vue`'s own
+augmentable `I18nMessages` — re-exporting it unparametrised would have this
+package's `t()` pick up whatever keys an unrelated app registered with
+`@nxgt/i18n-vue` in the same TypeScript program, since declaration merging is
+global to the program, not to a file. Its `lookup` also matches a key across
+both conventions at the call site (`t('linkExpires')` now finds a catalogue's
+`link-expires`), the same leniency just rejected for `checkCatalogues`, and
+for the same reason: it would revive an old-key override at send time,
+outside the template build's own exact-match check. `createFormatter` has
+neither problem — no generic key type, no lookup — so it is the one function
+this package now takes from `@nxgt/i18n-vue/core` as is. (Found in review;
+fixed before merge.)
 
 **`readCatalogues` and `templateTypes`/`typesSource` stay too**, for a
 different reason: `@nxgt/i18n-vue`'s equivalents (`readCatalogues`,
