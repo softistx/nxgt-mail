@@ -1,5 +1,18 @@
 # @nxgt/mail-resend
 
+## 0.4.0
+
+### Minor Changes
+
+- [#43](https://github.com/softistx/nxgt-mail/pull/43) [`9150a1e`](https://github.com/softistx/nxgt-mail/commit/9150a1e5e6ef7719709722e7578e1d3af5aabf13) Thanks [@SteveGT96](https://github.com/SteveGT96)! - Inline images: an attachment's `contentId` is sent as Resend's `content_id`, so `<img src="cid:…">` shows it. The `@nxgt/mail` peer moves to `^0.6.0`: upgrade `@nxgt/mail` with it.
+
+- [#50](https://github.com/softistx/nxgt-mail/pull/50) [`b51a759`](https://github.com/softistx/nxgt-mail/commit/b51a759d067efd87ad95932b77ed2488641ec9e6) Thanks [@SteveGT96](https://github.com/SteveGT96)! - Tags: a message's `tags` are sent as Resend's `tags`, a list of `{ name, value }`, to group sends in its dashboard and webhooks. More than 75, Resend's limit, is refused with `MailRefused` — `send: Resend takes at most 75 tags on one e-mail` — before anything is sent.
+
+### Patch Changes
+
+- Updated dependencies [[`9150a1e`](https://github.com/softistx/nxgt-mail/commit/9150a1e5e6ef7719709722e7578e1d3af5aabf13), [`b51a759`](https://github.com/softistx/nxgt-mail/commit/b51a759d067efd87ad95932b77ed2488641ec9e6)]:
+  - @nxgt/mail@0.6.0
+
 ## 0.3.2
 
 ### Patch Changes

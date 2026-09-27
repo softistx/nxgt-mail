@@ -1,5 +1,20 @@
 # @nxgt/mail-presets
 
+## 0.2.0
+
+### Minor Changes
+
+- [#44](https://github.com/softistx/nxgt-mail/pull/44) [`948a85f`](https://github.com/softistx/nxgt-mail/commit/948a85fe3ddfc59d8825e539447c5add31da4571) Thanks [@SteveGT96](https://github.com/SteveGT96)! - **Breaking.** `verify-email`, `reset-password`, `magic-link`, `sign-in-code` and `invitation` take a new required variable, `expiresIn`: how long the link or the code stays valid, a duration your code writes already translated (`'1 hour'`, `'1 heure'`). It is shown under the button as `This link expires in {{ expiresIn }}.` / `Ce lien expire dans {{ expiresIn }}.`, under the code as `This code expires in {{ expiresIn }}.` / `Ce code expire dans {{ expiresIn }}.`, and in `invitation` as `This invitation expires in {{ expiresIn }}.` / `Cette invitation expire dans {{ expiresIn }}.`, in the HTML and the text part. The manifest lists it in those e-mails' `variables`, so the generated `MailEmails` requires it: add `expiresIn` to every `render` of these five e-mails, or the call no longer compiles, and throws `render: <email> needs the variable expiresIn` untyped. Two keys join the `presets` group, `presets.linkExpires` and `presets.codeExpires`, and one the `invitation` group, `invitation.expires`: a project that builds a locale other than `en` and `fr` translates them, with the `{expiresIn}` argument.
+
+### Patch Changes
+
+- [#45](https://github.com/softistx/nxgt-mail/pull/45) [`b150a4f`](https://github.com/softistx/nxgt-mail/commit/b150a4f58610f945d7d5a86f6ccfa438bf286d32) Thanks [@SteveGT96](https://github.com/SteveGT96)! - The `@nxgt/mail-ui` peer moves to `^0.2.0`: upgrade `@nxgt/mail-ui` with it.
+
+- [#51](https://github.com/softistx/nxgt-mail/pull/51) [`8612394`](https://github.com/softistx/nxgt-mail/commit/8612394187df2a6e0e2bdafc681586ccb3c32c8d) Thanks [@SteveGT96](https://github.com/SteveGT96)! - The README and the guides show the preview pictures of the version you install: a release pins their URLs to its own tag, where they pointed at 0.1.0 whatever the version.
+- Updated dependencies [[`67c8852`](https://github.com/softistx/nxgt-mail/commit/67c8852440ffe86761c64b9307a6eeae8a31ee80), [`a4c91c4`](https://github.com/softistx/nxgt-mail/commit/a4c91c4396e2721a1914057f7c9b3118fcf02cb2), [`2a7b4db`](https://github.com/softistx/nxgt-mail/commit/2a7b4db2e8d26d6f6484bcef715591e1dba44fca), [`b150a4f`](https://github.com/softistx/nxgt-mail/commit/b150a4f58610f945d7d5a86f6ccfa438bf286d32), [`8612394`](https://github.com/softistx/nxgt-mail/commit/8612394187df2a6e0e2bdafc681586ccb3c32c8d), [`d1b4a69`](https://github.com/softistx/nxgt-mail/commit/d1b4a69be9c9ce6fb7ecd7d7b5cc383ddb165c49)]:
+  - @nxgt/mail-i18n@0.3.1
+  - @nxgt/mail-ui@0.2.0
+
 ## 0.1.2
 
 ### Patch Changes
