@@ -123,6 +123,7 @@ hold one.
 | `send: Resend could not be reached` | `MailFailure` | `fetch` threw |
 | `send: Resend did not answer within <timeoutMs> ms` | `MailFailure` | The timeout aborted the request |
 | `send: from is missing — give the message a from, or createResendMailer a default one` | `MailRefused` | A message without `from`, on a mailer without a default. No request is made |
+| `send: Resend takes at most 75 tags on one e-mail` | `MailRefused` | A message with more than 75 `tags`, Resend's limit. No request is made |
 | `send: …` from `checkMessage` | `MailRefused` | A message no transport hands over — see [`@nxgt/mail`'s troubleshooting](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/troubleshooting.md#sending) |
 
 ## Wiring — a `TypeError`
