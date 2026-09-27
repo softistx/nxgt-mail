@@ -69,6 +69,11 @@ template `emails/verify-email.vue`, and keys such as `verify-email.title`.
 - [`i18n: locales/fr/mails.json is missing — locales/en/mails.json exists`](#i18n-localesfrmailsjson-is-missing--localesenmailsjson-exists)
 - [`i18n: locales/en/sign_in.json: sign_in is not camelCase or kebab-case — a file path segment is a key segment too, as mails or sign-in`](#i18n-localesensign_injson-sign_in-is-not-camelcase-or-kebab-case--a-file-path-segment-is-a-key-segment-too-as-mails-or-sign-in)
 - [`i18n: en: mails is defined by both locales/en.json and locales/en/mails.json`](#i18n-en-mails-is-defined-by-both-localesenjson-and-localesenmailsjson)
+- [`i18n: ./i18n/messages.ts could not be loaded (<reason>)`](#i18n-i18nmessagests-could-not-be-loaded-reason)
+- [`i18n: ./i18n/messages.ts has no default export — export the resources object, or a function that returns it`](#i18n-i18nmessagests-has-no-default-export--export-the-resources-object-or-a-function-that-returns-it)
+- [`i18n: ./i18n/messages.ts's default export could not be run (<reason>)`](#i18n-i18nmessagestss-default-export-could-not-be-run-reason)
+- [`i18n: ./i18n/messages.ts's default export must be a resources object ({ en: {...}, fr: {...} }) or a function that returns one`](#i18n-i18nmessagestss-default-export-must-be-a-resources-object--en--fr--or-a-function-that-returns-one)
+- [`i18n: ./i18n/messages.ts is missing the fr locale`](#i18n-i18nmessagests-is-missing-the-fr-locale)
 
 **Templates** — while `maizzle build` renders
 - [`[Vue warn]: Unhandled error during execution of render function`](#vue-warn-unhandled-error-during-execution-of-render-function)
@@ -656,19 +661,81 @@ locales/en/sign-in.json   # not sign_in.json
 **When:** loading `maizzle.config.ts`, when two catalogue sources claim the
 same key: the flat file and a folder file (`locales/en.json`'s `mails` key
 and `locales/en/mails.json`), or two folder files whose paths nest one under
-the other (`locales/en/auth.json`'s `sign-in` key and
-`locales/en/auth/sign-in.json`).
+the other — `locales/en/auth.json` claims the whole `auth` prefix, so
+`locales/en/auth/sign-in.json`, which would add to it, collides on `auth`
+itself, even a sibling key `auth.json` does not have.
 **Why:** each key comes from exactly one file; two files writing the same key
 would have one silently win, and which one would depend on the order files
 are read in.
-**Fix:** keep the key in one file only, and remove it from the other:
+**Fix:** keep the key in one file only, and remove it from the other — not
+also in `locales/en.json`'s own `mails` key:
 
 ```json
 // locales/en/mails.json
 { "welcome": { "subject": "Welcome to the app" } }
 ```
 
-not also in `locales/en.json`'s own `mails` key.
+### `i18n: ./i18n/messages.ts could not be loaded (<reason>)`
+
+The path is `messages` as given; the reason in brackets is the error the
+`import()` threw.
+
+**When:** loading `maizzle.config.ts`, with `messages` set, when the module
+does not exist, has a syntax error, or throws while it runs.
+**Why:** `messages` is loaded with a plain dynamic `import()`, resolved
+against the project's root.
+**Fix:** fix the path, or the module's own error.
+
+### `i18n: ./i18n/messages.ts has no default export — export the resources object, or a function that returns it`
+
+**When:** loading `maizzle.config.ts`, with `messages` set, when the module
+has no `export default`.
+**Why:** `messages` is read from the module's default export alone; a named
+export is not looked at.
+**Fix:**
+
+```ts
+// i18n/messages.ts
+export default { en, fr };
+```
+
+### `i18n: ./i18n/messages.ts's default export could not be run (<reason>)`
+
+The reason in brackets is what the function threw.
+
+**When:** loading `maizzle.config.ts`, with `messages` set, when the default
+export is a function and calling it throws.
+**Why:** a function default export is called with no arguments, so its
+result can be built at load time (from a database, an API, or anything else
+JSON cannot express directly).
+**Fix:** fix what the function does, or export the resources object
+directly.
+
+### `i18n: ./i18n/messages.ts's default export must be a resources object ({ en: {...}, fr: {...} }) or a function that returns one`
+
+**When:** loading `maizzle.config.ts`, with `messages` set, when the default
+export (or what it answers, once called) is not an object of catalogues by
+locale — `null`, an array, a string.
+**Why:** `messages` replaces `dir`; what it answers is read exactly as a
+`dir`'s files, merged into one object first.
+**Fix:**
+
+```ts
+// i18n/messages.ts
+export default { en: { 'verify-email': { subject: 'Confirm' } }, fr: { 'verify-email': { subject: 'Confirmez' } } };
+```
+
+### `i18n: ./i18n/messages.ts is missing the fr locale`
+
+**When:** loading `maizzle.config.ts`, with `messages` set, when the resources
+object has no key for one of `locales`.
+**Why:** every locale in `locales` needs its own catalogue, whether it comes
+from `dir` or from `messages`.
+**Fix:** add the locale to the module's default export:
+
+```ts
+export default { en, fr };   // not just { en }
+```
 
 ---
 

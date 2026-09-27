@@ -193,6 +193,17 @@ reload it**: the module is loaded once, with no cache-busting, so editing it
 needs a full restart of `maizzle serve` — see
 [the troubleshooting entry](../troubleshooting.md#a-messages-module-does-not-reload-under-maizzle-serve).
 
+Once the module is found, what it answers is checked too, before it is
+merged in:
+
+| Build failure | Cause |
+| --- | --- |
+| `i18n: ./i18n/messages.ts could not be loaded (<reason>)` | The module does not exist, or throws while it runs |
+| `i18n: ./i18n/messages.ts has no default export — export the resources object, or a function that returns it` | No `export default` |
+| `i18n: ./i18n/messages.ts's default export could not be run (<reason>)` | The default export is a function, and calling it throws |
+| `i18n: ./i18n/messages.ts's default export must be a resources object ({ en: {...}, fr: {...} }) or a function that returns one` | What it answers is not an object of catalogues by locale |
+| `i18n: ./i18n/messages.ts is missing the fr locale` | The resources object has no key for one of `locales` |
+
 ## Catalogues from a package
 
 A package can ship messages its components or your templates share —

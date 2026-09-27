@@ -521,3 +521,74 @@ describe('messages instead of a folder', () => {
 		expect(fr).toContain('Confirmez votre adresse');
 	});
 });
+
+describe('a messages module that cannot be read', () => {
+	const root = `${cases}/messages-failures`;
+	afterAll(() => rmSync(root, { recursive: true, force: true }));
+
+	/** Writes a project with `messages` set, builds it, and answers what it printed. */
+	async function messagesFailure(
+		name: string,
+		files: Record<string, string>,
+	): Promise<string> {
+		const dir = `${root}/${name}`;
+		rmSync(dir, { recursive: true, force: true });
+		const all: Record<string, string> = {
+			'maizzle.config.ts': [
+				"import { defineMailConfig } from '@nxgt/mail-config';",
+				"import { i18n } from '../../../../src/index';",
+				'export default defineMailConfig({',
+				"  plugins: [await i18n({ locales: ['en', 'fr'], messages: './i18n/messages.ts' })],",
+				'});',
+			].join('\n'),
+			'emails/verify-email.vue':
+				"<template><p>{{ t('verify-email.title') }}</p></template>",
+			...files,
+		};
+		for (const [path, content] of Object.entries(all)) {
+			mkdirSync(dirname(`${dir}/${path}`), { recursive: true });
+			writeFileSync(`${dir}/${path}`, content);
+		}
+		const { code, output } = await run(dir, 'build');
+		expect(code).not.toBe(0);
+		return output;
+	}
+
+	test('no module at the path', async () => {
+		const output = await messagesFailure('missing', {});
+		expect(output).toMatch(
+			/i18n: \.\/i18n\/messages\.ts could not be loaded \(.+\)/,
+		);
+	}, 60_000);
+
+	test('a module with no default export', async () => {
+		const output = await messagesFailure('no-default', {
+			'i18n/messages.ts': 'export const en = {};\n',
+		});
+		expect(output).toContain(
+			'i18n: ./i18n/messages.ts has no default export — export the resources object, or a function that returns it',
+		);
+	}, 60_000);
+
+	test('a default export that throws when called', async () => {
+		const output = await messagesFailure('throws', {
+			'i18n/messages.ts':
+				"export default () => { throw new Error('boom'); };\n",
+		});
+		expect(output).toMatch(
+			/i18n: \.\/i18n\/messages\.ts's default export could not be run \(boom\)/,
+		);
+	}, 60_000);
+
+	test('a resources object missing a locale', async () => {
+		const output = await messagesFailure('missing-locale', {
+			'i18n/messages.ts': [
+				"const en = { 'verify-email': { subject: 'Confirm', title: 'Confirm your address' } };",
+				'export default { en };',
+			].join('\n'),
+		});
+		expect(output).toContain(
+			'i18n: ./i18n/messages.ts is missing the fr locale',
+		);
+	}, 60_000);
+});
