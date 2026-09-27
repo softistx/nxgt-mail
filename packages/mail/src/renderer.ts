@@ -14,6 +14,15 @@ import type { Rendered } from './types';
 const MANIFEST_FILE = 'mail-manifest.json';
 
 /**
+ * The newest manifest format this renderer reads. It reads every format up
+ * to this one, within 0.x: a build from any earlier `@nxgt/mail-i18n` 0.x
+ * keeps working. A manifest without `formatVersion` is format 1, as
+ * `@nxgt/mail-i18n` 0.1 and 0.2 wrote it. Copied in
+ * packages/mail-i18n/src/manifest.ts: change both.
+ */
+export const MANIFEST_FORMAT = 1;
+
+/**
  * A value only known at send time. A number is written as `String(n)`; any
  * other type is refused, so an object never renders as `[object Object]`.
  */
@@ -177,16 +186,34 @@ function readManifest(dir: string) {
 		}
 		throw error;
 	}
+	const notManifest = () =>
+		new Error(
+			`createMailRenderer: ${file} is not a manifest of @nxgt/mail-i18n — build with its i18n() plugin`,
+		);
+	if (!isObject(manifest)) throw notManifest();
+	// The format first, before any field it may change: a newer format is
+	// refused as newer, whatever its shape. Absent: format 1, written before
+	// the field was.
+	const format = 'formatVersion' in manifest ? manifest.formatVersion : 1;
 	if (
-		!isObject(manifest) ||
+		typeof format !== 'number' ||
+		!Number.isSafeInteger(format) ||
+		format < 1
+	) {
+		throw notManifest();
+	}
+	if (format > MANIFEST_FORMAT) {
+		throw new Error(
+			`createMailRenderer: ${file} is manifest format ${format}, newer than this @nxgt/mail reads (${MANIFEST_FORMAT}) — upgrade @nxgt/mail`,
+		);
+	}
+	if (
 		!isStringList(manifest.locales) ||
 		manifest.locales.length === 0 ||
 		typeof manifest.fallbackLocale !== 'string' ||
 		!isObject(manifest.emails)
 	) {
-		throw new Error(
-			`createMailRenderer: ${file} is not a manifest of @nxgt/mail-i18n — build with its i18n() plugin`,
-		);
+		throw notManifest();
 	}
 	return {
 		locales: manifest.locales,
@@ -204,7 +231,7 @@ function readEmail(
 ): Email {
 	const broken = () =>
 		new Error(
-			`createMailRenderer: ${MANIFEST_FILE} describes ${name} in a shape this version does not read — rebuild with the same version of @nxgt/mail-i18n`,
+			`createMailRenderer: ${MANIFEST_FILE} describes ${name} in a shape its format does not have — it was changed after the build; run maizzle build again`,
 		);
 	if (
 		!isObject(entry) ||

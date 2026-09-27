@@ -39,6 +39,7 @@ against:
 
 ```json
 {
+	"formatVersion": 1,
 	"locales": ["en", "fr"],
 	"fallbackLocale": "en",
 	"emails": {
@@ -85,7 +86,10 @@ against:
 ## The shape
 
 ```ts
+const MANIFEST_FORMAT = 1;
+
 interface Manifest {
+	readonly formatVersion: number;
 	readonly locales: readonly string[];
 	readonly fallbackLocale: string;
 	readonly emails: Readonly<Record<string, ManifestEmail>>;
@@ -101,6 +105,7 @@ interface ManifestEmail {
 
 | Field | Holds |
 | --- | --- |
+| `formatVersion` | The manifest's format, `MANIFEST_FORMAT` of the `@nxgt/mail-i18n` that built it: `1`. Written first |
 | `locales` | The plugin's `locales`, in the order given |
 | `fallbackLocale` | The plugin's `fallbackLocale`, or the first locale |
 | `emails` | One entry per e-mail, keyed by its template's path under `emails/` without `.vue` (`auth/reset-password`), sorted |
@@ -113,6 +118,30 @@ Each e-mail:
 | `urlVariables` | The placeholders a URL attribute (`href`, `src`, `background`, `poster`, `action`) starts with, sorted. The values that must be URLs |
 | `subject` | The subject per locale, formatted from `<emailKey>.subject`, each argument kept as `{{ name }}` |
 | `files` | The built files per locale, relative to the output folder: `html`, and `text` or `null` when there is no plain-text part |
+
+### `formatVersion`
+
+The format of the manifest's shape, so the renderer knows what it reads:
+
+```ts
+import { MANIFEST_FORMAT } from '@nxgt/mail-i18n';
+
+MANIFEST_FORMAT; // 1 — what this version writes as formatVersion
+```
+
+- **It changes only when the manifest's shape does.** A new
+  `@nxgt/mail-i18n` that writes the same fields writes the same format.
+- **`@nxgt/mail`'s renderer reads every format up to its own**, its
+  `MANIFEST_FORMAT` from `@nxgt/mail/renderer`, within 0.x. A build from any
+  earlier `@nxgt/mail-i18n` 0.x keeps working with a newer `@nxgt/mail`; a
+  newer format fails at start-up with `… is manifest format 2, newer than this
+  @nxgt/mail reads (1) — upgrade @nxgt/mail`.
+- **A manifest without it is format 1**, as `@nxgt/mail-i18n` 0.1 and 0.2
+  wrote it.
+
+See
+[Rendering — which builds it reads](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/guide/rendering.md#which-builds-it-reads--manifest_format)
+in `@nxgt/mail`.
 
 ### `variables`
 
@@ -351,8 +380,66 @@ describe('the built e-mails', () => {
 `acme-mails` stands for wherever your built project lives: a package of its
 own, a folder of the repository, a build artefact.
 
+## Shipping a build in a package
+
+A package can publish its e-mails already built — `mails/`, with its manifest
+— so the application that installs it only creates a renderer. The build
+decides which `@nxgt/mail` can read it, so the package peers the range whose
+renderers read its format, and checks it when it builds:
+
+```json
+{
+	"name": "acme-mails",
+	"files": ["mails"],
+	"scripts": {
+		"build": "maizzle build && bun run scripts/check-manifest-format.ts"
+	},
+	"peerDependencies": {
+		"@nxgt/mail": ">=0.1.0 <1"
+	},
+	"devDependencies": {
+		"@nxgt/mail": "0.5.1",
+		"@nxgt/mail-i18n": "^0.3.0"
+	}
+}
+```
+
+`maizzle.config.ts` writes the build there, with Maizzle's `output.path`:
+`defineMailConfig({ output: { path: 'mails' }, plugins: [i18n({ locales:
+['en', 'fr'] })] })`. The check reads the format the build wrote, and compares
+it with what the oldest `@nxgt/mail` you support reads:
+
+```ts
+// scripts/check-manifest-format.ts — after maizzle build, before publishing
+import { readFileSync } from 'node:fs';
+import { MANIFEST_FILE, MANIFEST_FORMAT, type Manifest } from '@nxgt/mail-i18n';
+import { MANIFEST_FORMAT as READABLE } from '@nxgt/mail/renderer'; // the devDependency: the oldest @nxgt/mail supported
+
+const manifest: Manifest = JSON.parse(readFileSync(`mails/${MANIFEST_FILE}`, 'utf8'));
+
+if (manifest.formatVersion !== MANIFEST_FORMAT) {
+	throw new Error(`mails/ is manifest format ${manifest.formatVersion}, not ${MANIFEST_FORMAT} — run maizzle build again`);
+}
+if (manifest.formatVersion > READABLE) {
+	throw new Error(
+		`mails/ is manifest format ${manifest.formatVersion}; the oldest @nxgt/mail supported reads up to ${READABLE} — raise the @nxgt/mail peer and devDependency`,
+	);
+}
+```
+
+- **The devDependency is the peer's lower bound**, so `MANIFEST_FORMAT` from
+  `@nxgt/mail/renderer` is what the oldest renderer an application may install
+  reads. `@nxgt/mail` 0.5.0 and earlier do not export it; they read format 1,
+  as 0.5.1 does, so a format-1 build pins 0.5.1 and still peers
+  `>=0.1.0 <1`.
+- **When `@nxgt/mail-i18n` writes a new format**, the second check fails the
+  build: raise the peer's lower bound, and the devDependency with it, to the
+  first `@nxgt/mail` that reads it.
+- **The first check** catches a `mails/` folder left from another build, made
+  before `@nxgt/mail-i18n` was upgraded.
+
 ## See also
 
-- [Rendering](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/guide/rendering.md) in `@nxgt/mail` — the renderer that reads the manifest at send time.
+- [Rendering](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/guide/rendering.md) in `@nxgt/mail` — the renderer that reads the manifest at send time, and the formats it reads.
 - [Templates](templates.md) — where placeholders come from.
 - [Catalogues](catalogues.md#the-subject) — the subject of each e-mail.

@@ -91,7 +91,8 @@ How the messages are shaped:
 - [`createMailRenderer: <dir>/<locale>/<email>.html cannot be read — run maizzle build, and deploy its output folder`](#createmailrenderer-dirlocaleemailhtml-cannot-be-read--run-maizzle-build-and-deploy-its-output-folder)
 - [`createMailRenderer: <dir>/mail-manifest.json is not valid JSON`](#createmailrenderer-dirmail-manifestjson-is-not-valid-json)
 - [`createMailRenderer: <dir>/mail-manifest.json is not a manifest of @nxgt/mail-i18n — build with its i18n() plugin`](#createmailrenderer-dirmail-manifestjson-is-not-a-manifest-of-nxgtmail-i18n--build-with-its-i18n-plugin)
-- [`createMailRenderer: mail-manifest.json describes <email> in a shape this version does not read — rebuild with the same version of @nxgt/mail-i18n`](#createmailrenderer-mail-manifestjson-describes-email-in-a-shape-this-version-does-not-read--rebuild-with-the-same-version-of-nxgtmail-i18n)
+- [`createMailRenderer: <dir>/mail-manifest.json is manifest format <format>, newer than this @nxgt/mail reads (<newest>) — upgrade @nxgt/mail`](#createmailrenderer-dirmail-manifestjson-is-manifest-format-format-newer-than-this-nxgtmail-reads-newest--upgrade-nxgtmail)
+- [`createMailRenderer: mail-manifest.json describes <email> in a shape its format does not have — it was changed after the build; run maizzle build again`](#createmailrenderer-mail-manifestjson-describes-email-in-a-shape-its-format-does-not-have--it-was-changed-after-the-build-run-maizzle-build-again)
 - [`createMailRenderer: <email> has no text part in <locale> — keep Maizzle's plaintext on, as @nxgt/mail-config sets it`](#createmailrenderer-email-has-no-text-part-in-locale--keep-maizzles-plaintext-on-as-nxgtmail-config-sets-it)
 - [`Could not resolve "node:fs"`, or `No such module "node:fs"`, on an edge runtime](#could-not-resolve-nodefs-or-no-such-module-nodefs-on-an-edge-runtime)
 
@@ -1226,7 +1227,8 @@ An `Error`.
 
 **When:** start-up, when `dir` points at a folder whose `mail-manifest.json`
 has no `locales` list (or an empty one), no `fallbackLocale` or no `emails`
-object: typically a `mail-manifest.json` written by something else.
+object, or a `formatVersion` that is not a positive integer (`0`, `1.5`,
+`"1"`, `null`): typically a `mail-manifest.json` written by something else.
 **Why:** the renderer reads only the manifest the `i18n()` plugin of
 `@nxgt/mail-i18n` writes. A Maizzle build without that plugin writes no
 manifest at all, and fails with
@@ -1244,19 +1246,51 @@ export default defineMailConfig({
 });
 ```
 
-### `createMailRenderer: mail-manifest.json describes <email> in a shape this version does not read — rebuild with the same version of @nxgt/mail-i18n`
+### `createMailRenderer: <dir>/mail-manifest.json is manifest format <format>, newer than this @nxgt/mail reads (<newest>) — upgrade @nxgt/mail`
+
+An `Error`, as `… is manifest format 2, newer than this @nxgt/mail reads (1)
+— upgrade @nxgt/mail`.
+
+**When:** start-up, when the build was made with a `@nxgt/mail-i18n` that
+writes a newer manifest format than the installed `@nxgt/mail` reads: the
+build tool was upgraded and the server was not, or a package that ships a
+prebuilt build needs a newer `@nxgt/mail` than the one installed.
+**Why:** a renderer reads every manifest format up to its `MANIFEST_FORMAT`,
+and refuses a newer one rather than misread it. The format only changes when
+the manifest's shape does.
+**Fix:** upgrade `@nxgt/mail` in the server that renders, to a version whose
+`MANIFEST_FORMAT` is at least the format in the message:
+
+```sh
+bun add @nxgt/mail@latest
+```
+
+```ts
+import { MANIFEST_FORMAT } from '@nxgt/mail/renderer';
+
+MANIFEST_FORMAT; // must be >= the manifest's formatVersion
+```
+
+A package that ships its build states the lowest `@nxgt/mail` it needs in its
+peer range; see
+[Rendering — which builds it reads](guide/rendering.md#which-builds-it-reads--manifest_format).
+
+### `createMailRenderer: mail-manifest.json describes <email> in a shape its format does not have — it was changed after the build; run maizzle build again`
 
 An `Error`.
 
 **When:** start-up, when an e-mail's entry in the manifest lacks
 `variables`, `urlVariables`, `subject` or `files`, or has no subject or HTML
 file for one of the build's locales.
-**Why:** the build and the server use versions of `@nxgt/mail-i18n` and
-`@nxgt/mail` that do not agree on the manifest: a build committed or cached
-from an older version, read by a newer server, or the reverse.
-**Fix:** upgrade `@nxgt/mail-i18n` and `@nxgt/mail` together, then run
-`maizzle build` again and deploy its output. If both are current and the
-build is fresh, it is a [bug in this package](#a-bug-in-nxgtmail-itself).
+**Why:** every manifest format has those fields, for every e-mail and every
+locale, and `@nxgt/mail-i18n` writes them all. An entry without one was
+changed after `maizzle build` wrote it: a hand edit, a merge conflict resolved
+in a committed build, a script that rewrote the file, a copy cut short. It is
+not a version mismatch: within 0.x, a renderer reads every format up to its
+own, so a build from an earlier `@nxgt/mail-i18n` 0.x keeps working.
+**Fix:** run `maizzle build` again, and deploy its output without editing
+`mail-manifest.json`. If the build is fresh and untouched, it is a
+[bug in this package](#a-bug-in-nxgtmail-itself).
 
 ### `createMailRenderer: <email> has no text part in <locale> — keep Maizzle's plaintext on, as @nxgt/mail-config sets it`
 

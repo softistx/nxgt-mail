@@ -2,7 +2,11 @@ import { beforeAll, describe, expect, test } from 'bun:test';
 import { cpSync, mkdirSync, readdirSync, rmSync, symlinkSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { MailRefused } from '@nxgt/mail';
-import { createMailRenderer } from '@nxgt/mail/renderer';
+import {
+	createMailRenderer,
+	MANIFEST_FORMAT as READS,
+} from '@nxgt/mail/renderer';
+import { MANIFEST_FORMAT as WRITES } from '@nxgt/mail-i18n';
 import { PRESETS } from './presets';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
@@ -110,6 +114,10 @@ describe('the presets, built by a project', () => {
 		expect(await read('dist-override/fr/sign-in-code.html')).toContain(
 			'Votre code de connexion',
 		);
+	});
+
+	test('the renderer reads the manifest format the plugin writes: the two copies of MANIFEST_FORMAT agree', () => {
+		expect(READS).toBe(WRITES);
 	});
 
 	test('@nxgt/mail renders the build in both locales, filling and escaping each value', () => {

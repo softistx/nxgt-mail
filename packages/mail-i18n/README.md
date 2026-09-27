@@ -88,6 +88,7 @@ file is how the editor learns them. See
 | `createTranslator(catalogues, getLanguage)` | `t(key, args?, language?)` outside templates, shaped like `@nxgt/i18n`, but it throws on a missing key |
 | `emailKey(email)` | Where an e-mail's messages live: `auth/reset-password` → `auth.resetPassword` |
 | `MANIFEST_FILE` | `'mail-manifest.json'`, the manifest's name in the output folder |
+| `MANIFEST_FORMAT` | `1`, the manifest format this version writes as `formatVersion`: it changes only with the manifest's shape, and `@nxgt/mail`'s renderer reads every format up to its own within 0.x |
 | `WRAPPERS_DIR` | `'.maizzle/emails'`, where the generated files go |
 | `I18nOptions`, `Layout`, `TemplateSource` | The plugin's options, `'nested' \| 'flat'`, and a package's folder of templates for `templates` |
 | `Catalogue`, `Catalogues`, `ArgumentKind` | A catalogue as written, catalogues by locale, and `'string' \| 'number' \| 'date'` |
@@ -260,11 +261,13 @@ catalogues`. See [Catalogues](docs/guide/catalogues.md#the-subject).
 ### The manifest
 
 `dist/mail-manifest.json` is written by `maizzle build`, for the code that
-sends. For each e-mail, it records its placeholders, the ones a link or an
-image URL starts with, its subject in each locale, and its files:
+sends. It starts with its format; then, for each e-mail, it records its
+placeholders, the ones a link or an image URL starts with, its subject in each
+locale, and its files:
 
 ```json
 {
+	"formatVersion": 1,
 	"locales": ["en", "fr"],
 	"fallbackLocale": "en",
 	"emails": {
@@ -286,7 +289,9 @@ image URL starts with, its subject in each locale, and its files:
 
 `createMailRenderer` from `@nxgt/mail/renderer` reads it at send time:
 `createMailRenderer({ dir: 'dist' }).render('verify-email', { name, link })`
-answers the subject, HTML and text, every value escaped.
+answers the subject, HTML and text, every value escaped. Within 0.x, a newer
+`@nxgt/mail` reads a build from any earlier `@nxgt/mail-i18n`: see
+[The manifest — `formatVersion`](docs/guide/manifest.md#formatversion).
 
 After the manifest, each build writes `generated/mail.ts`, in the project — the manifest's e-mails
 and variables as a type, rewritten only when they change. **Git-ignore it**

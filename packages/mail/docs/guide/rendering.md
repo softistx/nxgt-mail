@@ -49,6 +49,50 @@ Nothing is evaluated at send time: no template engine and no Maizzle run in
 your server. `render` replaces each `{{ name }}` the build left in place, and
 nothing else.
 
+### Which builds it reads — `MANIFEST_FORMAT`
+
+The manifest carries its format, `formatVersion`, and the renderer exports the
+newest format it reads:
+
+```ts
+import { MANIFEST_FORMAT } from '@nxgt/mail/renderer';
+
+MANIFEST_FORMAT; // 1 — the newest manifest format this @nxgt/mail reads
+```
+
+```ts
+const MANIFEST_FORMAT = 1;
+```
+
+The promise, within 0.x:
+
+- **A renderer reads every format up to its own.** A build from any earlier
+  `@nxgt/mail-i18n` 0.x keeps working with a newer `@nxgt/mail`: a package
+  that ships a prebuilt format-1 build can peer `@nxgt/mail` `>=0.1.0 <1`.
+  The peer's lower bound is the first `@nxgt/mail` that reads the build's
+  format.
+- **A manifest without `formatVersion` is format 1**, as `@nxgt/mail-i18n`
+  0.1 and 0.2 wrote it.
+- **The format changes only when the manifest's shape does.** A new
+  `@nxgt/mail-i18n` that writes the same shape writes the same format.
+
+So upgrade `@nxgt/mail` no later than `@nxgt/mail-i18n`. From 0.5.1, a
+renderer refuses a newer format when it starts, before reading any other
+field. 0.1.0 to 0.5.0 know no format and read only format 1: a build in a
+later format must peer at least the first `@nxgt/mail` that reads it.
+
+| The manifest's `formatVersion` | At start-up |
+| --- | --- |
+| absent | Read as format 1 |
+| `1` to `MANIFEST_FORMAT` | Read |
+| an integer above `MANIFEST_FORMAT` | `Error`: `createMailRenderer: dist/mail-manifest.json is manifest format 2, newer than this @nxgt/mail reads (1) — upgrade @nxgt/mail` |
+| anything else — `0`, `1.5`, `'1'`, `null` | `Error`: `createMailRenderer: dist/mail-manifest.json is not a manifest of @nxgt/mail-i18n — build with its i18n() plugin` |
+
+`@nxgt/mail` 0.5.0 and earlier do not export `MANIFEST_FORMAT` and ignore
+`formatVersion`; they read format 1. A package that ships its build checks the
+format it wrote against the renderers it supports when it builds: see
+[the manifest guide — shipping a build in a package](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-i18n/docs/guide/manifest.md#shipping-a-build-in-a-package).
+
 ## `createMailRenderer`
 
 ```ts
@@ -402,9 +446,10 @@ read. The paths are `dir` joined with the file, as you passed `dir`.
 | `createMailRenderer: getLanguage must be a function that answers the wanted locales, as () => user.locale` | `TypeError` | `getLanguage` given as a locale rather than a function |
 | `createMailRenderer: dist/mail-manifest.json cannot be read — run maizzle build, and deploy its output folder` | `Error` | No build at `dir`: not built, not deployed, or `dir` read from another working directory |
 | `createMailRenderer: dist/mail-manifest.json is not valid JSON` | `Error` | The manifest was cut or edited |
-| `createMailRenderer: dist/mail-manifest.json is not a manifest of @nxgt/mail-i18n — build with its i18n() plugin` | `Error` | A JSON file without `locales`, `fallbackLocale` and `emails` |
+| `createMailRenderer: dist/mail-manifest.json is not a manifest of @nxgt/mail-i18n — build with its i18n() plugin` | `Error` | A JSON file without `locales`, `fallbackLocale` and `emails`, or with a `formatVersion` that is not a positive integer |
+| `createMailRenderer: dist/mail-manifest.json is manifest format 2, newer than this @nxgt/mail reads (1) — upgrade @nxgt/mail` | `Error` | A build from a newer `@nxgt/mail-i18n`, whose manifest format this renderer predates — see [which builds it reads](#which-builds-it-reads--manifest_format) |
 | `createMailRenderer: fallbackLocale must be one of the build's locales, en, fr` | `TypeError` | `fallbackLocale` names a locale the build does not have |
-| `createMailRenderer: mail-manifest.json describes verify-email in a shape this version does not read — rebuild with the same version of @nxgt/mail-i18n` | `Error` | An entry of the manifest lacks a field, or a locale — usually a build made with another version |
+| `createMailRenderer: mail-manifest.json describes verify-email in a shape its format does not have — it was changed after the build; run maizzle build again` | `Error` | An entry of the manifest lacks a field, or a locale: every format has them, so the file was edited, merged or cut after `maizzle build` wrote it |
 | `createMailRenderer: verify-email has no text part in fr — keep Maizzle's plaintext on, as @nxgt/mail-config sets it` | `Error` | The project turned Maizzle's `plaintext` off; every e-mail sent has a text part |
 | `createMailRenderer: dist/fr/verify-email.txt cannot be read — run maizzle build, and deploy its output folder` | `Error` | A file the manifest lists is gone: only part of the build was deployed |
 
