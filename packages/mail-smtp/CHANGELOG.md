@@ -1,5 +1,13 @@
 # @nxgt/mail-smtp
 
+## 0.3.1
+
+### Patch Changes
+
+- [#31](https://github.com/softistx/nxgt-mail/pull/31) [`aa057e3`](https://github.com/softistx/nxgt-mail/commit/aa057e3850c72e1e8d25fb001aae6cb1c460a873) Thanks [@SteveGT96](https://github.com/SteveGT96)! - The `@nxgt/mail` peer moves to `^0.4.0`: upgrade `@nxgt/mail` with it. The docs point to its `listUnsubscribe` for one-click unsubscribe headers, sent as any other header; the relay (or nodemailer's `dkim` option) must DKIM-sign them.
+- Updated dependencies [[`aa057e3`](https://github.com/softistx/nxgt-mail/commit/aa057e3850c72e1e8d25fb001aae6cb1c460a873)]:
+  - @nxgt/mail@0.4.0
+
 ## 0.3.0
 
 ### Minor Changes
