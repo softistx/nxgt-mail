@@ -405,9 +405,10 @@ export default defineMailConfig({
 });
 ```
 
-`uiCatalogues` holds `en` and `fr`. A project in another locale writes the
-`common` keys in its own `locales/<locale>.json`; a key there overrides the
-package's, key by key.
+`uiCatalogues` holds `en` and `fr`. A project in another locale — a
+right-to-left one (`ar`, `he`, …) included — writes the `common` keys in its
+own `locales/<locale>.json`; a key there overrides the package's, key by key.
+See [Right-to-left languages](guide/right-to-left.md).
 
 ---
 

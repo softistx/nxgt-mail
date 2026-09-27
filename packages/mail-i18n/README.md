@@ -20,7 +20,7 @@ export default defineMailConfig({
 
 Your project stays a Maizzle project: `emails/`, `components/`, `public/`,
 `maizzle serve`, `maizzle build`. The plugin adds `locales/`, and gives each
-template `t`, `locale` and `placeholder`.
+template `t`, `locale`, `dir` and `placeholder`.
 
 > **0.x.** A minor version may still change the surface; the changelog says how.
 
@@ -40,8 +40,8 @@ Peers:
   (`"moduleResolution": "bundler"`) is what is supported and tested; `nodenext`
   is out of contract.
 - `vue` (`^3.5`), **optional** — Maizzle already brings it. List it in your
-  own `package.json` when you want `t`, `locale` and `placeholder` typed in
-  templates ([Editor and type checking](#editor-and-type-checking)).
+  own `package.json` when you want `t`, `locale`, `dir` and `placeholder`
+  typed in templates ([Editor and type checking](#editor-and-type-checking)).
 
 ## Setup
 
@@ -95,6 +95,7 @@ file is how the editor learns them. See
 | `Translate`, `LanguageProvider`, `MessageArgs` | What `createTranslator` answers and takes |
 | `Manifest`, `ManifestEmail` | The shape of `dist/mail-manifest.json` |
 | `TemplateMessages`, `TemplateKey`, `TemplateArgs` | The keys of `t` in templates and their arguments, filled from your catalogues by the generated `.maizzle/nxgt-mail-i18n.d.ts` |
+| `localeDirection(locale)`, `Direction` | The direction (`'ltr' \| 'rtl'`) a BCP 47 tag reads in — what the plugin gives each template as `dir`, usable outside a template too |
 
 ## Usage
 
@@ -120,7 +121,7 @@ One template, every language:
 ```vue
 <!-- emails/verify-email.vue -->
 <template>
-  <Html :lang="locale">
+  <Html :lang="locale" :dir="dir">
     <Body>
       <Container>
         <Heading>{{ t('verify-email.title') }}</Heading>
@@ -135,6 +136,11 @@ One template, every language:
 
 - `t(key, args?)` formats the message in the locale being built.
 - `locale` is that locale, `'en'` or `'fr'`.
+- `dir` is that locale's direction, `'ltr'` or `'rtl'` — derived from the
+  runtime's own `Intl.Locale` (Bun's `getTextInfo()`, Node's `textInfo`), with
+  a fallback list of right-to-left scripts for a runtime or a locale it
+  cannot answer. `@nxgt/mail-ui`'s `NxLayout` writes it on `<html>` and its
+  wrapper table already; see [Right-to-left languages](../mail-ui/docs/guide/right-to-left.md).
 - `placeholder('name')` writes `{{ name }}` in the built file, for a value that
   is only known at send time. Write it in text, in an attribute, or pass it as
   an argument.

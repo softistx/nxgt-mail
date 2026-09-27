@@ -23,6 +23,7 @@ export type {
 	Catalogue,
 	Catalogues,
 } from './catalogues';
+export { type Direction, localeDirection } from './direction';
 export {
 	emailKey,
 	MANIFEST_FORMAT,

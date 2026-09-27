@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import { twMerge } from '@maizzle/framework';
 import { computed, getCurrentInstance, useAttrs } from 'vue';
-import { sharedMessage, type TimelineItem, type TimelineTone } from './ui';
+import {
+	dirOf,
+	sharedMessage,
+	type TimelineItem,
+	type TimelineTone,
+} from './ui';
 
 /**
  * material-vue's Timeline: events one under the other, each a toned marker
@@ -26,6 +31,7 @@ const MARKER: Record<TimelineTone, string> = {
 
 const globals: Record<string, unknown> =
 	getCurrentInstance()?.appContext.config.globalProperties ?? {};
+const dir = computed(() => dirOf(globals));
 const emptyText = computed(
 	() =>
 		props.empty ??
@@ -42,25 +48,25 @@ const emptyClasses = computed(() =>
 </script>
 
 <template>
-  <table v-if="props.items.length > 0" v-bind="{ ...attrs, class: undefined }" :class="classes" role="presentation" cellpadding="0" cellspacing="0">
+  <table v-if="props.items.length > 0" v-bind="{ ...attrs, class: undefined }" :class="classes" role="presentation" cellpadding="0" cellspacing="0" :dir="dir">
     <template v-for="(item, position) in props.items" :key="item.id">
       <tr>
         <td colspan="2" class="w-8 align-top">
           <span :class="`block h-8 w-8 rounded-full border border-solid text-center text-[12px] leading-[30px] ${MARKER[item.tone ?? 'default']}`" aria-hidden="true"><span data-maizzle-html-only>&#9679;</span></span>
         </td>
-        <td class="pl-3 align-top">
-          <table class="w-full" role="presentation" cellpadding="0" cellspacing="0">
+        <td :class="dir === 'rtl' ? 'pr-3 align-top' : 'pl-3 align-top'">
+          <table class="w-full" role="presentation" cellpadding="0" cellspacing="0" :dir="dir">
             <tr>
               <td class="pt-1 align-top text-sm font-medium leading-6 text-foreground nx-dark-text-foreground">{{ item.title }}</td>
-              <td v-if="item.timestampLabel" class="whitespace-nowrap pl-3 pt-1 text-right align-top text-xs leading-6 text-muted-foreground">{{ item.timestampLabel }}</td>
+              <td v-if="item.timestampLabel" :class="`whitespace-nowrap pt-1 align-top text-xs leading-6 text-muted-foreground ${dir === 'rtl' ? 'pr-3 text-left' : 'pl-3 text-right'}`">{{ item.timestampLabel }}</td>
             </tr>
           </table>
         </td>
       </tr>
       <tr>
-        <td :class="['w-4 text-[1px] leading-px', position < props.items.length - 1 && 'border-r [border-right-style:solid] border-border nx-dark-border-border']"><span data-maizzle-html-only>&zwj;</span></td>
+        <td :class="['w-4 text-[1px] leading-px', position < props.items.length - 1 && (dir === 'rtl' ? 'border-l [border-left-style:solid] border-border nx-dark-border-border' : 'border-r [border-right-style:solid] border-border nx-dark-border-border')]"><span data-maizzle-html-only>&zwj;</span></td>
         <td class="w-4 text-[1px] leading-px"><span data-maizzle-html-only>&zwj;</span></td>
-        <td :class="['pl-3 align-top', position < props.items.length - 1 && 'pb-6']">
+        <td :class="[dir === 'rtl' ? 'pr-3 align-top' : 'pl-3 align-top', position < props.items.length - 1 && 'pb-6']">
           <p v-if="item.description" class="m-0 text-sm text-muted-foreground">{{ item.description }}</p>
         </td>
       </tr>

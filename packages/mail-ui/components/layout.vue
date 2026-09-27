@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { getCurrentInstance } from 'vue';
-import { useUi } from './ui';
+import { dirOf, useUi } from './ui';
 
 /**
  * The page of an e-mail: the brand's header, the content on a card, and a
@@ -31,6 +31,7 @@ const globals: Record<string, unknown> =
 	getCurrentInstance()?.appContext.config.globalProperties ?? {};
 const lang =
 	props.lang ?? (typeof globals.locale === 'string' ? globals.locale : 'en');
+const dir = dirOf(globals);
 const style = `@import "@maizzle/tailwindcss";\n${css}`;
 // With @nxgt/mail-i18n, the footer says why the e-mail came.
 const why =
@@ -40,19 +41,19 @@ const why =
 </script>
 
 <template>
-  <Html :lang="lang">
+  <Html :lang="lang" :dir="dir">
     <Head>
       <meta name="color-scheme" content="light dark">
       <meta name="supported-color-schemes" content="light dark">
       <style v-html="style"></style>
     </Head>
-    <Body class="bg-paper nx-dark-bg-paper">
+    <Body class="bg-paper nx-dark-bg-paper" :dir="dir">
       <Preheader v-if="preheader">{{ preheader }}</Preheader>
-      <table class="w-full bg-paper nx-dark-bg-paper font-sans" role="presentation" cellpadding="0" cellspacing="0">
+      <table class="w-full bg-paper nx-dark-bg-paper font-sans" role="presentation" cellpadding="0" cellspacing="0" :dir="dir">
         <tr>
           <td align="center" class="px-4 py-8">
             <Container :width="width">
-            <table class="w-full" role="presentation" cellpadding="0" cellspacing="0">
+            <table class="w-full" role="presentation" cellpadding="0" cellspacing="0" :dir="dir">
               <tr>
                 <td class="pb-6 text-center">
                   <a v-if="brand.url" :href="brand.url" class="text-lg font-semibold text-foreground nx-dark-text-foreground no-underline">

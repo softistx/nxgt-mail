@@ -37,6 +37,10 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   required `expiresIn` for its restoration link), `two-factor-enabled` and
   `two-factor-disabled` (security), and `invitation-accepted` (lifecycle,
   tells the inviter). `PRESETS` now lists thirteen names.
+- **`@nxgt/mail-i18n` 0.5, v0.4.0** — the peer moves to `^0.5.0`, the version
+  that gives every template `dir`. The e-mails do not change; a project
+  building the presets in a right-to-left locale gets `NxLayout`'s and the
+  other `@nxgt/mail-ui` components' mirroring for free.
 - **Messages under `kebab-case` keys, v0.3.0** — each preset's group is named
   after its file (`verify-email.*`, not `verifyEmail.*`), and the shared ones
   are `presets.link-expires`, `presets.code-expires`, `presets.link-fallback`

@@ -37,6 +37,8 @@ declare module 'vue' {
 		t<K extends TemplateKey>(key: K, ...args: TemplateArgs<K>): string;
 		/** The locale this build of the template is in: `'fr'`. */
 		readonly locale: string;
+		/** `'rtl'` for a right-to-left locale (`ar`, `he`, `fa`, `ur`, …), else `'ltr'`. */
+		readonly dir: 'ltr' | 'rtl';
 		/** `{{ name }}` in the built file, filled at send time. `name` is camelCase. */
 		placeholder(name: string): string;
 	}

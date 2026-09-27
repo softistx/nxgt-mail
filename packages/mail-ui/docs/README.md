@@ -11,6 +11,7 @@ template, component, plugin, placeholder, catalogue) are defined once, in the
 | [Components](guide/components.md) | You are writing `emails/*.vue` with the `Nx*` components: each one's props, defaults and slots, the material-vue component it mirrors, icons, spacing, and a complete template |
 | [The theme](guide/theme.md) | You want your colours or radii: every token of `theme.css`, the tints that stand for material-vue's translucent colours, and what an override changes |
 | [Dark mode](guide/dark-mode.md) | You want the mail client's dark theme followed: the technique per client, which tokens have a dark value, overriding one, the logo/figure `darkSrc`, and what Gmail cannot do |
+| [Right-to-left languages](guide/right-to-left.md) | You are building an e-mail in Arabic, Hebrew or another right-to-left language: where `dir` comes from, how a component mirrors its physical CSS, and what stays your own project's job |
 | [Shared messages](guide/messages.md) | You translate with `@nxgt/mail-i18n`: the `common` messages `uiCatalogues` brings, overriding one, and a locale other than `en` and `fr` |
 | [Troubleshooting](troubleshooting.md) | You have an error message and want its cause and its fix |
 | [Roadmap](roadmap.md) | You want to know what is coming, what shipped, and what is deliberately not planned |

@@ -91,11 +91,11 @@ describe('a project built with the i18n plugin', () => {
 	test('formats each locale with its own plural and date', async () => {
 		const en = await read('dist/en/verify-email.html');
 		const fr = await read('dist/fr/verify-email.html');
-		expect(en).toContain('<html lang="en"');
+		expect(en).toContain('<html lang="en" dir="ltr"');
 		expect(en).toContain('<h1>Confirm your e-mail address</h1>');
 		expect(en).toContain('The link expires in 15 minutes.');
 		expect(en).toContain('Sent on January 2, 2026.');
-		expect(fr).toContain('<html lang="fr"');
+		expect(fr).toContain('<html lang="fr" dir="ltr"');
 		expect(fr).toContain('Le lien expire dans 15 minutes.');
 		expect(fr).toContain('Envoyé le 2 janvier 2026.');
 	});
@@ -338,4 +338,54 @@ describe('a build failure names the locale, the template and the key', () => {
 		},
 		60_000,
 	);
+});
+
+describe('a right-to-left locale', () => {
+	const root = `${cases}/rtl`;
+	afterAll(() => rmSync(root, { recursive: true, force: true }));
+
+	beforeAll(async () => {
+		rmSync(root, { recursive: true, force: true });
+		// A small catalogue for this fixture alone: mail-i18n's shared messages
+		// ship en/fr only (see docs/guide/right-to-left.md), so a project adding
+		// ar writes its own catalogue, as this test does.
+		const files: Record<string, string | object> = {
+			'maizzle.config.ts': [
+				"import { defineMailConfig } from '@nxgt/mail-config';",
+				"import { i18n } from '../../../src/index';",
+				"export default defineMailConfig({ plugins: [i18n({ locales: ['en', 'ar'] })] });",
+			].join('\n'),
+			'locales/en.json': {
+				'verify-email': { subject: 'Confirm', title: 'Confirm your address' },
+			},
+			'locales/ar.json': {
+				'verify-email': { subject: 'تأكيد', title: 'تأكيد عنوانك' },
+			},
+			'emails/verify-email.vue': [
+				'<template>',
+				'  <Html :lang="locale" :dir="dir">',
+				'    <Body>',
+				"      <Container><Text>{{ t('verify-email.title') }}</Text></Container>",
+				'    </Body>',
+				'  </Html>',
+				'</template>',
+			].join('\n'),
+		};
+		for (const [path, content] of Object.entries(files)) {
+			mkdirSync(dirname(`${root}/${path}`), { recursive: true });
+			writeFileSync(
+				`${root}/${path}`,
+				typeof content === 'string' ? content : JSON.stringify(content),
+			);
+		}
+		await build(root);
+	}, 60_000);
+
+	test('gets dir="rtl" beside its locale, an ltr locale keeps dir="ltr"', async () => {
+		const ar = await Bun.file(`${root}/dist/ar/verify-email.html`).text();
+		const en = await Bun.file(`${root}/dist/en/verify-email.html`).text();
+		expect(ar).toContain('dir="rtl"');
+		expect(ar).toContain('تأكيد عنوانك');
+		expect(en).toContain('dir="ltr"');
+	});
 });

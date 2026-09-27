@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { twMerge } from '@maizzle/framework';
 import { computed, getCurrentInstance, useAttrs } from 'vue';
-import { EYEBROW, type SeeAlsoItem, sharedMessage } from './ui';
+import { dirOf, EYEBROW, type SeeAlsoItem, sharedMessage } from './ui';
 
 /**
  * material-vue's SeeAlso: a line, a small uppercase label, and links one per
@@ -16,9 +16,12 @@ const props = defineProps<{ items: readonly SeeAlsoItem[]; label?: string }>();
 
 const globals: Record<string, unknown> =
 	getCurrentInstance()?.appContext.config.globalProperties ?? {};
+const dir = computed(() => dirOf(globals));
 const heading = computed(
 	() => props.label ?? sharedMessage(globals, 'common.see-also', 'See also'),
 );
+// An external link's arrow, mirrored so it still points away from the text.
+const arrow = computed(() => (dir.value === 'rtl' ? '↖' : '↗'));
 const attrs = useAttrs();
 const classes = computed(() =>
 	twMerge(
@@ -29,7 +32,7 @@ const classes = computed(() =>
 </script>
 
 <template>
-  <table v-if="items.length > 0" v-bind="{ ...attrs, class: undefined }" :class="classes" role="presentation" cellpadding="0" cellspacing="0">
+  <table v-if="items.length > 0" v-bind="{ ...attrs, class: undefined }" :class="classes" role="presentation" cellpadding="0" cellspacing="0" :dir="dir">
     <tr>
       <td class="pt-10">
         <table class="w-full" role="presentation" cellpadding="0" cellspacing="0">
@@ -41,7 +44,7 @@ const classes = computed(() =>
                   <td class="px-2 py-2.5">
                     <a :href="item.href" class="text-sm text-muted-foreground no-underline">{{ item.title }}</a>
                   </td>
-                  <td class="w-1 px-2 text-right align-middle text-xs text-muted-foreground"><span aria-hidden="true"><span data-maizzle-html-only>&#8599;</span></span></td>
+                  <td :class="`w-1 px-2 align-middle text-xs text-muted-foreground ${dir === 'rtl' ? 'text-left' : 'text-right'}`"><span aria-hidden="true"><span data-maizzle-html-only>{{ arrow }}</span></span></td>
                 </tr>
               </table>
             </td>
