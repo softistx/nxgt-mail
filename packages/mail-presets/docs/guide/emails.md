@@ -1,6 +1,6 @@
 # The e-mails
 
-This page is for sending one of the nine presets, or rewording it: what each
+This page is for sending one of the thirteen presets, or rewording it: what each
 one is for, what it shows, the placeholders the sender fills, its subject,
 and every message it uses in `en` and `fr`.
 
@@ -35,11 +35,15 @@ export default defineMailConfig({
 | [`reset-password`](#reset-password) | A user asked to reset their password | `expiresIn`, `link`, `name` | `link` |
 | [`password-changed`](#password-changed) | A password was just changed | `link`, `name` | `link` |
 | [`email-changed`](#email-changed) | An account's address was changed — sent to the former one | `link`, `name`, `newEmail` | `link` |
+| [`account-deleted`](#account-deleted) | An account was deleted, with a grace period to restore it | `expiresIn`, `link`, `name` | `link` |
 | [`sign-in-code`](#sign-in-code) | A user signs in with a one-time code | `code`, `expiresIn` | — |
 | [`magic-link`](#magic-link) | A user signs in with a one-time link | `expiresIn`, `link` | `link` |
 | [`new-sign-in`](#new-sign-in) | An account was signed in from a device not seen before | `device`, `link`, `location`, `name`, `time` | `link` |
+| [`two-factor-enabled`](#two-factor-enabled) | Two-factor authentication was just turned on | `link`, `name` | `link` |
+| [`two-factor-disabled`](#two-factor-disabled) | Two-factor authentication was just turned off | `link`, `name` | `link` |
 | [`welcome`](#welcome) | An account was just created | `link`, `name` | `link` |
 | [`invitation`](#invitation) | Someone invites the recipient to an organisation | `expiresIn`, `inviter`, `link`, `organization` | `link` |
+| [`invitation-accepted`](#invitation-accepted) | The recipient invited to join an organisation accepted — sent to the inviter | `invitee`, `link`, `organization` | `link` |
 
 The placeholders are the manifest's `variables`, and the URL ones its
 `urlVariables`: the sender fills a URL one with an `http:` or `https:` URL,
@@ -49,12 +53,15 @@ build time.
 
 ## `expiresIn`: how long the link or the code lives
 
-`verify-email`, `reset-password`, `magic-link`, `sign-in-code` and
-`invitation` send something that stops working after a while, and say so:
-`This link expires in {{ expiresIn }}.` under the button,
-`This code expires in {{ expiresIn }}.` under the code, or
-`This invitation expires in {{ expiresIn }}.` under the invitation's button. `expiresIn` is
-required: the server that made the token knows its lifetime, the build does
+`verify-email`, `reset-password`, `magic-link`, `sign-in-code`,
+`invitation` and `account-deleted` send something that stops working after a
+while, and say so: `This link expires in {{ expiresIn }}.` under the button,
+`This code expires in {{ expiresIn }}.` under the code,
+`This invitation expires in {{ expiresIn }}.` under the invitation's button, or
+`This restoration link expires in {{ expiresIn }}.` under `account-deleted`'s
+restore button. `expiresIn` is
+required: the server that made the token — or that granted the grace period —
+knows its lifetime, the build does
 not. Pass it as text already written in the recipient's language — the
 renderer writes a value as is and translates nothing:
 
@@ -74,8 +81,9 @@ To say nothing about expiry, replace the template (see
 [Replacing a template](presets.md#replacing-a-template)): a message override cannot drop the
 argument, because the template still passes it.
 
-The other presets do not take it: `password-changed`, `new-sign-in` and
-`welcome` link to your site, not to a token, and `email-changed` says nothing
+The other presets do not take it: `password-changed`, `new-sign-in`,
+`two-factor-enabled`, `two-factor-disabled`, `welcome` and `invitation-accepted`
+link to your site, not to a token, and `email-changed` says nothing
 about a lifetime its undo link may not have. To tell one, replace
 `email-changed.vue` with your own and pass it as a placeholder of yours.
 
@@ -94,8 +102,8 @@ typography does, so a line never starts with `:`. Keep it in a `fr` override.
 | `presets.code-expires` | This code expires in {expiresIn}. | Ce code expire dans {expiresIn}. | `sign-in-code` |
 | `presets.link-expires` | This link expires in {expiresIn}. | Ce lien expire dans {expiresIn}. | `verify-email`, `reset-password`, `magic-link` |
 | `presets.link-fallback` | If the button does not work, open this link: | Si le bouton ne fonctionne pas, ouvrez ce lien : | every preset with a `link` |
-| `presets.not-you` | If this was not you, secure your account now. | Si ce n'était pas vous, sécurisez votre compte dès maintenant. | `password-changed`, `email-changed`, `new-sign-in` |
-| `common.greeting` | Hello {name}, | Bonjour {name}, | every preset but `sign-in-code`, `magic-link` and `invitation` |
+| `presets.not-you` | If this was not you, secure your account now. | Si ce n'était pas vous, sécurisez votre compte dès maintenant. | `password-changed`, `email-changed`, `new-sign-in`, `account-deleted`, `two-factor-enabled`, `two-factor-disabled` |
+| `common.greeting` | Hello {name}, | Bonjour {name}, | every preset but `sign-in-code`, `magic-link`, `invitation` and `invitation-accepted` |
 | `common.footer.ignore` | If you did not ask for this, you can ignore this e-mail. | Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet e-mail. | `verify-email`, `reset-password`, `magic-link` |
 | `common.footer.why` | You received this e-mail because you have an account with {brand}. | Vous recevez cet e-mail parce que vous avez un compte chez {brand}. | every preset, in the footer |
 
@@ -200,6 +208,35 @@ Samples:
 [en](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/en/email-changed.html) ·
 [fr](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/fr/email-changed.html).
 
+## `account-deleted`
+
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/en/account-deleted.png" width="420" alt="The account-deleted e-mail, in English">
+
+[In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/fr/account-deleted.png)
+
+A confirmation, after an account was deleted, with a grace period during
+which it can still be restored. A title, the greeting, the body, an error
+alert with `presets.not-you`, the **Restore my account** button,
+`account-deleted.expires`, and the link as text.
+
+| Key | `en` | `fr` |
+| --- | --- | --- |
+| `account-deleted.subject` | Your account was deleted | Votre compte a été supprimé |
+| `account-deleted.preheader` | Your account and its data are being removed. | Votre compte et ses données sont en cours de suppression. |
+| `account-deleted.title` | Your account was deleted | Votre compte a été supprimé |
+| `account-deleted.body` | Your {brand} account was deleted, along with its data. | Votre compte {brand} a été supprimé, ainsi que ses données. |
+| `account-deleted.action` | Restore my account | Restaurer mon compte |
+| `account-deleted.expires` | This restoration link expires in {expiresIn}. | Ce lien de restauration expire dans {expiresIn}. |
+
+Placeholders: `name`, `link` (a URL), `expiresIn` (a duration, as text).
+`expiresIn` is required, for the same reason as `invitation.expires`: the
+server that runs the grace period knows how long it lasts, the build does
+not. A project with no grace period — an immediate, unrecoverable deletion —
+replaces `account-deleted.vue` with its own, dropping the button and the
+expiry message. Samples:
+[en](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/en/account-deleted.html) ·
+[fr](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/fr/account-deleted.html).
+
 ## `sign-in-code`
 
 <img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/en/sign-in-code.png" width="420" alt="The sign-in-code e-mail, in English">
@@ -289,6 +326,53 @@ and time zone before sending (`2 janvier 2026, 14:05 (Paris)`). Samples:
 [en](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/en/new-sign-in.html) ·
 [fr](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/fr/new-sign-in.html).
 
+## `two-factor-enabled`
+
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/en/two-factor-enabled.png" width="420" alt="The two-factor-enabled e-mail, in English">
+
+[In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/fr/two-factor-enabled.png)
+
+A notice, after two-factor authentication was turned on for an account. A
+title, the greeting, the body, a warning alert with `presets.not-you`, the
+**Secure my account** button, and the link as text. `link` is where the user
+secures the account — your recovery or account-settings page.
+
+| Key | `en` | `fr` |
+| --- | --- | --- |
+| `two-factor-enabled.subject` | Two-factor authentication was turned on | L'authentification à deux facteurs a été activée |
+| `two-factor-enabled.preheader` | Your account now asks for a second factor at sign-in. | Votre compte demande désormais un second facteur à la connexion. |
+| `two-factor-enabled.title` | Two-factor authentication is now on | L'authentification à deux facteurs est maintenant active |
+| `two-factor-enabled.body` | Your {brand} account now asks for a second factor at sign-in. | Votre compte {brand} demande désormais un second facteur à la connexion. |
+| `two-factor-enabled.action` | Secure my account | Sécuriser mon compte |
+
+Placeholders: `name`, `link` (a URL). Samples:
+[en](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/en/two-factor-enabled.html) ·
+[fr](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/fr/two-factor-enabled.html).
+
+## `two-factor-disabled`
+
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/en/two-factor-disabled.png" width="420" alt="The two-factor-disabled e-mail, in English">
+
+[In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/fr/two-factor-disabled.png)
+
+A notice, after two-factor authentication was turned off for an account —
+worded more strongly than `two-factor-enabled`, since the account now signs
+in with a password alone. A title, the greeting, the body, an **error**
+alert with `presets.not-you`, the **Secure my account** button, and the link
+as text.
+
+| Key | `en` | `fr` |
+| --- | --- | --- |
+| `two-factor-disabled.subject` | Two-factor authentication was turned off | L'authentification à deux facteurs a été désactivée |
+| `two-factor-disabled.preheader` | Your account no longer asks for a second factor at sign-in. | Votre compte ne demande plus de second facteur à la connexion. |
+| `two-factor-disabled.title` | Two-factor authentication is now off | L'authentification à deux facteurs est maintenant désactivée |
+| `two-factor-disabled.body` | Your {brand} account no longer asks for a second factor at sign-in — anyone with just your password can sign in. | Votre compte {brand} ne demande plus de second facteur à la connexion : toute personne connaissant votre mot de passe peut désormais se connecter. |
+| `two-factor-disabled.action` | Secure my account | Sécuriser mon compte |
+
+Placeholders: `name`, `link` (a URL). Samples:
+[en](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/en/two-factor-disabled.html) ·
+[fr](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/fr/two-factor-disabled.html).
+
 ## `welcome`
 
 <img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/en/welcome.png" width="420" alt="The welcome e-mail, in English">
@@ -334,6 +418,31 @@ Placeholders: `inviter`, `organization` (both in the subject too), `link`
 (a URL), `expiresIn` (a duration, as text: `'7 days'`, `'7 jours'`). Samples:
 [en](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/en/invitation.html) ·
 [fr](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/fr/invitation.html).
+
+## `invitation-accepted`
+
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/en/invitation-accepted.png" width="420" alt="The invitation-accepted e-mail, in English">
+
+[In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/fr/invitation-accepted.png)
+
+Tells the **inviter**, after the person they invited accepted and joined the
+organisation. A title naming who joined, the body, the **View the team**
+button, and the link as text. No greeting: unlike `invitation`, the
+recipient here is the inviter, but the preset takes no `name` for them —
+replace the template to add one.
+
+| Key | `en` | `fr` |
+| --- | --- | --- |
+| `invitation-accepted.subject` | {invitee} accepted your invitation to {organization} | {invitee} a accepté votre invitation à rejoindre {organization} |
+| `invitation-accepted.preheader` | {invitee} joined {organization}. | {invitee} a rejoint {organization}. |
+| `invitation-accepted.title` | {invitee} joined {organization} | {invitee} a rejoint {organization} |
+| `invitation-accepted.body` | {invitee} accepted your invitation and now belongs to {organization} on {brand}. | {invitee} a accepté votre invitation et fait désormais partie de {organization} sur {brand}. |
+| `invitation-accepted.action` | View the team | Voir l'équipe |
+
+Placeholders: `invitee`, `organization` (both in the subject too), `link`
+(a URL). Samples:
+[en](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/en/invitation-accepted.html) ·
+[fr](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/fr/invitation-accepted.html).
 
 ## Rewording one
 

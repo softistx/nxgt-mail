@@ -33,6 +33,14 @@
 		"body": "Votre compte {brand} utilise désormais {newEmail}. Nous envoyons cet avis à votre ancienne adresse.",
 		"action": "Annuler ce changement"
 	},
+	"account-deleted": {
+		"subject": "Votre compte a été supprimé",
+		"preheader": "Votre compte et ses données sont en cours de suppression.",
+		"title": "Votre compte a été supprimé",
+		"body": "Votre compte {brand} a été supprimé, ainsi que ses données.",
+		"action": "Restaurer mon compte",
+		"expires": "Ce lien de restauration expire dans {expiresIn}."
+	},
 	"sign-in-code": {
 		"subject": "Votre code de connexion : {code}",
 		"preheader": "Saisissez ce code pour vous connecter.",
@@ -58,6 +66,20 @@
 		"body": "Si c'était vous, vous n'avez rien à faire.",
 		"action": "Sécuriser mon compte"
 	},
+	"two-factor-enabled": {
+		"subject": "L'authentification à deux facteurs a été activée",
+		"preheader": "Votre compte demande désormais un second facteur à la connexion.",
+		"title": "L'authentification à deux facteurs est maintenant active",
+		"body": "Votre compte {brand} demande désormais un second facteur à la connexion.",
+		"action": "Sécuriser mon compte"
+	},
+	"two-factor-disabled": {
+		"subject": "L'authentification à deux facteurs a été désactivée",
+		"preheader": "Votre compte ne demande plus de second facteur à la connexion.",
+		"title": "L'authentification à deux facteurs est maintenant désactivée",
+		"body": "Votre compte {brand} ne demande plus de second facteur à la connexion : toute personne connaissant votre mot de passe peut désormais se connecter.",
+		"action": "Sécuriser mon compte"
+	},
 	"welcome": {
 		"subject": "Bienvenue, {name}",
 		"preheader": "Votre compte est prêt.",
@@ -72,5 +94,12 @@
 		"body": "{inviter} vous invite à rejoindre {organization} sur {brand}.",
 		"action": "Accepter l'invitation",
 		"expires": "Cette invitation expire dans {expiresIn}."
+	},
+	"invitation-accepted": {
+		"subject": "{invitee} a accepté votre invitation à rejoindre {organization}",
+		"preheader": "{invitee} a rejoint {organization}.",
+		"title": "{invitee} a rejoint {organization}",
+		"body": "{invitee} a accepté votre invitation et fait désormais partie de {organization} sur {brand}.",
+		"action": "Voir l'équipe"
 	}
 }

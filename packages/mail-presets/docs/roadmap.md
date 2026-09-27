@@ -33,6 +33,10 @@ Nothing yet. A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **Four more presets, v0.4.0** — `account-deleted` (accounts, with a
+  required `expiresIn` for its restoration link), `two-factor-enabled` and
+  `two-factor-disabled` (security), and `invitation-accepted` (lifecycle,
+  tells the inviter). `PRESETS` now lists thirteen names.
 - **Messages under `kebab-case` keys, v0.3.0** — each preset's group is named
   after its file (`verify-email.*`, not `verifyEmail.*`), and the shared ones
   are `presets.link-expires`, `presets.code-expires`, `presets.link-fallback`
@@ -76,6 +80,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   [`samples/`](https://github.com/softistx/nxgt-mail/tree/develop/packages/mail-presets/samples),
   checked against a fresh build, so you can see an e-mail before installing
   anything.
-- **A renderer that sends them, v0.1.0** — `createMailRenderer` from
-  `@nxgt/mail/renderer` renders the presets' build at send time, each value
-  filled and escaped; the build spec renders every preset with it.

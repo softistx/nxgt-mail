@@ -14,11 +14,15 @@ export const PRESETS = [
 	'reset-password',
 	'password-changed',
 	'email-changed',
+	'account-deleted',
 	'sign-in-code',
 	'magic-link',
 	'new-sign-in',
+	'two-factor-enabled',
+	'two-factor-disabled',
 	'welcome',
 	'invitation',
+	'invitation-accepted',
 ] as const;
 
 export type PresetName = (typeof PRESETS)[number];
