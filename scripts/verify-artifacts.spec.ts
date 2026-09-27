@@ -3,10 +3,13 @@ import { mkdir, mkdtemp, utimes, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
+	builtinImports,
 	duplicateClasses,
+	importTarget,
 	licenseProblems,
 	manifestShapeProblems,
 	NOT_A_BUILD_INPUT,
+	noNodeBuiltinProblems,
 	staleBuilds,
 	subpathsOf,
 } from './verify-artifacts';
@@ -209,5 +212,171 @@ describe('staleBuilds', () => {
 		expect(NOT_A_BUILD_INPUT.test('identities/create.spec.ts')).toBe(true);
 		expect(NOT_A_BUILD_INPUT.test('__snapshots__/a.snap')).toBe(true);
 		expect(NOT_A_BUILD_INPUT.test('identities/create.ts')).toBe(false);
+	});
+});
+
+describe('builtinImports — what an edge runtime refuses', () => {
+	const files = (entries: Record<string, string>) =>
+		new Map(Object.entries(entries));
+
+	test('finds a built-in reached through a chunk the entry shares', () => {
+		expect(
+			builtinImports(
+				'dist/index.js',
+				files({
+					'dist/index.js': 'import { a } from "./chunks/a.js";',
+					'dist/chunks/a.js':
+						'import { b } from "./b.js";\nexport const a = 1;',
+					'dist/chunks/b.js': 'import { readFileSync } from "node:fs";',
+				}),
+			),
+		).toEqual(['dist/chunks/b.js: node:fs']);
+	});
+
+	test('counts a bare built-in, a subpath of one, bun:, a re-export and a dynamic import', () => {
+		expect(
+			builtinImports(
+				'index.js',
+				files({
+					'index.js': [
+						"import 'fs';",
+						"export { join } from 'path/posix';",
+						"const t = await import('bun:test');",
+						"const u = await import ('node:url');",
+					].join('\n'),
+				}),
+			),
+		).toEqual([
+			'index.js: fs',
+			'index.js: path/posix',
+			'index.js: bun:test',
+			'index.js: node:url',
+		]);
+	});
+
+	test('does not follow a dependency, nor count one', () => {
+		expect(
+			builtinImports(
+				'index.js',
+				files({
+					'index.js': 'import { Resend } from "resend";\nimport "@nxgt/mail";',
+				}),
+			),
+		).toEqual([]);
+	});
+
+	test('passes what @nxgt/mail builds: the root free, the renderer not', () => {
+		const built = files({
+			'dist/index.js': 'import { x } from "./chunks/errors.js";',
+			'dist/renderer.js':
+				'import { x } from "./chunks/errors.js";\nimport { join } from "node:path";',
+			'dist/chunks/errors.js': 'export class MailError extends Error {}',
+		});
+		expect(builtinImports('dist/index.js', built)).toEqual([]);
+		expect(builtinImports('./dist/renderer.js', built)).toEqual([
+			'dist/renderer.js: node:path',
+		]);
+	});
+
+	test('counts a require, and bare bun', () => {
+		expect(
+			builtinImports(
+				'index.cjs',
+				files({ 'index.cjs': 'const fs = require("fs");\nimport "bun";' }),
+			),
+		).toEqual(['index.cjs: fs', 'index.cjs: bun']);
+	});
+
+	test('does not count what Bun lists as built-in but is an npm package', () => {
+		expect(
+			builtinImports(
+				'index.js',
+				files({ 'index.js': 'import "ws";\nimport "undici";' }),
+			),
+		).toEqual([]);
+	});
+
+	test('survives an import cycle', () => {
+		expect(
+			builtinImports(
+				'a.js',
+				files({ 'a.js': 'import "./b.js";', 'b.js': 'import "./a.js";' }),
+			),
+		).toEqual([]);
+	});
+});
+
+describe('importTarget', () => {
+	test('reads the import condition, then default, then a bare string', () => {
+		expect(
+			importTarget({ types: './dist/i.d.ts', import: './dist/i.js' }),
+		).toBe('dist/i.js');
+		expect(importTarget({ default: './dist/d.js' })).toBe('dist/d.js');
+		expect(importTarget('./dist/s.js')).toBe('dist/s.js');
+		expect(importTarget('./dist/m.mjs')).toBe('dist/m.mjs');
+	});
+
+	test('is null for what is not JavaScript, or not there', () => {
+		expect(importTarget('./package.json')).toBeNull();
+		expect(importTarget('./dist/theme.css')).toBeNull();
+		expect(importTarget(undefined)).toBeNull();
+	});
+});
+
+describe('noNodeBuiltinProblems', () => {
+	const installed = async (manifest: Record<string, unknown>) => {
+		const dir = await mkdtemp(join(tmpdir(), 'mail-builtins-'));
+		await mkdir(join(dir, 'dist'), { recursive: true });
+		await writeFile(join(dir, 'package.json'), JSON.stringify(manifest));
+		await writeFile(join(dir, 'dist', 'index.js'), 'export const a = 1;');
+		await writeFile(
+			join(dir, 'dist', 'renderer.js'),
+			'import { readFileSync } from "node:fs";',
+		);
+		return dir;
+	};
+	const exports = {
+		'.': { import: './dist/index.js' },
+		'./renderer': { import: './dist/renderer.js' },
+	};
+
+	test('passes a free subpath, and checks nothing without the field', async () => {
+		expect(
+			await noNodeBuiltinProblems(
+				await installed({
+					name: 'm',
+					exports,
+					nxgt: { noNodeBuiltins: ['.'] },
+				}),
+			),
+		).toEqual([]);
+		expect(
+			await noNodeBuiltinProblems(await installed({ name: 'm', exports })),
+		).toEqual([]);
+	});
+
+	test('names a listed subpath that reaches a built-in, and one that is no export', async () => {
+		expect(
+			await noNodeBuiltinProblems(
+				await installed({
+					name: 'm',
+					exports,
+					nxgt: { noNodeBuiltins: ['./renderer', './typo'] },
+				}),
+			),
+		).toEqual([
+			'm ./renderer: dist/renderer.js: node:fs',
+			'm ./typo: no such JavaScript export',
+		]);
+	});
+
+	test('refuses a field that is not a list of subpaths, rather than skip it', async () => {
+		expect(
+			await noNodeBuiltinProblems(
+				await installed({ name: 'm', exports, nxgt: { noNodeBuiltins: '.' } }),
+			),
+		).toEqual([
+			'm: nxgt.noNodeBuiltins must be a list of subpaths, as [".", "./conformance"]',
+		]);
 	});
 });

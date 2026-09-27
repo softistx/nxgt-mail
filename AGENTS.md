@@ -188,7 +188,7 @@ they are built.
 
 | Package | Runs | Holds |
 | --- | --- | --- |
-| `@nxgt/mail` | at run time | The `Mailer` port, the errors, locale selection, a memory mailer, `./conformance` for transports, and `./renderer`, which fills built files. **No dependency**; only `./renderer` imports a Node built-in (`node:fs`) |
+| `@nxgt/mail` | at run time | The `Mailer` port, the errors, locale selection, a memory mailer, `./conformance` for transports, and `./renderer`, which fills built files. **No dependency**; only `./renderer` imports a Node built-in (`node:fs`), held by `nxgt.noNodeBuiltins` |
 | `@nxgt/mail-config` | in the Maizzle project | `defineMailConfig`: the base config, and the plugins merged with their hooks chained |
 | `@nxgt/mail-i18n` | in the Maizzle project | The i18n plugin: ICU catalogues, `t()` in templates, one output per locale, the manifest; `createTranslator` |
 | `@nxgt/mail-ui` | in the Maizzle project | The `Nx*` components in the style of `@nxgt/material-vue`, its theme, the shared messages |
@@ -244,6 +244,13 @@ through untouched, and never branches or computes on it
   (`scripts/check-changesets.ts`, run by CI, copied from nxgt-janus) refuses a
   changeset naming a private package, one that does not exist, or one it
   cannot read.
+- **A subpath that says it runs anywhere lists itself under
+  `nxgt.noNodeBuiltins`** in its package's `package.json`: `@nxgt/mail`'s
+  `.` and `./conformance`, `@nxgt/mail-resend`'s `.`. `verify:artifacts`
+  follows each one's imports through the installed tarball, shared chunks
+  included, and fails on a built-in (`node:*`, a bare `fs`, `bun:*`). Node and
+  Bun load such an import, so nothing else notices it; an edge runtime
+  refuses it. A dependency's own imports are not followed.
 - `*.spec.ts` colocated in `src/`; `test/` holds helpers; `test/types/` is
   typechecked and never run.
 - Settle an expected rejection where it is created, with `.then(ok, ko)`.
@@ -268,6 +275,12 @@ Carry each difference over when janus gets the same thing (`@nxgt/janus-mail`):
   way, without the rule.
 - `css.parser.tailwindDirectives` for `theme.css`, and `generated/` and
   `samples/` left out of `files.includes`.
+
+`scripts/verify-artifacts.ts` differs from the nxgt-janus copy by the
+`nxgt.noNodeBuiltins` step (`builtinImports`, `importTarget`,
+`noNodeBuiltinProblems` and its place in `main`): no janus package says it
+runs on an edge runtime. Carry it over the day one does, and keep it when
+syncing the copies.
 
 **One word per idea.** The words are defined once, in a `docs/vocabulary.md`
 the first package writes: *e-mail* (not "mail" in prose, not "email"),

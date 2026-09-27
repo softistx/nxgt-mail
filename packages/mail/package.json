@@ -57,6 +57,10 @@
 			"src/index.ts",
 			"src/renderer.ts",
 			"src/conformance/index.ts"
+		],
+		"noNodeBuiltins": [
+			".",
+			"./conformance"
 		]
 	},
 	"devDependencies": {
