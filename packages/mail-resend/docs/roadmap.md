@@ -5,13 +5,7 @@ no dates here, and the version something shipped in is the only number.
 
 ## Now
 
-- **An idempotency key per send** — a message's `idempotencyKey` is sent as
-  Resend's `Idempotency-Key` header, so a retry the caller decides, within
-  Resend's 24 hours, answers the first send's id and cannot send the same
-  e-mail twice. A `409 invalid_idempotent_request` (the key already used for
-  another message) is a `MailRefused`; a `409 concurrent_idempotent_requests`
-  (the same key still in progress) stays a `MailFailure`. Needs `@nxgt/mail`
-  0.3. Built, not yet published.
+Nothing yet.
 
 ## Next
 
@@ -38,6 +32,13 @@ Nothing yet.
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **An idempotency key per send, v0.3.0** — a message's `idempotencyKey` is sent as
+  Resend's `Idempotency-Key` header, so a retry the caller decides, within
+  Resend's 24 hours, answers the first send's id and cannot send the same
+  e-mail twice. A `409 invalid_idempotent_request` (the key already used for
+  another message) is a `MailRefused`; a `409 concurrent_idempotent_requests`
+  (the same key still in progress) stays a `MailFailure`. Needs `@nxgt/mail`
+  0.3.
 - **Attachments, v0.2.0** — the `attachments` of a message are sent in Resend's
   `attachments`, each as `{ filename, content, content_type }` with the bytes
   in base64, encoded with no Node built-in so the transport still runs on an

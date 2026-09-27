@@ -7,7 +7,7 @@ const LINE_BREAK = /[\r\n]/;
 // name), `,` `;` (a second address), `:` (a group). A provider that parses
 // the string then finds one mailbox, the one checked. Whether the mailbox
 // exists is the receiving server's question.
-const ADDRESS = /^[^\s@<>,;:]+@[^\s@<>,;:]+$/;
+export const ADDRESS = /^[^\s@<>,;:]+@[^\s@<>,;:]+$/;
 const HEADER_NAME = /^[A-Za-z0-9-]+$/;
 // The headers a transport writes from the message: the addresses, the subject
 // and the MIME structure. Set through `headers`, a Bcc reaches an SMTP

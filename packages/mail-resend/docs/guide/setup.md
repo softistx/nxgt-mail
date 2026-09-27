@@ -189,6 +189,10 @@ Content-Type: application/json
 
 - `replyTo` is sent as `reply_to`, Resend's name for it; `reply_to` and
   `headers` are left out when the message has none.
+- `headers` are sent as written, and Resend DKIM-signs them with your
+  domain's key; build `List-Unsubscribe` with `listUnsubscribe` from
+  `@nxgt/mail` — see
+  [one-click unsubscribe](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/guide/sending.md#one-click-unsubscribe).
 - Each attachment is sent as `{ filename, content, content_type }`: its bytes
   as base64, encoded in slices with `btoa` — no `Buffer`, so it runs on an
   edge runtime — and its type as `content_type`, Resend's name for it.

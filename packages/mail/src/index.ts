@@ -36,3 +36,8 @@ export type {
 	Rendered,
 	SentMail,
 } from './types';
+export {
+	type ListUnsubscribeHeaders,
+	type ListUnsubscribeOptions,
+	listUnsubscribe,
+} from './unsubscribe';

@@ -1,8 +1,8 @@
 # Sending
 
 This page is for calling `mailer.send`: the shape of what it takes, the
-addresses, headers and attachments it accepts, the idempotency key that makes
-a retry safe, what it answers, and what it throws.
+addresses, headers and attachments it accepts, one-click unsubscribe, the
+idempotency key that makes a retry safe, what it answers, and what it throws.
 
 ```ts
 import { createMemoryMailer } from '@nxgt/mail';
@@ -93,7 +93,7 @@ interface MailAttachment {
 | `to` | `Address \| readonly Address[]` | yes | One recipient or several, at least one |
 | `from` | `Address` | no | The sender. `checkMessage` does not require one: a transport is usually wired with a default sender, and one without a default may refuse a message without `from` — see its documentation |
 | `replyTo` | `Address` | no | Where replies go |
-| `headers` | `Record<string, string>` | no | Extra headers, such as `List-Unsubscribe` |
+| `headers` | `Record<string, string>` | no | Extra headers, such as `X-Entity-Ref-ID`, or the two of [one-click unsubscribe](#one-click-unsubscribe) |
 | `attachments` | `readonly MailAttachment[]` | no | Files sent with the e-mail, in order, as bytes — see [Attachments](#attachments). An empty list is the same as none |
 | `idempotencyKey` | `string` | no | Names this send, so sending it again delivers it once where the transport can deduplicate — see [Idempotency](#idempotency--sending-once). 1 to 256 visible ASCII characters |
 
@@ -211,12 +211,13 @@ declare const rendered: Rendered;
 const message: MailMessage = {
 	...rendered,
 	to: 'ada@example.com',
-	headers: {
-		'List-Unsubscribe': '<https://example.com/unsubscribe?u=42>',
-		'X-Entity-Ref-ID': 'welcome-42',
-	},
+	headers: { 'X-Entity-Ref-ID': 'welcome-42' },
 };
 ```
+
+`List-Unsubscribe` and `List-Unsubscribe-Post` are headers like any other,
+but write them with [`listUnsubscribe`](#one-click-unsubscribe), which checks
+the URL.
 
 | Written | Answer |
 | --- | --- |
@@ -224,6 +225,212 @@ const message: MailMessage = {
 | `{ 'X-Ref': 'a\r\nb' }` | `MailRefused`: `send: header X-Ref must be a string without a line break` |
 | `{ Bcc: 'eve@example.com' }` | `MailRefused`: `send: header Bcc is reserved — addresses, the subject and the MIME structure are never custom headers` |
 | `{ 'content-type': 'text/plain' }` | `MailRefused`: `send: header content-type is reserved — …` |
+
+## One-click unsubscribe
+
+`listUnsubscribe` answers the two headers that give an e-mail the
+"Unsubscribe" button Gmail and Yahoo show next to the sender (RFC 8058, with
+RFC 2369's `List-Unsubscribe`), to spread into `headers`:
+
+```ts
+import { listUnsubscribe } from '@nxgt/mail';
+
+listUnsubscribe({ url: 'https://example.com/unsubscribe?token=s3cr3t' });
+// {
+//   'List-Unsubscribe': '<https://example.com/unsubscribe?token=s3cr3t>',
+//   'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+// }
+
+listUnsubscribe({ url: 'https://example.com/unsubscribe?token=s3cr3t', mailto: 'unsubscribe@example.com' });
+// 'List-Unsubscribe': '<https://example.com/unsubscribe?token=s3cr3t>, <mailto:unsubscribe@example.com>'
+```
+
+```ts
+interface ListUnsubscribeOptions {
+	readonly url: string;
+	readonly mailto?: string;
+}
+
+interface ListUnsubscribeHeaders {
+	readonly 'List-Unsubscribe': string;
+	readonly 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click';
+}
+
+function listUnsubscribe(options: ListUnsubscribeOptions): ListUnsubscribeHeaders;
+```
+
+| Option | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `url` | `string` | required | The `https:` URL a mail client POSTs `List-Unsubscribe=One-Click` to. One per recipient, carrying what identifies them — `https://example.com/unsubscribe?token=…`. Written first in `List-Unsubscribe` |
+| `mailto` | `string` | none | A bare address that unsubscribes whoever writes to it, for clients that only send mail. Written after the URL as `<mailto:…>` |
+
+The headers travel as any other: `checkMessage` accepts them, and every
+transport sends them unchanged. Spread them into `headers` — alone, as
+`headers: { ...listUnsubscribe({ url }) }`, or beside headers of your own:
+
+```ts
+import { listUnsubscribe, type MailMessage, type Rendered } from '@nxgt/mail';
+
+declare const rendered: Rendered;
+declare const token: string;
+
+const message: MailMessage = {
+	...rendered,
+	to: 'ada@example.com',
+	headers: {
+		...listUnsubscribe({ url: `https://example.com/unsubscribe?token=${encodeURIComponent(token)}` }),
+		'X-Entity-Ref-ID': 'newsletter-2026-09',
+	},
+};
+```
+
+### What Gmail and Yahoo require
+
+Since 2024, a sender of bulk mail to Gmail or Yahoo addresses must, on
+marketing and subscribed mail:
+
+- carry **both** headers, `List-Unsubscribe` with an `https:` URL and
+  `List-Unsubscribe-Post: List-Unsubscribe=One-Click`;
+- have them covered by a **DKIM signature** of the sending domain, so nobody
+  can add or change them on the way;
+- honour the unsubscribe promptly — within two days.
+
+The DKIM signature is the sender's, not this package's: `listUnsubscribe`
+writes the headers, and whatever signs the message must include them.
+
+| Transport | Who signs |
+| --- | --- |
+| `@nxgt/mail-resend` | Resend, with the DKIM key of your verified domain — the custom headers included |
+| `@nxgt/mail-smtp` | Your relay, or nodemailer's own `dkim` option on the transporter you create. A relay that does not DKIM-sign leaves the headers unsigned, and the message fails the requirement |
+
+### Which e-mails carry it
+
+**Marketing and bulk mail** — a newsletter, a digest, a product announcement,
+anything the recipient subscribed to and can stop receiving.
+
+**Not transactional mail** — a password reset, a sign-in code, an e-mail
+verification, a receipt, a security alert. The recipient cannot opt out of
+those, and an "Unsubscribe" button next to a sign-in code invites them to
+try. Leave `headers` without it.
+
+### The endpoint
+
+The URL is yours. It must:
+
+- **unsubscribe on a `POST`** whose form body is `List-Unsubscribe=One-Click`
+  — sent as `application/x-www-form-urlencoded` or `multipart/form-data`,
+  which `request.formData()` both reads;
+- do it **with no login, no confirmation page and no redirect**, from the
+  URL alone — the mail client sends no cookie, so the endpoint takes no CSRF
+  token either — and answer **2xx**;
+- on a **`GET`** — the same URL in the body of the e-mail, clicked by a
+  person — **show a page, never unsubscribe**: link scanners and previews
+  fetch every URL in an e-mail. The page's button can post the same form.
+
+```ts
+// Yours: the token store.
+declare function unsubscribeByToken(token: string): Promise<boolean>; // false: unknown token
+
+export async function unsubscribeHandler(request: Request): Promise<Response> {
+	const token = new URL(request.url).searchParams.get('token') ?? '';
+
+	if (request.method === 'POST') {
+		const form = await request.formData();
+		if (form.get('List-Unsubscribe') !== 'One-Click') return new Response(null, { status: 400 });
+		await unsubscribeByToken(token); // an unknown token answers 200 too: nothing to tell a mail client
+		return new Response(null, { status: 200 });
+	}
+
+	// GET: a person followed the link in the e-mail. Show, do not act.
+	const page = `<!doctype html><title>Unsubscribe</title>
+<form method="post"><input type="hidden" name="List-Unsubscribe" value="One-Click">
+<button>Unsubscribe</button></form>`;
+	return new Response(page, { headers: { 'content-type': 'text/html; charset=utf-8' } });
+}
+```
+
+The form posts to its own URL, token included, so the page and the mail
+client take the same path. In a framework, mount it at the URL you pass:
+with Hono, `app.on(['GET', 'POST'], '/unsubscribe', (c) => unsubscribeHandler(c.req.raw))`.
+
+### The token is a credential
+
+Anyone holding the URL can unsubscribe that recipient. Make the token
+unguessable (random, or signed), keep it valid for as long as the e-mail may
+be read, and **never log it** — nor the URL that carries it, nor the query
+string of the endpoint's access log. `listUnsubscribe` does its part: a
+refused `url` is reported by the rule it broke, never quoted.
+
+### Commas must be percent-encoded
+
+`List-Unsubscribe` is a comma-separated list of URLs: a raw `,` in the URL
+would start a second one, so it is refused. `encodeURIComponent` and
+`URLSearchParams` both write `%2C`; a URL built with `URL` is passed as
+`url.href` — a `URL` object is a compile error:
+
+```ts
+import { listUnsubscribe } from '@nxgt/mail';
+
+declare const token: string;
+
+const url = new URL('https://example.com/unsubscribe');
+url.searchParams.set('token', token);
+url.searchParams.set('lists', 'news,offers'); // written lists=news%2Coffers
+
+listUnsubscribe({ url: url.href });
+```
+
+### Refusals
+
+The URL and the address are checked when the headers are built, before
+anything is sent. A `MailRefused` names the rule, never the value:
+
+| Written | Answer |
+| --- | --- |
+| `url: 'https://example.com/u?token=…'`, `'https://example.com:8443/u?list=a%2Cb'` | accepted |
+| `url: 'http://example.com/u'`, `'mailto:u@example.com'`, `'/unsubscribe'`, `''` | `MailRefused`: `listUnsubscribe: url must be an https: URL without whitespace, <, > or a raw comma` |
+| a `url` holding a space, a tab, a line break, `<`, `>` or a raw `,` | `MailRefused`: the same message |
+| `mailto: 'Unsub <u@example.com>'`, `'u@example.com, v@example.com'`, `'unsubscribe'`, `'mailto:u@example.com'` | `MailRefused`: `listUnsubscribe: mailto must be a bare e-mail address, as unsubscribe@example.com` |
+| `listUnsubscribe(null)` | `TypeError`: `listUnsubscribe: options must be an object, as { url }` |
+| `url: new URL(…)` | a compile error; at run time `TypeError`: `listUnsubscribe: url must be a string` |
+| `mailto: 42` | a compile error; at run time `TypeError`: `listUnsubscribe: mailto must be a string` |
+
+A `TypeError` is a mistake in the code, not in the data: no request handler
+should answer one. A `MailRefused` usually means a URL built from a value that
+was not encoded — keep the call inside the `try` that handles `MailError`.
+
+### A realistic case — a newsletter, one URL per subscriber
+
+```ts
+import { listUnsubscribe, MailError, type Mailer } from '@nxgt/mail';
+import { createMailRenderer } from '@nxgt/mail/renderer';
+
+// Yours: the subscriber store.
+declare function subscribersOf(list: string): AsyncIterable<{ id: string; email: string; name: string; token: string }>;
+
+const mails = createMailRenderer({ dir: 'dist' });
+
+export async function sendIssue(mailer: Mailer, issue: string): Promise<{ sent: number; failed: string[] }> {
+	let sent = 0;
+	const failed: string[] = [];
+	for await (const subscriber of subscribersOf('news')) {
+		const unsubscribe = `https://example.com/unsubscribe?token=${encodeURIComponent(subscriber.token)}`;
+		try {
+			await mailer.send({
+				to: subscriber.email,
+				...mails.render('newsletter', { name: subscriber.name, unsubscribe }), // the link in the body
+				headers: { ...listUnsubscribe({ url: unsubscribe }) }, // the button in the mail client
+				idempotencyKey: `newsletter-${issue}/${subscriber.id}`,
+			});
+			sent += 1;
+		} catch (error) {
+			if (!(error instanceof MailError)) throw error;
+			failed.push(subscriber.id); // an id, never the address or the token
+		}
+	}
+	return { sent, failed };
+}
+```
 
 ## Attachments
 
@@ -413,7 +620,7 @@ class MailRefused extends MailError {
 | Code | Class | When | Sending it again |
 | --- | --- | --- | --- |
 | `MAIL_FAILED` | `MailFailure` | The transport could not hand the e-mail over: a refused connection, a timeout, a 5xx from the provider, an expired credential. The transport's error is the `cause`. **Nothing is known to have been sent**: after a timeout or a dropped connection the provider may have taken it all the same | May work later — with an [`idempotencyKey`](#idempotency--sending-once), without a second delivery where the transport deduplicates. Never report it as sent |
-| `MAIL_REFUSED` | `MailRefused` | The e-mail itself was refused, before or by the transport: no recipient, something that is not an address, a line break in the subject or a header, a reserved header, an attachment that is not bytes or is badly named, a malformed idempotency key or one already used for a different message, or the provider answering that the message is malformed or too large | Fails again, unchanged |
+| `MAIL_REFUSED` | `MailRefused` | The e-mail itself was refused, before or by the transport: no recipient, something that is not an address, a line break in the subject or a header, a reserved header, an attachment that is not bytes or is badly named, an unsubscribe URL that is not `https:` or holds a raw comma, a malformed idempotency key or one already used for a different message, or the provider answering that the message is malformed or too large | Fails again, unchanged |
 
 `MailError` is **abstract**: catch it, test `instanceof MailError`, but
 `new MailError(…)` does not compile — a bare one would pass a `code` check and

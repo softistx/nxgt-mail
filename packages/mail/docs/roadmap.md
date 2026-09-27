@@ -6,15 +6,13 @@ the only number.
 
 ## Now
 
-- **An idempotency key per send** — `idempotencyKey` on a `MailMessage`
-  names the send, so sending it again — a retry after a timeout, a job run
-  twice — delivers it once where the transport can deduplicate; a transport
-  that cannot ignores it. `checkMessage` refuses a key that is not 1 to 256
-  visible ASCII characters, never quoting it. The memory mailer honours it as
-  Resend does: the same message under a key it already delivered answers
-  that delivery's `messageId` and delivers nothing more, a different message
-  under it is a `MailRefused`, a failed send leaves its key free, and
-  `clear()` forgets the keys. Built, not yet published.
+- **One-click unsubscribe** — `listUnsubscribe({ url, mailto? })` answers
+  RFC 8058's `List-Unsubscribe` and `List-Unsubscribe-Post` headers, to
+  spread into a message's `headers`, so Gmail and Yahoo offer their
+  one-click unsubscribe. A `url` that is not `https:`, or that would break
+  the header, and a `mailto` that is not a bare address are refused with
+  `MailRefused`, never quoting the value. No transport changes: the headers
+  travel as any other. Built, not yet published.
 
 ## Next
 
@@ -71,6 +69,15 @@ Nothing yet.
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **An idempotency key per send, v0.3.0** — `idempotencyKey` on a `MailMessage`
+  names the send, so sending it again — a retry after a timeout, a job run
+  twice — delivers it once where the transport can deduplicate; a transport
+  that cannot ignores it. `checkMessage` refuses a key that is not 1 to 256
+  visible ASCII characters, never quoting it. The memory mailer honours it as
+  Resend does: the same message under a key it already delivered answers
+  that delivery's `messageId` and delivers nothing more, a different message
+  under it is a `MailRefused`, a failed send leaves its key free, and
+  `clear()` forgets the keys.
 - **Attachments, v0.2.0** — `attachments` on a `MailMessage`: each file's bytes as a
   `Uint8Array`, its name and its type. Bytes only — no path, no URL, no
   stream, so a transport never reads a file or fetches a URL for you; a large
@@ -125,8 +132,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   time, one output per locale and the manifest this renderer reads; e-mail
   components in the style of `@nxgt/material-vue`, with shared messages in
   `en` and `fr`; and nine ready e-mails built with your own brand.
-- **A starter that sends, with v0.1.0** — `examples/starter`'s `send.ts` renders its
-  e-mails in `en` and `fr` through `createMailRenderer<MailEmails>` and
-  hands them to `createMemoryMailer()`, run in CI:
-  [`examples/starter`](https://github.com/softistx/nxgt-mail/tree/develop/examples/starter).
-  In the repository; its README says how to start your own from npm.

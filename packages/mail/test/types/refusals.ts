@@ -16,6 +16,7 @@
 import type { DeliveredMail, MailerHarness } from '../../src/conformance/index';
 import {
 	createMemoryMailer,
+	listUnsubscribe,
 	type MailAttachment,
 	MailError,
 	type MailErrorCode,
@@ -266,3 +267,26 @@ const keyed: MailMessage = {
 	idempotencyKey: `order-${orderId}/receipt`,
 };
 void [asText, asPath, untyped, single, numbered, keyed];
+
+// ── 23. A URL object for listUnsubscribe's url ───────────────────────────────
+// The header holds text; a URL object is a mistake in the code.
+// @ts-expect-error — url is a string.
+listUnsubscribe({ url: new URL('https://example.test/unsubscribe') });
+// Must compile: the URL as text, and an address as well — as a message's
+// headers, alone or beside others.
+const unsubscribable: MailMessage = {
+	...rendered,
+	to: 'ada@example.test',
+	headers: listUnsubscribe({
+		url: new URL('https://example.test/unsubscribe').href,
+		mailto: 'unsubscribe@example.test',
+	}),
+};
+const tagged: MailMessage = {
+	...unsubscribable,
+	headers: {
+		...listUnsubscribe({ url: 'https://example.test/u' }),
+		'X-Entity-Ref-ID': 'news-42',
+	},
+};
+void [unsubscribable, tagged];

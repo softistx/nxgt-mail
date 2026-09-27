@@ -10,7 +10,8 @@ How the messages are shaped:
   verification e-mail is a credential, and it never reaches a log through an
   error.
 - **Every message starts with the call you wrote**: `send: …`,
-  `createMailRenderer: …`, `render: …`, `pickLocale: …`, `describeMailer: …`.
+  `listUnsubscribe: …`, `createMailRenderer: …`, `render: …`,
+  `pickLocale: …`, `describeMailer: …`.
   A conformance case that fails starts with `conformance: …`.
 - **A `TypeError` is a wiring mistake**: it comes from how the application
   was put together — or, from `render`, from how the call was written —
@@ -68,6 +69,14 @@ How the messages are shaped:
 - [`send: idempotencyKey was already used for a different message — a key names one e-mail`](#send-idempotencykey-was-already-used-for-a-different-message--a-key-names-one-e-mail)
 - [An e-mail is delivered twice although it has an `idempotencyKey`](#an-e-mail-is-delivered-twice-although-it-has-an-idempotencykey)
 - [`send: the memory mailer was told to fail this send`](#send-the-memory-mailer-was-told-to-fail-this-send)
+
+**Unsubscribe**
+- [`listUnsubscribe: url must be an https: URL without whitespace, <, > or a raw comma`](#listunsubscribe-url-must-be-an-https-url-without-whitespace---or-a-raw-comma)
+- [`listUnsubscribe: mailto must be a bare e-mail address, as unsubscribe@example.com`](#listunsubscribe-mailto-must-be-a-bare-e-mail-address-as-unsubscribeexamplecom)
+- [`listUnsubscribe: options must be an object, as { url }`](#listunsubscribe-options-must-be-an-object-as--url-)
+- [`listUnsubscribe: url must be a string`](#listunsubscribe-url-must-be-a-string)
+- [`listUnsubscribe: mailto must be a string`](#listunsubscribe-mailto-must-be-a-string)
+- [Gmail shows no unsubscribe button](#gmail-shows-no-unsubscribe-button)
 
 **Locale**
 - [`pickLocale: supported must hold at least one locale`](#picklocale-supported-must-hold-at-least-one-locale)
@@ -866,6 +875,153 @@ import { createMemoryMailer } from '@nxgt/mail';
 const mailer = createMemoryMailer();
 beforeEach(() => mailer.clear());
 ```
+
+---
+
+## Unsubscribe
+
+`listUnsubscribe` checks its options **when it is called**, before any
+`send`. A value that is text but not a usable URL or address is a
+`MailRefused` (`code: 'MAIL_REFUSED'`), and it never quotes the value: the
+URL usually carries a per-recipient token, and a token is a credential. A
+value that is not text at all is a `TypeError`, a mistake in the code.
+
+### `listUnsubscribe: url must be an https: URL without whitespace, <, > or a raw comma`
+
+A `MailRefused`, `code: 'MAIL_REFUSED'`.
+
+**When:** `listUnsubscribe({ url })`, with a `url` that is `http:`, `mailto:`,
+relative (`/unsubscribe?token=…`) or empty, or that holds a space, a tab, a
+line break, `<`, `>` or a `,` as it is: typically a token or a list name
+pasted into a template string without being encoded, or an `http:` URL from
+a development configuration.
+**Why:** RFC 8058 accepts only an `https:` URL for one-click unsubscribe. The
+URL is written between `<` and `>` in the `List-Unsubscribe` header, so a
+line break would start a new header and a `>` would end the URL; a raw comma
+is RFC 2369's separator between two URLs, so a mail client would read the
+rest as a second one.
+**Fix:** build the URL with `new URL()` and set each value with
+`searchParams.set`, which percent-encodes it (`,` becomes `%2C`, a space
+`+`), then pass `.href`:
+
+```ts
+import { listUnsubscribe } from '@nxgt/mail';
+
+declare const token: string;
+
+const url = new URL('https://example.com/unsubscribe');
+url.searchParams.set('token', token);
+
+const headers = listUnsubscribe({ url: url.href });
+```
+
+A value in the path is encoded with `encodeURIComponent` (`/u/${encodeURIComponent(list)}`).
+In development, use an `https:` URL as well, or leave the headers out.
+
+### `listUnsubscribe: mailto must be a bare e-mail address, as unsubscribe@example.com`
+
+A `MailRefused`, `code: 'MAIL_REFUSED'`.
+
+**When:** `listUnsubscribe({ url, mailto })`, with a `mailto` that has a
+display name (`Unsubscribe <unsubscribe@example.com>`), a `mailto:` prefix,
+two addresses, or no `@`.
+**Why:** `mailto` is one mailbox, and `listUnsubscribe` writes the
+`<mailto:…>` around it itself; a name, a prefix or a second address would
+break the header or be read as something else.
+**Fix:** pass the address alone:
+
+```ts
+import { listUnsubscribe } from '@nxgt/mail';
+
+declare const token: string;
+
+const headers = listUnsubscribe({
+  url: `https://example.com/unsubscribe?token=${encodeURIComponent(token)}`,
+  mailto: 'unsubscribe@example.com', // ✗ 'mailto:unsubscribe@example.com'
+});
+```
+
+### `listUnsubscribe: options must be an object, as { url }`
+
+A `TypeError`.
+
+**When:** `listUnsubscribe()` with no argument, or with the URL alone:
+typically `listUnsubscribe(url)`.
+**Why:** the options are one object, and `url` is required in it.
+**Fix:** `listUnsubscribe({ url })`.
+
+### `listUnsubscribe: url must be a string`
+
+A `TypeError`.
+
+**When:** `listUnsubscribe({ url })`, with a `url` that is a `URL` object,
+`undefined` or anything else that is not text — from untyped code, since
+TypeScript already refuses a `URL` object (`Type 'URL' is not assignable to
+type 'string'`).
+**Why:** the header holds text; the helper does not guess how to turn a
+value into a URL.
+**Fix:** pass the URL's text:
+
+```ts
+import { listUnsubscribe } from '@nxgt/mail';
+
+const url = new URL('https://example.com/unsubscribe');
+
+const headers = listUnsubscribe({ url: url.href }); // ✗ { url }
+```
+
+### `listUnsubscribe: mailto must be a string`
+
+A `TypeError`.
+
+**When:** `listUnsubscribe({ url, mailto })`, with a `mailto` that is set
+but is not a string — `null`, or an `{ name, address }` object.
+**Why:** `mailto` is one bare address, as text; leave it out for none.
+**Fix:** `mailto: 'unsubscribe@example.com'`, or no `mailto` at all.
+
+### Gmail shows no unsubscribe button
+
+**When:** the message carries both headers from `listUnsubscribe`, yet
+Gmail (or Yahoo) shows no "Unsubscribe" link next to the sender.
+**Why:** the headers make the button possible; the mailbox provider decides
+whether to show it. The usual causes:
+
+- **The sender is not a bulk sender, or its reputation is low.** Gmail shows
+  the button to senders it recognises as sending bulk mail with a good
+  reputation; a new domain, or a handful of test messages, may never get it.
+- **The message is not DKIM-signed by the sending domain**, or the signature
+  does not cover the two headers. RFC 8058 requires a DKIM signature, aligned
+  with the `From` domain, whose `h=` includes `List-Unsubscribe` and
+  `List-Unsubscribe-Post`. Check the received message's original: the
+  `DKIM-Signature` must have `d=` your domain and name both headers.
+- **The endpoint does not unsubscribe on the POST alone.** The client POSTs
+  `List-Unsubscribe=One-Click` to the URL, with no cookie and no session. An
+  answer that is a redirect, a login page, a confirmation page, or an error
+  for a `POST` (a route that only answers `GET`) is a failed unsubscribe.
+- **The e-mail is transactional** — a sign-in code, a password reset, a
+  receipt. Gmail does not offer to unsubscribe from those, and they should
+  not carry the headers: nobody unsubscribes from their own password reset.
+
+**Fix:** set the headers only on e-mails a recipient subscribed to, send
+from a domain that signs with DKIM, and make the URL unsubscribe on the
+`POST` itself:
+
+```ts
+declare function unsubscribeByToken(token: string): Promise<void>; // yours
+
+// POST https://example.com/unsubscribe?token=…, body List-Unsubscribe=One-Click
+async function unsubscribe(request: Request): Promise<Response> {
+  const token = new URL(request.url).searchParams.get('token');
+  if (request.method !== 'POST' || token === null) {
+    return new Response(null, { status: 400 });
+  }
+  await unsubscribeByToken(token); // no login, no confirmation
+  return new Response(null, { status: 200 }); // never a redirect
+}
+```
+
+A `GET` on the same URL (a person following the link) may show a page that
+asks to confirm; the `POST` must not.
 
 ---
 
