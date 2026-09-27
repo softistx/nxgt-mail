@@ -58,6 +58,11 @@ Nothing yet. A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **A placeholder where a number is computed fails the build, v0.4.0** —
+  `NxAvatar`'s `size`, `NxLayout`'s `width` and `NxAvatarGroup`'s `max`
+  given a placeholder failed silently (a truncated style, every avatar
+  hidden); they now fail with the message the other computed props give. A
+  spec checks every prop of every component against a placeholder.
 - **Right-to-left languages, v0.4.0** — `NxLayout` writes `dir` on `<html>`,
   the body and the wrapper table, from `@nxgt/mail-i18n`'s `dir` (or a small
   built-in fallback list of right-to-left scripts). `NxAlert`, `NxCompareCard`,
@@ -107,21 +112,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   template, the brand (name, link, logo by absolute URL) in the layout's
   header and footer, and a wrong option refused where the config is written.
   A project's `components/nx-button.vue` replaces ours by name.
-- **The first set of components, in the style of `@nxgt/material-vue`, v0.1.0** —
-  `NxLayout`, `NxTypography`, `NxButton`, `NxLink`, `NxSeparator`, `NxCard`
-  and its parts, `NxBadge`, `NxAlert`, `NxBanner`, `NxStatusIndicator`,
-  `NxSummaryData`, and `NxCode` for a one-time code: material-vue's names with
-  the `Nx` prefix and its `variant`, `color` and `size` props, rendered with
-  tables and inlined styles, and checked in the package's tests against the
-  support data of Gmail, Outlook and Apple Mail.
-- **The theme, `theme.css`, v0.1.0** — material-vue's light tokens, overridden by name
-  with `ui({ theme: { 'color-primary': '#0f766e' } })`; its tints
-  (`bg-primary-15`) are flattened to plain colours, and follow a colour you
-  override.
-- **Shared messages, v0.1.0** — `uiCatalogues`: `common.greeting`,
-  `common.footer.why`, `common.footer.ignore`, `common.avatarGroup.more`,
-  `common.timeline.empty`, `common.metrics.ofTarget`,
-  `common.metrics.thisPeriod`, `common.metrics.lastPeriod` and
-  `common.seeAlso` in `en` and `fr`, given to
-  `@nxgt/mail-i18n` as `i18n({ catalogues: [uiCatalogues] })`, and overridden
-  key by key by your own `locales/<locale>.json`.

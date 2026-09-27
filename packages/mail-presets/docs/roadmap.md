@@ -79,8 +79,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
 - **Overriding a preset, v0.1.0** — a template of the same name in your project's
   `emails/` replaces a preset, and your `locales/<locale>.json` overrides any
   of its messages key by key.
-- **Samples, v0.1.0** — every preset built in `en` and `fr` with the brand `Acme` and
-  the default theme, in the repository's
-  [`samples/`](https://github.com/softistx/nxgt-mail/tree/develop/packages/mail-presets/samples),
-  checked against a fresh build, so you can see an e-mail before installing
-  anything.
