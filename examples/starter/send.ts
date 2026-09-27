@@ -15,20 +15,37 @@ import type { MailEmails } from './generated/mail'; // written by each `maizzle 
 const mails = createMailRenderer<MailEmails>({ dir: 'dist' }); // reads dist/ now, or throws
 const mailer = createMemoryMailer();
 
+// How long the link or the code stays valid, in the recipient's language
+// ('1 hour', '1 heure'): the build cannot write a value it does not have.
+const duration = (locale: string, value: number, unit: 'minute' | 'hour') =>
+	new Intl.NumberFormat(locale, {
+		style: 'unit',
+		unit,
+		unitDisplay: 'long',
+	}).format(value);
+
 for (const locale of mails.locales) {
 	await mailer.send({
 		to: { name: 'Ada Lovelace', address: 'ada@example.com' },
 		from: 'noreply@acme.example',
 		...mails.render(
 			'verify-email',
-			{ name: 'Ada <3', link: 'https://acme.example/verify?token=abc' },
+			{
+				name: 'Ada <3',
+				link: 'https://acme.example/verify?token=abc',
+				expiresIn: duration(locale, 15, 'minute'),
+			},
 			{ locale },
 		),
 	});
 	await mailer.send({
 		to: 'ada@example.com',
 		from: 'noreply@acme.example',
-		...mails.render('sign-in-code', { code: '621739' }, { locale }),
+		...mails.render(
+			'sign-in-code',
+			{ code: '621739', expiresIn: duration(locale, 1, 'hour') },
+			{ locale },
+		),
 	});
 }
 

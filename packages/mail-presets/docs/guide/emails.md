@@ -31,12 +31,12 @@ export default defineMailConfig({
 
 | E-mail | Sent when | Placeholders | A URL |
 | --- | --- | --- | --- |
-| [`verify-email`](#verify-email) | An address must be confirmed as the user's | `link`, `name` | `link` |
-| [`reset-password`](#reset-password) | A user asked to reset their password | `link`, `name` | `link` |
+| [`verify-email`](#verify-email) | An address must be confirmed as the user's | `expiresIn`, `link`, `name` | `link` |
+| [`reset-password`](#reset-password) | A user asked to reset their password | `expiresIn`, `link`, `name` | `link` |
 | [`password-changed`](#password-changed) | A password was just changed | `link`, `name` | `link` |
 | [`email-changed`](#email-changed) | An account's address was changed — sent to the former one | `link`, `name`, `newEmail` | `link` |
-| [`sign-in-code`](#sign-in-code) | A user signs in with a one-time code | `code` | — |
-| [`magic-link`](#magic-link) | A user signs in with a one-time link | `link` | `link` |
+| [`sign-in-code`](#sign-in-code) | A user signs in with a one-time code | `code`, `expiresIn` | — |
+| [`magic-link`](#magic-link) | A user signs in with a one-time link | `expiresIn`, `link` | `link` |
 | [`new-sign-in`](#new-sign-in) | An account was signed in from a device not seen before | `device`, `link`, `location`, `name`, `time` | `link` |
 | [`welcome`](#welcome) | An account was just created | `link`, `name` | `link` |
 | [`invitation`](#invitation) | Someone invites the recipient to an organisation | `inviter`, `link`, `organization` | `link` |
@@ -46,6 +46,32 @@ The placeholders are the manifest's `variables`, and the URL ones its
 and the others with text, which the renderer HTML-escapes. `{brand}` in a
 message is not a placeholder: it is your `ui({ brand })` name, written at
 build time.
+
+## `expiresIn`: how long the link or the code lives
+
+`verify-email`, `reset-password`, `magic-link` and `sign-in-code` send
+something that stops working after a while, and say so:
+`This link expires in {{ expiresIn }}.` under the button, or
+`This code expires in {{ expiresIn }}.` under the code. `expiresIn` is
+required: the server that made the token knows its lifetime, the build does
+not. Pass it as text already written in the recipient's language — the
+renderer writes a value as is and translates nothing:
+
+```ts
+const locale = pickLocale(user.locale, mails.locales, 'en');
+const minutes = new Intl.NumberFormat(locale, { style: 'unit', unit: 'minute', unitDisplay: 'long' });
+
+mails.render('sign-in-code', { code, expiresIn: minutes.format(10) }, { locale });
+// en: This code expires in 10 minutes.   fr: Ce code expire dans 10 minutes.
+```
+
+A number is written as is (`This link expires in 3600.`), so format it.
+Without `expiresIn`, the call does not compile against `MailEmails`, and
+`render` throws
+[`render: <email> needs the variable expiresIn`](../troubleshooting.md#render-reset-password-needs-the-variable-expiresin).
+To say nothing about expiry, replace the template (see
+[Replacing a template](presets.md#replacing-a-template)): a message override cannot drop the
+argument, because the template still passes it.
 
 ## What they share
 
@@ -59,6 +85,8 @@ typography does, so a line never starts with `:`. Keep it in a `fr` override.
 
 | Key | `en` | `fr` | Used by |
 | --- | --- | --- | --- |
+| `presets.codeExpires` | This code expires in {expiresIn}. | Ce code expire dans {expiresIn}. | `sign-in-code` |
+| `presets.linkExpires` | This link expires in {expiresIn}. | Ce lien expire dans {expiresIn}. | `verify-email`, `reset-password`, `magic-link` |
 | `presets.linkFallback` | If the button does not work, open this link: | Si le bouton ne fonctionne pas, ouvrez ce lien : | every preset with a `link` |
 | `presets.notYou` | If this was not you, secure your account now. | Si ce n'était pas vous, sécurisez votre compte dès maintenant. | `password-changed`, `email-changed`, `new-sign-in` |
 | `common.greeting` | Hello {name}, | Bonjour {name}, | every preset but `sign-in-code`, `magic-link` and `invitation` |
@@ -80,8 +108,8 @@ client shows after the subject in the inbox.
 [In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-presets@0.1.0/packages/mail-presets/previews/fr/verify-email.png)
 
 To confirm that an address belongs to the user, after they sign up or add
-it. A title, the greeting, the body, the **Confirm my address** button, the
-link as text, and `common.footer.ignore`.
+it. A title, the greeting, the body, the **Confirm my address** button,
+`presets.linkExpires`, the link as text, and `common.footer.ignore`.
 
 | Key | `en` | `fr` |
 | --- | --- | --- |
@@ -91,7 +119,8 @@ link as text, and `common.footer.ignore`.
 | `verifyEmail.body` | Confirm that this address is yours to finish setting up your {brand} account. | Confirmez que cette adresse est bien la vôtre pour terminer la création de votre compte {brand}. |
 | `verifyEmail.action` | Confirm my address | Confirmer mon adresse |
 
-Placeholders: `name`, `link` (a URL). Samples:
+Placeholders: `name`, `link` (a URL), `expiresIn` (a duration, as text).
+Samples:
 [en](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/en/verify-email.html) ·
 [fr](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/fr/verify-email.html).
 
@@ -102,8 +131,8 @@ Placeholders: `name`, `link` (a URL). Samples:
 [In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-presets@0.1.0/packages/mail-presets/previews/fr/reset-password.png)
 
 To let a user choose a new password. A title, the greeting, the body, the
-**Choose a new password** button, the link as text, and
-`common.footer.ignore`.
+**Choose a new password** button, `presets.linkExpires`, the link as text,
+and `common.footer.ignore`.
 
 | Key | `en` | `fr` |
 | --- | --- | --- |
@@ -113,7 +142,8 @@ To let a user choose a new password. A title, the greeting, the body, the
 | `resetPassword.body` | Someone asked to reset the password of your {brand} account. Choose a new one with the button below. | Quelqu'un a demandé à réinitialiser le mot de passe de votre compte {brand}. Choisissez-en un nouveau avec le bouton ci-dessous. |
 | `resetPassword.action` | Choose a new password | Choisir un nouveau mot de passe |
 
-Placeholders: `name`, `link` (a URL). Samples:
+Placeholders: `name`, `link` (a URL), `expiresIn` (a duration, as text).
+Samples:
 [en](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/en/reset-password.html) ·
 [fr](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/fr/reset-password.html).
 
@@ -171,8 +201,8 @@ Samples:
 [In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-presets@0.1.0/packages/mail-presets/previews/fr/sign-in-code.png)
 
 A one-time code to type in, for a sign-in without a password or a second
-factor. A title, the body, the code in a large block (`<NxCode>`), and
-`signInCode.ignore`. No greeting and no link.
+factor. A title, the body, the code in a large block (`<NxCode>`),
+`presets.codeExpires`, and `signInCode.ignore`. No greeting and no link.
 
 | Key | `en` | `fr` |
 | --- | --- | --- |
@@ -182,7 +212,7 @@ factor. A title, the body, the code in a large block (`<NxCode>`), and
 | `signInCode.body` | Enter this code to sign in to {brand}. It works once. | Saisissez ce code pour vous connecter à {brand}. Il ne fonctionne qu'une fois. |
 | `signInCode.ignore` | If you did not try to sign in, you can ignore this e-mail: no one can sign in without the code. | Si vous n'avez pas essayé de vous connecter, vous pouvez ignorer cet e-mail : personne ne peut se connecter sans ce code. |
 
-Placeholders: `code`, in the body and **in the subject** — the manifest's
+Placeholders: `expiresIn` (a duration, as text), and `code`, in the body and **in the subject** — the manifest's
 subject is `Your sign-in code: {{ code }}`, filled like the body, so the code
 shows in an inbox's list. Write a `signInCode.subject` without `{code}` in
 your catalogues to keep it out:
@@ -208,8 +238,8 @@ Samples:
 [In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-presets@0.1.0/packages/mail-presets/previews/fr/magic-link.png)
 
 A one-time link that signs the user in. A title with the brand, the body,
-the **Sign in** button, the link as text, and `common.footer.ignore`. No
-greeting.
+the **Sign in** button, `presets.linkExpires`, the link as text, and
+`common.footer.ignore`. No greeting.
 
 | Key | `en` | `fr` |
 | --- | --- | --- |
@@ -219,7 +249,7 @@ greeting.
 | `magicLink.body` | Click the button below to sign in. The link works once. | Cliquez sur le bouton ci-dessous pour vous connecter. Le lien ne fonctionne qu'une fois. |
 | `magicLink.action` | Sign in | Me connecter |
 
-Placeholders: `link` (a URL). Samples:
+Placeholders: `link` (a URL), `expiresIn` (a duration, as text). Samples:
 [en](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/en/magic-link.html) ·
 [fr](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/fr/magic-link.html).
 

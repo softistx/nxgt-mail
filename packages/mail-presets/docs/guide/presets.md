@@ -261,7 +261,7 @@ Error: i18n: en: verify-email calls t('verifyEmail.preheader'), which is not a k
 
 The presets are written in `en` and `fr`. A project that builds another
 locale writes, in its catalogue for it, every key the fallback locale has:
-the three `common` keys, the two `presets` keys, and the group of each preset
+the three `common` keys, the four `presets` keys, and the group of each preset
 it builds. Otherwise the build fails on the first one missing:
 
 ```text
@@ -281,6 +281,8 @@ With `presets({ only: ['sign-in-code'] })` and `locales: ['en', 'fr', 'de']`:
 		}
 	},
 	"presets": {
+		"codeExpires": "Dieser Code läuft in {expiresIn} ab.",
+		"linkExpires": "Dieser Link läuft in {expiresIn} ab.",
 		"linkFallback": "Wenn die Schaltfläche nicht funktioniert, öffnen Sie diesen Link:",
 		"notYou": "Wenn Sie das nicht waren, sichern Sie jetzt Ihr Konto."
 	},
@@ -311,8 +313,8 @@ import built from './dist/mail-manifest.json';
 
 const manifest = built as Manifest;
 
-test('the verification e-mail takes a name and a link', () => {
-	expect(manifest.emails['verify-email']?.variables).toEqual(['link', 'name']);
+test('the verification e-mail takes a name, a link and how long it lives', () => {
+	expect(manifest.emails['verify-email']?.variables).toEqual(['expiresIn', 'link', 'name']);
 	expect(manifest.emails['verify-email']?.urlVariables).toEqual(['link']);
 });
 

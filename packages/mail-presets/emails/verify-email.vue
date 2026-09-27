@@ -5,6 +5,7 @@
     <NxTypography>{{ t('verifyEmail.body', { brand: brand.name }) }}</NxTypography>
     <NxButton :href="placeholder('link')">{{ t('verifyEmail.action') }}</NxButton>
     <Spacer class="h-6" />
+    <NxTypography variant="body-small">{{ t('presets.linkExpires', { expiresIn: placeholder('expiresIn') }) }}</NxTypography>
     <NxTypography variant="body-small" class="text-muted-foreground">
       {{ t('presets.linkFallback') }}
       <NxLink :href="placeholder('link')">{{ placeholder('link') }}</NxLink>

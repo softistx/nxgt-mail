@@ -5,7 +5,7 @@
     <NxTypography>{{ t('verifyEmail.body', { brand: brand.name }) }}</NxTypography>
     <NxButton :href="placeholder('link')">{{ t('verifyEmail.action') }}</NxButton>
     <Spacer height="24px" />
-    <NxAlert variant="warning" :title="t('verifyEmail.expires', { minutes: 15 })" />
+    <NxAlert variant="warning" :title="t('verifyEmail.expires', { expiresIn: placeholder('expiresIn') })" />
     <Spacer height="24px" />
     <NxTypography variant="body-small">
       {{ t('verifyEmail.linkFallback') }}

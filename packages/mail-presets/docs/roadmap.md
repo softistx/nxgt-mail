@@ -5,7 +5,14 @@ are no dates here, and the version something shipped in is the only number.
 
 ## Now
 
-Nothing between releases.
+- **How long a link or a code lives** — `verify-email`, `reset-password`,
+  `magic-link` and `sign-in-code` take a required `expiresIn`, a duration
+  your code writes in the recipient's language (`'1 hour'`, `'1 heure'`), and
+  say `This link expires in {{ expiresIn }}.` or
+  `This code expires in {{ expiresIn }}.`, in the HTML and the text part.
+  Breaking: a send without it no longer compiles against `MailEmails`, and
+  throws [`render: <email> needs the variable expiresIn`](troubleshooting.md#render-reset-password-needs-the-variable-expiresin).
+  Built, not yet published.
 
 ## Next
 

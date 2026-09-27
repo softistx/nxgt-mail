@@ -71,7 +71,7 @@ dist/
   en/verify-email.txt
   en/sign-in-code.html
   en/sign-in-code.txt
-  fr/verify-email.html      Bonjour {{ name }}, … Le lien expire dans 15 minutes.
+  fr/verify-email.html      Bonjour {{ name }}, … Le lien expire dans {{ expiresIn }}.
   fr/…
   mail-manifest.json        each e-mail's placeholders, and its subject per locale
 ```
@@ -98,7 +98,7 @@ import { createMailRenderer } from '@nxgt/mail/renderer';
 import type { MailEmails } from './generated/mail';
 
 const mails = createMailRenderer<MailEmails>({ dir: 'dist', getLanguage: () => user.locale });
-await mailer.send({ to, from, ...mails.render('verify-email', { name, link }) });
+await mailer.send({ to, from, ...mails.render('verify-email', { name, link, expiresIn: '15 minutes' }) });
 ```
 
 In production, `mailer` comes from
@@ -108,6 +108,12 @@ with the server. `generated/mail.ts` is written by each build and
 git-ignored, so `typecheck` builds first: with it,
 `mails.render('verify-emial', …)`, a missing `link` or a number for it do
 not compile.
+
+`expiresIn` is how long the link or the code stays valid, written in the
+recipient's language (`'15 minutes'`, `'1 heure'`) by the code that sends:
+the server knows the lifetime of the token it made, and the build cannot
+translate a value it does not have. `send.ts` writes it with
+`Intl.NumberFormat(locale, { style: 'unit', unit: 'hour', unitDisplay: 'long' })`.
 
 ## Differences from the official starter
 
