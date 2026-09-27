@@ -174,6 +174,7 @@ A string is only an address: `'Acme <noreply@acme.test>'` is refused. Write
 | `headers` | `headers`, copied — `List-Unsubscribe` from [`listUnsubscribe`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/guide/sending.md#one-click-unsubscribe) included, which your relay or nodemailer's `dkim` option must DKIM-sign |
 | `idempotencyKey` | nothing: ignored — see [below](#the-idempotency-key) |
 | `tags` | nothing: ignored — SMTP has no tags. Still checked by `checkMessage` |
+| `scheduledAt` | nothing is sent: the transport refuses the message instead — see [below](#scheduling) |
 | `attachments`, each `{ filename, content, contentType }` | `attachments`, each `{ filename, content: Buffer, contentType }` — the bytes copied into a `Buffer`, never a `path` or an `href`; the e-mail is then `multipart/mixed`. Left out when the list is empty |
 | an attachment's `contentId` | its `cid`: nodemailer writes the `Content-ID` header, marks the file `inline` and puts it in a `multipart/related` beside the HTML. Left out when the attachment has none |
 | — | `disableFileAccess: true`, `disableUrlAccess: true`: a part or an attachment is never read from a file or fetched from a URL |
@@ -232,6 +233,36 @@ await mailer.send({
 
 On any other server, that header travels with the e-mail to the recipient:
 set it only when the relay is Resend's.
+
+## Scheduling
+
+SMTP has no way to schedule a send: the server takes the message the moment
+it is handed over, and there is no field, no header and no later step that
+delays it. A message that carries `scheduledAt` is therefore refused, before
+`transporter.sendMail` is ever called:
+
+```ts
+import { MailRefused } from '@nxgt/mail';
+
+const error = await mailer
+	.send({
+		to: 'ada@example.com',
+		subject: 'Your trial ends soon',
+		html: '<p>Your trial ends soon.</p>',
+		text: 'Your trial ends soon.',
+		scheduledAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+	})
+	.catch((e: unknown) => e);
+
+error instanceof MailRefused; // true: send: scheduledAt is not supported — SMTP has no way to schedule a send, and sending it now would be wrong
+```
+
+This is unlike `idempotencyKey` and `tags`, which SMTP has no room for and the
+transport silently ignores: sending the e-mail now instead of refusing it
+would be exactly the mistake `scheduledAt` exists to prevent. Schedule
+through a transport that supports it (`@nxgt/mail-resend`), or hold the
+e-mail yourself and send it through SMTP, with no `scheduledAt`, when the
+moment comes. Needs `@nxgt/mail` 0.7 or later.
 
 ## Attachments
 

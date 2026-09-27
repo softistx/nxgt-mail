@@ -15,7 +15,10 @@
  * peer, what Resend answered as the `cause`. Nothing is retried; a message's
  * `idempotencyKey` is sent as Resend's `Idempotency-Key`, so a retry the
  * caller makes delivers once. A message's `tags` are sent as Resend's `tags`,
- * to group sends in its dashboard and webhooks.
+ * to group sends in its dashboard and webhooks. A message's `scheduledAt` is
+ * sent as Resend's `scheduled_at`, ISO 8601: Resend still answers an id right
+ * away, and sends the e-mail itself later. `checkMessage`, called from its
+ * `@nxgt/mail` peer, already holds it to Resend's own 30-day limit.
  */
 
 import {
@@ -170,6 +173,12 @@ function bodyOf(
 						name,
 						value,
 					})),
+				}),
+		...(message.scheduledAt === undefined
+			? {}
+			: {
+					// biome-ignore lint/style/useNamingConvention: Resend's wire format names the field, not us.
+					scheduled_at: message.scheduledAt.toISOString(),
 				}),
 	};
 }

@@ -24,6 +24,18 @@ export interface DeliveredMail {
 	 * transport that leaves it out.
 	 */
 	readonly attachments?: readonly MailAttachment[];
+	/**
+	 * When the message it delivered carried `scheduledAt`: the moment read
+	 * back from the receiving end (Resend's `scheduled_at` re-parsed, the
+	 * memory outbox's own record). Absent for a message sent with no
+	 * `scheduledAt`.
+	 *
+	 * Optional, so a harness written before scheduling still compiles; but its
+	 * **absence on a message that was scheduled is reported, never passed
+	 * over**: `send.scheduled` fails on a harness that reads none back, until
+	 * it reads it back or skips the case with a reason.
+	 */
+	readonly scheduledAt?: Date;
 }
 
 /**

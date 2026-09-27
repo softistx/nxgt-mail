@@ -51,6 +51,15 @@ const CID_URL_END = /[\s,]/;
 const IDEMPOTENCY_KEY = /^[\x21-\x7E]{1,256}$/;
 // A tag's name and value: what Resend and Amazon SES both take.
 const TAG = /^[A-Za-z0-9_-]{1,256}$/;
+// A caller's clock and the transport's are never perfectly in sync: a
+// scheduledAt a few seconds in the past is still "now", not a mistake.
+const SCHEDULE_SKEW_MS = 60_000;
+// Resend's own limit: "Emails can be scheduled up to 30 days in advance."
+// https://resend.com/docs/dashboard/emails/schedule-email
+// checkMessage holds every transport to it, so a message built for one works
+// on another.
+const SCHEDULE_MAX_DAYS = 30;
+const SCHEDULE_MAX_MS = SCHEDULE_MAX_DAYS * 24 * 60 * 60 * 1000;
 
 /** Every recipient of a message, as bare addresses, in order. */
 export function recipientsOf(message: MailMessage): string[] {
@@ -195,7 +204,10 @@ function checkInlineImages(message: MailMessage): void {
  *   2392 says;
  * - `idempotencyKey`, when present, is 1 to 256 visible ASCII characters;
  * - `tags`, when present, is an object whose every name and value is 1 to 256
- *   ASCII letters, digits, `_` or `-`.
+ *   ASCII letters, digits, `_` or `-`;
+ * - `scheduledAt`, when present, is a valid `Date`, no earlier than now
+ *   (a small tolerance for clock skew) and no more than 30 days ahead —
+ *   Resend's own limit, held for every transport.
  */
 export function checkMessage(message: MailMessage): void {
 	if (typeof message !== 'object' || message === null) {
@@ -263,6 +275,29 @@ export function checkMessage(message: MailMessage): void {
 	}
 
 	if (message.tags !== undefined) checkTags(message.tags);
+
+	if (message.scheduledAt !== undefined) checkScheduledAt(message.scheduledAt);
+}
+
+/**
+ * Refuses `scheduledAt` unless it is a valid `Date`, no earlier than now
+ * (within {@link SCHEDULE_SKEW_MS} for clock skew), and no more than
+ * {@link SCHEDULE_MAX_DAYS} ahead — Resend's own limit, held for every
+ * transport so a message built for one works on another.
+ */
+function checkScheduledAt(scheduledAt: Date): void {
+	if (!(scheduledAt instanceof Date) || Number.isNaN(scheduledAt.getTime())) {
+		throw new MailRefused('send: scheduledAt must be a valid Date');
+	}
+	const delta = scheduledAt.getTime() - Date.now();
+	if (delta < -SCHEDULE_SKEW_MS) {
+		throw new MailRefused('send: scheduledAt is in the past');
+	}
+	if (delta > SCHEDULE_MAX_MS) {
+		throw new MailRefused(
+			`send: scheduledAt is more than ${SCHEDULE_MAX_DAYS} days ahead — Resend's own limit`,
+		);
+	}
 }
 
 /** Refuses `tags` unless each name and value is 1 to 256 of `[A-Za-z0-9_-]`. */

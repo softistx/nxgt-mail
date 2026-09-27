@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { MailFailure } from '../errors';
+import { MailFailure, MailRefused } from '../errors';
 import { createMemoryMailer } from '../memory';
 import { allMailerCases, failureCases } from './cases/index';
 import { describeMailer, MAILER_SKIP_REASONS, runMailerCase } from './describe';
@@ -551,6 +551,69 @@ describe('the suite fails a bad transport', () => {
 				runMailerCase(byId('send.refusesAttachmentPath'), unchecked),
 			),
 		).toContain('a send with an attachment named with a path resolved');
+	});
+
+	it('fails a transport that drops scheduledAt and sends now instead of honouring or refusing it', async () => {
+		const dropping: MailerHarness = {
+			async open() {
+				const opened = await referenceMailerHarness().open();
+				return {
+					...opened,
+					mailer: {
+						async send(message) {
+							const { scheduledAt: _, ...rest } = message;
+							return opened.mailer.send(rest);
+						},
+					},
+				};
+			},
+		};
+		expect(
+			await failureOf(runMailerCase(byId('send.scheduled'), dropping)),
+		).toContain("the harness's delivered() reads back no scheduledAt");
+	});
+
+	it('fails a harness that reads back no scheduledAt, saying so, rather than passing', async () => {
+		const older = readingBack(({ scheduledAt: _, ...mail }) => mail);
+		expect(
+			await failureOf(runMailerCase(byId('send.scheduled'), older)),
+		).toContain(
+			"the harness's delivered() reads back no scheduledAt — read it back from the receiving end, or skip send.scheduled with the reason",
+		);
+	});
+
+	it('fails a transport that delivers a scheduledAt other than the one sent', async () => {
+		const rewritten = readingBack((mail) => ({
+			...mail,
+			scheduledAt: new Date((mail.scheduledAt?.getTime() ?? 0) + 1000),
+		}));
+		expect(
+			await failureOf(runMailerCase(byId('send.scheduled'), rewritten)),
+		).toContain(
+			'the message was not delivered with the scheduledAt it was sent with',
+		);
+	});
+
+	it('accepts a transport that refuses a scheduled send it cannot honour', async () => {
+		const refusing: MailerHarness = {
+			async open() {
+				const opened = await referenceMailerHarness().open();
+				return {
+					...opened,
+					mailer: {
+						async send(message) {
+							if (message.scheduledAt !== undefined) {
+								throw new MailRefused('send: scheduling is not supported');
+							}
+							return opened.mailer.send(message);
+						},
+					},
+				};
+			},
+		};
+		expect(await runMailerCase(byId('send.scheduled'), refusing)).toEqual({
+			passed: true,
+		});
 	});
 
 	it('fails a failure case when the harness has no faults and did not say so', async () => {

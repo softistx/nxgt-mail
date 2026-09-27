@@ -28,6 +28,7 @@ A `send: …` message not on this page comes from `checkMessage` in
 - [`send: the SMTP server refused <n> of <total> recipients, and may have delivered to the others`](#send-the-smtp-server-refused-n-of-total-recipients-and-may-have-delivered-to-the-others)
 - [`send: the SMTP server could not take <n> of <total> recipients, and may have delivered to the others`](#send-the-smtp-server-could-not-take-n-of-total-recipients-and-may-have-delivered-to-the-others)
 - [`send: from is missing — give the message a from, or createSmtpMailer a default one`](#send-from-is-missing--give-the-message-a-from-or-createsmtpmailer-a-default-one)
+- [`send: scheduledAt is not supported — SMTP has no way to schedule a send, and sending it now would be wrong`](#send-scheduledat-is-not-supported--smtp-has-no-way-to-schedule-a-send-and-sending-it-now-would-be-wrong)
 
 **Wiring**
 - [`createSmtpMailer: options must be an object, as { transporter }`](#createsmtpmailer-options-must-be-an-object-as--transporter-)
@@ -186,6 +187,27 @@ const mailer = createSmtpMailer({
 	transporter: nodemailer.createTransport(process.env.SMTP_URL ?? 'smtp://localhost:1025'),
 	from: { name: 'Acme', address: 'noreply@acme.test' },
 });
+```
+
+### `send: scheduledAt is not supported — SMTP has no way to schedule a send, and sending it now would be wrong`
+
+A `MailRefused`, thrown before the transporter is called.
+
+**When:** the message carries `scheduledAt`.
+
+**Why:** SMTP takes the message the moment it is handed over — there is no
+field, no header and no later step that delays it. Sending it now instead of
+refusing it would silently do the opposite of what `scheduledAt` asked for.
+
+**Fix:** schedule through a transport that supports it, `@nxgt/mail-resend`;
+or hold the e-mail yourself — a job scheduled for that moment — and send it
+through SMTP, with no `scheduledAt`, when the moment comes:
+
+```ts
+declare const sendAt: Date;
+declare function scheduleJob(at: Date, run: () => Promise<void>): void;
+
+scheduleJob(sendAt, () => mailer.send({ ...message /* no scheduledAt */ }));
 ```
 
 ## Wiring

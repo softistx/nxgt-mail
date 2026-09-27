@@ -473,6 +473,52 @@ describe('checkMessage', () => {
 		);
 	});
 
+	describe('scheduledAt', () => {
+		it('accepts a Date up to 30 days ahead, and a few seconds in the past', () => {
+			expect(() =>
+				checkMessage({
+					...message,
+					scheduledAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+				}),
+			).not.toThrow();
+			expect(() =>
+				checkMessage({ ...message, scheduledAt: new Date(Date.now() - 1000) }),
+			).not.toThrow();
+			expect(() =>
+				checkMessage({ ...message, scheduledAt: new Date() }),
+			).not.toThrow();
+		});
+
+		it('refuses a value that is not a valid Date', () => {
+			expect(refusal({ ...message, scheduledAt: '2027-01-01' }).message).toBe(
+				'send: scheduledAt must be a valid Date',
+			);
+			expect(
+				refusal({ ...message, scheduledAt: new Date(Number.NaN) }).message,
+			).toBe('send: scheduledAt must be a valid Date');
+		});
+
+		it('refuses a date in the past, beyond the clock-skew tolerance', () => {
+			expect(
+				refusal({
+					...message,
+					scheduledAt: new Date(Date.now() - 5 * 60 * 1000),
+				}).message,
+			).toBe('send: scheduledAt is in the past');
+		});
+
+		it("refuses a date more than 30 days ahead — Resend's limit", () => {
+			expect(
+				refusal({
+					...message,
+					scheduledAt: new Date(Date.now() + 31 * 24 * 60 * 60 * 1000),
+				}).message,
+			).toBe(
+				"send: scheduledAt is more than 30 days ahead — Resend's own limit",
+			);
+		});
+	});
+
 	it('never puts a refused file name in the message', () => {
 		const error = refusal({
 			...message,

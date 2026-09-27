@@ -55,6 +55,7 @@ export function startResend() {
 				html: string;
 				text: string;
 				attachments?: { filename: string; content: string; content_type: string; content_id?: string }[];
+				scheduled_at?: string;
 			};
 			delivered.push({
 				to: body.to.map(addressOf),
@@ -68,6 +69,8 @@ export function startResend() {
 					contentType: file.content_type,
 					...(file.content_id === undefined ? {} : { contentId: file.content_id }), // an inline image
 				})),
+				// scheduled_at is ISO 8601: parsed back into a Date for send.scheduled.
+				...(body.scheduled_at === undefined ? {} : { scheduledAt: new Date(body.scheduled_at) }),
 			});
 			return Response.json({ id: `resend-${delivered.length}` });
 		},
@@ -120,11 +123,12 @@ describeMailer({
 });
 ```
 
-All sixteen cases pass: a send answers `SentMail`, the message arrives byte for
+All seventeen cases pass: a send answers `SentMail`, the message arrives byte for
 byte (accents, an emoji, `&amp;` in a link), every recipient is delivered to,
 a hostile name reaches only its own address, an attachment arrives byte for
 byte with its name and type, an inline image arrives with its content id, a message with an idempotency key is delivered
-without the key written in it, a message with tags is delivered without a tag written in it, the refusals — a `Bcc` among the custom headers
+without the key written in it, a message with tags is delivered without a tag written in it, a message scheduled
+a day ahead arrives with `scheduled_at` read back as its `scheduledAt`, the refusals — a `Bcc` among the custom headers
 and an attachment named with a path included — and the three
 failure cases — an outage is a `MailFailure` with its `cause` and one attempt,
 a refusal a `MailRefused`, and the next send goes through.
@@ -150,6 +154,8 @@ add what the suite does not ask of every transport:
   `TimeoutError` as `cause` — and so does a `fetch` that ignores the signal
   and never settles; an answer whose body never ends answers
   `{ messageId: null }` once the timeout passes;
+- `scheduledAt` is sent as `scheduled_at`, ISO 8601, and left out of a
+  message without one;
 - no message — the error's nor its cause's — holds the key, a recipient's
   address or what Resend said;
 - the request: `POST /emails`, the bearer key, JSON, a quoted name,

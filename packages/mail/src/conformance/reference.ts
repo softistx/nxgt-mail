@@ -20,6 +20,9 @@ export function referenceMailerHarness(): MailerHarness {
 						html: mail.html,
 						text: mail.text,
 						attachments: mail.attachments ?? [],
+						...(mail.scheduledAt === undefined
+							? {}
+							: { scheduledAt: mail.scheduledAt }),
 					}));
 				},
 				faults: {

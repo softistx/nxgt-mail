@@ -35,6 +35,10 @@ Nothing planned yet. Say what you need in an issue.
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **Scheduled send refused, v0.5.0** — a message's `scheduledAt` is refused
+  with `MailRefused` — `send: scheduledAt is not supported — SMTP has no way
+  to schedule a send, and sending it now would be wrong` — rather than sent
+  at once. The `@nxgt/mail` peer moves to `^0.7.0`.
 - **Inline images (`cid:`), v0.4.0** — an attachment's `contentId` is sent as
   nodemailer's `cid`: a `Content-ID` header, `inline`, in a
   `multipart/related` beside the HTML, so the HTML shows it as `<img

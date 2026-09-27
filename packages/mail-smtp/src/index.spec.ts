@@ -314,6 +314,25 @@ describe('createSmtpMailer, beyond the suite', () => {
 		);
 	});
 
+	test('refuses a scheduled message, before any hand-over: SMTP cannot schedule', async () => {
+		const sendMail = () => {
+			throw new Error('the transporter must not be called');
+		};
+		const error = await createSmtpMailer({ transporter: { sendMail } })
+			.send({
+				...sampleMessage,
+				scheduledAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+			})
+			.then(
+				() => null,
+				(caught: unknown) => caught,
+			);
+		expect(error).toBeInstanceOf(MailRefused);
+		expect((error as MailRefused).message).toBe(
+			'send: scheduledAt is not supported — SMTP has no way to schedule a send, and sending it now would be wrong',
+		);
+	});
+
 	test('reads no file and no URL a part could name', async () => {
 		let options: Record<string, unknown> = {};
 		await createSmtpMailer({

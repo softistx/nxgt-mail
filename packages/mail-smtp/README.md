@@ -154,6 +154,28 @@ await mailer.send({
 `contentId`, with `MailRefused`. Needs `@nxgt/mail` 0.6 or later. See
 [Setting up — inline images](docs/guide/setup.md#inline-images).
 
+### Scheduling — refused, not sent early
+
+SMTP has no way to schedule a send: a message with `scheduledAt` is refused
+with `MailRefused` — `send: scheduledAt is not supported — SMTP has no way to
+schedule a send, and sending it now would be wrong` — rather than sent at
+once, which would look like success while doing the opposite of what was
+asked:
+
+```ts
+import { MailRefused } from '@nxgt/mail';
+
+const error = await mailer
+	.send({ ...message, scheduledAt: new Date(Date.now() + 86_400_000) })
+	.catch((e: unknown) => e);
+
+error instanceof MailRefused; // true — nothing was sent
+```
+
+Schedule through a transport that supports it (`@nxgt/mail-resend`), or hold
+the e-mail yourself and send it through SMTP, with no `scheduledAt`, when the
+moment comes. Needs `@nxgt/mail` 0.7 or later.
+
 ### Errors — a refusal or a failure
 
 | When | Throws | `cause` |
@@ -203,6 +225,11 @@ A timeout ends in `MailFailure`.
 **A `4xx` is a failure, a `5xx` a refusal** — except authentication (`530`–
 `539`) and a sender refused at `MAIL FROM`: the next message would be refused
 the same way, so it is a failure of the wiring, not of the message.
+
+**`scheduledAt` is refused, never ignored.** Unlike `idempotencyKey` and
+`tags`, which SMTP has no room for and the transport quietly drops, a
+scheduled send is refused with `MailRefused`: ignoring it would send the
+e-mail now, which is the one behaviour `scheduledAt` exists to prevent.
 
 **A retry after a timeout can deliver twice.** SMTP cannot deduplicate, and
 the transport ignores `idempotencyKey`: after a `MailFailure` from a

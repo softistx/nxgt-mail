@@ -14,6 +14,9 @@
  *
  * **A failure throws** the `MailFailure` or `MailRefused` of the `@nxgt/mail`
  * peer, nodemailer's error as the `cause`. Nothing is retried.
+ *
+ * SMTP has no way to schedule a send: a message with `scheduledAt` is refused
+ * with `MailRefused` rather than sent at once, which would be wrong.
  */
 
 import {
@@ -203,6 +206,11 @@ export function createSmtpMailer(options: SmtpMailerOptions): Mailer {
 	return {
 		async send(message: MailMessage): Promise<SentMail> {
 			checkMessage(message);
+			if (message.scheduledAt !== undefined) {
+				throw new MailRefused(
+					'send: scheduledAt is not supported — SMTP has no way to schedule a send, and sending it now would be wrong',
+				);
+			}
 			const sender = message.from ?? from;
 			if (sender === undefined) {
 				throw new MailRefused(
