@@ -1,5 +1,16 @@
 # @nxgt/mail-smtp
 
+## 0.3.0
+
+### Minor Changes
+
+- [#29](https://github.com/softistx/nxgt-mail/pull/29) [`1294823`](https://github.com/softistx/nxgt-mail/commit/1294823764f19a3eb9107a6aac2dda8a00ea8bfe) Thanks [@SteveGT96](https://github.com/SteveGT96)! - Accepts `@nxgt/mail` 0.3, whose messages can carry an `idempotencyKey`. SMTP has no idempotency, so the transport ignores the key: a message sent twice is delivered twice. The `@nxgt/mail` peer moves to `^0.3.0`.
+
+### Patch Changes
+
+- Updated dependencies [[`1294823`](https://github.com/softistx/nxgt-mail/commit/1294823764f19a3eb9107a6aac2dda8a00ea8bfe)]:
+  - @nxgt/mail@0.3.0
+
 ## 0.2.0
 
 ### Minor Changes

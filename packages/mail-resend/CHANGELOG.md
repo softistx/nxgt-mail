@@ -1,5 +1,16 @@
 # @nxgt/mail-resend
 
+## 0.3.0
+
+### Minor Changes
+
+- [#29](https://github.com/softistx/nxgt-mail/pull/29) [`1294823`](https://github.com/softistx/nxgt-mail/commit/1294823764f19a3eb9107a6aac2dda8a00ea8bfe) Thanks [@SteveGT96](https://github.com/SteveGT96)! - Sends a message's `idempotencyKey` as Resend's `Idempotency-Key` header, so a retry the caller makes within Resend's 24 hours answers the first send's id and delivers once. A `409 invalid_idempotent_request` — the key already used for another message — is a `MailRefused`; a `409 concurrent_idempotent_requests` — the same key still in progress — stays a `MailFailure`. An empty `headers` is no longer sent, as an empty `attachments` is not. The `@nxgt/mail` peer moves to `^0.3.0`.
+
+### Patch Changes
+
+- Updated dependencies [[`1294823`](https://github.com/softistx/nxgt-mail/commit/1294823764f19a3eb9107a6aac2dda8a00ea8bfe)]:
+  - @nxgt/mail@0.3.0
+
 ## 0.2.0
 
 ### Minor Changes
