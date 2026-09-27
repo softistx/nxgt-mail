@@ -26,10 +26,10 @@ export type ListUnsubscribeHeaders = {
 // RFC 2369 wants an RFC 3986 URI inside `<…>`: printable ASCII only — a
 // transport would encode a header holding anything else, and no client
 // would find the URL in it — and none of what ends the URL (`<`, `>`), what
-// RFC 2369 reads as the next one (`,`), or what no URI holds as is (quotes,
-// a backslash, braces, `|`, `^`). Percent-encode it.
+// RFC 2369 reads as the next one (`,`), or what no URI holds as is (a double
+// quote, a backtick, a backslash, braces, `|`, `^`). Percent-encode it.
 const URL_ALLOWED = /^https:\/\/[\x21-\x7E]+$/;
-const URL_REFUSED = /[<>,"'`\\{}|^]/;
+const URL_REFUSED = /[<>,"`\\{}|^]/;
 // RFC 6068 reads `?`, `&`, `=`, `#` and `%` inside a mailto: as structure — a
 // subject, a second recipient — so the address is plain ASCII without them.
 const MAILTO = /^[A-Za-z0-9._~!$'*+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+$/;
@@ -49,7 +49,7 @@ const MAILTO = /^[A-Za-z0-9._~!$'*+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+$/;
  *
  * Refuses, with a {@link MailRefused} that never quotes the value, a `url`
  * that is not `https://` — RFC 8058 requires it — or is not printable ASCII,
- * carries a user or a password, or holds `<`, `>`, a quote or a raw `,`; and
+ * carries a user or a password, or holds `<`, `>`, a double quote or a raw `,`; and
  * a `mailto` that is not a bare ASCII address. The URL is
  * often built from a token, and a token is a credential: the message names
  * the rule, not the link.

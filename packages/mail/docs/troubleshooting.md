@@ -893,7 +893,7 @@ A `MailRefused`, `code: 'MAIL_REFUSED'`.
 **When:** `listUnsubscribe({ url })`, with a `url` that does not start with
 `https://` (`http:`, `mailto:`, relative, empty, `HTTPS://` in capitals), that
 carries a user or a password (`https://user:pass@…`), or that holds a space,
-a line break, a character outside ASCII, `<`, `>`, a quote, a backslash, a
+a line break, a character outside ASCII, `<`, `>`, a double quote, a backtick, a backslash, a
 brace, `|`, `^` or a `,` as it is: typically a token or a list name pasted
 into a template string without being encoded, or an `http:` URL from a
 development configuration.
@@ -928,7 +928,7 @@ A `MailRefused`, `code: 'MAIL_REFUSED'`.
 **When:** `listUnsubscribe({ url, mailto })`, with a `mailto` that has a
 display name (`Unsubscribe <unsubscribe@example.com>`), a `mailto:` prefix,
 two addresses, no `@`, a domain without a dot, a character outside ASCII,
-or `?`, `&`, `=`, `#`, `%` or a quote (`u@example.com?subject=stop`).
+or `?`, `&`, `=`, `#`, `%` or a double quote (`u@example.com?subject=stop`).
 **Why:** `mailto` is one mailbox, and `listUnsubscribe` writes the
 `<mailto:…>` around it itself; a name, a prefix or a second address would
 break the header or be read as something else — in a `mailto:`, `?` starts

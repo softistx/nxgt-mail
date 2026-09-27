@@ -222,8 +222,9 @@ export async function sendNewsletter(
 // List-Unsubscribe-Post: List-Unsubscribe=One-Click
 ```
 
-The URL must be `https:`, without whitespace, `<`, `>` or a raw comma
-(percent-encode it: `%2C`), and `mailto` a bare address; anything else is a
+The URL must start with `https://`, be printable ASCII, carry no user or
+password, and hold no `<`, `>`, double quote or raw comma (percent-encode
+it: `%2C`), and `mailto` must be a bare ASCII address; anything else is a
 `MailRefused` that never quotes the URL — its token is a credential. Your
 endpoint must unsubscribe on a `POST` with the body
 `List-Unsubscribe=One-Click`, with no login and no confirmation. It belongs on

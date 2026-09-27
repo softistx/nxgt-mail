@@ -46,8 +46,8 @@ describe('listUnsubscribe', () => {
 		expect(mailer.sent[0]?.headers).toMatchObject(headers);
 	});
 
-	it('keeps a percent-encoded comma, and a port', () => {
-		const encoded = 'https://example.test:8443/u?list=a%2Cb';
+	it('keeps a percent-encoded comma, a port, and what encodeURIComponent leaves', () => {
+		const encoded = `https://example.test:8443/u?list=a%2Cb&t=${encodeURIComponent("o'brien(1)*")}`;
 		expect(listUnsubscribe({ url: encoded })['List-Unsubscribe']).toBe(
 			`<${encoded}>`,
 		);
@@ -67,7 +67,7 @@ describe('listUnsubscribe', () => {
 		['an invisible format character', 'https://example.test/u\u202E'],
 		['backslashes for slashes', 'https:\\\\example.test\\u'],
 		['no //', 'https:example.test/u'],
-		['a quote', 'https://example.test/u?t="a"'],
+		['a double quote', 'https://example.test/u?t="a"'],
 		['a brace', 'https://example.test/u?t={a}'],
 		['a user and a password', 'https://user:pass@example.test/u'],
 		['a user alone', 'https://user@example.test/u'],
