@@ -113,7 +113,7 @@ attachment. See [Setting up — what a message becomes](docs/guide/setup.md#what
 
 | When | Throws | `cause` |
 | --- | --- | --- |
-| `400`, `422` — Resend refuses the message; `413` — too large, attachments included | `MailRefused` — `send: Resend refused the message` | an `Error` with `status`, `errorName` and Resend's `detail` |
+| `400`, `422` — Resend refuses the message, an attachment over the size limit included; `413` — a request too large for what sits in front of the API | `MailRefused` — `send: Resend refused the message` | an `Error` with `status`, `errorName` and Resend's `detail` |
 | `401`, `403`, `429`, `5xx`, any other status | `MailFailure` — `send: Resend could not take the message` | the same |
 | A network error | `MailFailure` — `send: Resend could not be reached` | the `fetch` error |
 | No answer within `timeoutMs` | `MailFailure` — `send: Resend did not answer within <timeoutMs> ms` | the `TimeoutError` |
@@ -156,7 +156,8 @@ the first send.
 refused at wiring; trim it.
 
 **Attachments count against Resend's 40 MB after base64.** A 30 MB file
-is over it once encoded. The whole request is also held in memory while it is
+is at it once encoded, before the rest of the body; Resend answers `422`
+`invalid_attachment`. The whole request is also held in memory while it is
 sent; past a few megabytes, send a signed link.
 
 **A `403` is a failure, not a refusal.** An invalid key or an unverified

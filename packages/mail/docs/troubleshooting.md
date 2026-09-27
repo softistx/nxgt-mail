@@ -62,8 +62,8 @@ How the messages are shaped:
 - [`send: attachments must be an array`](#send-attachments-must-be-an-array)
 - [`send: attachments[<n>] must be an object, as { filename, content, contentType }`](#send-attachmentsn-must-be-an-object-as--filename-content-contenttype-)
 - [`send: attachments[<n>].content must be a Uint8Array — the file's bytes, never a path or a URL`](#send-attachmentsncontent-must-be-a-uint8array--the-files-bytes-never-a-path-or-a-url)
-- [`send: attachments[<n>].filename must be a file name — not empty, without / or \, a line break or a control character`](#send-attachmentsnfilename-must-be-a-file-name--not-empty-without--or--a-line-break-or-a-control-character)
-- [`send: attachments[<n>].contentType must be type/subtype, as application/pdf`](#send-attachmentsncontenttype-must-be-typesubtype-as-applicationpdf)
+- [`send: attachments[<n>].filename must be a file name — not empty, not . or .., without / or \, a line break or a control character`](#send-attachmentsnfilename-must-be-a-file-name--not-empty-not--or--without--or--a-line-break-or-a-control-character)
+- [`send: attachments[<n>].contentType must be a file's type/subtype, as application/pdf — never multipart/* or message/*`](#send-attachmentsncontenttype-must-be-a-files-typesubtype-as-applicationpdf--never-multipart-or-message)
 - [`send: the memory mailer was told to fail this send`](#send-the-memory-mailer-was-told-to-fail-this-send)
 
 **Locale**
@@ -705,34 +705,43 @@ const fromArrayBuffer = new Uint8Array(new ArrayBuffer(8));
 A file too large to read into memory is too large for an e-mail: send a
 signed link instead.
 
-### `send: attachments[<n>].filename must be a file name — not empty, without / or \, a line break or a control character`
+### `send: attachments[<n>].filename must be a file name — not empty, not . or .., without / or \, a line break or a control character`
 
 **When:** `send`, with an attachment whose `filename` is empty, is not a
-string, or holds `/`, `\`, a line break, a NUL or another control character.
+string, is `.` or `..`, or holds `/`, `\`, a line break (U+2028 and U+2029
+included), a NUL or another control character, or a format character such
+as a right-to-left override.
 The message never holds the name.
 **Why:** the recipient's mail client shows the name and saves the file under
-it. A path — `../…`, `invoices/42.pdf`, `C:\…` — asks it to save elsewhere, and
-a line break or a control character can split the header the name is written
-in.
+it. A path — `../…`, `invoices/42.pdf`, `C:\…`, `..` — asks it to save
+elsewhere, a line break or a control character can split the header the name
+is written in, and a right-to-left override shows `invoice\u202Efdp.exe` as
+`invoiceexe.pdf`.
 **Fix:** a bare file name. Accents, spaces and parentheses are fine — the
 transport encodes them. From a name you did not write, keep the last segment
 of the path and drop the control characters:
 
 ```ts
 const safeName = (name: string) =>
-  name.split(/[\\/]/).pop()?.replace(/\p{Cc}/gu, '').trim() || 'attachment';
+  name.split(/[\\/]/).pop()?.replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/gu, '').trim().replace(/^\.\.?$/, '') ||
+  'attachment';
 
 safeName('../uploads/Relevé\nmars.pdf'); // 'Relevémars.pdf'
 ```
 
-### `send: attachments[<n>].contentType must be type/subtype, as application/pdf`
+### `send: attachments[<n>].contentType must be a file's type/subtype, as application/pdf — never multipart/* or message/*`
 
 **When:** `send`, with an attachment whose `contentType` is not a bare
 `type/subtype`: an extension (`pdf`), a type with parameters
-(`text/plain; charset=utf-8`), a space or a line break.
+(`text/plain; charset=utf-8`), a space or a line break — or a MIME container,
+`multipart/*` or `message/*`, in any case.
 **Why:** the type is written into the attachment's `Content-Type` header; a
 parameter there is a second, unchecked place for a name or a charset. The
-transport writes the parameters it needs.
+transport writes the parameters it needs. A container is not a file: SMTP
+writes `message/rfc822` and `multipart/mixed` unencoded, as parts of the
+message itself, and the recipient gets no attachment while `send` resolves.
+To forward an e-mail, attach it as `application/octet-stream` with a `.eml`
+name.
 **Fix:** the bare type — `text/plain`, and encode the text as UTF-8, which is
 what a mail client assumes:
 
@@ -1503,7 +1512,10 @@ harness, read only the parts the provider marks as attachments.
 **When:** `send.attachment`, whose file holds every byte from 0 to 255.
 **Why:** the bytes were read as text on the way — decoded as UTF-8 (every
 byte above 127 changes), a NUL cut short, or line breaks rewritten — or
-base64 was encoded from a string instead of the bytes.
+base64 was encoded from a string instead of the bytes. Over JSON, the usual
+cause is a `Uint8Array` handed to `JSON.stringify` as it is: it becomes an
+object keyed by index (`{"0":0,"1":1,…}`), never base64, so the harness's
+`atob` throws or decodes something else.
 **Fix:** encode the bytes, never a string made of them: base64 from the
 `Uint8Array` for a JSON API, a `Buffer` of the same bytes for nodemailer.
 In the harness, decode base64 back to bytes, not to a string.

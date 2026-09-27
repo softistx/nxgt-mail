@@ -16,14 +16,20 @@ const RESERVED_HEADER =
 	/^(?:to|cc|bcc|from|sender|reply-to|return-path|subject|mime-version|content-.*)$/i;
 
 // A file name is shown and saved by the recipient's mail client: no path
-// separator (a client that saves it as is writes elsewhere), no line break or
-// other control character, C1 included (a header could be split on one).
-const FILENAME_REFUSED = /[/\\\p{Cc}]/u;
+// separator and no `.` or `..` (a client that saves it as is writes
+// elsewhere), no line break or other control character, C1 included (a header
+// could be split on one), and no format character — a right-to-left override
+// disguises `fdp.exe` as `exe.pdf`.
+const FILENAME_REFUSED = /[/\\\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/u;
+const DOT_NAME = /^\.\.?$/;
 // RFC 2045: type "/" subtype, each a token — any printable ASCII but space
 // and the tspecials ()<>@,;:\"/[]?=. No parameters: a charset or a name
 // there would be a second, unchecked place to write the file's name.
 const CONTENT_TYPE =
 	/^[!#$%&'*+.^_`{|}~0-9A-Za-z-]+\/[!#$%&'*+.^_`{|}~0-9A-Za-z-]+$/;
+// multipart/* and message/* are MIME containers, not files: nodemailer writes
+// them unencoded, and the receiving end reads back no attachment at all.
+const CONTAINER_TYPE = /^(?:multipart|message)\//i;
 
 /** Every recipient of a message, as bare addresses, in order. */
 export function recipientsOf(message: MailMessage): string[] {
@@ -72,18 +78,20 @@ function checkAttachment(attachment: MailAttachment, where: string): void {
 	if (
 		typeof attachment.filename !== 'string' ||
 		attachment.filename === '' ||
+		DOT_NAME.test(attachment.filename) ||
 		FILENAME_REFUSED.test(attachment.filename)
 	) {
 		throw new MailRefused(
-			`send: ${where}.filename must be a file name — not empty, without / or \\, a line break or a control character`,
+			`send: ${where}.filename must be a file name — not empty, not . or .., without / or \\, a line break or a control character`,
 		);
 	}
 	if (
 		typeof attachment.contentType !== 'string' ||
-		!CONTENT_TYPE.test(attachment.contentType)
+		!CONTENT_TYPE.test(attachment.contentType) ||
+		CONTAINER_TYPE.test(attachment.contentType)
 	) {
 		throw new MailRefused(
-			`send: ${where}.contentType must be type/subtype, as application/pdf`,
+			`send: ${where}.contentType must be a file's type/subtype, as application/pdf — never multipart/* or message/*`,
 		);
 	}
 }
@@ -156,8 +164,9 @@ export function checkMessage(message: MailMessage): void {
 		if (!Array.isArray(message.attachments)) {
 			throw new MailRefused('send: attachments must be an array');
 		}
-		message.attachments.forEach((attachment, index) => {
-			checkAttachment(attachment, `attachments[${index}]`);
-		});
+		// Indexed, not forEach: a hole in the array is refused, not skipped.
+		for (let index = 0; index < message.attachments.length; index++) {
+			checkAttachment(message.attachments[index], `attachments[${index}]`);
+		}
 	}
 }

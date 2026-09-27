@@ -43,7 +43,7 @@ import without extensions, so `nodenext` is not supported.
 | --- | --- |
 | `@nxgt/mail` | The port (`Mailer`, `MailMessage`, `Rendered`, `SentMail`, `Address`, `MailAttachment`), the errors (`MailError`, `MailFailure`, `MailRefused`), `createMemoryMailer`, `pickLocale` and `parseAcceptLanguage`, and what a transport calls first: `checkMessage`, `recipientsOf`, `addressOf`. No Node built-in: it runs anywhere |
 | `@nxgt/mail/renderer` | The renderer: `createMailRenderer`, `MailRenderer`, `MailRendererOptions`, `RenderOptions`, `MailVariables`, and the types that type it with a build's `MailEmails` (`MailEmailsOf`, `AnyMailEmails`, `RenderArguments`). Reads the build with `node:fs` |
-| `@nxgt/mail/conformance` | **For transport authors**: `describeMailer`, its cases as data, `runMailerCase`, and the memory mailer's harness as a worked example |
+| `@nxgt/mail/conformance` | **For transport authors**: `describeMailer`, its cases as data, `runMailerCase`, the messages they send (`sampleMessage`, `sampleAttachment`), and the memory mailer's harness as a worked example |
 
 ## Usage
 
@@ -236,14 +236,26 @@ peer, and passes the conformance suite:
 ```ts
 import { checkMessage, MailFailure, MailRefused, type Mailer, recipientsOf } from '@nxgt/mail';
 
+// JSON has no bytes: an attachment travels as base64, read in slices.
+function base64Of(bytes: Uint8Array): string {
+	let binary = '';
+	for (let start = 0; start < bytes.length; start += 0x8000) {
+		binary += String.fromCharCode(...bytes.subarray(start, start + 0x8000));
+	}
+	return btoa(binary);
+}
+
 export function createHttpMailer(endpoint: string, apiKey: string): Mailer {
 	return {
 		async send(message) {
 			checkMessage(message); // MailRefused, naming where, never the value
+			const attachments = message.attachments?.length
+				? message.attachments.map((file) => ({ ...file, content: base64Of(file.content) }))
+				: undefined; // an empty list is none
 			const response = await fetch(endpoint, {
 				method: 'POST',
 				headers: { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' },
-				body: JSON.stringify({ ...message, to: recipientsOf(message) }),
+				body: JSON.stringify({ ...message, to: recipientsOf(message), attachments }),
 			}).catch((cause: unknown) => {
 				throw new MailFailure('send: the provider could not be reached', { cause });
 			});

@@ -103,8 +103,8 @@ Throws `MailRefused`, naming **where** the problem is and never the value:
 | `attachments` that is not an array | `send: attachments must be an array` |
 | an attachment that is not an object | `send: attachments[0] must be an object, as { filename, content, contentType }` |
 | an attachment whose `content` is not a `Uint8Array` — a string, a path, an `ArrayBuffer` | `send: attachments[0].content must be a Uint8Array — the file's bytes, never a path or a URL` |
-| a file name that is empty, or holds `/`, `\`, a line break or a control character | `send: attachments[0].filename must be a file name — not empty, without / or \, a line break or a control character` |
-| a content type that is not a bare `type/subtype` | `send: attachments[0].contentType must be type/subtype, as application/pdf` |
+| a file name that is empty, `.` or `..`, or holds `/`, `\`, a line break, a control character or a format character | `send: attachments[0].filename must be a file name — not empty, not . or .., without / or \, a line break or a control character` |
+| a content type that is not a bare `type/subtype`, or is `multipart/*` or `message/*` | `send: attachments[0].contentType must be a file's type/subtype, as application/pdf — never multipart/* or message/*` |
 
 An empty `attachments` is accepted, and is the same as none: send no
 attachment field to the provider then.
@@ -154,11 +154,14 @@ export function createHttpMailer(options: HttpMailerOptions): Mailer {
 		async send(message) {
 			checkMessage(message);
 			// A JSON API takes an attachment's bytes as base64.
-			const attachments = message.attachments?.map((file) => ({
-				filename: file.filename,
-				content: base64Of(file.content),
-				contentType: file.contentType,
-			}));
+			// An empty list is none: the field is left out of the request.
+			const attachments = message.attachments?.length
+				? message.attachments.map((file) => ({
+						filename: file.filename,
+						content: base64Of(file.content),
+						contentType: file.contentType,
+					}))
+				: undefined;
 
 			let response: Response;
 			try {

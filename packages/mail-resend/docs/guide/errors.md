@@ -45,7 +45,7 @@ Resend answers an error as `{ statusCode, name, message }`:
 | Resend answers | Typical `name` | Throws |
 | --- | --- | --- |
 | `400` | `validation_error` | `MailRefused` |
-| `413` | — (a request too large: attachments over the limit) | `MailRefused` |
+| `413` | — (not in Resend's reference: a request too large for what sits in front of the API; refused, as a resend would fail again) | `MailRefused` |
 | `422` | `validation_error`, `missing_required_field`, `invalid_attachment` | `MailRefused` |
 | `401`, `403` | `missing_api_key`, `invalid_api_key`, an unverified domain | `MailFailure` |
 | `429` | `rate_limit_exceeded`, `daily_quota_exceeded` | `MailFailure` |

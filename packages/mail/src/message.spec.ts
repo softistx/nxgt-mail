@@ -144,6 +144,12 @@ describe('checkMessage', () => {
 			'send: attachments[1] must be an object, as { filename, content, contentType }',
 		],
 		[
+			'a hole in the attachments',
+			// biome-ignore lint/suspicious/noSparseArray: the hole is what is refused.
+			{ ...message, attachments: [, pdf] },
+			'send: attachments[0] must be an object, as { filename, content, contentType }',
+		],
+		[
 			'an attachment given as a string',
 			{ ...message, attachments: [{ ...pdf, content: '%PDF-1.7' }] },
 			"send: attachments[0].content must be a Uint8Array — the file's bytes, never a path or a URL",
@@ -172,12 +178,16 @@ describe('checkMessage', () => {
 			['a line break in a file name', 'a.pdf\r\nContent-Type: text/html'],
 			['a NUL in a file name', 'a.pdf\u0000.exe'],
 			['a C1 control character in a file name', 'a\u0085.pdf'],
+			['a right-to-left override in a file name', 'invoice\u202Efdp.exe'],
+			['a line separator in a file name', 'a\u2028.pdf'],
+			['a file name that is only a dot', '.'],
+			['a file name that is only two dots', '..'],
 		].map(
 			([what, filename]) =>
 				[
 					what,
 					{ ...message, attachments: [{ ...pdf, filename }] },
-					'send: attachments[0].filename must be a file name — not empty, without / or \\, a line break or a control character',
+					'send: attachments[0].filename must be a file name — not empty, not . or .., without / or \\, a line break or a control character',
 				] as const,
 		),
 		...[
@@ -187,12 +197,15 @@ describe('checkMessage', () => {
 			['a space in a content type', 'text /plain'],
 			['an empty content type', ''],
 			['a content type that is not a string', undefined],
+			['a MIME container as a content type', 'multipart/mixed'],
+			['a message as a content type', 'message/rfc822'],
+			['a message as a content type, in capitals', 'Message/RFC822'],
 		].map(
 			([what, contentType]) =>
 				[
 					what,
 					{ ...message, attachments: [{ ...pdf, contentType }] },
-					'send: attachments[0].contentType must be type/subtype, as application/pdf',
+					"send: attachments[0].contentType must be a file's type/subtype, as application/pdf — never multipart/* or message/*",
 				] as const,
 		),
 	])('refuses %s with MailRefused, naming where', (_, input, text) => {

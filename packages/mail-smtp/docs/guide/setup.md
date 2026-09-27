@@ -210,7 +210,8 @@ await mailer.send({
 
 - Each attachment is checked by `checkMessage` first: bytes as a
   `Uint8Array`, a file name without `/`, `\`, a line break or a control
-  character, a `type/subtype` — see
+  character, a `type/subtype` that is not `multipart/*` or `message/*` (which
+  nodemailer would write unencoded, as parts of the message) — see
   [`@nxgt/mail` — attachments](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/guide/sending.md#attachments).
 - The bytes are **copied** into a `Buffer` when `send` is called: changing
   your array while the message is on its way changes nothing.

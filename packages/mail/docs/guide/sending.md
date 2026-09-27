@@ -229,9 +229,9 @@ An attachment is a file's **bytes**, its name and its type:
 
 | Field | Type | Effect |
 | --- | --- | --- |
-| `filename` | `string` | The name the recipient's mail client shows and saves it as. Not empty; no `/` or `\`, no line break, no control character. Accents and spaces are fine: the transport encodes the name |
+| `filename` | `string` | The name the recipient's mail client shows and saves it as. Not empty, not `.` or `..`; no `/` or `\`, no line break, no control or format character. Accents and spaces are fine: the transport encodes the name |
 | `content` | `Uint8Array` | The bytes, sent as they are. A Node `Buffer` is a `Uint8Array` |
-| `contentType` | `string` | A bare `type/subtype`, as `application/pdf` or `text/calendar` — no parameters. Nothing guesses it from the file name |
+| `contentType` | `string` | A bare `type/subtype`, as `application/pdf` or `text/calendar` — no parameters, and never `multipart/*` or `message/*`, which are not files. Nothing guesses it from the file name |
 
 ```ts
 import { readFile } from 'node:fs/promises';
@@ -293,8 +293,8 @@ logo belongs on an `https:` URL, which is what the templates of
 | `attachments: pdf` — one, not in a list | a compile error; at run time `MailRefused`: `send: attachments must be an array` |
 | `[null]` | `MailRefused`: `send: attachments[0] must be an object, as { filename, content, contentType }` |
 | `{ filename, content: '%PDF-1.7', contentType }`, or `{ filename, path, contentType }` | a compile error; at run time `MailRefused`: `send: attachments[0].content must be a Uint8Array — the file's bytes, never a path or a URL` |
-| `filename: 'invoices/42.pdf'`, `'..\\42.pdf'`, `''`, or one holding a line break | `MailRefused`: `send: attachments[0].filename must be a file name — not empty, without / or \, a line break or a control character` |
-| `contentType: 'text/plain; charset=utf-8'`, or `'pdf'` | `MailRefused`: `send: attachments[0].contentType must be type/subtype, as application/pdf` |
+| `filename: 'invoices/42.pdf'`, `'..\\42.pdf'`, `'..'`, `''`, or one holding a line break or a right-to-left override | `MailRefused`: `send: attachments[0].filename must be a file name — not empty, not . or .., without / or \, a line break or a control character` |
+| `contentType: 'text/plain; charset=utf-8'`, `'pdf'`, or `'message/rfc822'` | `MailRefused`: `send: attachments[0].contentType must be a file's type/subtype, as application/pdf — never multipart/* or message/*` |
 | `attachments: []` | accepted: the same as none |
 
 A message the provider refuses — too large, or an attachment it will not
