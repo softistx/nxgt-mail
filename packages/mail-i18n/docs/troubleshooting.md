@@ -72,7 +72,7 @@ template `emails/verify-email.vue`, and keys such as `verify-email.title`.
 - [`i18n: ./i18n/messages.ts could not be loaded (<reason>)`](#i18n-i18nmessagests-could-not-be-loaded-reason)
 - [`i18n: ./i18n/messages.ts has no default export — export the resources object, or a function that returns it`](#i18n-i18nmessagests-has-no-default-export--export-the-resources-object-or-a-function-that-returns-it)
 - [`i18n: ./i18n/messages.ts's default export could not be run (<reason>)`](#i18n-i18nmessagestss-default-export-could-not-be-run-reason)
-- [`i18n: ./i18n/messages.ts's default export must be a resources object ({ en: {...}, fr: {...} }) or a function that returns one`](#i18n-i18nmessagestss-default-export-must-be-a-resources-object--en--fr--or-a-function-that-returns-one)
+- [`i18n: ./i18n/messages.ts's default export must be a resources object ({ en: {...}, fr: {...} }) or a function that returns one`](#i18n-i18nmessagestss-default-export-must-be-a-resources-object--en--fr---or-a-function-that-returns-one)
 - [`i18n: ./i18n/messages.ts is missing the fr locale`](#i18n-i18nmessagests-is-missing-the-fr-locale)
 
 **Templates** — while `maizzle build` renders
@@ -661,9 +661,10 @@ locales/en/sign-in.json   # not sign_in.json
 **When:** loading `maizzle.config.ts`, when two catalogue sources claim the
 same key: the flat file and a folder file (`locales/en.json`'s `mails` key
 and `locales/en/mails.json`), or two folder files whose paths nest one under
-the other — `locales/en/auth.json` claims the whole `auth` prefix, so
-`locales/en/auth/sign-in.json`, which would add to it, collides on `auth`
-itself, even a sibling key `auth.json` does not have.
+the other. In that second case, `locales/en/auth.json` claims the whole
+`auth` prefix for itself — even a key under `auth` that `auth.json`'s own
+content does not have — so `locales/en/auth/sign-in.json`, which would add to
+that prefix, collides on `auth` itself, not on `sign-in`.
 **Why:** each key comes from exactly one file; two files writing the same key
 would have one silently win, and which one would depend on the order files
 are read in.
