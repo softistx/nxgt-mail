@@ -6,13 +6,7 @@ the only number.
 
 ## Now
 
-- **The conformance suite checks the idempotency key** — a fourteenth case,
-  `send.idempotencyKey`: a message with a key is delivered, never refused
-  for it, and the key is written nowhere in the e-mail. Built, not yet
-  published.
-- **`listUnsubscribe` writes the URL a parser reads** — `new URL(url).href`,
-  so the value written is the value checked, and a `%` that starts no escape
-  is refused. Built, not yet published.
+Nothing between releases.
 
 ## Next
 
@@ -69,6 +63,13 @@ Nothing yet.
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **The idempotency key in the conformance suite, and the unsubscribe URL as
+  written, v0.5.0** — a fourteenth case, `send.idempotencyKey`, delivers a
+  message with a fresh key and expects it never refused for it, the key in
+  none of its recipients, subject, HTML or text. `listUnsubscribe` writes
+  `new URL(url).href` and checks it as well as what it was given: a `%` that
+  starts no escape, or a host escape decoded into a refused character, is a
+  `MailRefused`. SMTP and Resend move their peer to `^0.5.0`.
 - **One-click unsubscribe, v0.4.0** — `listUnsubscribe({ url, mailto? })`
   answers RFC 8058's `List-Unsubscribe` and `List-Unsubscribe-Post` headers,
   to spread into a message's `headers`, so Gmail and Yahoo offer their
@@ -125,9 +126,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   call written out. The
   type parameter is optional; untyped, the renderer is unchanged, and the
   run-time checks hold either way.
-- **Two transports, `@nxgt/mail-smtp` and `@nxgt/mail-resend` v0.1.0** —
-  SMTP on the `nodemailer` you install, and Resend over `fetch` with no SDK,
-  each passing the conformance suite — against a local SMTP server, and a
-  local server answering as Resend does — and throwing `@nxgt/mail`'s errors.
-  See [the SMTP roadmap](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-smtp/docs/roadmap.md)
-  and [the Resend roadmap](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-resend/docs/roadmap.md).
