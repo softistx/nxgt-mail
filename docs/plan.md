@@ -332,7 +332,7 @@ safe ? (templates et data) », and his « OK » to the answer:
 each refusal has its `@ts-expect-error` in `packages/mail/test/types/` (13 to
 17) and the option's in `packages/mail-i18n/test/types/` (18) ✅.
 
-## Step 7 — Transports
+## Step 7 — Transports ✅
 
 `@nxgt/mail-smtp` (on the consumer's `nodemailer`) and `@nxgt/mail-resend`
 (over `fetch`), each passing `describeMailer`: SMTP against a local
@@ -340,7 +340,23 @@ each refusal has its `@ts-expect-error` in `packages/mail/test/types/` (13 to
 before the rewrite and paused; they depend only on `@nxgt/mail`.
 
 **Done when:** both pass the conformance suite, and an outage in each ends in
-`MailFailure` with `cause`.
+`MailFailure` with `cause`. ✅ — all ten cases in each package's
+`src/index.spec.ts`; SMTP's outage is a `421` and a server not listening,
+Resend's a `503`, a server not listening and a timeout.
+
+As built: SMTP reads back what arrived with `mailparser`, the recipients from
+the envelope; Resend's fake is a `Bun.serve` that reads each `to` entry as an
+RFC 5322 address list, so an unquoted name fails `send.hostileName`. The
+mapping — SMTP: a permanent `5xx` on a recipient or the content
+(`EENVELOPE`, `EMESSAGE`) is `MailRefused`, everything else, authentication
+(`530`–`539`) included, `MailFailure`; Resend: `400` and `422` are
+`MailRefused`, `401`, `403`, `429`, `5xx`, a network error and a timeout
+`MailFailure`. Resend's own message, which can quote an address, stays on
+`cause.detail` and out of every `message`. `@nxgt/mail-smtp` never imports
+nodemailer: it takes the transporter the application creates
+(`SmtpTransporter` is the one method it calls), and nodemailer stays a
+required peer for its tested range. Six and seven `@ts-expect-error` refusals
+in their `test/types/`, each package with its `docs/`.
 
 ## Step 8 — A starter, documentation, the first release
 

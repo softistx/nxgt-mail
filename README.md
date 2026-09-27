@@ -52,7 +52,8 @@ await mailer.send({ to, ...mails.render('verify-email', { name, link }) });
 | [`@nxgt/mail-i18n`](./packages/mail-i18n) | The i18n plugin: ICU catalogues checked at build time, `t()` in templates, one output per locale, the manifest; and `createTranslator` |
 | [`@nxgt/mail-presets`](./packages/mail-presets) | Nine ready e-mails — verify-email, reset-password, sign-in-code, magic-link, welcome, invitation… — in `en` and `fr`, built by your project with your brand; [built samples](./packages/mail-presets/samples) |
 | [`@nxgt/mail-ui`](./packages/mail-ui) | E-mail components in the style of `@nxgt/material-vue`, its theme, and the shared messages |
-| `@nxgt/mail-smtp`, `@nxgt/mail-resend` | Transports |
+| [`@nxgt/mail-resend`](./packages/mail-resend) | A Resend transport over `fetch`, with no SDK and no dependency |
+| [`@nxgt/mail-smtp`](./packages/mail-smtp) | An SMTP transport on the `nodemailer` you install |
 
 ## Contributing
 
