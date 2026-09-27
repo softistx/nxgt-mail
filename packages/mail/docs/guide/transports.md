@@ -109,10 +109,15 @@ Throws `MailRefused`, naming **where** the problem is and never the value:
 | an attachment whose `content` is not a `Uint8Array` — a string, a path, an `ArrayBuffer` | `send: attachments[0].content must be a Uint8Array — the file's bytes, never a path or a URL` |
 | a file name that is empty, `.` or `..`, or holds `/`, `\`, a line break, a control character or a format character | `send: attachments[0].filename must be a file name — not empty, not . or .., without / or \, a line break or a control character` |
 | a content type that is not a bare `type/subtype`, or is `multipart/*` or `message/*` | `send: attachments[0].contentType must be a file's type/subtype, as application/pdf — never multipart/* or message/*` |
+| a `contentId` that is not 1 to 127 letters, digits and `.` `_` `~` `+` `-` with at most one `@` — angle brackets, a space, a `%`, not a string | `send: attachments[0].contentId must be 1 to 127 letters, digits and . _ ~ + -, with at most one @, as logo@acme.test` |
+| two attachments under one `contentId` | `send: attachments[1].contentId is already another attachment's — a contentId names one file` |
+| a `cid:` URL the HTML quotes as an attribute value that no attachment's `contentId` names | `send: html shows a cid: URL that no attachment's contentId names — attach the image with that contentId` |
 | an `idempotencyKey` that is not 1 to 256 visible ASCII characters — empty, a space, a line break, a letter outside ASCII, not a string | `send: idempotencyKey must be 1 to 256 visible ASCII characters, as order-42/receipt` |
 
 An empty `attachments` is accepted, and is the same as none: send no
-attachment field to the provider then. A key that passes is safe to write in
+attachment field to the provider then. A `contentId` that passes is safe in
+a `Content-ID` header once the transport wraps it in angle brackets, and in
+a JSON body as it is. A key that passes is safe to write in
 an HTTP header as it is: no line break, no character a header would need to
 encode.
 
