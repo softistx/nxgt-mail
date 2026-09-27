@@ -1,6 +1,6 @@
 {
 	"name": "@nxgt/mail-resend",
-	"version": "0.4.0",
+	"version": "0.5.0",
 	"description": "A Resend transport for @nxgt/mail over fetch, with no SDK: it throws the MailFailure and MailRefused of its @nxgt/mail peer, and passes the conformance suite.",
 	"license": "MIT",
 	"type": "module",

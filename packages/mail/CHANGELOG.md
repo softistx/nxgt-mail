@@ -1,5 +1,11 @@
 # @nxgt/mail
 
+## 0.7.0
+
+### Minor Changes
+
+- [#60](https://github.com/softistx/nxgt-mail/pull/60) [`5f9c8b8`](https://github.com/softistx/nxgt-mail/commit/5f9c8b8cf031b7654731dabfe3c6746c274fcd23) Thanks [@SteveGT96](https://github.com/SteveGT96)! - Scheduled send: `scheduledAt` on a `MailMessage`, a `Date` that sends the e-mail later instead of now. `checkMessage` refuses with `MailRefused` a value that is not a valid `Date`, one in the past (beyond a 60-second tolerance for clock skew), or more than 30 days ahead — Resend's own limit, held for every transport so a message built for one works on another. A transport that cannot schedule refuses the message rather than sending it now. The memory mailer records it, and includes it in the idempotency fingerprint, so the same key rescheduled to a different moment is a different message. The conformance suite gains `send.scheduled`: a scheduled send is either honoured — delivered with its `scheduledAt` — or refused with `MailRefused`, never sent as if it were absent.
+
 ## 0.6.0
 
 ### Minor Changes

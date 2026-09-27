@@ -1,5 +1,16 @@
 # @nxgt/mail-smtp
 
+## 0.5.0
+
+### Minor Changes
+
+- [#60](https://github.com/softistx/nxgt-mail/pull/60) [`5f9c8b8`](https://github.com/softistx/nxgt-mail/commit/5f9c8b8cf031b7654731dabfe3c6746c274fcd23) Thanks [@SteveGT96](https://github.com/SteveGT96)! - Scheduled send: SMTP has no way to schedule a send, so a message with `scheduledAt` is refused with `MailRefused` — `send: scheduledAt is not supported — SMTP has no way to schedule a send, and sending it now would be wrong` — rather than sent at once. The `@nxgt/mail` peer moves to `^0.7.0`: upgrade `@nxgt/mail` with it.
+
+### Patch Changes
+
+- Updated dependencies [[`5f9c8b8`](https://github.com/softistx/nxgt-mail/commit/5f9c8b8cf031b7654731dabfe3c6746c274fcd23)]:
+  - @nxgt/mail@0.7.0
+
 ## 0.4.0
 
 ### Minor Changes
