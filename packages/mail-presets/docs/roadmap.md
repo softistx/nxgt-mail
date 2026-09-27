@@ -5,9 +5,7 @@ are no dates here, and the version something shipped in is the only number.
 
 ## Now
 
-- **`@nxgt/mail-i18n` 0.2** — the peer moves to `^0.2.0`, the version that
-  writes its generated files under `.maizzle/emails/`. The e-mails and their
-  output do not change. Built, not yet published.
+Nothing between releases.
 
 ## Next
 
@@ -35,6 +33,9 @@ Nothing yet. A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **`@nxgt/mail-i18n` 0.2, v0.1.1** — the peer moves to `^0.2.0`, the version
+  that writes its generated files under `.maizzle/emails/`. The e-mails and
+  their output do not change.
 - **Nine ready e-mails, v0.1.0** — `verify-email`, `reset-password`,
   `password-changed` and `email-changed` for accounts; `sign-in-code` and
   `magic-link` for passwordless sign-in; `new-sign-in` for security; `welcome`

@@ -5,11 +5,7 @@ no dates here, and the version something shipped in is the only number.
 
 ## Now
 
-- **The wrappers under `.maizzle/emails/`** — the files generated per
-  template and locale move from `.maizzle/i18n/` to `.maizzle/emails/`, so
-  `maizzle serve` lists the e-mails under `.maizzle/emails/en` rather than a
-  folder named after the plugin. The build output does not move. Built, not
-  yet published.
+Nothing between releases.
 
 ## Next
 
@@ -42,6 +38,11 @@ Nothing yet. A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **The wrappers under `.maizzle/emails/`, v0.2.0** — the files generated per
+  template and locale move from `.maizzle/i18n/` to `.maizzle/emails/`, so
+  `maizzle serve` lists the e-mails under `.maizzle/emails/en` rather than a
+  folder named after the plugin; `WRAPPERS_DIR` follows. The build output
+  does not move. Delete the old `.maizzle/i18n/` after upgrading.
 - **i18n as a plugin, v0.1.0** — `i18n({ locales, fallbackLocale })`, listed in
   `defineMailConfig`'s `plugins`: one template per e-mail, its text keys into
   `locales/<locale>.json` ICU catalogues, and one output per locale from a
@@ -88,8 +89,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   unknown e-mail, a missing or unknown variable, or a number for a URL at
   compile time. Rewritten only when it changes;
   `rendererTypes` moves it, or `false` turns it off.
-- **A starter project, with v0.1.0** — the official Maizzle starter with
-  `defineMailConfig`, the i18n and the UI plugins wired in as the READMEs
-  say, built, rendered in `en` and `fr` and served in CI, so the snippets are
-  known to work: [`examples/starter`](https://github.com/softistx/nxgt-mail/tree/develop/examples/starter).
-  In the repository; its README says how to start your own from npm.
