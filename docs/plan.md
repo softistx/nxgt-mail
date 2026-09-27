@@ -385,7 +385,8 @@ pictures pinned to the `@nxgt/mail-ui@0.1.0` and `@nxgt/mail-presets@0.1.0`
 tags. They are published by the release workflow's "Version Packages" pull
 request, whose merge runs `scripts/publish.ts`. The starter stays a
 workspace on `workspace:*`; its README's "Start your own" installs the same
-packages from npm.
+packages from npm. An empty project installing them from npm is checked by hand
+once the publish has run.
 
 ## Step 9 — Handing over to janus
 
