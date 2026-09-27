@@ -244,6 +244,92 @@ In an application's tests, use `createMemoryMailer()` from `@nxgt/mail`. To
 test this transport, see [Testing](docs/guide/testing.md): a local Bun server
 answering as Resend does, `baseUrl` pointed at it, and `describeMailer`.
 
+## Webhooks — delivery events
+
+`@nxgt/mail-resend/webhooks` verifies Resend's webhook signature and answers
+a neutral `MailEvent` from `@nxgt/mail`: what happened to a message after
+`send` handed it over.
+
+```ts
+// A plain fetch handler
+import { MailWebhookRefused } from '@nxgt/mail';
+import { createResendWebhook } from '@nxgt/mail-resend/webhooks';
+
+const webhook = createResendWebhook({ secret: process.env.RESEND_WEBHOOK_SECRET ?? '' });
+
+export default {
+	async fetch(request: Request): Promise<Response> {
+		try {
+			const event = await webhook.verify(request);
+			if (event === null) return new Response(null, { status: 202 }); // an event type this package does not map
+			if (event.type === 'bounced' && event.bounceType === 'hard') await suppress(event.recipient);
+			return new Response(null, { status: 202 });
+		} catch (error) {
+			if (error instanceof MailWebhookRefused) return new Response(null, { status: 401 });
+			throw error;
+		}
+	},
+};
+```
+
+```ts
+// Hono — c.req.raw is the standard Request; verify reads its raw body itself
+import { MailWebhookRefused } from '@nxgt/mail';
+import { createResendWebhook } from '@nxgt/mail-resend/webhooks';
+import { Hono } from 'hono';
+
+const webhook = createResendWebhook({ secret: process.env.RESEND_WEBHOOK_SECRET ?? '' });
+const app = new Hono();
+
+app.post('/webhooks/resend', async (c) => {
+	try {
+		const event = await webhook.verify(c.req.raw);
+		if (event === null) return c.body(null, 202);
+		if (event.type === 'bounced' && event.bounceType === 'hard') await suppress(event.recipient);
+		return c.body(null, 202);
+	} catch (error) {
+		if (error instanceof MailWebhookRefused) return c.body(null, 401);
+		throw error;
+	}
+});
+```
+
+| Export | What it is |
+| --- | --- |
+| `createResendWebhook(options)` | `{ secret, toleranceMs? } → { verify(request) }` |
+| `ResendWebhookOptions` | `{ secret, toleranceMs? }` — `toleranceMs` defaults to `300000` (5 minutes) |
+| `ResendWebhookRequest` | `Request`, or `{ headers, body }` when a framework already read the raw body |
+| `ResendWebhook` | `{ verify(request): Promise<MailEvent \| null> }` |
+
+- **Give `verify` the raw body, never a parsed one.** The signature is an
+  HMAC over the exact bytes Resend sent; a body already parsed to JSON and
+  re-serialized has different key order or whitespace, and no longer
+  matches. Pass the `Request` itself — `verify` reads `request.text()` — or,
+  if your framework has already read the body as **text** (not JSON), pass
+  `{ headers, body }`.
+- **Verifies Resend's Svix signature**: the headers `svix-id`,
+  `svix-timestamp` and `svix-signature`, a secret `whsec_…`, HMAC-SHA256 over
+  `${svix-id}.${svix-timestamp}.${body}`, `svix-signature` holding one or more
+  space-separated `v1,<signature>` (any one matching is enough — Resend
+  rotates the secret this way), and `svix-timestamp` within `toleranceMs` of
+  now, either way.
+- **Web Crypto only** (`crypto.subtle`, `atob`/`btoa`) — no Node built-in, so
+  this runs on Node, Bun, Deno, an edge runtime or a Cloudflare Worker alike.
+- **An event type Resend sends but this package does not map is `null`** —
+  `email.sent`, `email.scheduled`, `email.failed`, `email.received`,
+  `email.suppressed`, and any type Resend adds later — never a throw.
+- **A bad or old signature throws `MailWebhookRefused`** from the `@nxgt/mail`
+  peer, with a `code`: `INVALID_SIGNATURE` (a header missing, no signature
+  matches, or the body was not the exact raw text) or `EXPIRED_TIMESTAMP` (the
+  timestamp is outside `toleranceMs`). Both mean the same thing to a
+  handler — `401`, never retried.
+
+See [Resend's event types](https://resend.com/docs/dashboard/webhooks/event-types),
+[verifying webhook requests](https://resend.com/docs/dashboard/webhooks/verify-webhooks-requests)
+and [Svix's signing algorithm](https://docs.svix.com/receiving/verifying-payloads/how-manual),
+and [`@nxgt/mail`'s guide to delivery events](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/guide/events.md)
+for the `MailEvent` shape. Needs `@nxgt/mail` 0.8 or later.
+
 ## Traps
 
 **Read the key where the process starts, and decide its absence there.**
@@ -272,7 +358,7 @@ and retry within Resend's 24 hours.
 
 ## Type safety, counted
 
-**7 plausible mistakes, 7 refused** at compile time, each measured by a
+**10 plausible mistakes, 10 refused** at compile time, each measured by a
 `@ts-expect-error` in
 [`test/types/refusals.ts`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-resend/test/types/refusals.ts)
 that fails the typecheck the moment it stops holding:
@@ -285,9 +371,13 @@ that fails the typecheck the moment it stops holding:
    `replyTo`.
 6. A `retries` option: the transport tries once.
 7. `messageId` read as a `string`: it is `string | null`.
+8. `createResendWebhook` without a `secret`.
+9. `verify` given an already-parsed body instead of the raw text.
+10. A `MailWebhookErrorCode` the union does not declare.
 
 The same file holds the calls that must keep compiling — among them a `fetch`
-written as a plain function.
+written as a plain function, and a webhook verified against a `Request` or
+`{ headers, body }`.
 
 ## Documentation
 

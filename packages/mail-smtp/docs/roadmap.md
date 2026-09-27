@@ -29,6 +29,11 @@ Nothing planned yet. Say what you need in an issue.
   already holds; `disableFileAccess` and `disableUrlAccess` stay on, so no
   value from outside can make nodemailer read a file or fetch a URL.
 - **Bundling nodemailer** — it is a peer: one copy, the version you choose.
+- **Webhooks / delivery events of our own** — SMTP has none: what happened
+  after the hand-over is in the receiving MTA's own logs, or comes back as a
+  DSN (delivery status notification) e-mail to the envelope sender, out of
+  scope here. See `@nxgt/mail`'s neutral `MailEvent` and
+  `@nxgt/mail-resend/webhooks`, the provider transport that has a webhook.
 
 ## Shipped
 
@@ -36,7 +41,9 @@ The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
 - **`@nxgt/mail` 0.8, v0.5.1** — the peer moves to `^0.8.0`, the version with
-  `@nxgt/mail/telemetry`. No change here.
+  `@nxgt/mail/telemetry` and with delivery events. No change here: SMTP has
+  no webhook of its own, so it maps no delivery events — see
+  [Delivery events — out of scope](../README.md#delivery-events--out-of-scope).
 - **Scheduled send refused, v0.5.0** — a message's `scheduledAt` is refused
   with `MailRefused` — `send: scheduledAt is not supported — SMTP has no way
   to schedule a send, and sending it now would be wrong` — rather than sent

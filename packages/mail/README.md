@@ -41,7 +41,7 @@ import without extensions, so `nodenext` is not supported.
 
 | Import | What it holds |
 | --- | --- |
-| `@nxgt/mail` | The port (`Mailer`, `MailMessage`, `Rendered`, `SentMail`, `Address`, `MailAttachment`), the errors (`MailError`, `MailFailure`, `MailRefused`), `createMemoryMailer`, `withRetry` with `RetryOptions` and `RetryExhausted`, `pickLocale` and `parseAcceptLanguage`, `listUnsubscribe` with `ListUnsubscribeOptions` and `ListUnsubscribeHeaders`, and what a transport calls first: `checkMessage`, `recipientsOf`, `addressOf`. No Node built-in: it runs anywhere |
+| `@nxgt/mail` | The port (`Mailer`, `MailMessage`, `Rendered`, `SentMail`, `Address`, `MailAttachment`), the errors (`MailError`, `MailFailure`, `MailRefused`), the neutral delivery events (`MailEvent` and its members, `MailWebhookRefused`), `createMemoryMailer`, `withRetry` with `RetryOptions` and `RetryExhausted`, `pickLocale` and `parseAcceptLanguage`, `listUnsubscribe` with `ListUnsubscribeOptions` and `ListUnsubscribeHeaders`, and what a transport calls first: `checkMessage`, `recipientsOf`, `addressOf`. No Node built-in: it runs anywhere |
 | `@nxgt/mail/renderer` | The renderer: `createMailRenderer`, `MailRenderer`, `MailRendererOptions`, `RenderOptions`, `MailVariables`, the types that type it with a build's `MailEmails` (`MailEmailsOf`, `AnyMailEmails`, `RenderArguments`), and `MANIFEST_FORMAT`, the newest manifest format it reads. Reads the build with `node:fs` |
 | `@nxgt/mail/conformance` | **For transport authors**: `describeMailer`, its cases as data, `runMailerCase`, the messages they send (`sampleMessage`, `sampleAttachment`, `sampleInlineImage`), and the memory mailer's harness as a worked example |
 | `@nxgt/mail/telemetry` | **Optional**: `withTelemetry` and `withRendererTelemetry`, a span per send and per render on `@opentelemetry/api` — an optional peer, installed only if this subpath is imported |
@@ -382,6 +382,36 @@ marketing and bulk mail, not on a password reset or a sign-in code. See
 [Sending — one-click unsubscribe](docs/guide/sending.md#one-click-unsubscribe)
 for the endpoint and DKIM.
 
+### Delivery events — `MailEvent`
+
+What a provider reports **after** `send` hands a message over: delivered,
+bounced, complained, delayed — and, if the provider tracks it, opened or
+clicked. Neutral, provider-free: a webhook subpath like
+`@nxgt/mail-resend/webhooks` verifies the provider's signature and maps its
+own payload to this shape.
+
+```ts
+import type { MailEvent } from '@nxgt/mail';
+
+function handle(event: MailEvent): void {
+	if (event.type === 'bounced' && event.bounceType === 'hard') {
+		// the address itself is bad: never send it again
+	}
+}
+```
+
+Every event carries `messageId` (the id `send` answered), `recipient`,
+`timestamp`, `tags` and `raw` — the provider's own payload, untouched. **No
+PII beyond what the provider already sends**: `recipient` is the address the
+provider itself reports, and some providers put more inside `raw` for
+`opened` and `clicked` (an IP address, a user agent) — read it only when you
+accept that. An event type a package does not map is `null`, never a throw;
+a webhook request that cannot be trusted throws `MailWebhookRefused`
+(`INVALID_SIGNATURE`, `EXPIRED_TIMESTAMP`), so a handler answers `401`. See
+[Delivery events](docs/guide/events.md) for the shape, and
+[`@nxgt/mail-resend/webhooks`](https://github.com/softistx/nxgt-mail/tree/develop/packages/mail-resend#webhooks--delivery-events)
+for verifying Resend's.
+
 ### Errors — switch on `code`
 
 Both errors extend `MailError`, whose `code` is a union a `switch` exhausts.
@@ -643,7 +673,7 @@ gives a test file `describe` and `it` as bare identifiers, not on `globalThis`.
 
 ## Type safety, counted
 
-**27 plausible mistakes, 27 refused** at compile time, each measured by a
+**29 plausible mistakes, 29 refused** at compile time, each measured by a
 `@ts-expect-error` in
 [`test/types/refusals.ts`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/test/types/refusals.ts)
 that fails the typecheck the moment it stops holding:
@@ -708,6 +738,13 @@ And `withRetry`:
 
 27. `attempts` given as a numeral string (`'5'`): it is a number, checked at
     wiring time.
+
+And delivery events:
+
+28. A `MailEventType` the union does not declare (`'unsubscribed'`): an
+    unmapped webhook event is `null`, never a seventh member.
+29. A `MailBouncedEvent` without its `bounceType`: every provider that reports
+    a bounce classifies it hard or soft.
 
 The same file holds the calls that must keep compiling: a refusal that refuses
 the correct call is a bug.

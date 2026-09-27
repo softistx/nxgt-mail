@@ -21,6 +21,19 @@ export {
 	MailFailure,
 	MailRefused,
 } from './errors';
+export {
+	type MailBouncedEvent,
+	type MailBounceType,
+	type MailClickedEvent,
+	type MailComplainedEvent,
+	type MailDelayedEvent,
+	type MailDeliveredEvent,
+	type MailEvent,
+	type MailEventType,
+	type MailOpenedEvent,
+	type MailWebhookErrorCode,
+	MailWebhookRefused,
+} from './events';
 export { parseAcceptLanguage, pickLocale, type WantedLocales } from './locale';
 export {
 	createMemoryMailer,

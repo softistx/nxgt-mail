@@ -20,6 +20,9 @@ Nothing yet.
   `POST /emails/{id}/cancel`. `scheduledAt` ships without it: a package that
   wraps it needs the id `send` already answers, and a shape for "cancel"
   that a memory mailer and a future transport could share.
+- **A `describeMailEvent` conformance suite** — `checkMailEvent` grows into a
+  full suite, the way `describeMailer` runs the whole `Mailer` port, the day
+  a second provider maps its webhook to `MailEvent`.
 
 ## Not planned
 
@@ -65,6 +68,16 @@ Nothing yet.
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **Delivery events, v0.8.0** — `MailEvent`, the neutral shape a provider's
+  webhook is mapped to: `delivered`, `bounced` (`bounceType`, `hard` or
+  `soft`), `complained`, `delayed`, and, optional and marked `tracking: true`,
+  `opened` and `clicked`. Every event carries `messageId` (the id `send`
+  answered), `recipient`, `timestamp`, `tags` and `raw`, the provider's own
+  payload untouched. `MailWebhookRefused` (`INVALID_SIGNATURE`,
+  `EXPIRED_TIMESTAMP`) is what a webhook subpath throws when the *request*
+  cannot be trusted; an event type it does not map is `null`, never a throw.
+  `@nxgt/mail-resend/webhooks` is the first mapping; `@nxgt/mail/conformance`
+  gains `sampleMailEvent` and `checkMailEvent` for a second provider's.
 - **Observability, v0.8.0** — `@nxgt/mail/telemetry`: `withTelemetry(mailer,
   { transport })` wraps a `Mailer` with a span `mail.send` per send, kind
   `CLIENT`; `withRendererTelemetry(renderer)` wraps a `MailRenderer` with a

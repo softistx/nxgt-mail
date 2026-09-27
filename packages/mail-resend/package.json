@@ -19,6 +19,11 @@
 			"import": "./dist/index.js",
 			"default": "./dist/index.js"
 		},
+		"./webhooks": {
+			"types": "./dist/webhooks.d.ts",
+			"import": "./dist/webhooks.js",
+			"default": "./dist/webhooks.js"
+		},
 		"./package.json": "./package.json"
 	},
 	"keywords": [
@@ -51,8 +56,13 @@
 		"typescript": "^6.0.3"
 	},
 	"nxgt": {
+		"entrypoints": [
+			"src/index.ts",
+			"src/webhooks.ts"
+		],
 		"noNodeBuiltins": [
-			"."
+			".",
+			"./webhooks"
 		]
 	}
 }

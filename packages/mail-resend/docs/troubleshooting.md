@@ -41,6 +41,17 @@ A `send: …` message not on this page comes from `checkMessage` in
 - [`createResendMailer: timeoutMs must be at most 2147483647 — a longer timer fires at once`](#createresendmailer-timeoutms-must-be-at-most-2147483647--a-longer-timer-fires-at-once)
 - [`createResendMailer: from must be an e-mail address, as noreply@example.com or { name, address }`](#createresendmailer-from-must-be-an-e-mail-address-as-noreplyexamplecom-or--name-address-)
 
+**Webhooks**
+- [`verify: svix-id, svix-timestamp or svix-signature is missing`](#verify-svix-id-svix-timestamp-or-svix-signature-is-missing)
+- [`verify: svix-timestamp must be a Unix timestamp, in seconds`](#verify-svix-timestamp-must-be-a-unix-timestamp-in-seconds)
+- [`verify: svix-timestamp is more than <toleranceMs>ms from now`](#verify-svix-timestamp-is-more-than-tolerancemsms-from-now)
+- [`verify: svix-signature does not match — check the secret, and that the body given was the exact raw text Resend sent`](#verify-svix-signature-does-not-match--check-the-secret-and-that-the-body-given-was-the-exact-raw-text-resend-sent)
+- [`verify: the signature matched but the body is not JSON — check that the exact raw body was given, not one re-serialized by a framework`](#verify-the-signature-matched-but-the-body-is-not-json--check-that-the-exact-raw-body-was-given-not-one-re-serialized-by-a-framework)
+- [`verify: request must be a Request, or { headers, body } with the raw text body`](#verify-request-must-be-a-request-or--headers-body--with-the-raw-text-body)
+- [`createResendWebhook: options must be an object, as { secret }`](#createresendwebhook-options-must-be-an-object-as--secret-)
+- [`createResendWebhook: secret must be Resend's signing secret, whsec_… — from the endpoint's settings page`](#createresendwebhook-secret-must-be-resends-signing-secret-whsec--from-the-endpoints-settings-page)
+- [`createResendWebhook: toleranceMs must be a positive integer`](#createresendwebhook-tolerancems-must-be-a-positive-integer)
+
 **Install and types**
 - [`error instanceof MailFailure` is `false`](#error-instanceof-mailfailure-is-false)
 - [`TS2322: Type 'string | undefined' is not assignable to type 'string'.`](#ts2322-type-string--undefined-is-not-assignable-to-type-string)
@@ -285,6 +296,109 @@ written inside the string:
 createResendMailer({ apiKey, from: 'Acme <noreply@acme.test>' }); // ✗
 createResendMailer({ apiKey, from: { name: 'Acme', address: 'noreply@acme.test' } }); // ✓
 ```
+
+## Webhooks
+
+Every message here is thrown by `createResendWebhook(options).verify(request)`,
+from `@nxgt/mail-resend/webhooks`. See [Webhooks](guide/webhooks.md) for
+setting up the endpoint.
+
+### `verify: svix-id, svix-timestamp or svix-signature is missing`
+
+A `MailWebhookRefused`, code `INVALID_SIGNATURE`.
+
+**When:** `request` did not carry one of Resend's three headers.
+**Why:** a proxy, a gateway or a framework's router stripped it — some strip
+anything starting with an underscore-free custom prefix, or lower-case only
+a subset of headers before your handler sees them.
+**Fix:** forward every header Resend sent, unchanged, to the handler that
+calls `verify`; check with a raw request log if you cannot tell which layer
+drops it.
+
+### `verify: svix-timestamp must be a Unix timestamp, in seconds`
+
+A `MailWebhookRefused`, code `INVALID_SIGNATURE`.
+
+**When:** the `svix-timestamp` header was not all digits.
+**Why:** something rewrote it — a proxy that reformats headers, or a
+hand-built test request with an ISO string instead of Resend's Unix seconds.
+**Fix:** pass the header exactly as received.
+
+### `verify: svix-timestamp is more than <toleranceMs>ms from now`
+
+A `MailWebhookRefused`, code `EXPIRED_TIMESTAMP`.
+
+**When:** the timestamp sits further from the current time than
+`toleranceMs` (default 5 minutes), either in the past or the future.
+**Why:** most often clock skew between your server and real time — rarer, a
+replayed or very late-delivered request.
+**Fix:** check your server's clock (NTP) first. If the skew is genuine and
+small, widen `toleranceMs`; do not widen it to work around a webhook queue
+that is minutes behind — fix the backlog instead, since a wide tolerance
+also widens the window a captured request could be replayed in.
+
+### `verify: svix-signature does not match — check the secret, and that the body given was the exact raw text Resend sent`
+
+A `MailWebhookRefused`, code `INVALID_SIGNATURE`.
+
+**When:** none of the `v1,…` signatures in `svix-signature` matched what
+`options.secret` computes over `${svix-id}.${svix-timestamp}.${body}`.
+**Why:** almost always one of two things: the wrong secret (a different
+endpoint's, or a stale one after rotation with no overlap), or `body` is not
+the exact raw text Resend sent — parsed to JSON and re-serialized, trimmed,
+re-encoded, or read after another middleware already consumed the stream.
+**Fix:**
+
+```ts
+// ✗ — body already JSON, re-stringified: key order and spacing can differ
+const body = JSON.stringify(await request.json());
+
+// ✓ — the raw text, or the Request itself
+const body = await request.text();
+const event = await webhook.verify({ headers: request.headers, body });
+// or, simplest:
+const event = await webhook.verify(request);
+```
+
+### `verify: the signature matched but the body is not JSON — check that the exact raw body was given, not one re-serialized by a framework`
+
+A `MailWebhookRefused`, code `INVALID_SIGNATURE`.
+
+**When:** the signature matched, but `JSON.parse(body)` failed.
+**Why:** a body that happens to still verify (identical bytes) but is not
+JSON at all is almost never real: check the request came from Resend's own
+IPs, and that nothing upstream (a proxy re-encoding the body while somehow
+preserving the exact bytes the signature covers) is doing something unusual.
+**Fix:** log the raw body once, from a trusted environment, and compare it
+byte for byte with what Resend's dashboard shows was sent for that delivery.
+
+### `verify: request must be a Request, or { headers, body } with the raw text body`
+
+A bare `TypeError`.
+
+**When:** `request` was neither a `Request` nor an object with a string
+`body` and an object `headers`.
+**Why:** a wiring mistake — often `{ headers, body: await request.json() }`,
+whose `body` is an object, not the raw text.
+**Fix:** pass the `Request`, or `{ headers, body: await request.text() }`.
+
+### `createResendWebhook: options must be an object, as { secret }`
+
+A bare `TypeError`, at wiring.
+
+### `createResendWebhook: secret must be Resend's signing secret, whsec_… — from the endpoint's settings page`
+
+A bare `TypeError`, at wiring.
+
+**When:** `secret` was missing, empty, or did not start with `whsec_`.
+**Fix:** copy the **signing secret** from the webhook endpoint's settings
+page in Resend's dashboard — not the API key (`re_…`), a different
+credential for a different purpose.
+
+### `createResendWebhook: toleranceMs must be a positive integer`
+
+A bare `TypeError`, at wiring. `toleranceMs` is milliseconds, greater than
+zero.
 
 ## Install and types
 

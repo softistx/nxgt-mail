@@ -10,15 +10,22 @@
  * The calls that **must keep compiling** are here too, unmarked: a refusal
  * that refuses the correct call is a bug.
  *
- * **Seven plausible mistakes, seven refused.**
+ * **Ten plausible mistakes, ten refused.**
  */
 
-import type { Mailer, MailMessage, SentMail } from '@nxgt/mail';
+import type {
+	MailEvent,
+	Mailer,
+	MailMessage,
+	MailWebhookErrorCode,
+	SentMail,
+} from '@nxgt/mail';
 import {
 	createResendMailer,
 	formatAddress,
 	type ResendMailerOptions,
 } from '../../src/index';
+import { createResendWebhook, type ResendWebhook } from '../../src/webhooks';
 
 declare const message: MailMessage;
 declare const env: Readonly<Record<string, string | undefined>>;
@@ -75,4 +82,42 @@ const retrying: ResendMailerOptions = { apiKey: 're_123', retries: 3 };
 // @ts-expect-error — an absence is `null`: Resend may answer no id.
 const id: string = (await mailer.send(message)).messageId;
 
-void [snake, retrying, id];
+// ── Must compile: a webhook, verified against a Request or { headers, body } ─
+const webhook: ResendWebhook = createResendWebhook({
+	secret: env.RESEND_WEBHOOK_SECRET ?? '',
+});
+const fromRequest: Promise<MailEvent | null> = webhook.verify(
+	new Request('https://x.test'),
+);
+const fromParts: Promise<MailEvent | null> = webhook.verify({
+	headers: {
+		'svix-id': 'msg_1',
+		'svix-timestamp': '1',
+		'svix-signature': 'v1,x',
+	},
+	body: '{}',
+});
+void [fromRequest, fromParts];
+
+// ── 8. No signing secret ─────────────────────────────────────────────────────
+// @ts-expect-error — secret is required.
+createResendWebhook({});
+
+// ── 9. verify given a body that is not the raw text ──────────────────────────
+// A parsed body cannot be verified: the signature is over the exact bytes
+// Resend sent, so `body` is always a string.
+webhook.verify({
+	headers: {
+		'svix-id': 'msg_1',
+		'svix-timestamp': '1',
+		'svix-signature': 'v1,x',
+	},
+	// @ts-expect-error — body is the raw text, not the parsed JSON.
+	body: { type: 'email.delivered' },
+});
+
+// ── 10. A MailWebhookErrorCode the union does not declare ────────────────────
+// @ts-expect-error — 'BAD_SIGNATURE' is not a MailWebhookErrorCode.
+const badCode: MailWebhookErrorCode = 'BAD_SIGNATURE';
+
+void [snake, retrying, id, badCode];

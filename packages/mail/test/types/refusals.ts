@@ -10,7 +10,7 @@
  * The calls that **must keep compiling** are here too, unmarked: a refusal
  * that refuses the correct call is a bug.
  *
- * **27 plausible mistakes, 27 refused.**
+ * **29 plausible mistakes, 29 refused.**
  */
 
 import type { DeliveredMail, MailerHarness } from '../../src/conformance/index';
@@ -18,8 +18,10 @@ import {
 	createMemoryMailer,
 	listUnsubscribe,
 	type MailAttachment,
+	type MailBouncedEvent,
 	MailError,
 	type MailErrorCode,
+	type MailEventType,
 	type Mailer,
 	MailFailure,
 	type MailMessage,
@@ -369,3 +371,26 @@ withRetry(memoryMailer, {
 	maxDelayMs: 30_000,
 	signal: new AbortController().signal,
 });
+
+// ── 28. A MailEventType the union does not declare ──────────────────────────
+// A provider's webhook subpath answers `null` for a type it does not map; it
+// never invents a seventh member for one it does not recognise.
+// @ts-expect-error — 'unsubscribed' is not a MailEventType.
+const unknownEventType: MailEventType = 'unsubscribed';
+void unknownEventType;
+
+// ── 29. A bounced event without its bounceType ───────────────────────────────
+// Every provider that reports a bounce classifies it: hard/permanent or
+// soft/transient decides whether a retry could ever help.
+// @ts-expect-error — bounceType is required on a bounced event.
+const bounced: MailBouncedEvent = {
+	type: 'bounced',
+	messageId: 'msg_1',
+	recipient: 'ada@example.test',
+	timestamp: new Date(),
+	tags: {},
+	raw: null,
+};
+// Must compile: the same event, classified.
+const bouncedOk: MailBouncedEvent = { ...bounced, bounceType: 'hard' };
+void bouncedOk;

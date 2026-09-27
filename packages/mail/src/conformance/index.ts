@@ -19,6 +19,7 @@ export {
 	MAILER_SKIP_REASONS,
 	runMailerCase,
 } from './describe';
+export { checkMailEvent, sampleMailEvent } from './events';
 export { referenceMailerHarness } from './reference';
 export {
 	sampleAttachment,
