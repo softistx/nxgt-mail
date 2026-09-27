@@ -197,6 +197,23 @@ through untouched, and never branches or computes on it
 - `develop` is the base branch; merge commits only; a changeset for every
   change a consumer can see, docs included.
 
+### Local to this copy of the skeleton
+
+`biome.json` differs from the nxgt-janus copy where this repository has what
+janus has not — Vue templates, Tailwind, generated files and built samples.
+Carry each difference over when janus gets the same thing (`@nxgt/janus-mail`):
+
+- **Biome parses the Vue templates** (`html.experimentalFullSupportEnabled`).
+  Without it, Biome 2.5's language server re-parses a `.vue` file with no
+  `<script>` as JavaScript from the first edit on, and an editor fills with
+  `parse` errors on `{{ t('…') }}` that `biome check` never shows. A rule
+  that cannot see a slot's content is silenced on its element, with the
+  reason.
+- `noUnusedVariables` and `noUnusedImports` are off for `.vue`: what the
+  template uses, the script-only rules do not see.
+- `css.parser.tailwindDirectives` for `theme.css`, and `generated/` and
+  `samples/` left out of `files.includes`.
+
 **One word per idea.** The words are defined once, in a `docs/vocabulary.md`
 the first package writes: *e-mail* (not "mail" in prose, not "email"),
 *template*, *catalogue*, *message*, *locale*, *plugin*, *placeholder*,

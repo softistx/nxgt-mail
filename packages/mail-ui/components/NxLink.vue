@@ -14,5 +14,6 @@ const classes = computed(() =>
 </script>
 
 <template>
+  <!-- biome-ignore lint/a11y/useAnchorContent: the link's text is the slot, which Biome cannot see. -->
   <a v-bind="{ ...attrs, class: undefined }" :href="href" :class="classes"><slot /></a>
 </template>

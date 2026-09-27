@@ -175,6 +175,13 @@ any arguments, as a plain `t(key: string, args?: MessageArgs)`.
 `resources/js/types/maizzle`), must include that `.maizzle/*.d.ts` in its
 `tsconfig.json` itself.
 
+## With Biome
+
+If Biome is the editor's linter, set
+`html.experimentalFullSupportEnabled` in `biome.json`: otherwise Biome 2.5
+reads a template without `<script>` as JavaScript once you edit it — see
+[the troubleshooting entry](../troubleshooting.md#biome-reports-parse-errors-in-a-template-as-soon-as-you-edit-it).
+
 ## In CI
 
 `vue-tsc` checks the templates as the editor does. Generate the types first:
