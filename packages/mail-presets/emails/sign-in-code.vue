@@ -1,9 +1,9 @@
 <template>
-  <NxLayout :preheader="t('signInCode.preheader')">
-    <NxTypography variant="headline-small">{{ t('signInCode.title') }}</NxTypography>
-    <NxTypography>{{ t('signInCode.body', { brand: brand.name }) }}</NxTypography>
+  <NxLayout :preheader="t('sign-in-code.preheader')">
+    <NxTypography variant="headline-small">{{ t('sign-in-code.title') }}</NxTypography>
+    <NxTypography>{{ t('sign-in-code.body', { brand: brand.name }) }}</NxTypography>
     <NxCode>{{ placeholder('code') }}</NxCode>
-    <NxTypography variant="body-small">{{ t('presets.codeExpires', { expiresIn: placeholder('expiresIn') }) }}</NxTypography>
-    <NxTypography variant="caption">{{ t('signInCode.ignore') }}</NxTypography>
+    <NxTypography variant="body-small">{{ t('presets.code-expires', { expiresIn: placeholder('expiresIn') }) }}</NxTypography>
+    <NxTypography variant="caption">{{ t('sign-in-code.ignore') }}</NxTypography>
   </NxLayout>
 </template>

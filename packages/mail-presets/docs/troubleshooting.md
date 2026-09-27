@@ -56,18 +56,21 @@ and the brand `Acme`.
 - [`presets: only holds the same preset twice`](#presets-only-holds-the-same-preset-twice)
 - [`i18n: templates must be a list of template folders, as [{ dir: '/abs/path/emails' }] — emails, when given, names at least one, each once`](#i18n-templates-must-be-a-list-of-template-folders-as--dir-abspathemails---emails-when-given-names-at-least-one-each-once)
 - [`i18n: templates[0] and templates[1] both have welcome.vue — keep one with emails: [...], or write the project's own in its folder`](#i18n-templates0-and-templates1-both-have-welcomevue--keep-one-with-emails--or-write-the-projects-own-in-its-folder)
-- [`i18n: de: presets.linkFallback is missing — en, the fallback locale, has it`](#i18n-de-presetslinkfallback-is-missing--en-the-fallback-locale-has-it)
-- [`i18n: fr: verifyEmail.body uses {brand}, which en does not declare`](#i18n-fr-verifyemailbody-uses-brand-which-en-does-not-declare)
+- [`i18n: de: presets.link-fallback is missing — en, the fallback locale, has it`](#i18n-de-presetslink-fallback-is-missing--en-the-fallback-locale-has-it)
+- [`i18n: fr: verify-email.body uses {brand}, which en does not declare`](#i18n-fr-verify-emailbody-uses-brand-which-en-does-not-declare)
 
 **Build**: while `maizzle build` renders
 - [`i18n: en: verify-email calls t('common.footer.why'), which is not a key of the catalogues`](#i18n-en-verify-email-calls-tcommonfooterwhy-which-is-not-a-key-of-the-catalogues)
-- [`i18n: en: verify-email calls t('verifyEmail.preheader'), which is not a key of the catalogues`](#i18n-en-verify-email-calls-tverifyemailpreheader-which-is-not-a-key-of-the-catalogues)
+- [`i18n: en: verify-email calls t('verify-email.preheader'), which is not a key of the catalogues`](#i18n-en-verify-email-calls-tverify-emailpreheader-which-is-not-a-key-of-the-catalogues)
 - [`TypeError: Cannot read properties of undefined (reading 'name')`](#typeerror-cannot-read-properties-of-undefined-reading-name)
 - [`i18n: en/new-sign-in.html is empty — a tag of its template resolved to no component; list the plugin that brings it, as ui()`](#i18n-ennew-sign-inhtml-is-empty--a-tag-of-its-template-resolved-to-no-component-list-the-plugin-that-brings-it-as-ui)
-- [`i18n: en: verify-email passes {brand} to verifyEmail.body, which does not use it`](#i18n-en-verify-email-passes-brand-to-verifyemailbody-which-does-not-use-it)
+- [`i18n: en: verify-email passes {brand} to verify-email.body, which does not use it`](#i18n-en-verify-email-passes-brand-to-verify-emailbody-which-does-not-use-it)
 
 **Sending**: when your code renders a built preset
 - [`render: reset-password needs the variable expiresIn`](#render-reset-password-needs-the-variable-expiresin)
+
+**Upgrading**
+- [`i18n: en: verify-email calls t('presets.linkExpires'), which is not a key of the catalogues`](#i18n-en-verify-email-calls-tpresetslinkexpires-which-is-not-a-key-of-the-catalogues)
 
 **Traps: a build that succeeds and is wrong**
 - [A bug in `@nxgt/mail-presets` itself](#a-bug-in-nxgtmail-presets-itself)
@@ -111,7 +114,7 @@ presets();                        // every preset
 
 **When:** loading `maizzle.config.ts`, when `only` names an e-mail the
 package does not ship. Common causes are a typo, a name in camelCase
-(`'verifyEmail'`), a name with `.vue`, or a name of your own template such as
+(`'verify-email'`), a name with `.vue`, or a name of your own template such as
 `'sign-in'`.
 **Why:** `only` names the package's templates, by the name of their file and
 of their built file (`dist/en/verify-email.html`). The message lists them.
@@ -121,7 +124,7 @@ TypeScript refuses such a name too, where the config is type-checked.
 ```ts
 import { PRESETS, presets } from '@nxgt/mail-presets';
 
-presets({ only: ['verify-email', 'sign-in-code'] });   // not 'verifyEmail', not 'sign-in'
+presets({ only: ['verify-email', 'sign-in-code'] });   // not 'verify-email', not 'sign-in'
 console.log(PRESETS);                                   // every name
 ```
 
@@ -178,14 +181,14 @@ i18n({
 To replace a preset with your own, write `emails/welcome.vue` in the project.
 It wins over the preset, and this error does not apply to it.
 
-### `i18n: de: presets.linkFallback is missing — en, the fallback locale, has it`
+### `i18n: de: presets.link-fallback is missing — en, the fallback locale, has it`
 
 The message names your locale. The key starts `presets.` or with a preset's
-key (`verifyEmail.`, `signInCode.`, …), or `common.` when the `common` keys
+key (`verify-email.`, `sign-in-code.`, …), or `common.` when the `common` keys
 are missing as well (`i18n: de: common.footer.ignore is missing — …`).
 After an upgrade to 0.2, a catalogue written for 0.1 misses the keys it
-added: `presets.codeExpires` and `presets.linkExpires`
-(`i18n: de: presets.codeExpires is missing — …`), and `invitation.expires`
+added: `presets.code-expires` and `presets.link-expires`
+(`i18n: de: presets.code-expires is missing — …`), and `invitation.expires`
 when it builds `invitation`. Translate them with the `{expiresIn}` argument,
 as `"Dieser Link läuft in {expiresIn} ab."`.
 
@@ -200,8 +203,8 @@ fallback locale.
 // locales/de.json
 {
   "common": { "greeting": "Hallo {name},", "footer": { "why": "…", "ignore": "…" } },
-  "presets": { "codeExpires": "…", "linkExpires": "…", "linkFallback": "…", "notYou": "…" },
-  "verifyEmail": { "subject": "…", "preheader": "…", "title": "…", "body": "…", "action": "…" }
+  "presets": { "code-expires": "…", "link-expires": "…", "link-fallback": "…", "not-you": "…" },
+  "verify-email": { "subject": "…", "preheader": "…", "title": "…", "body": "…", "action": "…" }
 }
 ```
 
@@ -215,7 +218,7 @@ import { presets } from '@nxgt/mail-presets';
 console.log(JSON.stringify(presets({ only: ['verify-email'] }).catalogues.en, null, 2));
 ```
 
-### `i18n: fr: verifyEmail.body uses {brand}, which en does not declare`
+### `i18n: fr: verify-email.body uses {brand}, which en does not declare`
 
 The message names a locale the project did not override, a preset's key, and
 an argument of the preset's message.
@@ -233,17 +236,17 @@ the preset's own message:
 ```ts
 import { presetCatalogues } from '@nxgt/mail-presets';
 
-console.log(presetCatalogues.en.verifyEmail);   // body: '… your {brand} account.'
+console.log(presetCatalogues.en['verify-email']);   // body: '… your {brand} account.'
 ```
 
 ```jsonc
 // locales/en.json
-{ "verifyEmail": { "body": "Confirm your address to start using {brand}." } }
+{ "verify-email": { "body": "Confirm your address to start using {brand}." } }
 ```
 
 When both locales are overridden with a new argument, as `{company}` in `en`
 and in `fr`, the build stops later, on
-`i18n: en: verify-email calls t('verifyEmail.body') without {company}`: the
+`i18n: en: verify-email calls t('verify-email.body') without {company}`: the
 preset's template passes `brand`, not `company`. To add an argument, write
 the project's own template in `emails/verify-email.vue`, which replaces the
 preset's.
@@ -276,10 +279,10 @@ i18n({
 });
 ```
 
-### `i18n: en: verify-email calls t('verifyEmail.preheader'), which is not a key of the catalogues`
+### `i18n: en: verify-email calls t('verify-email.preheader'), which is not a key of the catalogues`
 
 The message names a preset, and the key starts with that preset's key
-(`verifyEmail.`, `signInCode.`, …) or `presets.`.
+(`verify-email.`, `sign-in-code.`, …) or `presets.`.
 
 **When:** `maizzle build`, on the first preset, when `templates` holds the
 presets' templates but `catalogues` does not hold their messages.
@@ -343,7 +346,7 @@ renders a component it cannot resolve as nothing. The e-mail would go out
 blank.
 **Fix:** add `ui()`, as above.
 
-### `i18n: en: verify-email passes {brand} to verifyEmail.body, which does not use it`
+### `i18n: en: verify-email passes {brand} to verify-email.body, which does not use it`
 
 **When:** `maizzle build`, on that preset, after the project overrides one of
 its messages in every locale with a text that leaves out an argument the
@@ -358,11 +361,11 @@ template in `emails/verify-email.vue`, which replaces the preset's:
 
 ```jsonc
 // locales/en.json
-{ "verifyEmail": { "body": "Confirm your address to start using {brand}." } }
+{ "verify-email": { "body": "Confirm your address to start using {brand}." } }
 ```
 
 When only `en` leaves the argument out, the build stops earlier, when the
-config loads, on `i18n: fr: verifyEmail.body uses {brand}, which en does not
+config loads, on `i18n: fr: verify-email.body uses {brand}, which en does not
 declare`.
 
 ---
@@ -400,6 +403,39 @@ template with your own in `emails/`; see
 [Replacing a template](guide/presets.md#replacing-a-template).
 
 ---
+
+## Upgrading
+
+### `i18n: en: verify-email calls t('presets.linkExpires'), which is not a key of the catalogues`
+
+**When:** after upgrading `@nxgt/mail-presets` to a version whose messages
+moved to `kebab-case` keys (0.2), on your own override in
+`locales/<locale>.json` for a preset or a shared `presets.*` message, or a
+template of your own that still calls the old `camelCase` key.
+**Why:** `@nxgt/mail-i18n` accepts a `camelCase` or a `kebab-case` key, so
+this is not a format refusal — but the specific key moved: every preset's
+namespace (`verifyEmail` becoming `verify-email`, `resetPassword` becoming
+`reset-password`, `passwordChanged` becoming `password-changed`,
+`emailChanged` becoming `email-changed`, `signInCode` becoming
+`sign-in-code`, `magicLink` becoming `magic-link`, `newSignIn` becoming
+`new-sign-in`) and the shared `presets.*` group (`codeExpires`,
+`linkExpires`, `linkFallback`, `notYou` becoming `code-expires`,
+`link-expires`, `link-fallback`, `not-you`). An override under the old key
+is not an error by itself — it becomes a key of its own that no preset
+reads, so the build succeeds with your override silently ignored — until a
+template's own call to the new key finds nothing under the old one.
+**Fix:** rename the key in your override and in any template you replaced a
+preset with — see the package's changeset for the full old → new list:
+
+```json
+// locales/en.json — before
+{ "verifyEmail": { "action": "Yes, this is my address" } }
+```
+
+```json
+// locales/en.json — after
+{ "verify-email": { "action": "Yes, this is my address" } }
+```
 
 ## Traps: a build that succeeds and is wrong
 

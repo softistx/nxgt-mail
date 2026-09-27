@@ -111,7 +111,7 @@ Your `locales/<locale>.json` is where a message changes — see
 ```ts
 import { presetCatalogues } from '@nxgt/mail-presets';
 
-Object.isFrozen(presetCatalogues.en?.verifyEmail); // true — and its type is readonly
+Object.isFrozen(presetCatalogues.en?.['verify-email']); // true — and its type is readonly
 ```
 
 With `only`, the folder with the e-mails to keep, and only their messages
@@ -120,7 +120,7 @@ with the shared `presets.*` group:
 ```ts
 const one = presets({ only: ['sign-in-code'] });
 // one.templates  → { dir: TEMPLATES_DIR, emails: ['sign-in-code'] }
-// Object.keys(one.catalogues.en) → ['presets', 'signInCode']
+// Object.keys(one.catalogues.en) → ['presets', 'sign-in-code']
 ```
 
 | Field | What `i18n()` does with it |
@@ -160,7 +160,7 @@ the same `dist/` and the same manifest:
 { "orderShipped": { "subject": "Order {order} is on its way", "body": "Order {order} has shipped." } }
 ```
 
-The presets' messages are under their own keys (`verifyEmail.*`,
+The presets' messages are under their own keys (`verify-email.*`,
 `presets.*`), so yours do not collide with them unless you mean them to.
 
 ## Replacing a template
@@ -207,7 +207,7 @@ each locale:
 
 ```json
 // locales/en.json
-{ "verifyEmail": { "action": "Yes, this is my address" } }
+{ "verify-email": { "action": "Yes, this is my address" } }
 ```
 
 ```json
@@ -217,9 +217,9 @@ each locale:
 
 The English button says `Yes, this is my address`; every other message,
 English or French, stays the package's. An override keeps the arguments
-the template passes: in `en`, the fallback locale, `verifyEmail.body` keeps
+the template passes: in `en`, the fallback locale, `verify-email.body` keeps
 `{brand}`, or the build fails with
-`i18n: en: verify-email passes {brand} to verifyEmail.body, which does not use it`.
+`i18n: en: verify-email passes {brand} to verify-email.body, which does not use it`.
 In `fr` it may leave `{brand}` out, and never use an argument `en` does not
 declare. To change what a template passes, replace the template. The keys of
 every preset are in [The e-mails](emails.md), and the merge rules in
@@ -254,7 +254,7 @@ Error: i18n: en: verify-email calls t('common.footer.why'), which is not a key o
 Without `mails.catalogues`, it fails on the first preset message instead:
 
 ```text
-Error: i18n: en: verify-email calls t('verifyEmail.preheader'), which is not a key of the catalogues
+Error: i18n: en: verify-email calls t('verify-email.preheader'), which is not a key of the catalogues
 ```
 
 ## Another locale
@@ -265,7 +265,7 @@ the three `common` keys, the four `presets` keys, and the group of each preset
 it builds. Otherwise the build fails on the first one missing:
 
 ```text
-Error: i18n: de: presets.linkFallback is missing — en, the fallback locale, has it
+Error: i18n: de: presets.link-fallback is missing — en, the fallback locale, has it
 ```
 
 With `presets({ only: ['sign-in-code'] })` and `locales: ['en', 'fr', 'de']`:
@@ -281,12 +281,12 @@ With `presets({ only: ['sign-in-code'] })` and `locales: ['en', 'fr', 'de']`:
 		}
 	},
 	"presets": {
-		"codeExpires": "Dieser Code läuft in {expiresIn} ab.",
-		"linkExpires": "Dieser Link läuft in {expiresIn} ab.",
-		"linkFallback": "Wenn die Schaltfläche nicht funktioniert, öffnen Sie diesen Link:",
-		"notYou": "Wenn Sie das nicht waren, sichern Sie jetzt Ihr Konto."
+		"code-expires": "Dieser Code läuft in {expiresIn} ab.",
+		"link-expires": "Dieser Link läuft in {expiresIn} ab.",
+		"link-fallback": "Wenn die Schaltfläche nicht funktioniert, öffnen Sie diesen Link:",
+		"not-you": "Wenn Sie das nicht waren, sichern Sie jetzt Ihr Konto."
 	},
-	"signInCode": {
+	"sign-in-code": {
 		"subject": "Ihr Anmeldecode: {code}",
 		"preheader": "Geben Sie diesen Code ein, um sich anzumelden.",
 		"title": "Ihr Anmeldecode",

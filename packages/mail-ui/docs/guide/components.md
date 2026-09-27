@@ -639,7 +639,7 @@ side, 4px apart, rather than overlapping as in material-vue: Gmail drops the
 negative margin that stacks them. Avatars from a `v-for` count one by one.
 
 The `+N` is labelled for a screen reader with the shared message
-`common.avatarGroup.more` (`2 more`, `2 autres`) when `@nxgt/mail-i18n` is
+`common.avatar-group.more` (`2 more`, `2 autres`) when `@nxgt/mail-i18n` is
 listed, and in English otherwise; see [Shared messages](messages.md).
 
 Outlook on Windows ignores the width and height of an inline box: there,
@@ -875,7 +875,7 @@ thin bar of the share reached.
 | `target` | `number` | required | Written after the figure, and the bar's `max` |
 | `unit` | `string` | none | Written right after `value`, with no space: `unit="%"` gives `18%`. Not after the target |
 
-`of 24` is the shared message `common.metrics.ofTarget` (`of {target}`,
+`of 24` is the shared message `common.metrics.of-target` (`of {target}`,
 `sur {target}`) when `@nxgt/mail-i18n` is listed, and English otherwise; see
 [Shared messages](messages.md). The bar is an `NxProgress` of `height` 6: a
 `value` past its `target` fills it, and both are numbers known at build time.
@@ -917,8 +917,8 @@ two boxes, and the delta between them.
 | Prop | Type | Default | Effect |
 | --- | --- | --- | --- |
 | `label` | `string` | required | The first line, `text-sm` muted |
-| `current` | `{ value: string; label?: string }` | required | The left box, `text-2xl` semibold. `label` defaults to the shared message `common.metrics.thisPeriod` (`This period`) |
-| `previous` | `{ value: string; label?: string }` | required | The right box, muted. `label` defaults to `common.metrics.lastPeriod` (`Last period`) |
+| `current` | `{ value: string; label?: string }` | required | The left box, `text-2xl` semibold. `label` defaults to the shared message `common.metrics.this-period` (`This period`) |
+| `previous` | `{ value: string; label?: string }` | required | The right box, muted. `label` defaults to `common.metrics.last-period` (`Last period`) |
 | `delta` | `number` | none | On the right of the label, toned by its sign, with its arrow — see [A delta and its arrow](#a-delta-and-its-arrow) |
 
 Without `@nxgt/mail-i18n`, the two default labels are in English. The delta's
@@ -971,7 +971,7 @@ e-mail opens a browser.
 | Prop | Type | Default | Effect |
 | --- | --- | --- | --- |
 | `items` | `{ id?: string; title: string; href: string }[]` | required | The links, in order; each `id`, or else each `href`, unique |
-| `label` | `string` | the shared message `common.seeAlso` (`See also`); without `@nxgt/mail-i18n`, `See also` in every language | The label over the links |
+| `label` | `string` | the shared message `common.see-also` (`See also`); without `@nxgt/mail-i18n`, `See also` in every language | The label over the links |
 
 With no `items`, it writes nothing: no line, no label. The `↗` is
 `aria-hidden` and left out of the plain-text version. Its `class` is merged
@@ -1087,7 +1087,7 @@ count — `99+` past `max`, nothing at 0.
 
 The badge follows the content on its line, 4 pixels after it: a mail client
 does not place it over a corner as material-vue does. A screen reader hears
-the shared message `common.countBadge.label` (`3 notifications`, `1 notification`; without
+the shared message `common.count-badge.label` (`3 notifications`, `1 notification`; without
 `@nxgt/mail-i18n`, in English), and the plain-text version writes the count
 in brackets: `Unread (3)`.
 
@@ -1325,7 +1325,7 @@ the title and `postalCode locality · country` under it.
 | Prop | Type | Default | Effect |
 | --- | --- | --- | --- |
 | `data` | `{ street?; locality?; region?; postalCode?; country? }`, each `string \| null` | none | The address |
-| `label` | `string` | the shared message `common.postalAddress` (`Address`) | The heading |
+| `label` | `string` | the shared message `common.postal-address` (`Address`) | The heading |
 
 The layout is material-vue's, the same in every locale: without a street, the
 city — else the country, else the region — is the title and
@@ -1357,11 +1357,11 @@ day as the title and its hours under it.
 | Prop | Type | Default | Effect |
 | --- | --- | --- | --- |
 | `data` | `{ dayOfWeek: number; openTime?: string; closeTime?: string; isClosed?: boolean }[]` | `[]` | The days, sorted from Sunday (`0`) to Saturday (`6`) |
-| `label` | `string` | the shared message `common.openingHours.label` (`Opening hours`) | The heading |
+| `label` | `string` | the shared message `common.opening-hours.label` (`Opening hours`) | The heading |
 
-The day's name is a shared message (`common.openingHours.days.monday`, …),
+The day's name is a shared message (`common.opening-hours.days.monday`, …),
 the hours `09:00 – 18:00` as written, `—` for a time not given, and a closed
-day `common.openingHours.closed` (`Closed all day`). With no day, nothing is
+day `common.opening-hours.closed` (`Closed all day`). With no day, nothing is
 written. A `dayOfWeek` outside `0`–`6` names no day and fails the build:
 `NxOpeningHours: dayOfWeek must be a whole number from 0 (Sunday) to 6 (Saturday)`.
 
@@ -1420,10 +1420,10 @@ attachment's page, or a download.
 | Prop | Type | Default | Effect |
 | --- | --- | --- | --- |
 | `items` | `{ id: string; name: string; size?: number \| string; href?: string; type?: string; disabled?: boolean }[]` | required | The files, in order; each `id` unique |
-| `empty` | `string` | the shared message `common.fileList.empty` (`No files`) | The text shown, centred and muted, when `items` is empty; the `empty` slot replaces it |
+| `empty` | `string` | the shared message `common.file-list.empty` (`No files`) | The text shown, centred and muted, when `items` is empty; the `empty` slot replaces it |
 
 A size in bytes is written as material-vue's `formatFileSize` does, in the
-template's locale: `1.5 MB`, `1,5 Mo` (`common.fileList.size`). A string — a
+template's locale: `1.5 MB`, `1,5 Mo` (`common.file-list.size`). A string — a
 placeholder — is written as given. Where material-vue draws an icon for the
 type, the tile shows the extension on a tonal circle, from the name
 (`agenda.pdf` is `PDF`), else from the MIME `type` (`image/png` is `PNG`),

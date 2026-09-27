@@ -16,7 +16,7 @@ const props = defineProps<{
 const globals: Record<string, unknown> =
 	getCurrentInstance()?.appContext.config.globalProperties ?? {};
 const ofTarget = computed(() =>
-	sharedMessage(globals, 'common.metrics.ofTarget', `of ${props.target}`, {
+	sharedMessage(globals, 'common.metrics.of-target', `of ${props.target}`, {
 		target: String(props.target),
 	}),
 );

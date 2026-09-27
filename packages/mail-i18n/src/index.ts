@@ -11,7 +11,7 @@
  * });
  * ```
  *
- * A template writes `{{ t('verifyEmail.title') }}`; `maizzle build` writes
+ * A template writes `{{ t('verify-email.title') }}`; `maizzle build` writes
  * `dist/en/verify-email.html`, `dist/fr/verify-email.html` and
  * `dist/mail-manifest.json`.
  */

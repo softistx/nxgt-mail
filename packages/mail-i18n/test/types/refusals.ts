@@ -32,11 +32,11 @@ const plugin: MailPlugin = i18n({
 	rendererTypes: 'src/generated/mail.ts',
 });
 i18n({ locales: ['en'], rendererTypes: false });
-const catalogue: Catalogue = { verifyEmail: { subject: 'Confirm, {name}' } };
+const catalogue: Catalogue = { 'verify-email': { subject: 'Confirm, {name}' } };
 const t = createTranslator({ en: catalogue }, () => 'en');
-t('verifyEmail.subject', { name: 'Ada', count: 2, at: new Date() }, 'en');
+t('verify-email.subject', { name: 'Ada', count: 2, at: new Date() }, 'en');
 declare const template: ComponentCustomProperties;
-template.t('verifyEmail.title', { minutes: 15 });
+template.t('verify-email.title', { minutes: 15 });
 template.placeholder('link');
 template.locale.toUpperCase();
 
@@ -54,7 +54,7 @@ i18n({ locales: ['en'], layout: 'tree' });
 
 // 4. A catalogue with a leaf that is not a message.
 // @ts-expect-error — a leaf is an ICU string.
-const broken: Catalogue = { verifyEmail: { expires: 15 } };
+const broken: Catalogue = { 'verify-email': { expires: 15 } };
 
 // 5. A language provider that answers nothing usable.
 // @ts-expect-error — a locale, or a function that answers one.
@@ -62,7 +62,7 @@ createTranslator({ en: catalogue }, 1);
 
 // 6. An argument that is an object.
 // @ts-expect-error — a string, a number or a Date.
-t('verifyEmail.subject', { name: { first: 'Ada' } });
+t('verify-email.subject', { name: { first: 'Ada' } });
 
 // 7. A placeholder named by something that is not a name.
 // @ts-expect-error — placeholder('name').
@@ -81,12 +81,12 @@ i18n({ locales: ['en'], fallbackLocale: 1 });
 i18n({ locales: ['en'], emails: 1 });
 
 // 11. A key that is not a string, in a template.
-// @ts-expect-error — t('verifyEmail.title').
+// @ts-expect-error — t('verify-email.title').
 template.t(1);
 
 // 12. A language that is not a locale, per call.
 // @ts-expect-error — a locale, or a function that answers one.
-t('verifyEmail.subject', {}, 1);
+t('verify-email.subject', {}, 1);
 
 // 13. Package catalogues given as one, not a list.
 // @ts-expect-error — a list of catalogues by locale.

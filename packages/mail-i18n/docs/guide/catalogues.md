@@ -6,16 +6,16 @@ locale, checked against each other when the config loads.
 ```json
 // locales/en.json
 {
-	"verifyEmail": {
+	"verify-email": {
 		"subject": "Confirm your e-mail address, {name}",
 		"title": "Confirm your e-mail address",
 		"greeting": "Hello {name},",
 		"expires": "The link expires in {minutes, plural, one {# minute} other {# minutes}}.",
-		"sentOn": "Sent on {at, date, long}.",
+		"sent-on": "Sent on {at, date, long}.",
 		"action": "Confirm my address"
 	},
 	"auth": {
-		"resetPassword": {
+		"reset-password": {
 			"subject": "Reset your password",
 			"body": "Someone asked to reset the password of {email}."
 		}
@@ -26,16 +26,16 @@ locale, checked against each other when the config loads.
 ```json
 // locales/fr.json
 {
-	"verifyEmail": {
+	"verify-email": {
 		"subject": "Confirmez votre adresse e-mail, {name}",
 		"title": "Confirmez votre adresse e-mail",
 		"greeting": "Bonjour {name},",
 		"expires": "Le lien expire dans {minutes, plural, one {# minute} other {# minutes}}.",
-		"sentOn": "Envoyé le {at, date, long}.",
+		"sent-on": "Envoyé le {at, date, long}.",
 		"action": "Confirmer mon adresse"
 	},
 	"auth": {
-		"resetPassword": {
+		"reset-password": {
 			"subject": "Réinitialisez votre mot de passe",
 			"body": "Quelqu'un a demandé à réinitialiser le mot de passe de {email}."
 		}
@@ -53,7 +53,7 @@ export default defineMailConfig({
 });
 ```
 
-A template writes `t('verifyEmail.expires', { minutes: 15 })`. The English
+A template writes `t('verify-email.expires', { minutes: 15 })`. The English
 build shows `The link expires in 15 minutes.` and the French one
 `Le lien expire dans 15 minutes.`.
 
@@ -179,12 +179,12 @@ build failure, as any other on this page.
 
 A catalogue is an object. A leaf is an ICU message (a string), and anything
 else is an object of messages. The key of a message is its path, dotted:
-`verifyEmail.title`, `auth.resetPassword.body`.
+`verify-email.title`, `auth.reset-password.body`.
 
 ```ts
 import type { Catalogue } from '@nxgt/mail-i18n';
 
-const en: Catalogue = { verifyEmail: { subject: 'Confirm, {name}' } };
+const en: Catalogue = { 'verify-email': { subject: 'Confirm, {name}' } };
 ```
 
 ```ts
@@ -194,21 +194,24 @@ interface Catalogue {
 type Catalogues = Readonly<Record<string, Catalogue>>; // { en, fr }
 ```
 
-**Every segment of a key is `camelCase`**: a lower-case letter, then letters
-and digits. Keys are **nested, never dotted**: a dot inside a key is refused
-the same way as a dash.
+**Every segment of a key is `camelCase` or `kebab-case`**: a lower-case
+letter, then letters and digits, optionally cut into `kebab-case` words. Our
+own convention for a new key is `kebab-case`; `camelCase` stays accepted so a
+project migrates on its own schedule. Keys are **nested, never dotted**: a
+dot inside a key is refused the same way as an underscore or a capital first
+letter.
 
 ```json
-{ "verifyEmail": { "title": "…" } }
+{ "verify-email": { "title": "…" } }
 ```
 
 | Build failure | Cause |
 | --- | --- |
-| `i18n: en: verify-email is not camelCase — every segment of a key is camelCase, and nested rather than dotted, as verifyEmail.title` | A key with a dash, an underscore, or a capital first letter |
-| `i18n: en: verifyEmail.title is not camelCase — …` | A dotted key, `{ "verifyEmail.title": "…" }`: nest it |
+| `i18n: en: verify_email is not camelCase or kebab-case — every segment of a key is one or the other, and nested rather than dotted, as verify-email.title` | A key with an underscore, or a capital first letter |
+| `i18n: en: verifyEmail.title is not camelCase or kebab-case — …` | A dotted key, `{ "verifyEmail.title": "…" }`: nest it |
 | `i18n: en: the catalogue must be an object of messages` | The file holds an array, a string, `null` |
-| `i18n: en: verifyEmail.expires must be a message (a string) or an object of messages` | A leaf that is a number, a boolean, `null`, an array |
-| `i18n: en: verifyEmail.greeting is not a valid ICU message (EXPECT_ARGUMENT_CLOSING_BRACE)` | The message does not parse: here an unclosed `{name`. A `plural` or `select` with no `other` gives `(MISSING_OTHER_CLAUSE)`. The parser's reason is in brackets. The text of the message is not repeated |
+| `i18n: en: verify-email.expires must be a message (a string) or an object of messages` | A leaf that is a number, a boolean, `null`, an array |
+| `i18n: en: verify-email.greeting is not a valid ICU message (EXPECT_ARGUMENT_CLOSING_BRACE)` | The message does not parse: here an unclosed `{name`. A `plural` or `select` with no `other` gives `(MISSING_OTHER_CLAUSE)`. The parser's reason is in brackets. The text of the message is not repeated |
 
 HTML-like tags in a message are text: `"<b>{name}</b>"` is a message whose
 argument `name` counts, and whose `<b>` is written as it is.
@@ -268,7 +271,7 @@ it:
 
 | Build failure | Cause |
 | --- | --- |
-| `i18n: fr: verifyEmail.title is missing — en, the fallback locale, has it` | A key only the fallback has |
+| `i18n: fr: verify-email.title is missing — en, the fallback locale, has it` | A key only the fallback has |
 | `i18n: fr: welcome.extra is not a key of en, the fallback locale` | A key the fallback does not have: add it there first |
 | `i18n: fr: welcome.body uses {name}, which en does not declare` | An argument a translation invents |
 | `i18n: fr: welcome.body uses {n} as date, and en declares it as number` | An argument a translation uses as another kind |
@@ -280,15 +283,15 @@ same one.
 
 Every e-mail has a subject in every locale: the message `<emailKey>.subject`.
 `emailKey` turns a template's path under `emails/` into the key its messages
-live under. Each path segment is converted from kebab-case to `camelCase`,
-and the segments are joined with dots:
+live under: the same path, its `/` joined with a `.`, since a template's name
+is already the kebab-case a catalogue key uses.
 
 ```ts
 import { emailKey } from '@nxgt/mail-i18n';
 
-emailKey('verify-email'); // 'verifyEmail'
-emailKey('auth/reset-password'); // 'auth.resetPassword'
-emailKey('auth/reset-password-2'); // 'auth.resetPassword2'
+emailKey('verify-email'); // 'verify-email'
+emailKey('auth/reset-password'); // 'auth.reset-password'
+emailKey('auth/reset-password-2'); // 'auth.reset-password-2'
 ```
 
 ```ts
@@ -297,15 +300,15 @@ function emailKey(email: string): string;
 
 | Template | Its subject |
 | --- | --- |
-| `emails/verify-email.vue` | `verifyEmail.subject` |
-| `emails/auth/reset-password.vue` | `auth.resetPassword.subject` |
+| `emails/verify-email.vue` | `verify-email.subject` |
+| `emails/auth/reset-password.vue` | `auth.reset-password.subject` |
 
 The template never writes the subject. After the build, the plugin formats
 it in each locale into the [manifest](manifest.md), and **each argument
 becomes a placeholder**:
 
 ```json
-{ "verifyEmail": { "subject": "Confirm your e-mail address, {name}" } }
+{ "verify-email": { "subject": "Confirm your e-mail address, {name}" } }
 ```
 
 ```json
@@ -330,7 +333,7 @@ These three fail at the end of `maizzle build`, when the manifest is written.
 `maizzle serve` does not write a manifest, so it does not report them.
 
 Keeping the rest of an e-mail's messages under the same key
-(`verifyEmail.title`, `verifyEmail.action`) is a convention, not a rule. A
+(`verify-email.title`, `verify-email.action`) is a convention, not a rule. A
 template can call any key, such as a shared `common.footer`.
 
 ## In CI

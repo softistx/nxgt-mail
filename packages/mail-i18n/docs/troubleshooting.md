@@ -26,7 +26,7 @@ How the messages are shaped:
   reach these errors.
 
 The samples below use the locales `en` (the fallback locale) and `fr`, the
-template `emails/verify-email.vue`, and keys such as `verifyEmail.title`.
+template `emails/verify-email.vue`, and keys such as `verify-email.title`.
 
 ## Index
 
@@ -55,32 +55,32 @@ template `emails/verify-email.vue`, and keys such as `verifyEmail.title`.
 - [`i18n: locales/fr.json is missing — every locale has a catalogue`](#i18n-localesfrjson-is-missing--every-locale-has-a-catalogue)
 - [`i18n: locales/fr.json is not valid JSON`](#i18n-localesfrjson-is-not-valid-json)
 - [`i18n: fr: the catalogue must be an object of messages`](#i18n-fr-the-catalogue-must-be-an-object-of-messages)
-- [`i18n: en: verifyEmail.title must be a message (a string) or an object of messages`](#i18n-en-verifyemailtitle-must-be-a-message-a-string-or-an-object-of-messages)
-- [`i18n: en: verify-email is not camelCase — every segment of a key is camelCase, and nested rather than dotted, as verifyEmail.title`](#i18n-en-verify-email-is-not-camelcase--every-segment-of-a-key-is-camelcase-and-nested-rather-than-dotted-as-verifyemailtitle)
-- [`i18n: en: verifyEmail.greeting is not a valid ICU message (EXPECT_ARGUMENT_CLOSING_BRACE)`](#i18n-en-verifyemailgreeting-is-not-a-valid-icu-message-expect_argument_closing_brace)
-- [`i18n: en: verifyEmail.greeting uses {first_name}, which is not camelCase — an argument is a camelCase name, as {firstName}`](#i18n-en-verifyemailgreeting-uses-first_name-which-is-not-camelcase--an-argument-is-a-camelcase-name-as-firstname)
-- [`i18n: en: verifyEmail.expires uses {minutes} as number and as date`](#i18n-en-verifyemailexpires-uses-minutes-as-number-and-as-date)
-- [`i18n: fr: verifyEmail.title is missing — en, the fallback locale, has it`](#i18n-fr-verifyemailtitle-is-missing--en-the-fallback-locale-has-it)
-- [`i18n: fr: verifyEmail.titel is not a key of en, the fallback locale`](#i18n-fr-verifyemailtitel-is-not-a-key-of-en-the-fallback-locale)
-- [`i18n: fr: verifyEmail.title uses {name}, which en does not declare`](#i18n-fr-verifyemailtitle-uses-name-which-en-does-not-declare)
-- [`i18n: fr: verifyEmail.expires uses {minutes} as date, and en declares it as number`](#i18n-fr-verifyemailexpires-uses-minutes-as-date-and-en-declares-it-as-number)
+- [`i18n: en: verify-email.title must be a message (a string) or an object of messages`](#i18n-en-verify-emailtitle-must-be-a-message-a-string-or-an-object-of-messages)
+- [`i18n: en: verify_email is not camelCase or kebab-case — every segment of a key is one or the other, and nested rather than dotted, as verify-email.title`](#i18n-en-verify_email-is-not-camelcase-or-kebab-case--every-segment-of-a-key-is-one-or-the-other-and-nested-rather-than-dotted-as-verify-emailtitle)
+- [`i18n: en: verify-email.greeting is not a valid ICU message (EXPECT_ARGUMENT_CLOSING_BRACE)`](#i18n-en-verify-emailgreeting-is-not-a-valid-icu-message-expect_argument_closing_brace)
+- [`i18n: en: verify-email.greeting uses {first_name}, which is not camelCase — an argument is a camelCase name, as {firstName}`](#i18n-en-verify-emailgreeting-uses-first_name-which-is-not-camelcase--an-argument-is-a-camelcase-name-as-firstname)
+- [`i18n: en: verify-email.expires uses {minutes} as number and as date`](#i18n-en-verify-emailexpires-uses-minutes-as-number-and-as-date)
+- [`i18n: fr: verify-email.title is missing — en, the fallback locale, has it`](#i18n-fr-verify-emailtitle-is-missing--en-the-fallback-locale-has-it)
+- [`i18n: fr: verify-email.titel is not a key of en, the fallback locale`](#i18n-fr-verify-emailtitel-is-not-a-key-of-en-the-fallback-locale)
+- [`i18n: fr: verify-email.title uses {name}, which en does not declare`](#i18n-fr-verify-emailtitle-uses-name-which-en-does-not-declare)
+- [`i18n: fr: verify-email.expires uses {minutes} as date, and en declares it as number`](#i18n-fr-verify-emailexpires-uses-minutes-as-date-and-en-declares-it-as-number)
 
 **Templates** — while `maizzle build` renders
 - [`[Vue warn]: Unhandled error during execution of render function`](#vue-warn-unhandled-error-during-execution-of-render-function)
 - [`i18n: emails/Welcome.vue is not a kebab-case name — name a template as verify-email.vue`](#i18n-emailswelcomevue-is-not-a-kebab-case-name--name-a-template-as-verify-emailvue)
 - [`i18n: emails/verify-email.vue is not built through the i18n plugin — leave content to it, and put templates in emails/`](#i18n-emailsverify-emailvue-is-not-built-through-the-i18n-plugin--leave-content-to-it-and-put-templates-in-emails)
-- [`i18n: en: verify-email calls t('verifyEmail.titel'), which is not a key of the catalogues`](#i18n-en-verify-email-calls-tverifyemailtitel-which-is-not-a-key-of-the-catalogues)
-- [`i18n: en: verify-email calls t('verifyEmail.expires') without {minutes}`](#i18n-en-verify-email-calls-tverifyemailexpires-without-minutes)
-- [`i18n: en: verify-email passes {minutes} to verifyEmail.expires as a string — the message uses it as a number`](#i18n-en-verify-email-passes-minutes-to-verifyemailexpires-as-a-string--the-message-uses-it-as-a-number)
-- [`i18n: en: verify-email passes {name} to verifyEmail.title, which does not use it`](#i18n-en-verify-email-passes-name-to-verifyemailtitle-which-does-not-use-it)
-- [`i18n: en: verify-email calls t('verifyEmail.title') with arguments that are not an object, as { name: placeholder('name') }`](#i18n-en-verify-email-calls-tverifyemailtitle-with-arguments-that-are-not-an-object-as--name-placeholdername-)
-- [`i18n: en: verify-email passes a placeholder to {plan}, which verifyEmail.title chooses on with a select — a placeholder always chooses other`](#i18n-en-verify-email-passes-a-placeholder-to-plan-which-verifyemailtitle-chooses-on-with-a-select--a-placeholder-always-chooses-other)
+- [`i18n: en: verify-email calls t('verify-email.titel'), which is not a key of the catalogues`](#i18n-en-verify-email-calls-tverify-emailtitel-which-is-not-a-key-of-the-catalogues)
+- [`i18n: en: verify-email calls t('verify-email.expires') without {minutes}`](#i18n-en-verify-email-calls-tverify-emailexpires-without-minutes)
+- [`i18n: en: verify-email passes {minutes} to verify-email.expires as a string — the message uses it as a number`](#i18n-en-verify-email-passes-minutes-to-verify-emailexpires-as-a-string--the-message-uses-it-as-a-number)
+- [`i18n: en: verify-email passes {name} to verify-email.title, which does not use it`](#i18n-en-verify-email-passes-name-to-verify-emailtitle-which-does-not-use-it)
+- [`i18n: en: verify-email calls t('verify-email.title') with arguments that are not an object, as { name: placeholder('name') }`](#i18n-en-verify-email-calls-tverify-emailtitle-with-arguments-that-are-not-an-object-as--name-placeholdername-)
+- [`i18n: en: verify-email passes a placeholder to {plan}, which verify-email.title chooses on with a select — a placeholder always chooses other`](#i18n-en-verify-email-passes-a-placeholder-to-plan-which-verify-emailtitle-chooses-on-with-a-select--a-placeholder-always-chooses-other)
 - [`i18n: en: verify-email calls placeholder() with a name that is not camelCase — as placeholder('firstName')`](#i18n-en-verify-email-calls-placeholder-with-a-name-that-is-not-camelcase--as-placeholderfirstname)
-- [`i18n: en: verifyEmail.sentOn could not be formatted`](#i18n-en-verifyemailsenton-could-not-be-formatted)
+- [`i18n: en: verify-email.sent-on could not be formatted`](#i18n-en-verify-emailsent-on-could-not-be-formatted)
 
 **Manifest and subject** — after the build
 - [`i18n: welcome has no subject — add welcome.subject to the catalogues`](#i18n-welcome-has-no-subject--add-welcomesubject-to-the-catalogues)
-- [`i18n: en: verifyEmail.subject uses {minutes} as a number — a subject's arguments are placeholders, filled at send time as strings`](#i18n-en-verifyemailsubject-uses-minutes-as-a-number--a-subjects-arguments-are-placeholders-filled-at-send-time-as-strings)
+- [`i18n: en: verify-email.subject uses {minutes} as a number — a subject's arguments are placeholders, filled at send time as strings`](#i18n-en-verify-emailsubject-uses-minutes-as-a-number--a-subjects-arguments-are-placeholders-filled-at-send-time-as-strings)
 - [`i18n: en: welcome.subject chooses on {kind} with a select — a subject's arguments are placeholders, which always choose other`](#i18n-en-welcomesubject-chooses-on-kind-with-a-select--a-subjects-arguments-are-placeholders-which-always-choose-other)
 - [`i18n: fr/welcome.html is empty — a tag of its template resolved to no component; list the plugin that brings it, as ui()`](#i18n-frwelcomehtml-is-empty--a-tag-of-its-template-resolved-to-no-component-list-the-plugin-that-brings-it-as-ui)
 - [`i18n: welcome was not built in fr`](#i18n-welcome-was-not-built-in-fr)
@@ -90,8 +90,11 @@ template `emails/verify-email.vue`, and keys such as `verifyEmail.title`.
 
 **Run time** — `createTranslator`'s `t`
 - [`t: the language is not a locale of the catalogues — pick one with pickLocale`](#t-the-language-is-not-a-locale-of-the-catalogues--pick-one-with-picklocale)
-- [`t: fr: verifyEmail.titel is not a key`](#t-fr-verifyemailtitel-is-not-a-key)
-- [`t: en: verifyEmail.expires could not be formatted`](#t-en-verifyemailexpires-could-not-be-formatted)
+- [`t: fr: verify-email.titel is not a key`](#t-fr-verify-emailtitel-is-not-a-key)
+- [`t: en: verify-email.expires could not be formatted`](#t-en-verify-emailexpires-could-not-be-formatted)
+
+**Upgrading**
+- [`i18n: en: verify-email calls t('verifyEmail.action'), which is not a key of the catalogues`](#i18n-en-verify-email-calls-tverifyemailaction-which-is-not-a-key-of-the-catalogues)
 
 **Traps: a build that succeeds and is wrong**
 - [`[Vue warn]: Property "name" was accessed during render but is not defined on instance.`](#vue-warn-property-name-was-accessed-during-render-but-is-not-defined-on-instance)
@@ -467,10 +470,10 @@ message keys.
 **Fix:**
 
 ```json
-{ "verifyEmail": { "title": "Confirmez votre adresse" } }
+{ "verify-email": { "title": "Confirmez votre adresse" } }
 ```
 
-### `i18n: en: verifyEmail.title must be a message (a string) or an object of messages`
+### `i18n: en: verify-email.title must be a message (a string) or an object of messages`
 
 **When:** loading `maizzle.config.ts`, for a value that is a number, a
 boolean, `null` or an array.
@@ -479,26 +482,27 @@ message as an argument, not as its value.
 **Fix:**
 
 ```json
-{ "verifyEmail": { "expires": "The link expires in {minutes, plural, one {# minute} other {# minutes}}." } }
+{ "verify-email": { "expires": "The link expires in {minutes, plural, one {# minute} other {# minutes}}." } }
 ```
 
-### `i18n: en: verify-email is not camelCase — every segment of a key is camelCase, and nested rather than dotted, as verifyEmail.title`
+### `i18n: en: verify_email is not camelCase or kebab-case — every segment of a key is one or the other, and nested rather than dotted, as verify-email.title`
 
-**When:** loading `maizzle.config.ts`, for a key in kebab-case or snake_case,
-starting with a capital, or written with a dot (`"verifyEmail.title"` as one
-key).
-**Why:** a key is camelCase segments, one object per segment, as in
-`@nxgt/i18n`. The subject of `emails/verify-email.vue` is looked up as
-`verifyEmail.subject`, so the template's kebab-case name is not a key.
+**When:** loading `maizzle.config.ts`, for a key in snake_case, starting with
+a capital, or written with a dot (`"verifyEmail.title"` as one key).
+**Why:** a key is `camelCase` or `kebab-case` segments, one object per
+segment. Our own convention is `kebab-case`; `camelCase` stays accepted so a
+project migrates on its own schedule. The subject of `emails/verify-email.vue`
+is looked up as `verify-email.subject`, so the template's kebab-case name is
+already a key.
 **Fix:**
 
 ```json
-{ "verifyEmail": { "title": "Confirm your e-mail address" } }
+{ "verify-email": { "title": "Confirm your e-mail address" } }
 ```
 
-not `{ "verify-email": { … } }`, and not `{ "verifyEmail.title": "…" }`.
+not `{ "verify_email": { … } }`, and not `{ "verifyEmail.title": "…" }`.
 
-### `i18n: en: verifyEmail.greeting is not a valid ICU message (EXPECT_ARGUMENT_CLOSING_BRACE)`
+### `i18n: en: verify-email.greeting is not a valid ICU message (EXPECT_ARGUMENT_CLOSING_BRACE)`
 
 The reason in brackets is the ICU parser's own code.
 
@@ -512,14 +516,14 @@ and quote a literal brace with apostrophes:
 
 ```json
 {
-  "verifyEmail": {
+  "verify-email": {
     "greeting": "Hello {name},",
     "code": "Your code is '{'{code}'}'."
   }
 }
 ```
 
-### `i18n: en: verifyEmail.greeting uses {first_name}, which is not camelCase — an argument is a camelCase name, as {firstName}`
+### `i18n: en: verify-email.greeting uses {first_name}, which is not camelCase — an argument is a camelCase name, as {firstName}`
 
 **When:** loading `maizzle.config.ts`, for an argument in snake_case,
 kebab-case, or starting with a capital.
@@ -528,10 +532,10 @@ camelCase.
 **Fix:**
 
 ```json
-{ "verifyEmail": { "greeting": "Hello {firstName}," } }
+{ "verify-email": { "greeting": "Hello {firstName}," } }
 ```
 
-### `i18n: en: verifyEmail.expires uses {minutes} as number and as date`
+### `i18n: en: verify-email.expires uses {minutes} as number and as date`
 
 **When:** loading `maizzle.config.ts`, for a message that uses one argument
 as two kinds — `{minutes, number}` and `{minutes, date}`, or a `plural` and a
@@ -541,10 +545,10 @@ value is checked against it; one value cannot be both.
 **Fix:** use two arguments:
 
 ```json
-{ "verifyEmail": { "expires": "Expires in {minutes, number} minutes, at {at, time, short}." } }
+{ "verify-email": { "expires": "Expires in {minutes, number} minutes, at {at, time, short}." } }
 ```
 
-### `i18n: fr: verifyEmail.title is missing — en, the fallback locale, has it`
+### `i18n: fr: verify-email.title is missing — en, the fallback locale, has it`
 
 **When:** loading `maizzle.config.ts`, when a key of the fallback locale's
 catalogue is not in another locale's.
@@ -554,7 +558,7 @@ fallback's text, or the key, into a French e-mail.
 **Fix:** add the key to `locales/fr.json`. Keys are sorted in the check, so
 the first missing key is reported; there may be others.
 
-### `i18n: fr: verifyEmail.titel is not a key of en, the fallback locale`
+### `i18n: fr: verify-email.titel is not a key of en, the fallback locale`
 
 **When:** loading `maizzle.config.ts`, when a locale's catalogue has a key the
 fallback locale's does not — usually a typo, or a key renamed in one file
@@ -564,7 +568,7 @@ translation has cannot be used by a template.
 **Fix:** rename the key to match, or add it to the fallback locale's
 catalogue first.
 
-### `i18n: fr: verifyEmail.title uses {name}, which en does not declare`
+### `i18n: fr: verify-email.title uses {name}, which en does not declare`
 
 **When:** loading `maizzle.config.ts`, when a translation uses an argument the
 fallback locale's message does not.
@@ -574,7 +578,7 @@ translation may leave an argument out.
 **Fix:** add the argument to the fallback locale's message, or remove it from
 the translation.
 
-### `i18n: fr: verifyEmail.expires uses {minutes} as date, and en declares it as number`
+### `i18n: fr: verify-email.expires uses {minutes} as date, and en declares it as number`
 
 **When:** loading `maizzle.config.ts`, when a translation uses an argument as
 another kind than the fallback locale's message does.
@@ -583,7 +587,7 @@ in one and a date in the other.
 **Fix:** use the same kind in both:
 
 ```json
-{ "verifyEmail": { "expires": "Le lien expire dans {minutes, plural, one {# minute} other {# minutes}}." } }
+{ "verify-email": { "expires": "Le lien expire dans {minutes, plural, one {# minute} other {# minutes}}." } }
 ```
 
 ---
@@ -608,7 +612,7 @@ package, then the error — the useful line is in the middle.
 [Vue warn]: Unhandled error during execution of render function
   at <VerifyEmail >
 …
-Error: i18n: en: verify-email calls t('verifyEmail.titel'), which is not a key of the catalogues
+Error: i18n: en: verify-email calls t('verify-email.titel'), which is not a key of the catalogues
     at Proxy.<anonymous> (…)
 ```
 
@@ -628,7 +632,7 @@ kebab-case name gives all three.
 
 ```
 emails/welcome.vue
-emails/auth/reset-password.vue   → messages under auth.resetPassword
+emails/auth/reset-password.vue   → messages under auth.reset-password
 ```
 
 ### `i18n: emails/verify-email.vue is not built through the i18n plugin — leave content to it, and put templates in emails/`
@@ -649,20 +653,20 @@ export default defineMailConfig({
 });
 ```
 
-### `i18n: en: verify-email calls t('verifyEmail.titel'), which is not a key of the catalogues`
+### `i18n: en: verify-email calls t('verify-email.titel'), which is not a key of the catalogues`
 
 **When:** `maizzle build`, rendering a template that calls `t()` with a key
 no catalogue has — a typo, a key renamed in the catalogues, or a key that is
-an object of messages (`t('verifyEmail')`).
+an object of messages (`t('verify-email')`).
 **Why:** every locale has the same keys, so a key missing in one is missing
 in all; the build fails rather than writing the key into the e-mail.
 **Fix:** use a key of the catalogues, down to its message:
 
 ```vue
-<Heading>{{ t('verifyEmail.title') }}</Heading>
+<Heading>{{ t('verify-email.title') }}</Heading>
 ```
 
-### `i18n: en: verify-email calls t('verifyEmail.expires') without {minutes}`
+### `i18n: en: verify-email calls t('verify-email.expires') without {minutes}`
 
 **When:** `maizzle build`, when a template calls `t()` without an argument
 the fallback locale's message uses.
@@ -671,11 +675,11 @@ a value then. A value only known at send time is a placeholder.
 **Fix:**
 
 ```vue
-<Text>{{ t('verifyEmail.expires', { minutes: 15 }) }}</Text>
-<Text>{{ t('verifyEmail.greeting', { name: placeholder('name') }) }}</Text>
+<Text>{{ t('verify-email.expires', { minutes: 15 }) }}</Text>
+<Text>{{ t('verify-email.greeting', { name: placeholder('name') }) }}</Text>
 ```
 
-### `i18n: en: verify-email passes {minutes} to verifyEmail.expires as a string — the message uses it as a number`
+### `i18n: en: verify-email passes {minutes} to verify-email.expires as a string — the message uses it as a number`
 
 The kinds are `string`, `number` and `date`, as the message uses the argument
 and as the template passes it.
@@ -691,18 +695,18 @@ timestamp).
 knows it, write the message with a plain argument:
 
 ```vue
-<Text>{{ t('verifyEmail.expires', { minutes: 15 }) }}</Text>
+<Text>{{ t('verify-email.expires', { minutes: 15 }) }}</Text>
 ```
 
 ```json
-{ "verifyEmail": { "expiresAt": "The link expires at {time}." } }
+{ "verify-email": { "expires-at": "The link expires at {time}." } }
 ```
 
 ```vue
-<Text>{{ t('verifyEmail.expiresAt', { time: placeholder('time') }) }}</Text>
+<Text>{{ t('verify-email.expires-at', { time: placeholder('time') }) }}</Text>
 ```
 
-### `i18n: en: verify-email passes {name} to verifyEmail.title, which does not use it`
+### `i18n: en: verify-email passes {name} to verify-email.title, which does not use it`
 
 **When:** `maizzle build`, when a template passes an argument the fallback
 locale's message does not use.
@@ -711,10 +715,10 @@ the sign that the message or the argument was renamed.
 **Fix:** remove the argument, or add it to the message in every locale:
 
 ```vue
-<Heading>{{ t('verifyEmail.title') }}</Heading>
+<Heading>{{ t('verify-email.title') }}</Heading>
 ```
 
-### `i18n: en: verify-email calls t('verifyEmail.title') with arguments that are not an object, as { name: placeholder('name') }`
+### `i18n: en: verify-email calls t('verify-email.title') with arguments that are not an object, as { name: placeholder('name') }`
 
 **When:** `maizzle build`, when a template passes its arguments as something
 other than an object — a placeholder or a value on its own, or `null`.
@@ -722,16 +726,16 @@ other than an object — a placeholder or a value on its own, or `null`.
 **Fix:**
 
 ```vue
-<Text>{{ t('verifyEmail.greeting', { name: placeholder('name') }) }}</Text>
+<Text>{{ t('verify-email.greeting', { name: placeholder('name') }) }}</Text>
 ```
 
-not `t('verifyEmail.greeting', placeholder('name'))`.
+not `t('verify-email.greeting', placeholder('name'))`.
 
-### `i18n: en: verify-email passes a placeholder to {plan}, which verifyEmail.title chooses on with a select — a placeholder always chooses other`
+### `i18n: en: verify-email passes a placeholder to {plan}, which verify-email.title chooses on with a select — a placeholder always chooses other`
 
 **When:** `maizzle build`, when a template passes `placeholder()` to an
 argument the message chooses on with a `select`:
-`t('verifyEmail.title', { plan: placeholder('plan') })` for
+`t('verify-email.title', { plan: placeholder('plan') })` for
 `"{plan, select, pro {Pro} other {Free}}"`.
 **Why:** a `select` chooses at build time, and a placeholder is the string
 `{{ plan }}` then: it always matches `other`, and the `pro` branch would never
@@ -741,7 +745,7 @@ e-mail (or one message) per case, and choose which to send in your
 application:
 
 ```vue
-<Heading>{{ t('verifyEmail.title', { plan: 'pro' }) }}</Heading>
+<Heading>{{ t('verify-email.title', { plan: 'pro' }) }}</Heading>
 ```
 
 ### `i18n: en: verify-email calls placeholder() with a name that is not camelCase — as placeholder('firstName')`
@@ -753,10 +757,10 @@ with a space, in snake_case or kebab-case, or starting with a capital.
 **Fix:**
 
 ```vue
-<Text>{{ t('verifyEmail.greeting', { name: placeholder('firstName') }) }}</Text>
+<Text>{{ t('verify-email.greeting', { name: placeholder('firstName') }) }}</Text>
 ```
 
-### `i18n: en: verifyEmail.sentOn could not be formatted`
+### `i18n: en: verify-email.sent-on could not be formatted`
 
 **When:** `maizzle build`, when a message is given a value that passes the
 checks and still cannot be formatted — typically an invalid `Date`
@@ -767,7 +771,7 @@ this error's own message never does.
 **Fix:** pass a valid date or timestamp:
 
 ```vue
-<Text>{{ t('verifyEmail.sentOn', { at: new Date(Date.UTC(2026, 0, 2)) }) }}</Text>
+<Text>{{ t('verify-email.sent-on', { at: new Date(Date.UTC(2026, 0, 2)) }) }}</Text>
 ```
 
 ---
@@ -783,7 +787,7 @@ written.
 no `subject` — a new template, or one renamed.
 **Why:** the subject is a message like any other, looked up from the
 template's name: `emails/welcome.vue` reads `welcome.subject`,
-`emails/auth/reset-password.vue` reads `auth.resetPassword.subject`. An
+`emails/auth/reset-password.vue` reads `auth.reset-password.subject`. An
 e-mail is not sent without one.
 **Fix:** add it to every catalogue:
 
@@ -791,7 +795,7 @@ e-mail is not sent without one.
 { "welcome": { "subject": "Welcome, {name}" } }
 ```
 
-### `i18n: en: verifyEmail.subject uses {minutes} as a number — a subject's arguments are placeholders, filled at send time as strings`
+### `i18n: en: verify-email.subject uses {minutes} as a number — a subject's arguments are placeholders, filled at send time as strings`
 
 The kind is `number` or `date`.
 
@@ -803,7 +807,7 @@ with a string. No ICU can be applied to it then.
 **Fix:** use plain arguments in a subject:
 
 ```json
-{ "verifyEmail": { "subject": "Confirm your e-mail address, {name}" } }
+{ "verify-email": { "subject": "Confirm your e-mail address, {name}" } }
 ```
 
 ### `i18n: en: welcome.subject chooses on {kind} with a select — a subject's arguments are placeholders, which always choose other`
@@ -942,19 +946,19 @@ const t = createTranslator({ en, fr }, () =>
 );
 ```
 
-### `t: fr: verifyEmail.titel is not a key`
+### `t: fr: verify-email.titel is not a key`
 
 **When:** calling `t` with a key the language's catalogue does not have — a
-typo, or a key that is an object of messages (`t('verifyEmail')`).
+typo, or a key that is an object of messages (`t('verify-email')`).
 **Why:** where `@nxgt/i18n` answers the key, this `t` throws: an e-mail is
 not sent with a key in it.
 **Fix:** use a key of the catalogues, down to its message:
 
 ```ts
-t('verifyEmail.subject', { name: 'Ada' });
+t('verify-email.subject', { name: 'Ada' });
 ```
 
-### `t: en: verifyEmail.expires could not be formatted`
+### `t: en: verify-email.expires could not be formatted`
 
 **When:** calling `t`, when the message cannot be formatted with the
 arguments given — most often an argument left out, or an invalid `Date` for a
@@ -965,10 +969,48 @@ build does.
 **Fix:** pass every argument the message uses:
 
 ```ts
-t('verifyEmail.expires', { minutes: 15 });
+t('verify-email.expires', { minutes: 15 });
 ```
 
 ---
+
+## Upgrading
+
+### `i18n: en: verify-email calls t('verifyEmail.action'), which is not a key of the catalogues`
+
+**When:** after upgrading `@nxgt/mail-i18n`, `@nxgt/mail-ui` or
+`@nxgt/mail-presets` to a version whose catalogues moved to `kebab-case`
+keys, on a template of your own that still calls `t()` with the old
+`camelCase` key, or on a catalogue override you wrote under the old key.
+**Why:** `@nxgt/mail-i18n` 0.x accepts a `camelCase` or a `kebab-case` key —
+this is not a format refusal — but a specific key that moved, such as
+`verifyEmail` becoming `verify-email` in `@nxgt/mail-presets` 0.2 and
+`@nxgt/mail-ui` 0.2, is gone under its old name. An override under the old
+key in `locales/<locale>.json` is not an error by itself: it becomes a key
+of its own, unread by any template, so the build succeeds and your override
+is silently ignored — until a template still calls the old key, which then
+**is** reported as this build failure, naming the key that does not exist.
+**Fix:** rename the key, in your override and in every template that calls
+it, from its old `camelCase` form to the new one — see the package's
+changeset for the full old → new list:
+
+```json
+// locales/en.json — before
+{ "verifyEmail": { "action": "Yes, this is my address" } }
+```
+
+```json
+// locales/en.json — after
+{ "verify-email": { "action": "Yes, this is my address" } }
+```
+
+```vue
+<!-- before -->
+<NxButton :href="placeholder('link')">{{ t('verifyEmail.action') }}</NxButton>
+
+<!-- after -->
+<NxButton :href="placeholder('link')">{{ t('verify-email.action') }}</NxButton>
+```
 
 ## Traps: a build that succeeds and is wrong
 
@@ -985,8 +1027,8 @@ in the built file:
 
 ```vue
 <Text>{{ placeholder('name') }}</Text>
-<Text>{{ t('verifyEmail.greeting', { name: placeholder('name') }) }}</Text>
-<Button :href="placeholder('link')">{{ t('verifyEmail.action') }}</Button>
+<Text>{{ t('verify-email.greeting', { name: placeholder('name') }) }}</Text>
+<Button :href="placeholder('link')">{{ t('verify-email.action') }}</Button>
 ```
 
 ### A link's placeholder is prefixed with a domain
@@ -1102,7 +1144,7 @@ or run `bunx maizzle prepare`.
 ### Biome reports `parse` errors in a template as soon as you edit it
 
 `Expected a property, a shorthand property, a getter, a setter, or a method but
-instead found '{ t('verifyEmail.title')'`, `type assertion are a TypeScript
+instead found '{ t('verify-email.title')'`, `type assertion are a TypeScript
 only feature`, or `This class property name should be in camelCase` on a
 component's tag — in the editor only; `biome check` reports nothing.
 

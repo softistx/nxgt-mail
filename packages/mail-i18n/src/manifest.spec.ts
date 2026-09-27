@@ -202,7 +202,7 @@ describe('buildManifest', () => {
 
 describe('emailKey', () => {
 	test('is where the messages of an e-mail live', () => {
-		expect(emailKey('verify-email')).toBe('verifyEmail');
-		expect(emailKey('auth/reset-password-2')).toBe('auth.resetPassword2');
+		expect(emailKey('verify-email')).toBe('verify-email');
+		expect(emailKey('auth/reset-password-2')).toBe('auth.reset-password-2');
 	});
 });

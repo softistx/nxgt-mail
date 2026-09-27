@@ -33,7 +33,7 @@ const globals: Record<string, unknown> =
 const heading = computed(
 	() =>
 		props.label ??
-		sharedMessage(globals, 'common.openingHours.label', 'Opening hours'),
+		sharedMessage(globals, 'common.opening-hours.label', 'Opening hours'),
 );
 
 function dayTitle(day: number): string {
@@ -44,7 +44,7 @@ function dayTitle(day: number): string {
 		);
 	}
 	const [key, fallback] = entry;
-	return sharedMessage(globals, `common.openingHours.days.${key}`, fallback);
+	return sharedMessage(globals, `common.opening-hours.days.${key}`, fallback);
 }
 
 const rows = computed(() =>
@@ -55,7 +55,7 @@ const rows = computed(() =>
 			key: `${item.dayOfWeek}-${index}`,
 			title: dayTitle(item.dayOfWeek),
 			subtitle: item.isClosed
-				? sharedMessage(globals, 'common.openingHours.closed', 'Closed all day')
+				? sharedMessage(globals, 'common.opening-hours.closed', 'Closed all day')
 				: `${item.openTime ?? '—'} – ${item.closeTime ?? '—'}`,
 		})),
 );

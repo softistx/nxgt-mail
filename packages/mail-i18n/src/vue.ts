@@ -56,7 +56,7 @@ export type TemplateArgs<K> = [K] extends [Declared]
 
 /**
  * What a template gets from the i18n plugin, typed for Vue's template
- * checker: `{{ t('verifyEmail.title') }}`, `:lang="locale"`,
+ * checker: `{{ t('verify-email.title') }}`, `:lang="locale"`,
  * `:href="placeholder('link')"`.
  */
 declare module 'vue' {

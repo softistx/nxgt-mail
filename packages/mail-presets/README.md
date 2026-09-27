@@ -88,7 +88,7 @@ import { presets } from '@nxgt/mail-presets';
 
 const mails = presets({ only: ['verify-email', 'reset-password', 'magic-link'] });
 // mails.templates  → { dir: '/…/@nxgt/mail-presets/emails', emails: ['verify-email', 'reset-password', 'magic-link'] }
-// mails.catalogues → { en, fr }, with presets.*, verifyEmail.*, resetPassword.*, magicLink.* only
+// mails.catalogues → { en, fr }, with presets.*, verify-email.*, reset-password.*, magic-link.* only
 ```
 
 Pass both to `i18n()` as above: only those three are built, beside your own
@@ -176,7 +176,7 @@ from `TEMPLATES_DIR`.
 
 ```json
 // locales/en.json — every other message stays the package's
-{ "verifyEmail": { "action": "Yes, this is my address" } }
+{ "verify-email": { "action": "Yes, this is my address" } }
 ```
 
 Your catalogues go over the package's, key by key, in each locale. The
@@ -188,7 +188,7 @@ Your catalogues go over the package's, key by key, in each locale. The
 **Give `i18n()` both catalogues.** The templates use `@nxgt/mail-ui`'s
 `common.*` messages: without `uiCatalogues` the build fails with
 `calls t('common.footer.why'), which is not a key of the catalogues`, and
-without `mails.catalogues`, with `calls t('verifyEmail.preheader'), …`.
+without `mails.catalogues`, with `calls t('verify-email.preheader'), …`.
 
 ```ts
 catalogues: [uiCatalogues, mails.catalogues],
@@ -203,12 +203,12 @@ brings it, as ui()`.
 **Another locale writes the keys itself.** The presets have `en` and `fr`
 only: a project in `de` writes `common.*`, `presets.*` and the group of each
 preset it builds in `locales/de.json`, or the build fails with
-`i18n: de: presets.linkFallback is missing — en, the fallback locale, has it`.
+`i18n: de: presets.link-fallback is missing — en, the fallback locale, has it`.
 See [Another locale](docs/guide/presets.md#another-locale).
 
 **An `en` override keeps the template's arguments.** `en` is the fallback
-locale, and the template still passes `{brand}` to `verifyEmail.body`: an
-override without it fails with `passes {brand} to verifyEmail.body, which
+locale, and the template still passes `{brand}` to `verify-email.body`: an
+override without it fails with `passes {brand} to verify-email.body, which
 does not use it`. Replace the template to change what it passes.
 
 **`only` keeps only those presets' messages.** A template of yours named

@@ -150,7 +150,7 @@ Collected from the built files, not from the template's source: every
 in each subject. A placeholder only in the text part, inside a Maizzle
 `<Plaintext>` block, is listed. So is a placeholder that only one locale
 writes. A value the
-template formatted at build time (`t('verifyEmail.expires', { minutes: 15 })`)
+template formatted at build time (`t('verify-email.expires', { minutes: 15 })`)
 is not a variable.
 
 ### `urlVariables`
@@ -178,7 +178,7 @@ listed in `variables` only.
 ### `subject`
 
 The message `<emailKey>.subject` of each locale, formatted, each argument
-turned into a placeholder. `verifyEmail.subject` is
+turned into a placeholder. `verify-email.subject` is
 `"Confirm your e-mail address, {name}"`, so the manifest holds
 `"Confirm your e-mail address, {{ name }}"`, and `name` is in `variables`.
 See [the subject](catalogues.md#the-subject).

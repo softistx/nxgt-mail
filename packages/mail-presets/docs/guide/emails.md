@@ -83,7 +83,7 @@ about a lifetime its undo link may not have. To tell one, replace
 
 Every preset is an `<NxLayout>`: the brand at the top, the content on a card,
 and the footer's `common.footer.why`. Every one with a `link` shows it twice —
-a button, then the URL itself under `presets.linkFallback`, for a mail client
+a button, then the URL itself under `presets.link-fallback`, for a mail client
 that breaks the button.
 
 The `fr` messages put a no-break space (U+00A0) before a colon, as French
@@ -91,10 +91,10 @@ typography does, so a line never starts with `:`. Keep it in a `fr` override.
 
 | Key | `en` | `fr` | Used by |
 | --- | --- | --- | --- |
-| `presets.codeExpires` | This code expires in {expiresIn}. | Ce code expire dans {expiresIn}. | `sign-in-code` |
-| `presets.linkExpires` | This link expires in {expiresIn}. | Ce lien expire dans {expiresIn}. | `verify-email`, `reset-password`, `magic-link` |
-| `presets.linkFallback` | If the button does not work, open this link: | Si le bouton ne fonctionne pas, ouvrez ce lien : | every preset with a `link` |
-| `presets.notYou` | If this was not you, secure your account now. | Si ce n'était pas vous, sécurisez votre compte dès maintenant. | `password-changed`, `email-changed`, `new-sign-in` |
+| `presets.code-expires` | This code expires in {expiresIn}. | Ce code expire dans {expiresIn}. | `sign-in-code` |
+| `presets.link-expires` | This link expires in {expiresIn}. | Ce lien expire dans {expiresIn}. | `verify-email`, `reset-password`, `magic-link` |
+| `presets.link-fallback` | If the button does not work, open this link: | Si le bouton ne fonctionne pas, ouvrez ce lien : | every preset with a `link` |
+| `presets.not-you` | If this was not you, secure your account now. | Si ce n'était pas vous, sécurisez votre compte dès maintenant. | `password-changed`, `email-changed`, `new-sign-in` |
 | `common.greeting` | Hello {name}, | Bonjour {name}, | every preset but `sign-in-code`, `magic-link` and `invitation` |
 | `common.footer.ignore` | If you did not ask for this, you can ignore this e-mail. | Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet e-mail. | `verify-email`, `reset-password`, `magic-link` |
 | `common.footer.why` | You received this e-mail because you have an account with {brand}. | Vous recevez cet e-mail parce que vous avez un compte chez {brand}. | every preset, in the footer |
@@ -104,7 +104,7 @@ The `common` keys come from `@nxgt/mail-ui`'s `uiCatalogues`; see its
 The `presets` keys come with every `presets()` answer, whatever `only` holds.
 
 Each preset below has its own group, named after it (`verify-email` →
-`verifyEmail`). `subject` is its subject; `preheader` is the line a mail
+`verify-email`). `subject` is its subject; `preheader` is the line a mail
 client shows after the subject in the inbox.
 
 ## `verify-email`
@@ -115,15 +115,15 @@ client shows after the subject in the inbox.
 
 To confirm that an address belongs to the user, after they sign up or add
 it. A title, the greeting, the body, the **Confirm my address** button,
-`presets.linkExpires`, the link as text, and `common.footer.ignore`.
+`presets.link-expires`, the link as text, and `common.footer.ignore`.
 
 | Key | `en` | `fr` |
 | --- | --- | --- |
-| `verifyEmail.subject` | Confirm your e-mail address | Confirmez votre adresse e-mail |
-| `verifyEmail.preheader` | One click to confirm your address. | Un clic pour confirmer votre adresse. |
-| `verifyEmail.title` | Confirm your e-mail address | Confirmez votre adresse e-mail |
-| `verifyEmail.body` | Confirm that this address is yours to finish setting up your {brand} account. | Confirmez que cette adresse est bien la vôtre pour terminer la création de votre compte {brand}. |
-| `verifyEmail.action` | Confirm my address | Confirmer mon adresse |
+| `verify-email.subject` | Confirm your e-mail address | Confirmez votre adresse e-mail |
+| `verify-email.preheader` | One click to confirm your address. | Un clic pour confirmer votre adresse. |
+| `verify-email.title` | Confirm your e-mail address | Confirmez votre adresse e-mail |
+| `verify-email.body` | Confirm that this address is yours to finish setting up your {brand} account. | Confirmez que cette adresse est bien la vôtre pour terminer la création de votre compte {brand}. |
+| `verify-email.action` | Confirm my address | Confirmer mon adresse |
 
 Placeholders: `name`, `link` (a URL), `expiresIn` (a duration, as text).
 Samples:
@@ -137,16 +137,16 @@ Samples:
 [In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/fr/reset-password.png)
 
 To let a user choose a new password. A title, the greeting, the body, the
-**Choose a new password** button, `presets.linkExpires`, the link as text,
+**Choose a new password** button, `presets.link-expires`, the link as text,
 and `common.footer.ignore`.
 
 | Key | `en` | `fr` |
 | --- | --- | --- |
-| `resetPassword.subject` | Reset your password | Réinitialisez votre mot de passe |
-| `resetPassword.preheader` | Choose a new password for your account. | Choisissez un nouveau mot de passe pour votre compte. |
-| `resetPassword.title` | Reset your password | Réinitialisez votre mot de passe |
-| `resetPassword.body` | Someone asked to reset the password of your {brand} account. Choose a new one with the button below. | Quelqu'un a demandé à réinitialiser le mot de passe de votre compte {brand}. Choisissez-en un nouveau avec le bouton ci-dessous. |
-| `resetPassword.action` | Choose a new password | Choisir un nouveau mot de passe |
+| `reset-password.subject` | Reset your password | Réinitialisez votre mot de passe |
+| `reset-password.preheader` | Choose a new password for your account. | Choisissez un nouveau mot de passe pour votre compte. |
+| `reset-password.title` | Reset your password | Réinitialisez votre mot de passe |
+| `reset-password.body` | Someone asked to reset the password of your {brand} account. Choose a new one with the button below. | Quelqu'un a demandé à réinitialiser le mot de passe de votre compte {brand}. Choisissez-en un nouveau avec le bouton ci-dessous. |
+| `reset-password.action` | Choose a new password | Choisir un nouveau mot de passe |
 
 Placeholders: `name`, `link` (a URL), `expiresIn` (a duration, as text).
 Samples:
@@ -160,17 +160,17 @@ Samples:
 [In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/fr/password-changed.png)
 
 A notice, after the password of an account changed. A title, the greeting,
-the body, a warning alert with `presets.notYou`, the **Secure my account**
+the body, a warning alert with `presets.not-you`, the **Secure my account**
 button, and the link as text. `link` is where the user secures the account —
 your recovery or account-settings page.
 
 | Key | `en` | `fr` |
 | --- | --- | --- |
-| `passwordChanged.subject` | Your password was changed | Votre mot de passe a été modifié |
-| `passwordChanged.preheader` | The password of your account was just changed. | Le mot de passe de votre compte vient d'être modifié. |
-| `passwordChanged.title` | Your password was changed | Votre mot de passe a été modifié |
-| `passwordChanged.body` | The password of your {brand} account was just changed. | Le mot de passe de votre compte {brand} vient d'être modifié. |
-| `passwordChanged.action` | Secure my account | Sécuriser mon compte |
+| `password-changed.subject` | Your password was changed | Votre mot de passe a été modifié |
+| `password-changed.preheader` | The password of your account was just changed. | Le mot de passe de votre compte vient d'être modifié. |
+| `password-changed.title` | Your password was changed | Votre mot de passe a été modifié |
+| `password-changed.body` | The password of your {brand} account was just changed. | Le mot de passe de votre compte {brand} vient d'être modifié. |
+| `password-changed.action` | Secure my account | Sécuriser mon compte |
 
 Placeholders: `name`, `link` (a URL). Samples:
 [en](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/en/password-changed.html) ·
@@ -184,16 +184,16 @@ Placeholders: `name`, `link` (a URL). Samples:
 
 A notice sent to the **former** address, after an account's address changed,
 so its owner can undo a change they did not make. A title, the greeting, the
-body naming the new address, a warning alert with `presets.notYou`, the
+body naming the new address, a warning alert with `presets.not-you`, the
 **Undo this change** button, and the link as text.
 
 | Key | `en` | `fr` |
 | --- | --- | --- |
-| `emailChanged.subject` | Your e-mail address was changed | Votre adresse e-mail a été modifiée |
-| `emailChanged.preheader` | Your account now signs in with a new address. | Votre compte utilise désormais une nouvelle adresse. |
-| `emailChanged.title` | Your e-mail address was changed | Votre adresse e-mail a été modifiée |
-| `emailChanged.body` | Your {brand} account now uses {newEmail}. We send this notice to your former address. | Votre compte {brand} utilise désormais {newEmail}. Nous envoyons cet avis à votre ancienne adresse. |
-| `emailChanged.action` | Undo this change | Annuler ce changement |
+| `email-changed.subject` | Your e-mail address was changed | Votre adresse e-mail a été modifiée |
+| `email-changed.preheader` | Your account now signs in with a new address. | Votre compte utilise désormais une nouvelle adresse. |
+| `email-changed.title` | Your e-mail address was changed | Votre adresse e-mail a été modifiée |
+| `email-changed.body` | Your {brand} account now uses {newEmail}. We send this notice to your former address. | Votre compte {brand} utilise désormais {newEmail}. Nous envoyons cet avis à votre ancienne adresse. |
+| `email-changed.action` | Undo this change | Annuler ce changement |
 
 Placeholders: `name`, `newEmail` (the new address, as text), `link` (a URL).
 Samples:
@@ -208,29 +208,29 @@ Samples:
 
 A one-time code to type in, for a sign-in without a password or a second
 factor. A title, the body, the code in a large block (`<NxCode>`),
-`presets.codeExpires`, and `signInCode.ignore`. No greeting and no link.
+`presets.code-expires`, and `sign-in-code.ignore`. No greeting and no link.
 
 | Key | `en` | `fr` |
 | --- | --- | --- |
-| `signInCode.subject` | Your sign-in code: {code} | Votre code de connexion : {code} |
-| `signInCode.preheader` | Enter this code to sign in. | Saisissez ce code pour vous connecter. |
-| `signInCode.title` | Your sign-in code | Votre code de connexion |
-| `signInCode.body` | Enter this code to sign in to {brand}. It works once. | Saisissez ce code pour vous connecter à {brand}. Il ne fonctionne qu'une fois. |
-| `signInCode.ignore` | If you did not try to sign in, you can ignore this e-mail: no one can sign in without the code. | Si vous n'avez pas essayé de vous connecter, vous pouvez ignorer cet e-mail : personne ne peut se connecter sans ce code. |
+| `sign-in-code.subject` | Your sign-in code: {code} | Votre code de connexion : {code} |
+| `sign-in-code.preheader` | Enter this code to sign in. | Saisissez ce code pour vous connecter. |
+| `sign-in-code.title` | Your sign-in code | Votre code de connexion |
+| `sign-in-code.body` | Enter this code to sign in to {brand}. It works once. | Saisissez ce code pour vous connecter à {brand}. Il ne fonctionne qu'une fois. |
+| `sign-in-code.ignore` | If you did not try to sign in, you can ignore this e-mail: no one can sign in without the code. | Si vous n'avez pas essayé de vous connecter, vous pouvez ignorer cet e-mail : personne ne peut se connecter sans ce code. |
 
 Placeholders: `expiresIn` (a duration, as text), and `code`, in the body and **in the subject** — the manifest's
 subject is `Your sign-in code: {{ code }}`, filled like the body, so the code
-shows in an inbox's list. Write a `signInCode.subject` without `{code}` in
+shows in an inbox's list. Write a `sign-in-code.subject` without `{code}` in
 your catalogues to keep it out:
 
 ```json
 // locales/en.json
-{ "signInCode": { "subject": "Your sign-in code" } }
+{ "sign-in-code": { "subject": "Your sign-in code" } }
 ```
 
 ```json
 // locales/fr.json
-{ "signInCode": { "subject": "Votre code de connexion" } }
+{ "sign-in-code": { "subject": "Votre code de connexion" } }
 ```
 
 Samples:
@@ -244,16 +244,16 @@ Samples:
 [In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/fr/magic-link.png)
 
 A one-time link that signs the user in. A title with the brand, the body,
-the **Sign in** button, `presets.linkExpires`, the link as text, and
+the **Sign in** button, `presets.link-expires`, the link as text, and
 `common.footer.ignore`. No greeting.
 
 | Key | `en` | `fr` |
 | --- | --- | --- |
-| `magicLink.subject` | Your sign-in link | Votre lien de connexion |
-| `magicLink.preheader` | One click to sign in. | Un clic pour vous connecter. |
-| `magicLink.title` | Sign in to {brand} | Connectez-vous à {brand} |
-| `magicLink.body` | Click the button below to sign in. The link works once. | Cliquez sur le bouton ci-dessous pour vous connecter. Le lien ne fonctionne qu'une fois. |
-| `magicLink.action` | Sign in | Me connecter |
+| `magic-link.subject` | Your sign-in link | Votre lien de connexion |
+| `magic-link.preheader` | One click to sign in. | Un clic pour vous connecter. |
+| `magic-link.title` | Sign in to {brand} | Connectez-vous à {brand} |
+| `magic-link.body` | Click the button below to sign in. The link works once. | Cliquez sur le bouton ci-dessous pour vous connecter. Le lien ne fonctionne qu'une fois. |
+| `magic-link.action` | Sign in | Me connecter |
 
 Placeholders: `link` (a URL), `expiresIn` (a duration, as text). Samples:
 [en](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/en/magic-link.html) ·
@@ -267,20 +267,20 @@ Placeholders: `link` (a URL), `expiresIn` (a duration, as text). Samples:
 
 An alert, after an account was signed in from a device not seen before. A
 title, the greeting, a warning banner, a summary of the device, the location
-and the time, the body with `presets.notYou`, the **Secure my account**
+and the time, the body with `presets.not-you`, the **Secure my account**
 button, and the link as text.
 
 | Key | `en` | `fr` |
 | --- | --- | --- |
-| `newSignIn.subject` | New sign-in to your account | Nouvelle connexion à votre compte |
-| `newSignIn.preheader` | Your account was signed in from a new device. | Votre compte a été utilisé depuis un nouvel appareil. |
-| `newSignIn.title` | New sign-in to your account | Nouvelle connexion à votre compte |
-| `newSignIn.banner` | Your account was signed in from a device we had not seen. | Votre compte a été utilisé depuis un appareil que nous ne connaissions pas. |
-| `newSignIn.device` | Device | Appareil |
-| `newSignIn.location` | Location | Lieu |
-| `newSignIn.time` | Time | Heure |
-| `newSignIn.body` | If this was you, there is nothing to do. | Si c'était vous, vous n'avez rien à faire. |
-| `newSignIn.action` | Secure my account | Sécuriser mon compte |
+| `new-sign-in.subject` | New sign-in to your account | Nouvelle connexion à votre compte |
+| `new-sign-in.preheader` | Your account was signed in from a new device. | Votre compte a été utilisé depuis un nouvel appareil. |
+| `new-sign-in.title` | New sign-in to your account | Nouvelle connexion à votre compte |
+| `new-sign-in.banner` | Your account was signed in from a device we had not seen. | Votre compte a été utilisé depuis un appareil que nous ne connaissions pas. |
+| `new-sign-in.device` | Device | Appareil |
+| `new-sign-in.location` | Location | Lieu |
+| `new-sign-in.time` | Time | Heure |
+| `new-sign-in.body` | If this was you, there is nothing to do. | Si c'était vous, vous n'avez rien à faire. |
+| `new-sign-in.action` | Secure my account | Sécuriser mon compte |
 
 Placeholders: `name`, `device`, `location`, `time`, `link` (a URL).
 `device`, `location` and `time` are text the sender writes: the build cannot
@@ -350,14 +350,14 @@ The arguments are what an override must respect:
   `i18n: fr: welcome.subject uses {extra}, which en does not declare`.
 - **A subject** is not passed arguments by the template: each of its
   arguments becomes a placeholder the sender fills. Dropping `{code}` from
-  `signInCode.subject` is fine in both locales at once; adding `{brand}` to a
+  `sign-in-code.subject` is fine in both locales at once; adding `{brand}` to a
   subject would add a `brand` placeholder, not your brand's name.
 
 ```json
 // locales/en.json
 {
 	"welcome": { "subject": "Welcome to Acme, {name}" },
-	"verifyEmail": { "action": "Yes, this is my address" }
+	"verify-email": { "action": "Yes, this is my address" }
 }
 ```
 

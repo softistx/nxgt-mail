@@ -1,11 +1,11 @@
 {
-	"verifyEmail": {
+	"verify-email": {
 		"subject": "Confirmez votre adresse e-mail, {name}",
 		"preheader": "Un clic pour confirmer votre adresse.",
 		"title": "Confirmez votre adresse e-mail",
 		"body": "Confirmez que cette adresse est la vôtre pour terminer la création de votre compte {brand}.",
 		"action": "Confirmer mon adresse",
 		"expires": "Le lien expire dans {expiresIn}.",
-		"linkFallback": "Ou collez ce lien dans votre navigateur :"
+		"link-fallback": "Ou collez ce lien dans votre navigateur :"
 	}
 }

@@ -21,7 +21,7 @@ Nothing yet. A request is welcome as an
 - **Answering the key on a missing message** — `@nxgt/i18n` answers the key
   when a message is missing; here a missing key, a language with no catalogue
   or a formatting failure throws, in templates and in `createTranslator`
-  alike. An e-mail must never go out with `verifyEmail.title` or `{link}` in
+  alike. An e-mail must never go out with `verify-email.title` or `{link}` in
   it, so the failure belongs at build time.
 - **A template engine at run time** — templates are built by `maizzle build`;
   at send time only `{{ name }}` placeholders are filled in the built files.
@@ -60,7 +60,7 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   that is not camelCase, a message that does not parse, a key missing in one
   locale, an argument a translation invents or types differently: the build
   fails, naming the locale and the key.
-- **`t`, `locale` and `placeholder` in templates, v0.1.0** — `{{ t('verifyEmail.title')
+- **`t`, `locale` and `placeholder` in templates, v0.1.0** — `{{ t('verify-email.title')
   }}` translates in the template's locale, and fails the build on an unknown
   key or a wrong, missing or unused argument; `placeholder('name')` writes
   `{{ name }}` for a value only known at send time, and can be passed as an
