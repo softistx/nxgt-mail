@@ -1,11 +1,19 @@
 import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import {
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from 'node:fs';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { type MaizzleServer, serveMaizzle } from '../test/maizzle-serve';
+import { instanceOf, propsOf, TABLE, tagOf } from '../test/placeholder-props';
 
 const fixture = fileURLToPath(new URL('../test/fixture', import.meta.url));
 const cases = fileURLToPath(new URL('../test/.cases', import.meta.url));
+const components = fileURLToPath(new URL('../components', import.meta.url));
 const maizzle = fileURLToPath(
 	new URL('../node_modules/.bin/maizzle', import.meta.url),
 );
@@ -954,4 +962,141 @@ describe('a tag that resolves to no component', () => {
 		expect(html).toContain('Hello from the app');
 		expect(html).toContain('<center>');
 	}, 60_000);
+});
+
+/**
+ * A generic spec suggested by an earlier review: every prop of every
+ * `@nxgt/mail-ui` component, given `placeholder('x')` (`{{ x }}`), reaches
+ * one of the two outcomes `test/placeholder-props.ts` declares — the table
+ * itself is read from each component's `defineProps`, so a new component or
+ * prop with no declared expectation fails the first test below.
+ */
+describe('the generic placeholder spec of every component and every prop', () => {
+	test("every component's props all have a declared expectation", () => {
+		const problems: string[] = [];
+		for (const file of readdirSync(components).sort()) {
+			if (!file.endsWith('.vue')) continue;
+			const tag = tagOf(file);
+			const found = propsOf(readFileSync(`${components}/${file}`, 'utf8'));
+			const declared = Object.keys(TABLE[tag] ?? {});
+			for (const name of found) {
+				if (!declared.includes(name)) {
+					problems.push(
+						`${tag}.${name} (in ${file}) has no entry in test/placeholder-props.ts`,
+					);
+				}
+			}
+			for (const name of declared) {
+				if (!found.includes(name)) {
+					problems.push(
+						`${tag}.${name} in test/placeholder-props.ts is not a prop of ${file}`,
+					);
+				}
+			}
+		}
+		expect(problems).toEqual([]);
+	});
+
+	const passCases = Object.entries(TABLE).flatMap(([tag, props]) =>
+		Object.entries(props)
+			.filter(([, entry]) => entry.expect.kind === 'passes')
+			.map(([name]) => instanceOf(tag, name)),
+	);
+
+	describe('a prop that is plain text or a URL, built once for every one of them', () => {
+		const root = `${cases}/placeholder-pass`;
+		beforeAll(async () => {
+			rmSync(root, { recursive: true, force: true });
+			const files: Record<string, string> = {
+				'maizzle.config.ts': [
+					"import { defineMailConfig } from '@nxgt/mail-config';",
+					"import { i18n } from '@nxgt/mail-i18n';",
+					"import { ui, uiCatalogues } from '../../../src/index';",
+					"export default defineMailConfig({ plugins: [ui({ brand: { name: 'Acme' } }), i18n({ locales: ['en'], catalogues: [uiCatalogues] })] });",
+				].join('\n'),
+				'locales/en.json': '{ "welcome": { "subject": "Welcome" } }',
+				'emails/welcome.vue': [
+					'<template><NxLayout :lang="placeholder(\'layoutLang\')" :preheader="placeholder(\'layoutPreheader\')">',
+					...passCases.map((each) => each.markup),
+					'</NxLayout></template>',
+				].join('\n'),
+			};
+			for (const [path, content] of Object.entries(files)) {
+				mkdirSync(dirname(`${root}/${path}`), { recursive: true });
+				writeFileSync(`${root}/${path}`, content);
+			}
+			await build(root);
+		}, 120_000);
+		afterAll(() => rmSync(root, { recursive: true, force: true }));
+
+		test.each([
+			...passCases.map((each) => each.name),
+			'layoutLang',
+			'layoutPreheader',
+		])('%s reaches the built file as {{ %s }}', async (name) => {
+			const html = await Bun.file(`${root}/dist/en/welcome.html`).text();
+			expect(html).toContain(`{{ ${name} }}`);
+		});
+	});
+
+	describe('a prop the build must compute, each its own build', () => {
+		const failCases = Object.entries(TABLE).flatMap(([tag, props]) =>
+			Object.entries(props)
+				.filter(
+					(
+						entry,
+					): entry is [
+						string,
+						(typeof props)[string] & {
+							expect: { kind: 'fails'; message: string };
+						},
+					] => entry[1].expect.kind === 'fails',
+				)
+				.map(([name, entry]) => ({
+					tag,
+					name,
+					message: entry.expect.message,
+					markup:
+						tag === 'NxLayout'
+							? instanceOf(tag, name).markup
+							: `<NxLayout>${instanceOf(tag, name).markup}</NxLayout>`,
+				})),
+		);
+		afterAll(() =>
+			rmSync(`${cases}/placeholder-fails`, { recursive: true, force: true }),
+		);
+
+		test.each(
+			failCases.map(({ tag, name, message, markup }) => [
+				`${tag}.${name}`,
+				markup,
+				message,
+			]),
+		)(
+			'%s fails the build, naming the component and the prop',
+			async (label, markup, message) => {
+				// Its own directory: bun runs these cases concurrently.
+				const root = `${cases}/placeholder-fails/${label}`;
+				rmSync(root, { recursive: true, force: true });
+				const files: Record<string, string> = {
+					'maizzle.config.ts': [
+						"import { defineMailConfig } from '@nxgt/mail-config';",
+						"import { i18n } from '@nxgt/mail-i18n';",
+						"import { ui, uiCatalogues } from '../../../../src/index';",
+						"export default defineMailConfig({ plugins: [ui({ brand: { name: 'Acme' } }), i18n({ locales: ['en'], catalogues: [uiCatalogues] })] });",
+					].join('\n'),
+					'locales/en.json': '{ "welcome": { "subject": "Welcome" } }',
+					'emails/welcome.vue': `<template>${markup}</template>`,
+				};
+				for (const [path, content] of Object.entries(files)) {
+					mkdirSync(dirname(`${root}/${path}`), { recursive: true });
+					writeFileSync(`${root}/${path}`, content);
+				}
+				const { code, output } = await run(root, 'build');
+				expect(code).not.toBe(0);
+				expect(output).toContain(message);
+			},
+			60_000,
+		);
+	});
 });
