@@ -45,6 +45,8 @@ A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **`@nxgt/mail-config` 0.2, v0.1.1** — the peer moves to `^0.2.0`, whose text
+  part is laid out in paragraphs. The components do not change.
 - **UI components as a plugin, v0.1.0** — `ui({ brand, theme })`, listed in
   `defineMailConfig`'s `plugins`: the `Nx*` components available in every
   template, the brand (name, link, logo by absolute URL) in the layout's
@@ -90,8 +92,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   a toned delta and its arrow, bars and links, checked against the same
   support data. With it, every material-vue component that fits an e-mail —
   one that is read, not used — has its `Nx` counterpart.
-- **A starter project, with v0.1.0** — the official Maizzle starter with
-  `defineMailConfig`, the i18n and the UI plugins wired in as the READMEs
-  say, built, rendered in `en` and `fr` and served in CI, so the snippets are
-  known to work: [`examples/starter`](https://github.com/softistx/nxgt-mail/tree/develop/examples/starter).
-  In the repository; its README says how to start your own from npm.
