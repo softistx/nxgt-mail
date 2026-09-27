@@ -43,9 +43,7 @@ values in its placeholders. Click one for full size; `fr` is the French build.
 <tr><td valign="top"><a href="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-presets/previews/en/new-sign-in.png"><img src="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-presets/previews/en/new-sign-in.png" width="260" alt="The new-sign-in e-mail, in English"></a><br><code>new-sign-in</code> · <a href="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-presets/previews/fr/new-sign-in.png">fr</a></td><td valign="top"><a href="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-presets/previews/en/welcome.png"><img src="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-presets/previews/en/welcome.png" width="260" alt="The welcome e-mail, in English"></a><br><code>welcome</code> · <a href="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-presets/previews/fr/welcome.png">fr</a></td><td valign="top"><a href="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-presets/previews/en/invitation.png"><img src="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-presets/previews/en/invitation.png" width="260" alt="The invitation e-mail, in English"></a><br><code>invitation</code> · <a href="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-presets/previews/fr/invitation.png">fr</a></td></tr>
 </table>
 
-> **Not published yet.** The package is `private` while the rest of the
-> repository — a starter — is written. It is published at
-> `0.1.0` with the other packages; the surface below is the one that will ship.
+> **0.x.** A minor version may still change the surface; the changelog says how.
 
 ## Install
 
