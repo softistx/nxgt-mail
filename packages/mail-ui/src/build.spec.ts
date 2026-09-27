@@ -271,13 +271,14 @@ describe('a project built with the ui plugin', () => {
 
 	test('numbers the steps in order unless one says its index, and joins all but the last', async () => {
 		const html = await read('dist/en/sequence.html');
-		for (const index of ['1', '2', '7', '&#9733;', '★']) {
-			if (!html.includes(`>${index}</span>`)) continue;
+		for (const index of ['1', '2', '7']) {
 			expect(styleOf(html, index, 'span')).toContain(
 				'border: 1px solid #d1d3e5;',
 			);
 		}
+		// The index slot, a star, in place of the fourth number.
 		expect(html).toMatch(/>(&#9733;|★)<\/span>/);
+		expect(html).not.toContain('>4</span>');
 		const steps = html.slice(
 			html.indexOf('>1</span>'),
 			html.indexOf('>Signed in<'),

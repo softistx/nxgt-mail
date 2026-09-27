@@ -23,7 +23,11 @@ for (const [name, value] of [
 	['max', props.max],
 	['height', props.height],
 ] as const) {
-	if (typeof value !== 'number' || !Number.isFinite(value)) {
+	if (
+		typeof value !== 'number' ||
+		!Number.isFinite(value) ||
+		(name === 'height' && value <= 0)
+	) {
 		throw new Error(
 			`NxProgress: ${name} must be a number known when the e-mail is built — a placeholder is filled only when it is sent`,
 		);

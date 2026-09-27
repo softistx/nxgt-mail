@@ -610,7 +610,7 @@ on a rounded track at 20% of the primary colour.
 | --- | --- | --- | --- |
 | `modelValue` | `number` | `0` | How much is done — material-vue's name, passed one way: an e-mail has no `v-model` |
 | `max` | `number` | `100` | What `modelValue` is out of |
-| `height` | `number` | `8` | The bar's height in pixels; an addition, where material-vue sets a class such as `h-1.5` |
+| `height` | `number` | `8` | The bar's height in pixels, above 0; an addition, where material-vue sets a class such as `h-1.5` |
 
 The fill is `modelValue / max`, rounded to a whole percent and kept between 0 and
 100. It is a table cell of that width, which every client draws: material-vue's
@@ -666,15 +666,15 @@ a line, its title, a time on the right, and a description.
       { id: 'password', title: 'Password changed', tone: 'warning' },
       { id: 'created', title: 'Account created' },
     ]"
-    empty="No activity yet"
   />
+  <NxTimeline :items="[]" empty="Nothing this week" />
 </template>
 ```
 
 | Prop | Type | Default | Effect |
 | --- | --- | --- | --- |
 | `items` | `{ id: string; title: string; description?: string; timestampLabel?: string; tone?: TimelineTone }[]` | required | The events, in order; each `id` unique |
-| `empty` | `string` | the shared message `common.timeline.empty` (`No activity yet`) | The text shown, centred and muted, when `items` is empty |
+| `empty` | `string` | the shared message `common.timeline.empty` (`No activity yet`); without `@nxgt/mail-i18n`, `No activity yet` in every language | The text shown, centred and muted, when `items` is empty |
 
 `TimelineTone` is `'default' | 'primary' | 'success' | 'info' | 'warning' | 'error'`:
 the marker's border at 40% of the tone, its ground at 15%, and its dot in the

@@ -339,7 +339,7 @@ package's, key by key.
 
 ### `NxProgress: modelValue must be a number known when the e-mail is built — a placeholder is filled only when it is sent`
 
-The prop named is `modelValue`, `max` or `height`.
+The prop named is `modelValue`, `max` or `height` (which must also be above 0).
 
 **When:** `maizzle build`, on a template whose `<NxProgress>` is given a
 placeholder or any value that is not a number:
