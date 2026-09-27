@@ -17,7 +17,11 @@
  * placeholder's value — the invariant `@nxgt/mail`'s own errors hold
  * (`MailError`: "a message reports a shape, never a value") applies here
  * too, and `telemetry.spec.ts` asserts it: the address, the subject and the
- * body used in its fixtures never occur in any attribute this module writes.
+ * body used in its fixtures never occur in any attribute or event this
+ * module writes — the exception a failure records is a name and a
+ * `MailErrorCode`, never the thrown error's own `message` or `stack`, which
+ * a hand-rolled `Mailer` or a third-party transport may have built from the
+ * message.
  *
  * ## Outcome
  *
@@ -78,12 +82,18 @@ function outcomeOf(error: unknown): { outcome: Outcome; code?: string } {
 /**
  * Marks the span with `outcome` and, for a failure, records the exception.
  * A refusal is an answer: the span stays `ok`. Always rethrows.
+ *
+ * **Never the error's own `message` or `stack`**: a hand-rolled `Mailer` or a
+ * third-party transport may put the address or the subject in there — the
+ * fixture in `telemetry.spec.ts` does, on purpose. `recordException` is given
+ * a name and the `MailErrorCode` instead of the `Error` itself, so a value
+ * never reaches the span's `events` the way it never reaches its attributes.
  */
 function fail(
 	span: {
 		setAttribute(name: string, value: unknown): unknown;
 		setStatus(status: { code: SpanStatusCode; message?: string }): unknown;
-		recordException(exception: unknown): unknown;
+		recordException(exception: { name: string; message: string }): unknown;
 	},
 	error: unknown,
 ): never {
@@ -93,7 +103,10 @@ function fail(
 	if (outcome === 'refused') {
 		span.setStatus({ code: SpanStatusCode.OK });
 	} else {
-		span.recordException(error instanceof Error ? error : String(error));
+		span.recordException({
+			name: error instanceof Error ? error.name : 'Error',
+			message: code ?? 'unknown error',
+		});
 		span.setStatus(
 			code === undefined
 				? { code: SpanStatusCode.ERROR }

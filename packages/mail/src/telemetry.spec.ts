@@ -54,16 +54,32 @@ afterEach(async () => {
 	await meterProvider.shutdown();
 });
 
-/** Every string that never belongs in an attribute: the address, the subject, a body word. */
+/** Every string that never belongs in an attribute or an event: the address, the subject, a body word. */
 const forbidden = [ADDRESS, SUBJECT, BODY_WORD];
 
-function assertsNoPii(attributes: Record<string, unknown>): void {
-	for (const value of Object.values(attributes)) {
-		if (typeof value !== 'string') continue;
-		for (const secret of forbidden) {
-			expect(value).not.toContain(secret);
-		}
+function assertsNoSecret(value: unknown): void {
+	if (typeof value !== 'string') return;
+	for (const secret of forbidden) {
+		expect(value).not.toContain(secret);
 	}
+}
+
+function assertsNoPii(attributes: Record<string, unknown>): void {
+	for (const value of Object.values(attributes)) assertsNoSecret(value);
+}
+
+/**
+ * The whole span: its attributes, and every event's own attributes,
+ * `recordException`'s `exception.message` and `exception.stacktrace`
+ * included — a caught error's `message` or `stack` can carry the same value
+ * an attribute must never carry.
+ */
+function assertsSpanHasNoPii(span: {
+	attributes: Record<string, unknown>;
+	events: readonly { attributes?: Record<string, unknown> }[];
+}): void {
+	assertsNoPii(span.attributes);
+	for (const event of span.events) assertsNoPii(event.attributes ?? {});
 }
 
 function message(overrides: Partial<MailMessage> = {}): MailMessage {
@@ -148,7 +164,7 @@ describe('withTelemetry(mailer, options) — the span', () => {
 		assertsNoPii(span?.attributes ?? {});
 	});
 
-	it('never lets the address, subject or body reach an attribute, even for a hand-rolled Mailer that echoes the message in its error', async () => {
+	it('never lets the address, subject or body reach an attribute or a recorded exception, even for a hand-rolled Mailer that echoes the message in its error', async () => {
 		const failing: Mailer = {
 			send() {
 				return Promise.reject(
@@ -161,7 +177,12 @@ describe('withTelemetry(mailer, options) — the span', () => {
 		await expect(mailer.send(message())).rejects.toBeInstanceOf(MailFailure);
 
 		const [span] = spanExporter.getFinishedSpans();
-		assertsNoPii(span?.attributes ?? {});
+		expect(span).toBeDefined();
+		if (span === undefined) throw new Error('unreachable');
+		assertsSpanHasNoPii(span);
+		// The exception is still recorded — sanitised, never the caller's own message.
+		expect(span.events).toHaveLength(1);
+		expect(span.events[0]?.name).toBe('exception');
 	});
 
 	it('records mail.send.duration and mail.send.count by outcome', async () => {

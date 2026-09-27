@@ -502,13 +502,15 @@ record a duration histogram and a counter, by outcome.
 **Never an address, a subject, a body, an attachment or a placeholder's
 value** — only a shape, the same invariant `MailError`'s own messages hold.
 `telemetry.spec.ts` asserts it: the address, the subject and the body used in
-its fixtures never occur in any attribute either function writes.
+its fixtures never occur in any attribute or event either function writes.
 
 **A refusal is an answer.** `MailRefused` ends the span `ok`, with
 `mail.outcome: 'refused'` and `error.type` set to its code; `MailFailure` (or
 anything else) ends it `error`, with `mail.outcome: 'failure'` and the
-exception recorded — nothing is known to have been sent. Either way the error
-is rethrown unchanged: telemetry only observes.
+exception recorded — as a name and the `MailErrorCode`, **never the thrown
+error's own `message` or `stack`**, which a hand-rolled `Mailer` may have
+built from the message. Either way the error is rethrown unchanged:
+telemetry only observes.
 
 **With a retry decorator, `withTelemetry` goes on the outside**:
 `withTelemetry(withRetry(mailer), { transport })`. One call from your code is

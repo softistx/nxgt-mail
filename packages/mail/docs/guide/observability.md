@@ -41,9 +41,13 @@ a value"):
 
 `telemetry.spec.ts` asserts the negative half directly: after a send and a
 render whose message and template use an address, a subject and a body word,
-none of the three ever occurs in any attribute either function writes —
-checked by substring, not by field name, so a new attribute added later is
-covered by the same assertion without being named.
+none of the three ever occurs in any attribute **or event** either function
+writes — checked by substring, not by field name, so a new attribute added
+later is covered by the same assertion without being named. This reaches the
+exception a failure records too: `span.recordException` is given a name and
+the `MailErrorCode`, **never the thrown error's own `message` or `stack`**
+— which a hand-rolled `Mailer`, or a third-party transport, may have built
+from the address or the subject.
 
 ## `withTelemetry(mailer, options)`
 
@@ -120,7 +124,9 @@ are told apart:
   the message over, or `render` hit a build out of step with the code.
   Nothing is known to have been sent. The span ends **`error`**, with
   `mail.outcome: 'failure'`, `error.type` set to `'MAIL_FAILED'` when it
-  applies, and the exception recorded (`span.recordException`).
+  applies, and the exception recorded (`span.recordException`) — sanitised:
+  a name and the `MailErrorCode`, never the thrown error's own `message` or
+  `stack`.
 
 Either way, **the error is rethrown unchanged**: `withTelemetry` and
 `withRendererTelemetry` only observe. A `catch` written against `MailError`
