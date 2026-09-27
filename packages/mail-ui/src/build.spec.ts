@@ -11,8 +11,18 @@ const maizzle = fileURLToPath(
 
 /** Runs `maizzle <args>` in `cwd`, as a project runs it. */
 async function run(cwd: string, ...args: string[]) {
+	return runIn(process.env, cwd, ...args);
+}
+
+/** Runs `maizzle <args>` in `cwd` with the environment `env`. */
+async function runIn(
+	env: Record<string, string | undefined>,
+	cwd: string,
+	...args: string[]
+) {
 	const child = Bun.spawn([maizzle, ...args], {
 		cwd,
+		env,
 		stdout: 'pipe',
 		stderr: 'pipe',
 	});
@@ -678,5 +688,61 @@ describe('a component without the ui plugin', () => {
 		expect(output).toContain(
 			'NxLayout: ui() is not in the plugins of defineMailConfig',
 		);
+	}, 60_000);
+});
+
+describe('a tag that resolves to no component', () => {
+	const root = `${cases}/unresolved`;
+	const write = (files: Record<string, string>) => {
+		rmSync(root, { recursive: true, force: true });
+		for (const [path, content] of Object.entries(files)) {
+			mkdirSync(dirname(`${root}/${path}`), { recursive: true });
+			writeFileSync(`${root}/${path}`, content);
+		}
+	};
+	const config = (vue = '') =>
+		[
+			"import { defineMailConfig } from '@nxgt/mail-config';",
+			"import { ui } from '../../../src/index';",
+			`export default defineMailConfig({ plugins: [ui({ brand: { name: 'Acme' } })]${vue} });`,
+		].join('\n');
+	afterAll(() => rmSync(root, { recursive: true, force: true }));
+
+	for (const mode of ['development', 'production']) {
+		test(`fails the build when nested in a card, naming the tag and the template, under NODE_ENV=${mode}`, async () => {
+			write({
+				'maizzle.config.ts': config(),
+				'emails/welcome.vue':
+					'<template><NxLayout><NxCard><NxButon href="https://acme.example">Go</NxButon></NxCard></NxLayout></template>',
+			});
+			const { code, output } = await runIn(
+				// biome-ignore lint/style/useNamingConvention: an environment variable.
+				{ ...process.env, NODE_ENV: mode },
+				root,
+				'build',
+			);
+			expect(code).not.toBe(0);
+			expect(output).toContain(
+				'ui: <NxButon> in emails/welcome.vue is no component — check its name, or add the plugin or the components folder that brings it',
+			);
+		}, 60_000);
+	}
+
+	test("passes Maizzle's own components, and one the app registers", async () => {
+		write({
+			'maizzle.config.ts': config(
+				", vue: { plugins: [{ install: (app) => app.component('Greeting', { render: () => 'Hello from the app' }) }] }",
+			),
+			'emails/welcome.vue': [
+				'<template><NxLayout><NxCard>',
+				'<Button href="https://acme.example">Maizzle</Button><Spacer size="8" /><Greeting />',
+				'</NxCard></NxLayout></template>',
+			].join(''),
+		});
+		const { code, output } = await run(root, 'build');
+		expect({ code, output }).toEqual({ code: 0, output: expect.any(String) });
+		const html = await Bun.file(`${root}/dist/welcome.html`).text();
+		expect(html).toContain('https://acme.example');
+		expect(html).toContain('Hello from the app');
 	}, 60_000);
 });
