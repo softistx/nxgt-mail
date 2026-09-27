@@ -298,9 +298,11 @@ there is no dark theme.
 Maizzle's `<Spacer>`, which Outlook keeps.
 
 **A count, a query or an icon is known at build time.** `NxCountBadge`'s
-`count`, `NxHighlightText`'s `query` and `NxIconButton`'s `icon`, like `NxProgress`'s `modelValue`, fail the build
-when given a placeholder: write a count known only at send time in an
-`NxBadge`.
+`count`, `NxHighlightText`'s `query` and `NxIconButton`'s `icon`, like
+`NxProgress`'s `modelValue`, fail the build when given a placeholder. Write
+a count known only at send time in an `NxBadge`, highlight a query known at
+build time, and put an icon known only at send time in `NxIconButton`'s
+default slot, as an `<img :src="placeholder('iconUrl')">`.
 
 **Never branch on a placeholder** in a component or a template:
 `v-if="link.startsWith('https:')"` is decided on the string `{{ link }}`.

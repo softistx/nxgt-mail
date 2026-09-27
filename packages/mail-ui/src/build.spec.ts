@@ -622,6 +622,11 @@ describe.each([
 		'<NxHighlightText text="Acme invoices" query="{{ search }}" />',
 		'NxHighlightText: query must be text known when the e-mail is built — a placeholder is filled only when it is sent',
 	],
+	[
+		'icon-button-placeholder',
+		'<NxIconButton href="https://acme.example" icon="{{ iconUrl }}" aria-label="Open" />',
+		'NxIconButton: icon must be known when the e-mail is built — a placeholder is filled only when it is sent',
+	],
 ])(
 	'a component given a value the build cannot know (%s)',
 	(name, tag, message) => {
