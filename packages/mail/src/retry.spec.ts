@@ -3,7 +3,7 @@ import { describeMailer } from './conformance/describe';
 import { MailFailure, MailRefused } from './errors';
 import { createMemoryMailer } from './memory';
 import { createRetryingMailer, type RetryHooks, withRetry } from './retry';
-import type { MailMessage } from './types';
+import type { MailBatchResult, Mailer, MailMessage } from './types';
 
 const message: MailMessage = {
 	to: 'ada@example.test',
@@ -195,6 +195,36 @@ describe('createRetryingMailer', () => {
 		const memory = createMemoryMailer();
 		expect(() => withRetry(memory, null as never)).toThrow(TypeError);
 		expect(() => withRetry(memory)).not.toThrow();
+	});
+
+	it('passes sendBatch through untouched when the mailer has one', async () => {
+		const batchResult: readonly MailBatchResult[] = [
+			{ status: 'sent', sentMail: { messageId: 'abc' } },
+		];
+		let received: readonly MailMessage[] | undefined;
+		const fake: Mailer = {
+			send: () => Promise.reject(new Error('not used in this test')),
+			sendBatch: (messages) => {
+				received = messages;
+				return Promise.resolve(batchResult);
+			},
+		};
+
+		const mailer = withRetry(fake);
+		const messages = [message];
+		const result = await mailer.sendBatch?.(messages);
+
+		// The very same array and result: no retry, no idempotency key added,
+		// no wrapping of any kind — a batch's own outcome is not this
+		// decorator's job.
+		expect(result).toBe(batchResult);
+		expect(received).toBe(messages);
+	});
+
+	it('has no sendBatch when the wrapped mailer has none', () => {
+		const memory = createMemoryMailer();
+		const mailer = withRetry(memory);
+		expect(mailer.sendBatch).toBeUndefined();
 	});
 
 	describeMailer({

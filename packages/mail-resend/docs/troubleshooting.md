@@ -41,6 +41,7 @@ A `send: …` message not on this page comes from `checkMessage` in
 - [`sendBatch: Resend could not take the batch request`](#sendbatch-resend-could-not-take-the-batch-request)
 - [`sendBatch: Resend did not answer within <timeoutMs> ms`](#sendbatch-resend-did-not-answer-within-timeoutms-ms)
 - [`sendBatch: Resend could not be reached`](#sendbatch-resend-could-not-be-reached)
+- [`sendBatch: Resend's batch answer did not include this message`](#sendbatch-resends-batch-answer-did-not-include-this-message)
 
 **Cancelling and rescheduling**
 - [`cancel: messageId must be the id send answered`](#cancel-messageid-must-be-the-id-send-answered)
@@ -408,6 +409,19 @@ for the whole chunk.
 **Fix:** check the network from the process's host, and retry the messages
 reported `failed` — a chunk further along in the same call that did reach
 Resend is reported on its own, and is unaffected.
+
+### `sendBatch: Resend's batch answer did not include this message`
+
+A `MailFailure`, on this one message only — the rest of the chunk is
+unaffected. Resend answered `2xx` for the request, but its `data` held fewer
+entries than the chunk sent: an answer this shape is not one this transport
+trusts enough to call `sent` with no id.
+
+**When:** a malformed `2xx` answer from Resend, or a proxy in between that
+truncated the response body. Not observed from Resend itself; a defensive
+check.
+**Fix:** retry the message; if it recurs, it is worth reporting to Resend
+directly, with the request id.
 
 ## Cancelling and rescheduling
 

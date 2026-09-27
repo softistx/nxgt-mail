@@ -277,6 +277,177 @@ function chunk<T>(items: readonly T[], size: number): T[][] {
 	return chunks;
 }
 
+type PreparedMessage =
+	| { readonly ok: true; readonly body: Record<string, unknown> }
+	| { readonly ok: false; readonly error: MailRefused };
+
+/**
+ * Checks every message for `sendBatch`, building each one's wire body or its
+ * own refusal — before any of them reaches Resend. `defaultFrom` is
+ * `createResendMailer`'s own `from` option, the fallback `send` uses too.
+ */
+function prepareBatch(
+	messages: readonly MailMessage[],
+	defaultFrom: Address | undefined,
+): PreparedMessage[] {
+	return messages.map((message) => {
+		try {
+			checkMessage(message);
+			const sender = message.from ?? defaultFrom;
+			if (sender === undefined) {
+				throw new MailRefused(
+					'sendBatch: from is missing — give the message a from, or createResendMailer a default one',
+				);
+			}
+			if (message.attachments !== undefined && message.attachments.length > 0) {
+				throw new MailRefused(
+					"sendBatch: attachments are not supported in a batch send — Resend's /emails/batch refuses them; send this message on its own with send",
+				);
+			}
+			if (message.idempotencyKey !== undefined) {
+				throw new MailRefused(
+					'sendBatch: idempotencyKey is not supported in a batch send — Resend takes one Idempotency-Key per batch request, never one per message; send this message on its own with send',
+				);
+			}
+			if (Object.keys(message.tags ?? {}).length > MAX_TAGS) {
+				throw new MailRefused(
+					`sendBatch: Resend takes at most ${MAX_TAGS} tags on one e-mail`,
+				);
+			}
+			return { ok: true, body: bodyOf(message, sender) };
+		} catch (error) {
+			if (error instanceof MailRefused) return { ok: false, error };
+			throw error;
+		}
+	});
+}
+
+/**
+ * Sends one chunk of up to `BATCH_LIMIT` already-prepared messages to
+ * `POST /emails/batch`, and writes each one's {@link MailBatchResult} into
+ * `results`, at its original index in the caller's `messages`.
+ *
+ * Resend answers the whole request as one: a refusal or a failure marks
+ * every message of this chunk the same way. A `2xx` answer whose `data` is
+ * shorter than the chunk (a malformed answer) marks the missing entries
+ * `failed` too, rather than `sent` with no id — an answer this shape is not
+ * one this transport trusts.
+ */
+async function sendBatchChunk(
+	post: (url: string, init: RequestInit) => Promise<Response>,
+	endpoint: string,
+	apiKey: string,
+	timeoutMs: number,
+	group: readonly number[],
+	prepared: readonly PreparedMessage[],
+	results: MailBatchResult[],
+): Promise<void> {
+	const payload = group.map(
+		(index) =>
+			(
+				prepared[index] as {
+					readonly ok: true;
+					readonly body: Record<string, unknown>;
+				}
+			).body,
+	);
+	try {
+		const { response, answer } = await resendCall(
+			post,
+			`${endpoint}/batch`,
+			{ method: 'POST', body: payload },
+			apiKey,
+			timeoutMs,
+			'sendBatch',
+		);
+		if (!response.ok) {
+			const cause = resendAnswer(
+				response.status,
+				text(answer.name),
+				text(answer.message),
+			);
+			const refused =
+				response.status === 400 ||
+				response.status === 413 ||
+				response.status === 422;
+			for (const index of group) {
+				results[index] = refused
+					? {
+							status: 'refused',
+							error: new MailRefused(
+								'sendBatch: Resend refused the batch request',
+								{ cause },
+							),
+						}
+					: {
+							status: 'failed',
+							error: new MailFailure(
+								'sendBatch: Resend could not take the batch request',
+								{ cause },
+							),
+						};
+			}
+			return;
+		}
+		const data = Array.isArray(answer.data) ? answer.data : [];
+		group.forEach((index, position) => {
+			const entry = data[position];
+			if (typeof entry !== 'object' || entry === null) {
+				results[index] = {
+					status: 'failed',
+					error: new MailFailure(
+						"sendBatch: Resend's batch answer did not include this message",
+					),
+				};
+				return;
+			}
+			results[index] = {
+				status: 'sent',
+				sentMail: { messageId: text((entry as Record<string, unknown>).id) },
+			};
+		});
+	} catch (error) {
+		if (!(error instanceof MailFailure)) throw error;
+		for (const index of group) results[index] = { status: 'failed', error };
+	}
+}
+
+/**
+ * The error `cancel` and `reschedule` refuse or fail with, for the same
+ * answer shape (both act on a message by its Resend id): a `404` is an id
+ * Resend does not hold pending, a `400` is one it already sent — Resend
+ * documents neither precisely, the only two answers observed for either
+ * endpoint — and anything else is a `MailFailure`, Resend's answer as the
+ * `cause`.
+ */
+function scheduleErrorFor(
+	action: 'cancel' | 'reschedule',
+	response: Response,
+	answer: Record<string, unknown>,
+): MailScheduleRefused | MailFailure {
+	if (response.status === 404) {
+		return new MailScheduleRefused(
+			'UNKNOWN_ID',
+			`${action}: Resend has no scheduled message with this id — it may already have been cancelled, or the id is wrong`,
+		);
+	}
+	const cause = resendAnswer(
+		response.status,
+		text(answer.name),
+		text(answer.message),
+	);
+	if (response.status === 400) {
+		return new MailScheduleRefused(
+			'ALREADY_SENT',
+			`${action}: Resend refused to ${action} this message — it has already been sent, and is no longer scheduled`,
+			{ cause },
+		);
+	}
+	return new MailFailure(`${action}: Resend could not take the request`, {
+		cause,
+	});
+}
+
 /**
  * One raw call to Resend, shared by `send`, `sendBatch`, `cancel` and
  * `reschedule`: applies the timeout, and throws `MailFailure` — named for
@@ -466,43 +637,7 @@ export function createResendMailer(options: ResendMailerOptions): ResendMailer {
 					'sendBatch: messages must be an array of MailMessage',
 				);
 			}
-			const prepared: (
-				| { readonly ok: true; readonly body: Record<string, unknown> }
-				| { readonly ok: false; readonly error: MailRefused }
-			)[] = messages.map((message) => {
-				try {
-					checkMessage(message);
-					const sender = message.from ?? options.from;
-					if (sender === undefined) {
-						throw new MailRefused(
-							'sendBatch: from is missing — give the message a from, or createResendMailer a default one',
-						);
-					}
-					if (
-						message.attachments !== undefined &&
-						message.attachments.length > 0
-					) {
-						throw new MailRefused(
-							"sendBatch: attachments are not supported in a batch send — Resend's /emails/batch refuses them; send this message on its own with send",
-						);
-					}
-					if (message.idempotencyKey !== undefined) {
-						throw new MailRefused(
-							'sendBatch: idempotencyKey is not supported in a batch send — Resend takes one Idempotency-Key per batch request, never one per message; send this message on its own with send',
-						);
-					}
-					if (Object.keys(message.tags ?? {}).length > MAX_TAGS) {
-						throw new MailRefused(
-							`sendBatch: Resend takes at most ${MAX_TAGS} tags on one e-mail`,
-						);
-					}
-					return { ok: true, body: bodyOf(message, sender) };
-				} catch (error) {
-					if (error instanceof MailRefused) return { ok: false, error };
-					throw error;
-				}
-			});
-
+			const prepared = prepareBatch(messages, options.from);
 			const results: MailBatchResult[] = new Array(messages.length);
 			prepared.forEach((item, index) => {
 				if (!item.ok) results[index] = { status: 'refused', error: item.error };
@@ -512,65 +647,15 @@ export function createResendMailer(options: ResendMailerOptions): ResendMailer {
 				.filter((index) => index >= 0);
 
 			for (const group of chunk(pending, BATCH_LIMIT)) {
-				const payload = group.map(
-					(index) =>
-						(prepared[index] as { ok: true; body: Record<string, unknown> })
-							.body,
+				await sendBatchChunk(
+					post,
+					endpoint,
+					options.apiKey,
+					timeoutMs,
+					group,
+					prepared,
+					results,
 				);
-				try {
-					const { response, answer } = await resendCall(
-						post,
-						`${endpoint}/batch`,
-						{ method: 'POST', body: payload },
-						options.apiKey,
-						timeoutMs,
-						'sendBatch',
-					);
-					if (!response.ok) {
-						const cause = resendAnswer(
-							response.status,
-							text(answer.name),
-							text(answer.message),
-						);
-						const refused =
-							response.status === 400 ||
-							response.status === 413 ||
-							response.status === 422;
-						for (const index of group) {
-							results[index] = refused
-								? {
-										status: 'refused',
-										error: new MailRefused(
-											'sendBatch: Resend refused the batch request',
-											{
-												cause,
-											},
-										),
-									}
-								: {
-										status: 'failed',
-										error: new MailFailure(
-											'sendBatch: Resend could not take the batch request',
-											{ cause },
-										),
-									};
-						}
-						continue;
-					}
-					const data = Array.isArray(answer.data) ? answer.data : [];
-					group.forEach((index, position) => {
-						const entry = data[position];
-						const id =
-							typeof entry === 'object' && entry !== null
-								? text((entry as Record<string, unknown>).id)
-								: null;
-						results[index] = { status: 'sent', sentMail: { messageId: id } };
-					});
-				} catch (error) {
-					if (!(error instanceof MailFailure)) throw error;
-					for (const index of group)
-						results[index] = { status: 'failed', error };
-				}
 			}
 			return results;
 		},
@@ -588,27 +673,7 @@ export function createResendMailer(options: ResendMailerOptions): ResendMailer {
 				'cancel',
 			);
 			if (response.ok) return;
-			if (response.status === 404) {
-				throw new MailScheduleRefused(
-					'UNKNOWN_ID',
-					'cancel: Resend has no scheduled message with this id — it may already have been cancelled, or the id is wrong',
-				);
-			}
-			const cause = resendAnswer(
-				response.status,
-				text(answer.name),
-				text(answer.message),
-			);
-			if (response.status === 400) {
-				throw new MailScheduleRefused(
-					'ALREADY_SENT',
-					'cancel: Resend refused to cancel this message — it has already been sent, and is no longer scheduled',
-					{ cause },
-				);
-			}
-			throw new MailFailure('cancel: Resend could not take the request', {
-				cause,
-			});
+			throw scheduleErrorFor('cancel', response, answer);
 		},
 
 		async reschedule(messageId: string, scheduledAt: Date): Promise<void> {
@@ -633,27 +698,7 @@ export function createResendMailer(options: ResendMailerOptions): ResendMailer {
 				'reschedule',
 			);
 			if (response.ok) return;
-			if (response.status === 404) {
-				throw new MailScheduleRefused(
-					'UNKNOWN_ID',
-					'reschedule: Resend has no scheduled message with this id — it may already have been cancelled, or the id is wrong',
-				);
-			}
-			const cause = resendAnswer(
-				response.status,
-				text(answer.name),
-				text(answer.message),
-			);
-			if (response.status === 400) {
-				throw new MailScheduleRefused(
-					'ALREADY_SENT',
-					'reschedule: Resend refused to reschedule this message — it has already been sent, and is no longer scheduled',
-					{ cause },
-				);
-			}
-			throw new MailFailure('reschedule: Resend could not take the request', {
-				cause,
-			});
+			throw scheduleErrorFor('reschedule', response, answer);
 		},
 	};
 }

@@ -528,7 +528,7 @@ export function fakeProvider() {
 ```
 
 With the transport and the fake above, the example at the top of this page
-passes all seventeen cases.
+passes all nineteen cases.
 
 ### Without faults
 

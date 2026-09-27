@@ -20,7 +20,8 @@ type Fault =
 	| 'keyInUse'
 	| 'noId'
 	| 'notJson'
-	| 'hang';
+	| 'hang'
+	| 'shortBatchData';
 
 /**
  * One request as Resend received it. `body` is typed as an object for the
@@ -182,11 +183,22 @@ function startResend() {
 
 			if (request.method === 'POST' && url.pathname === '/emails/batch') {
 				attempts += 1;
-				const fault = faultResponse(faults.shift());
-				if (fault !== null) return fault;
+				const queuedBatchFault = faults.shift();
 				const items = Array.isArray(parsed)
 					? (parsed as Record<string, unknown>[])
 					: [];
+				if (queuedBatchFault === 'shortBatchData') {
+					const ids = items.map((item) => {
+						delivered.push(deliveredOf(item));
+						return `resend-${delivered.length}`;
+					});
+					// One entry fewer than sent: a malformed 2xx answer.
+					return Response.json({
+						data: ids.slice(0, -1).map((id) => ({ id })),
+					});
+				}
+				const fault = faultResponse(queuedBatchFault);
+				if (fault !== null) return fault;
 				const ids = items.map((item) => {
 					delivered.push(deliveredOf(item));
 					return `resend-${delivered.length}`;
@@ -938,6 +950,27 @@ describe('createResendMailer, sendBatch', () => {
 			baseUrl: resend.baseUrl,
 		}).sendBatch([sampleMessage]);
 		expect(results[0]?.status).toBe('failed');
+	});
+
+	test('a 2xx answer whose data is shorter than the chunk marks the missing messages failed, never sent with no id', async () => {
+		const resend = startResend();
+		try {
+			resend.faults.push('shortBatchData');
+			const results = await createResendMailer({
+				apiKey: API_KEY,
+				baseUrl: resend.baseUrl,
+			}).sendBatch([sampleMessage, { ...sampleMessage, subject: 'Second' }]);
+			expect(results[0]?.status).toBe('sent');
+			expect(results[1]?.status).toBe('failed');
+			expect((results[1] as { error: unknown }).error).toBeInstanceOf(
+				MailFailure,
+			);
+			expect((results[1] as { error: MailFailure }).error.message).toContain(
+				"Resend's batch answer did not include this message",
+			);
+		} finally {
+			await resend.close();
+		}
 	});
 });
 

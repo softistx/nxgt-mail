@@ -160,6 +160,14 @@ message at a time:
 | `sendBatch: Resend could not be reached` | `MailFailure` | `fetch` threw |
 | `sendBatch: Resend did not answer within <timeoutMs> ms` | `MailFailure` | The timeout aborted the request |
 
+And on one message alone, when Resend's own `2xx` answer for the request did
+not include it — a malformed answer, not one this transport has seen from
+Resend itself:
+
+| `message` | Class | When |
+| --- | --- | --- |
+| `sendBatch: Resend's batch answer did not include this message` | `MailFailure` | The request answered `2xx`, but `data` held fewer entries than the chunk sent |
+
 ```ts
 import type { MailMessage } from '@nxgt/mail';
 import type { ResendMailer } from '@nxgt/mail-resend';
