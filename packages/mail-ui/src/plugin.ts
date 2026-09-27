@@ -5,6 +5,7 @@ import { isMainThread } from 'node:worker_threads';
 import { defineMailPlugin, type MailPlugin } from '@nxgt/mail-config';
 import { packagedComponents } from './packaged';
 import { themeCss } from './theme';
+import { unresolvedComponents } from './unresolved';
 
 /** Who sends the e-mail: the layout's header and footer. */
 export interface Brand {
@@ -123,7 +124,8 @@ function checkBrand(brand: unknown): asserts brand is Brand {
  *
  * It registers `NxLayout`, `NxButton`, … — a project's own
  * `components/nx-button.vue` replaces ours — gives every template `brand`,
- * and themes the layout with `theme.css` and the `theme` overrides.
+ * and themes the layout with `theme.css` and the `theme` overrides. A tag
+ * that resolves to no component fails the build.
  */
 export function ui(options: UiOptions): MailPlugin {
 	if (!isObject(options)) {
@@ -152,10 +154,22 @@ export function ui(options: UiOptions): MailPlugin {
 	return defineMailPlugin({
 		name: 'ui',
 		components: { source: [COMPONENTS] },
-		vite: { plugins: packagedComponents(COMPONENTS) },
+		vite: {
+			plugins: [...packagedComponents(COMPONENTS), unresolvedComponents()],
+		},
 		vue: {
 			globalProperties: { brand },
-			plugins: [{ install: (app) => app.provide(UI_CONTEXT, context) }],
+			plugins: [
+				{
+					install: (app) => {
+						app.provide(UI_CONTEXT, context);
+						// Vue only logs an error thrown while rendering under
+						// NODE_ENV=production, and the build passes with the
+						// component missing. A failure throws, in both modes.
+						app.config.throwUnhandledErrorInProduction = true;
+					},
+				},
+			],
 		},
 	});
 }

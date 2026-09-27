@@ -444,7 +444,9 @@ export const tidy = defineMailPlugin({
 
 **When:** `maizzle build` succeeds, but a plugin's component — say
 `<BrandFooter>` — is not rendered: the tag is left unresolved in the built
-HTML.
+HTML. With `@nxgt/mail-ui`'s `ui()` in the plugins, the build fails instead,
+on `ui: <BrandFooter> in emails/welcome.vue is no component — check its name,
+or add the plugin or the components folder that brings it`.
 **Why:** the plugin set `components.source` to a relative path
 (`'./components'`). Maizzle resolves a relative `components.source` against
 the directory `maizzle` runs in — the project — not against the plugin's

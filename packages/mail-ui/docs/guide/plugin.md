@@ -359,6 +359,25 @@ It happens when the components are registered by hand from
 `COMPONENTS_DIR` rather than through `ui()`. List `ui()` in the project's
 `plugins`.
 
+A tag that resolves to no component fails the build too, naming the tag as
+written and the file it is written in — the template, a component, or an
+installed template:
+
+```text
+Error: ui: <NxButon> in emails/welcome.vue is no component — check its name, or add the plugin or the components folder that brings it
+```
+
+Vue would render it as an unknown element, or as nothing, and warn only in
+development. A component registered on the app (`app.component(…)` in a
+plugin of `vue.plugins`) and Maizzle's own components resolve, and pass.
+Only a name a component can have is checked — PascalCase, or kebab-case with
+a `-`: an old HTML tag such as `<center>` and a namespaced one such as
+`<o:p>` are written as they are. An
+error thrown while a template renders fails the build under
+`NODE_ENV=production` as in development: `ui()` sets Vue's
+`app.config.throwUnhandledErrorInProduction`, where Vue would otherwise log
+it and write the e-mail without the component.
+
 ## See also
 
 - [Components](components.md) — every component, its props and its slots.

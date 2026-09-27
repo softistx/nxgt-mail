@@ -266,7 +266,9 @@ which skips that folder. The plugin that ships the components resolves them —
 `@nxgt/mail-ui`'s `ui()` does, for its `Nx*` components and Maizzle's
 built-ins, so list it in `plugins`. A tag left unresolved renders nothing,
 and the build fails on the empty e-mail (see
-[What fails the build](#what-fails-the-build)).
+[What fails the build](#what-fails-the-build)); with `ui()` listed, one
+nested anywhere fails it too, naming the tag and the file:
+`ui: <NxButon> in emails/welcome.vue is no component — …`.
 
 ### Its errors
 
@@ -302,7 +304,7 @@ the template or the catalogues, to fix, not a condition to catch.
 | `i18n: templates[0] has no template sign-in.vue — name one of its e-mails` | A [package's source](#templates-from-a-package) lists, in `emails`, a template its folder does not have; checked when the config loads |
 | `i18n: templates[0] holds no template — is /…/emails the folder of a package's e-mails?` | A package's source whose `dir` is missing or has no template; checked when the config loads |
 | `i18n: templates[0] and templates[1] both have welcome.vue — keep one with emails: [...], or write the project's own in its folder` | Two package sources ship the same e-mail; checked when the config loads |
-| `i18n: fr/welcome.html is empty — a tag of its template resolved to no component; list the plugin that brings it, as ui()` | The e-mail rendered nothing but the doctype: a tag of its template, usually the layout, matched no component, and Vue renders an unknown component as nothing. Typically `ui()` is missing from `plugins`, or a package's template uses a component no plugin brings. Reported when the manifest is written |
+| `i18n: fr/welcome.html is empty — a tag of its template resolved to no component; list the plugin that brings it, as ui()` | The e-mail rendered nothing but the doctype: a tag of its template, usually the layout, matched no component, and Vue renders an unknown component as nothing. Typically `ui()` is missing from `plugins`, or a package's template uses a component no plugin brings. Reported when the manifest is written; with `ui()` listed, the build fails earlier on `ui: <Tag> in <file> is no component` |
 | `i18n: emails/Welcome.vue is not a kebab-case name — name a template as verify-email.vue` | A template whose path is not kebab-case, checked when the config loads. Under `maizzle serve`, one added while the server runs is printed with `console.error`, and the server keeps running |
 | `i18n: welcome has no subject — add welcome.subject to the catalogues` | The e-mail has no subject message; reported when the manifest is written, at the end of the build. The other manifest failures, including an output path set in a template, are in [The manifest](manifest.md#where-it-is-written) |
 | `i18n: emails/verify-email.vue is not built through the i18n plugin — leave content to it, and put templates in emails/` | Maizzle rendered a template directly: the project set its own `content` |

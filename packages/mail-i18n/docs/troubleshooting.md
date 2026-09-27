@@ -828,9 +828,12 @@ such warning for each tag that did not resolve.
 
 **When:** `maizzle build`, after the templates, when a template's outermost
 tag is a component that nothing resolves. Most often `ui()` is missing from
-the plugins while a template uses `<NxLayout>`. It also happens when a
-package's template, under `node_modules`, uses a component that no plugin in
-the list resolves for it.
+the plugins while a template uses `<NxLayout>`, or a package's template,
+under `node_modules`, uses a component that no plugin in the list resolves
+for it. With `@nxgt/mail-ui`'s `ui()` listed, the build stops earlier, on
+`ui: <NxLayout> in emails/welcome.vue is no component — check its name, or add
+the plugin or the components folder that brings it`, for any tag nested or
+not.
 **Why:** Vue renders a component it cannot resolve as nothing, and Maizzle
 still writes the file, with its doctype alone. The e-mail would go out
 blank, so the build stops.

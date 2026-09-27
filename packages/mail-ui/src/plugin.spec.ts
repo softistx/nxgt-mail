@@ -98,6 +98,7 @@ describe('ui — the plugin', () => {
 			?.plugins as { install(app: unknown): void }[];
 		for (const plugin of plugins) {
 			plugin.install({
+				config: {},
 				provide: (key: unknown, value: unknown) => provided.set(key, value),
 			});
 		}
@@ -106,6 +107,15 @@ describe('ui — the plugin', () => {
 		expect(css.endsWith('@theme {\n\t--color-primary: #0f766e;\n}\n')).toBe(
 			true,
 		);
+	});
+
+	test('makes an error while rendering fail the build under NODE_ENV=production too', () => {
+		const config: Record<string, unknown> = {};
+		const plugins = ui({ brand }).vue?.plugins as {
+			install(app: unknown): void;
+		}[];
+		for (const plugin of plugins) plugin.install({ config, provide() {} });
+		expect(config.throwUnhandledErrorInProduction).toBe(true);
 	});
 
 	test('keeps the brand from being changed after the call', () => {

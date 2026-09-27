@@ -13,9 +13,15 @@ How the messages are shaped:
   it: `ui: @maizzle/framework is not installed beside @nxgt/mail-ui`.
 - **A build failure is a plain `Error`**, thrown while `maizzle build` renders
   a template, and printed after Vue's own
-  `[Vue warn]: Unhandled error during execution of setup function`. It names
-  the component and what to fix. It has no `code`: it is a mistake in the
-  config, not a condition to catch.
+  `[Vue warn]: Unhandled error during execution of setup function`, or
+  `of render function` for a tag that resolves to no component. It names the
+  component or the template and what to fix. It has no `code`: it is a
+  mistake in the config, not a condition to catch.
+- **The build fails under `NODE_ENV=production` too.** Vue prints no warning
+  there, but `ui()` sets `app.config.throwUnhandledErrorInProduction`, so the
+  error still stops the build.
+- **A tag that resolves to no component starts `ui:` too**, though no option
+  causes it: it is a build failure, not a wiring one.
 - **A message never holds a value you passed**: it names the option or the
   token, never the URL or the colour.
 
@@ -40,6 +46,7 @@ The samples below use the locales `en` and `fr`, the template
 **Build** — while `maizzle build` renders
 - [`[Vue warn]: Failed to resolve component: NxLayout`](#vue-warn-failed-to-resolve-component-nxlayout)
 - [`NxLayout: ui() is not in the plugins of defineMailConfig`](#nxlayout-ui-is-not-in-the-plugins-of-definemailconfig)
+- [`ui: <NxButon> in emails/welcome.vue is no component — check its name, or add the plugin or the components folder that brings it`](#ui-nxbuton-in-emailswelcomevue-is-no-component--check-its-name-or-add-the-plugin-or-the-components-folder-that-brings-it)
 - [`i18n: en: welcome calls t('common.footer.why'), which is not a key of the catalogues`](#i18n-en-welcome-calls-tcommonfooterwhy-which-is-not-a-key-of-the-catalogues)
 - [`NxProgress: modelValue must be a number known when the e-mail is built — a placeholder is filled only when it is sent`](#nxprogress-modelvalue-must-be-a-number-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent)
 - [`NxCountBadge: count must be a number known when the e-mail is built — a placeholder is filled only when it is sent`](#nxcountbadge-count-must-be-a-number-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent)
@@ -281,8 +288,10 @@ export default defineMailConfig({
 ```
 
 A template installed from another package, which uses a component that is
-neither the project's, nor an `Nx*` component, nor one of Maizzle's, is left
-unresolved: that package's plugin must resolve it.
+neither the project's, nor an `Nx*` component, nor one of Maizzle's, fails
+the build once `ui()` is listed:
+[`ui: <…> in … is no component`](#ui-nxbuton-in-emailswelcomevue-is-no-component--check-its-name-or-add-the-plugin-or-the-components-folder-that-brings-it).
+That package's plugin must resolve it.
 
 ### `NxLayout: ui() is not in the plugins of defineMailConfig`
 
@@ -303,6 +312,40 @@ export default defineMailConfig({
   // no components.source pointing at COMPONENTS_DIR
 });
 ```
+
+### `ui: <NxButon> in emails/welcome.vue is no component — check its name, or add the plugin or the components folder that brings it`
+
+**When:** `maizzle build`, or a render of `maizzle serve`, when a template or
+a component writes a tag that nothing resolves — a typo such as `<NxButon>`
+for `<NxButton>` or `<nx-buton>`, or in the `is` of `<component is="…">`,
+anywhere in the template, nested in a card or not, in a `v-if` branch or
+not. The message names the tag as written and the file it
+is written in: the template, a component, or an installed template under
+`node_modules`.
+**Why:** Vue renders a tag it cannot resolve as an unknown element
+(`<nxbuton>`) or as nothing, and warns only in development: the build would
+pass and the e-mail go out without the button. `ui()` checks every tag the
+compiled template still asks Vue for by name, once every resolver has run —
+Maizzle's, and the one for installed files. A component the app registers
+(`app.component('Greeting', …)` in a plugin of `vue.plugins`) resolves, and
+passes; Maizzle's own (`<Button>`, `<Spacer>`) do too.
+**Fix:** correct the tag, or bring the component it names: create
+`components/<name>.vue` in the project, list the plugin of the package that
+ships it, or add its folder to `components.source`.
+
+```vue
+<!-- emails/welcome.vue -->
+<NxCard>
+  <NxButton :href="placeholder('link')">{{ t('welcome.action') }}</NxButton>
+</NxCard>
+```
+
+Only a name a component can have is checked: one in PascalCase, or in
+kebab-case with a `-`. A lowercase HTML tag Vue does not know (`<center>`,
+`<big>`) and a namespaced one (`<o:p>`, `<v:rect>`) are written as they are,
+as Maizzle writes them. A kebab-case tag meant to reach the HTML as it is is
+not a component either: Maizzle passes `amp-*` through, and
+`vue.customElements` in `maizzle.config.ts` names the others.
 
 ### `i18n: en: welcome calls t('common.footer.why'), which is not a key of the catalogues`
 

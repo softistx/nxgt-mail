@@ -407,7 +407,9 @@ the build.
 **List the plugin that brings a template's components.** A tag that
 resolves to no component renders nothing, and the build fails with
 `i18n: fr/welcome.html is empty — a tag of its template resolved to no
-component; list the plugin that brings it, as ui()`.
+component; list the plugin that brings it, as ui()`. With `ui()` listed, a
+tag that resolves to no component fails the build first, nested or not:
+`ui: <NxButon> in emails/welcome.vue is no component — …`.
 
 **Leave the output paths to the plugin.** An `output.path` set in a
 template, or a `plaintext.destination`, moves a file out of the plugin's

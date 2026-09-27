@@ -275,6 +275,12 @@ ours are named without the prefix `ui()` adds, so a copied `badge.vue` is
 **List `ui()` in `plugins`.** A component used without it fails the build:
 `NxLayout: ui() is not in the plugins of defineMailConfig`.
 
+**A tag that resolves to no component fails the build**, nested or not,
+naming the tag and the file:
+`ui: <NxButon> in emails/welcome.vue is no component — check its name, or add
+the plugin or the components folder that brings it`. Correct the tag, or
+bring its component. It fails under `NODE_ENV=production` too.
+
 **With `@nxgt/mail-i18n`, give it the shared messages.** `<NxLayout>` calls
 `t('common.footer.why')` once the i18n plugin is listed, and the build fails
 with `calls t('common.footer.why'), which is not a key of the catalogues`
