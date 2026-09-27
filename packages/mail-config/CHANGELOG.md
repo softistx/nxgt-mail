@@ -1,5 +1,13 @@
 # @nxgt/mail-config
 
+## 0.2.1
+
+### Patch Changes
+
+- [#47](https://github.com/softistx/nxgt-mail/pull/47) [`67c8852`](https://github.com/softistx/nxgt-mail/commit/67c8852440ffe86761c64b9307a6eeae8a31ee80) Thanks [@SteveGT96](https://github.com/SteveGT96)! - The docs say that, with `@nxgt/mail-ui`'s `ui()` in the plugins, a tag that resolves to no component fails the build, naming the tag and the file.
+
+- [#52](https://github.com/softistx/nxgt-mail/pull/52) [`aa4f748`](https://github.com/softistx/nxgt-mail/commit/aa4f7480142d8cae4023048f77fdade17aa700f0) Thanks [@SteveGT96](https://github.com/SteveGT96)! - Fix: the text part no longer breaks a sentence mid-word where Maizzle wrapped a long source line. `breakBlocks` now marks a paragraph and a line break instead of writing `\n\n` and `\n` directly, so `tidyPlaintext` can tell a source line's wrap from one it meant: it joins the wrap back into its sentence with a single space, but still keeps a link's address on its own line, and keeps every line of a `<pre>`. A project whose own `cb` never marks anything sees no change.
+
 ## 0.2.0
 
 ### Minor Changes

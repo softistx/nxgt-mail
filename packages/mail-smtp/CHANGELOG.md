@@ -1,5 +1,17 @@
 # @nxgt/mail-smtp
 
+## 0.4.0
+
+### Minor Changes
+
+- [#43](https://github.com/softistx/nxgt-mail/pull/43) [`9150a1e`](https://github.com/softistx/nxgt-mail/commit/9150a1e5e6ef7719709722e7578e1d3af5aabf13) Thanks [@SteveGT96](https://github.com/SteveGT96)! - Inline images: an attachment's `contentId` is handed to nodemailer as its `cid` — a `Content-ID` header, `Content-Disposition: inline`, in a `multipart/related` beside the HTML — so `<img src="cid:…">` shows it. The `@nxgt/mail` peer moves to `^0.6.0`: upgrade `@nxgt/mail` with it.
+
+### Patch Changes
+
+- [#50](https://github.com/softistx/nxgt-mail/pull/50) [`b51a759`](https://github.com/softistx/nxgt-mail/commit/b51a759d067efd87ad95932b77ed2488641ec9e6) Thanks [@SteveGT96](https://github.com/SteveGT96)! - A message's `tags` are ignored, as `idempotencyKey` is: SMTP has no tags, and nothing names them in the e-mail. The docs say so.
+- Updated dependencies [[`9150a1e`](https://github.com/softistx/nxgt-mail/commit/9150a1e5e6ef7719709722e7578e1d3af5aabf13), [`b51a759`](https://github.com/softistx/nxgt-mail/commit/b51a759d067efd87ad95932b77ed2488641ec9e6)]:
+  - @nxgt/mail@0.6.0
+
 ## 0.3.2
 
 ### Patch Changes

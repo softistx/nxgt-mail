@@ -1,5 +1,13 @@
 # @nxgt/mail
 
+## 0.6.0
+
+### Minor Changes
+
+- [#43](https://github.com/softistx/nxgt-mail/pull/43) [`9150a1e`](https://github.com/softistx/nxgt-mail/commit/9150a1e5e6ef7719709722e7578e1d3af5aabf13) Thanks [@SteveGT96](https://github.com/SteveGT96)! - Inline images: `contentId` on a `MailAttachment` makes it an image the HTML shows as `<img src="cid:…">` (RFC 2392). `checkMessage` refuses, with `MailRefused` and never quoting the id, a `contentId` that is not 1 to 127 letters, digits and `. _ ~ + -` with at most one `@`, two attachments under one `contentId`, and a `cid:` URL the HTML uses — an attribute value, quoted or not, or a CSS `url()` — that no attachment's `contentId` names once percent-decoded, before a broken image goes out; a `cid:` in prose or in the text part is not read. A URL variable holding `cid:` stays refused by the renderer: a `cid:` is written in the template. The memory mailer keeps the id (and counts it for an idempotency key); the conformance suite gains `send.inlineImage` and exports `sampleInlineImage`, and `DeliveredMail.attachments` carries each `contentId` — a harness must read it back, bare, for the new case to pass.
+
+- [#50](https://github.com/softistx/nxgt-mail/pull/50) [`b51a759`](https://github.com/softistx/nxgt-mail/commit/b51a759d067efd87ad95932b77ed2488641ec9e6) Thanks [@SteveGT96](https://github.com/SteveGT96)! - Tags: `tags` on a `MailMessage`, a record of names to values, label a send for the provider's dashboard and webhooks, and are never part of the e-mail. `checkMessage` refuses with `MailRefused` tags that are not an object, and a name or value that is not 1 to 256 ASCII letters, digits, `_` or `-` (the rule Resend and Amazon SES share), naming the tag and never the value. The memory mailer keeps them and counts them for an idempotency key; the conformance suite gains `send.tags`: a message with tags is delivered, with no tag written into it.
+
 ## 0.5.1
 
 ### Patch Changes
