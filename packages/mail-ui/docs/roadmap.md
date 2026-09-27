@@ -61,6 +61,10 @@ Nothing yet. A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **Shared messages under `kebab-case` keys, v0.3.0** — `common.avatarGroup.more`
+  is `common.avatar-group.more`, and so on for every multi-word key; an
+  override under the old key is no longer read. The full list is in the
+  [CHANGELOG](../CHANGELOG.md).
 - **Layout and content components, v0.2.0** — `NxSpacer` (vertical space in
   the theme's steps, on Maizzle's `<Spacer>`), `NxExtendedLabel`,
   `NxHighlightText`, `NxKbd`, `NxCountBadge`, `NxActionCard`, `NxFigure`,
@@ -110,8 +114,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   `common.seeAlso` in `en` and `fr`, given to
   `@nxgt/mail-i18n` as `i18n({ catalogues: [uiCatalogues] })`, and overridden
   key by key by your own `locales/<locale>.json`.
-- **Components and templates installed from npm, v0.1.0** — `ui()` resolves the
-  tags of a `.vue` file under `node_modules` itself, since Maizzle does not:
-  ours, and a package's templates such as `@nxgt/mail-presets`', render the
-  same installed as in the workspace, with your `components/` still replacing
-  ours by name.
