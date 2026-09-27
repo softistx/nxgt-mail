@@ -56,6 +56,7 @@ const both = (html: string, text?: string) => ({
 describe('buildManifest', () => {
 	test('records the placeholders, the subject per locale and the files', () => {
 		expect(manifestOf(both('<p>{{ code }}</p>', '{{ code }}'))).toEqual({
+			formatVersion: 1,
 			locales: ['en', 'fr'],
 			fallbackLocale: 'en',
 			emails: {

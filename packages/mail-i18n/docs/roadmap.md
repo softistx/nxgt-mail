@@ -5,7 +5,10 @@ no dates here, and the version something shipped in is the only number.
 
 ## Now
 
-Nothing between releases.
+- **The manifest's format, versioned** — `mail-manifest.json` starts with
+  `formatVersion`, `MANIFEST_FORMAT` is exported, and the format changes only
+  with the manifest's shape: any later `@nxgt/mail` 0.x reads the build.
+  Built, not yet published.
 
 ## Next
 

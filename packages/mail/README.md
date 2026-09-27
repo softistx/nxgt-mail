@@ -42,7 +42,7 @@ import without extensions, so `nodenext` is not supported.
 | Import | What it holds |
 | --- | --- |
 | `@nxgt/mail` | The port (`Mailer`, `MailMessage`, `Rendered`, `SentMail`, `Address`, `MailAttachment`), the errors (`MailError`, `MailFailure`, `MailRefused`), `createMemoryMailer`, `pickLocale` and `parseAcceptLanguage`, `listUnsubscribe` with `ListUnsubscribeOptions` and `ListUnsubscribeHeaders`, and what a transport calls first: `checkMessage`, `recipientsOf`, `addressOf`. No Node built-in: it runs anywhere |
-| `@nxgt/mail/renderer` | The renderer: `createMailRenderer`, `MailRenderer`, `MailRendererOptions`, `RenderOptions`, `MailVariables`, and the types that type it with a build's `MailEmails` (`MailEmailsOf`, `AnyMailEmails`, `RenderArguments`). Reads the build with `node:fs` |
+| `@nxgt/mail/renderer` | The renderer: `createMailRenderer`, `MailRenderer`, `MailRendererOptions`, `RenderOptions`, `MailVariables`, the types that type it with a build's `MailEmails` (`MailEmailsOf`, `AnyMailEmails`, `RenderArguments`), and `MANIFEST_FORMAT`, the newest manifest format it reads. Reads the build with `node:fs` |
 | `@nxgt/mail/conformance` | **For transport authors**: `describeMailer`, its cases as data, `runMailerCase`, the messages they send (`sampleMessage`, `sampleAttachment`), and the memory mailer's harness as a worked example |
 
 ## Usage
@@ -87,6 +87,14 @@ variable missing or unknown, and a number for a URL variable, as
 `MailVariables` compile, and the same mistakes throw at run time. See
 [Rendering](docs/guide/rendering.md) for the options, typing the renderer,
 the locale chosen through `getLanguage`, and every error.
+
+A renderer reads every manifest format up to its `MANIFEST_FORMAT`, within
+0.x: a build from any earlier `@nxgt/mail-i18n` 0.x keeps working with a newer
+`@nxgt/mail`, so a package that ships a prebuilt build can peer `@nxgt/mail`
+`>=0.1.0 <1`. A build in a newer format fails at start-up with
+`… is manifest format 2, newer than this @nxgt/mail reads (1) — upgrade
+@nxgt/mail`. See
+[Rendering — which builds it reads](docs/guide/rendering.md#which-builds-it-reads--manifest_format).
 
 ### Sending — the port and `MailMessage`
 

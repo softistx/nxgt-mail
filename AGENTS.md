@@ -124,6 +124,22 @@ a subject, never a link — a link in a verification e-mail is a credential.
   breaks — a header injection is a line break in a subject.
 - `url.base` stays off for links: it would prefix a placeholder.
 
+## The manifest is a contract across versions
+
+A build is often made by one version and read by another: a package ships a
+prebuilt `mails/` folder, and its consumer installs whatever `@nxgt/mail` 0.x
+it has. So, within 0.x:
+
+- `mail-manifest.json` carries `formatVersion`, `MANIFEST_FORMAT` in both
+  `@nxgt/mail-i18n` (what it writes) and `@nxgt/mail/renderer` (the newest it
+  reads). The two constants are copies: change both.
+- The format changes only when the manifest's shape does. A renderer reads
+  **every** format up to its own — never drop an older reader — and a
+  manifest without the field is format 1. A newer format than the renderer
+  reads is refused at start-up, naming both numbers.
+- `packages/mail/test/built` is format 1 as written; a spec reads it without
+  the field too. A new format adds its own fixture, and the old ones stay.
+
 ## No `snake_case`, anywhere
 
 Every key is `camelCase`: options, variables, catalogue keys

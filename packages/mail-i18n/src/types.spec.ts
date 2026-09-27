@@ -60,6 +60,7 @@ describe('rendererTypes', () => {
 	test('types each e-mail, sorted, with its variables, none as an empty record', () => {
 		expect(
 			rendererTypes({
+				formatVersion: 1,
 				locales: ['en'],
 				fallbackLocale: 'en',
 				emails: {

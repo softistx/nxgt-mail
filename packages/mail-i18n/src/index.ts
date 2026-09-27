@@ -25,6 +25,7 @@ export type {
 } from './catalogues';
 export {
 	emailKey,
+	MANIFEST_FORMAT,
 	type Manifest,
 	type ManifestEmail,
 } from './manifest';

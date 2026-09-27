@@ -10,7 +10,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MailRefused } from './errors';
-import { createMailRenderer } from './renderer';
+import { createMailRenderer, MANIFEST_FORMAT } from './renderer';
 
 const built = fileURLToPath(new URL('../test/built', import.meta.url));
 const link = 'https://app.example/verify?token=abc&next=%2F';
@@ -189,6 +189,7 @@ describe('createMailRenderer — wiring and a broken build', () => {
 		return dir;
 	};
 	interface EditableManifest {
+		formatVersion?: unknown;
 		locales?: unknown;
 		emails: Record<string, { files: Record<string, { text: string | null }> }>;
 	}
@@ -252,13 +253,45 @@ describe('createMailRenderer — wiring and a broken build', () => {
 		);
 	});
 
+	it('reads a manifest without formatVersion, as @nxgt/mail-i18n 0.1 and 0.2 wrote it', () => {
+		const at = editManifest((m) => {
+			delete m.formatVersion;
+		});
+		const renderer = createMailRenderer({ dir: at });
+		expect(renderer.render('sign-in-code', { code: '123456' }).text).toContain(
+			'123456',
+		);
+	});
+
+	it('reads every format up to its own, and refuses a newer one, saying which', () => {
+		expect(MANIFEST_FORMAT).toBe(1);
+		const newer = editManifest((m) => {
+			m.formatVersion = MANIFEST_FORMAT + 1;
+		});
+		expect(() => createMailRenderer({ dir: newer })).toThrow(
+			`createMailRenderer: ${join(newer, 'mail-manifest.json')} is manifest format 2, newer than this @nxgt/mail reads (1) — upgrade @nxgt/mail`,
+		);
+	});
+
+	it.each([0, 1.5, '1', null])(
+		'refuses a formatVersion that is not a format: %p',
+		(formatVersion) => {
+			const at = editManifest((m) => {
+				m.formatVersion = formatVersion;
+			});
+			expect(() => createMailRenderer({ dir: at })).toThrow(
+				`createMailRenderer: ${join(at, 'mail-manifest.json')} is not a manifest of @nxgt/mail-i18n — build with its i18n() plugin`,
+			);
+		},
+	);
+
 	it('fails on an e-mail whose entry lacks a locale', () => {
 		const at = editManifest((m) => {
 			const files = m.emails['sign-in-code']?.files;
 			if (files) delete files.fr;
 		});
 		expect(() => createMailRenderer({ dir: at })).toThrow(
-			'createMailRenderer: mail-manifest.json describes sign-in-code in a shape this version does not read — rebuild with the same version of @nxgt/mail-i18n',
+			'createMailRenderer: mail-manifest.json describes sign-in-code in a shape its format does not have — it was changed after the build; run maizzle build again',
 		);
 	});
 

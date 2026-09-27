@@ -22,8 +22,21 @@ export interface ManifestEmail {
 	>;
 }
 
+/**
+ * The manifest's format. It changes only with the manifest's shape, and
+ * `@nxgt/mail`'s renderer reads every format up to its own within 0.x: a
+ * build from an older `@nxgt/mail-i18n` keeps working with a newer renderer.
+ * Copied in packages/mail/src/renderer.ts: change both.
+ */
+export const MANIFEST_FORMAT = 1;
+
 /** `dist/mail-manifest.json`: what the build wrote, for the renderer. */
 export interface Manifest {
+	/**
+	 * {@link MANIFEST_FORMAT} when built. A manifest without it is format 1,
+	 * as `@nxgt/mail-i18n` 0.1 and 0.2 wrote it.
+	 */
+	readonly formatVersion: number;
 	readonly locales: readonly string[];
 	readonly fallbackLocale: string;
 	readonly emails: Readonly<Record<string, ManifestEmail>>;
@@ -181,6 +194,7 @@ export function buildManifest(options: {
 		};
 	}
 	return {
+		formatVersion: MANIFEST_FORMAT,
 		locales: [...locales],
 		fallbackLocale: options.fallbackLocale,
 		emails,

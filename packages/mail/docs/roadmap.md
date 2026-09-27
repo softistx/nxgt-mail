@@ -6,7 +6,12 @@ the only number.
 
 ## Now
 
-Nothing between releases.
+- **A build read by any later renderer** — within 0.x, `createMailRenderer`
+  reads every manifest format up to its own (`MANIFEST_FORMAT`, exported from
+  `@nxgt/mail/renderer`), so a build from any earlier `@nxgt/mail-i18n` 0.x
+  keeps working, and a package that ships a prebuilt build can peer
+  `@nxgt/mail` `>=0.1.0 <1`. A newer format is refused at start-up. Built,
+  not yet published.
 
 ## Next
 
