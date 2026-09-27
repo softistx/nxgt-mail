@@ -34,6 +34,14 @@ function maizzleComponentsDir(from: string): string {
 }
 
 /**
+ * The file name of a tag, as Maizzle names a component from its file:
+ * `NxCardHeader` is `nx-card-header.vue`. `NxCardHeader.vue` is found too,
+ * as Maizzle's own `Button.vue` is.
+ */
+const kebabCase = (name: string): string =>
+	name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+
+/**
  * Maizzle resolves the tags of a template (`<NxButton>`, `<Container>`) with
  * unplugin-vue-components, which skips every file under `node_modules` — so a
  * component or a template installed from npm would render empty, and the
@@ -48,8 +56,10 @@ export function packagedComponents(componentsDir: string): VitePlugins {
 	let root = process.cwd();
 	const resolveTag = (name: string): string | undefined => {
 		for (const dir of [resolve(root, 'components'), componentsDir, builtins]) {
-			const file = join(dir, `${name}.vue`);
-			if (existsSync(file)) return file;
+			for (const base of [kebabCase(name), name]) {
+				const file = join(dir, `${base}.vue`);
+				if (existsSync(file)) return file;
+			}
 		}
 		return undefined;
 	};

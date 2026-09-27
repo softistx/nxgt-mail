@@ -216,7 +216,7 @@ if the editor does not know `brand`.
 ### Replacing a component
 
 ```vue
-<!-- components/NxBadge.vue — replaces the package's <NxBadge> in every template -->
+<!-- components/nx-badge.vue — replaces the package's <NxBadge> in every template -->
 <template>
   <span class="rounded-sm bg-primary px-2 text-xs text-primary-foreground"><slot /></span>
 </template>

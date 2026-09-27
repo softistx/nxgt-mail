@@ -116,7 +116,7 @@ function checkBrand(brand: unknown): asserts brand is Brand {
  * ```
  *
  * It registers `NxLayout`, `NxButton`, … — a project's own
- * `components/NxButton.vue` replaces ours — gives every template `brand`,
+ * `components/nx-button.vue` replaces ours — gives every template `brand`,
  * and themes the layout with `theme.css` and the `theme` overrides.
  */
 export function ui(options: UiOptions): MailPlugin {

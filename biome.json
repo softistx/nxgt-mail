@@ -25,6 +25,10 @@
 				"noArguments": "off"
 			},
 			"style": {
+				"useFilenamingConvention": {
+					"level": "error",
+					"options": { "filenameCases": ["kebab-case"] }
+				},
 				"useNamingConvention": {
 					"level": "error",
 					"options": {

@@ -129,6 +129,13 @@ Biome's `useNamingConvention`, as in `nxgt-janus`. Error codes are data values,
 `SCREAMING_SNAKE`, and that is not an exception. A provider's wire format
 (Resend's `reply_to`) is written where it is sent, with a comment.
 
+**File names are `kebab-case`**, Vue components included: `nx-card-header.vue`
+is `<NxCardHeader>` in a template, as Maizzle names a component from its file,
+and a project overrides it with its own `components/nx-card-header.vue`. Held
+by Biome's `useFilenamingConvention`. The Markdown files a tool looks for by
+name (`README.md`, `AGENTS.md`, `CLAUDE.md`, `CHANGELOG.md`) are the exception,
+and Biome does not read them.
+
 ## Type safety is measured, not claimed
 
 As in `nxgt-janus`: **every refusal has a `@ts-expect-error` case in
@@ -161,7 +168,7 @@ they are built.
 `@nxgt/janus-mail` lives in `nxgt-janus`: a Maizzle project built with these
 packages.
 
-**A project overrides by name.** Its `components/NxButton.vue` replaces the
+**A project overrides by name.** Its `components/nx-button.vue` replaces the
 package's `<NxButton>`; its `locales/en.json` overrides a shared message key
 by key; a later plugin overrides an earlier one's config key. The packages'
 components carry the `Nx` prefix, so Maizzle's own (`<Button>`) stay
@@ -211,6 +218,8 @@ Carry each difference over when janus gets the same thing (`@nxgt/janus-mail`):
   reason.
 - `noUnusedVariables` and `noUnusedImports` are off for `.vue`: what the
   template uses, the script-only rules do not see.
+- `useFilenamingConvention` in `kebab-case`: janus names its files the same
+  way, without the rule.
 - `css.parser.tailwindDirectives` for `theme.css`, and `generated/` and
   `samples/` left out of `files.includes`.
 
@@ -226,7 +235,7 @@ bun install          # postinstall: bun run editor — the build, then maizzle p
                      # the fixtures of mail-i18n, mail-ui and mail-presets, so an editor
                      # knows t and brand in templates; a package that does not build
                      # only warns, and CI skips it (scripts/postinstall.ts)
-bun run check        # biome, and the naming convention that holds the casing rule
+bun run check        # biome, and the naming conventions that hold the casing rules
 bun run build        # before typecheck: a package reaches its siblings, and its
                      # templates reach the package itself, through dist/
 bun run typecheck    # includes test/types/ and the fixtures' templates, the type-safety measurement

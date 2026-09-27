@@ -380,12 +380,13 @@ other sides have none. `NxSummaryData` draws its rows this way.
 package's `<NxBadge>` although the project has its own badge component.
 **Why:** a project replaces a component by name: its file must be named as
 the component, `Nx` prefix included, in the project's `components/` folder
-(under `root`, when the config sets one). `components/Badge.vue` is a
-different component, `<Badge>`.
+(under `root`, when the config sets one), in kebab case or in Pascal case.
+`components/badge.vue` is a different component, `<Badge>`.
 **Fix:**
 
 ```
-components/NxBadge.vue     → replaces <NxBadge> in every template
+components/nx-badge.vue    → replaces <NxBadge> in every template
+components/NxBadge.vue     → the same
 ```
 
 The package's components carry the `Nx` prefix so that Maizzle's own

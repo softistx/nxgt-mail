@@ -54,7 +54,7 @@ function ui(options: UiOptions): MailPlugin;
 The plugin it answers, named `ui`, does four things:
 
 - registers every component of the package's `components/` folder under the
-  prefix `Nx` (`NxButton.vue` is `<NxButton>`); Maizzle's own stay
+  prefix `Nx` (`nx-button.vue` is `<NxButton>`); Maizzle's own stay
   available (`<Button>`, `<Spacer>`);
 - gives every template `brand`, the brand as passed;
 - provides the brand and the theme's CSS to the components, under
@@ -189,7 +189,7 @@ A file in your project's `components/` named like one of ours replaces it, in
 every template:
 
 ```vue
-<!-- components/NxBadge.vue -->
+<!-- components/nx-badge.vue -->
 <template>
   <span class="rounded-sm bg-primary px-2 text-xs text-primary-foreground"><slot /></span>
 </template>
@@ -267,12 +267,12 @@ component; list the plugin that brings it, as ui()`.
 
 ## Your own layout — `UI_CONTEXT`
 
-Replace `<NxLayout>` the same way, with `components/NxLayout.vue`. Read the
+Replace `<NxLayout>` the same way, with `components/nx-layout.vue`. Read the
 brand and the theme's CSS from `UI_CONTEXT`, so `ui({ theme })` still applies
 to every component inside:
 
 ```vue
-<!-- components/NxLayout.vue -->
+<!-- components/nx-layout.vue -->
 <script setup lang="ts">
 import { type UiContext, UI_CONTEXT } from '@nxgt/mail-ui';
 import { inject } from 'vue';
