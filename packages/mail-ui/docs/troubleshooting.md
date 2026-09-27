@@ -47,7 +47,7 @@ The samples below use the locales `en` and `fr`, the template
 - [A side border (`border-b`) is gone, and the style ends with `border: 0`](#a-side-border-border-b-is-gone-and-the-style-ends-with-border-0)
 - [A project's own component does not replace the package's](#a-projects-own-component-does-not-replace-the-packages)
 - [An element placed directly in `NxCard` breaks the card](#an-element-placed-directly-in-nxcard-breaks-the-card)
-- [`class="mb-0"` leaves the space under an `NxAlert`, `NxBanner`, `NxCard` or `NxCode`](#classmb-0-leaves-the-space-under-an-nxalert-nxbanner-nxcard-or-nxcode)
+- [`class="mb-0"` leaves the space under an `NxAlert`, `NxBanner`, `NxCard`, `NxCode` or `NxListTile`](#classmb-0-leaves-the-space-under-an-nxalert-nxbanner-nxcard-nxcode-or-nxlisttile)
 - [The editor says `Property 'brand' does not exist` in a template](#the-editor-says-property-brand-does-not-exist-in-a-template)
 - [Biome reports `parse` errors in a template as soon as you edit it](#biome-reports-parse-errors-in-a-template-as-soon-as-you-edit-it)
 - [A bug in `@nxgt/mail-ui` itself](#a-bug-in-nxgtmail-ui-itself)
@@ -409,13 +409,13 @@ a `<table>`, which clients render out of place or drop.
 </NxCard>
 ```
 
-### `class="mb-0"` leaves the space under an `NxAlert`, `NxBanner`, `NxCard` or `NxCode`
+### `class="mb-0"` leaves the space under an `NxAlert`, `NxBanner`, `NxCard`, `NxCode` or `NxListTile`
 
 **When:** `<NxAlert class="mb-0">` still has 16px below it.
 **Why:** these components put their `class` on the box inside, where it
 styles the box; the space below is on the table around it.
 **Fix:** replace the component with your own, copied from the package's, and
-change its outer `mb-4` — see
+change its outer `mb-4` (`mb-2` on `NxListTile`) — see
 [Replacing a component](guide/plugin.md#replacing-a-component). On
 `NxTypography`, `NxSummaryData`, `NxTable`, `NxDescription` and
 `NxAvatarGroup`, `class="mb-0"` works.

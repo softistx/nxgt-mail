@@ -21,7 +21,7 @@
       </NxTableBody>
       <NxTableFooter>
         <NxTableRow>
-          <NxTableCell>Total</NxTableCell>
+          <NxTableHead>Total</NxTableHead>
           <NxTableCell class="text-right">$30.00</NxTableCell>
         </NxTableRow>
       </NxTableFooter>
@@ -36,17 +36,25 @@
       <template #leading><NxAvatar><NxAvatarFallback>AL</NxAvatarFallback></NxAvatar></template>
       <template #trailing><NxChip variant="tonal" color="success">Active</NxChip></template>
     </NxListTile>
-    <NxListTile title="Grace Hopper" subtitle="Invited" size="sm" disabled />
+    <NxListTile title="Grace Hopper" subtitle="Invited" href="https://acme.example/team/grace" size="sm" disabled />
     <NxTypography>
       <NxChip label="Outlined" />
       <NxChip label="Active" active />
       <NxChip variant="ghost" color="error">Ghost</NxChip>
+      <NxChip variant="tonal">
+        <template #avatar><NxAvatar><NxAvatarFallback>GH</NxAvatarFallback></NxAvatar></template>
+        Grace
+        <template #trailing>&#10003;</template>
+      </NxChip>
     </NxTypography>
     <NxAvatarGroup :max="2" size="lg">
       <NxAvatar><NxAvatarImage src="https://acme.example/ada.png" alt="Ada" /></NxAvatar>
       <NxAvatar><NxAvatarFallback>GH</NxAvatarFallback></NxAvatar>
       <NxAvatar><NxAvatarFallback>AT</NxAvatarFallback></NxAvatar>
       <NxAvatar><NxAvatarFallback>KJ</NxAvatarFallback></NxAvatar>
+    </NxAvatarGroup>
+    <NxAvatarGroup size="sm">
+      <NxAvatar v-for="initials in ['AB', 'CD', 'EF']" :key="initials"><NxAvatarFallback>{{ initials }}</NxAvatarFallback></NxAvatar>
     </NxAvatarGroup>
     <NxAvatar :size="48"><NxAvatarImage src="https://acme.example/ada.png" alt="Ada" /></NxAvatar>
   </NxLayout>

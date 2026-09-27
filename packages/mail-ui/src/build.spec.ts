@@ -150,12 +150,15 @@ describe('a project built with the ui plugin', () => {
 		// A data table, which a screen reader reads as one, not a layout's role="none".
 		expect(html).toContain('<table role="table"');
 		expect(styleOf(html, 'Pro plan', 'td')).toContain(
-			'border-bottom-width: 1px; border-style: solid; border-color: #e2e8f0;',
+			'border-bottom-width: 1px; border-bottom-style: solid; border-color: #e2e8f0;',
 		);
-		expect(styleOf(html, 'Total', 'td')).toContain('border-top-width: 1px;');
-		expect(styleOf(html, 'Total', 'td')).toContain(
+		// A head in the footer takes the footer's line and ground too.
+		expect(styleOf(html, 'Total', 'th')).toContain('border-top-width: 1px;');
+		expect(styleOf(html, 'Total', 'th')).not.toContain('border-bottom');
+		expect(styleOf(html, 'Total', 'th')).toContain(
 			'background-color: #f1f5f9;',
 		);
+		expect(styleOf(html, '$30.00', 'td')).toContain('border-top-style: solid;');
 		expect(html).toContain(
 			'<caption align="bottom" style="caption-side: bottom;',
 		);
@@ -176,6 +179,8 @@ describe('a project built with the ui plugin', () => {
 		expect(html).toContain('<a href="https://acme.example/team/ada"');
 		// A disabled tile's title is text, muted.
 		expect(styleOf(html, 'Grace Hopper', 'span')).toContain('color: #62748e;');
+		// And not a link, though it has an href.
+		expect(html).not.toContain('https://acme.example/team/grace');
 	});
 
 	test('colours a chip by its variant, and an active one as filled', async () => {
@@ -197,11 +202,30 @@ describe('a project built with the ui plugin', () => {
 		expect(html).toContain(
 			'<img src="https://acme.example/ada.png" alt="Ada" width="40" height="40"',
 		);
-		expect(html).toContain('<span aria-label="+2 more"');
+		expect(html).toContain('title="2 more" role="img" aria-label="2 more"');
+		expect(await read('dist/fr/gallery.html')).toContain(
+			'aria-label="2 autres"',
+		);
 		expect(styleOf(html, '+2', 'span')).toContain('line-height: 40px;');
 		expect(html).not.toContain('>AT<');
 		// An avatar out of a group takes its own size.
 		expect(html).toContain('alt="Ada" width="48" height="48"');
+	});
+
+	test('lays out a group from a v-for, all of it without max', async () => {
+		const html = await read('dist/en/gallery.html');
+		for (const initials of ['AB', 'CD', 'EF']) {
+			expect(styleOf(html, initials, 'span')).toContain('line-height: 24px;');
+		}
+	});
+
+	test('sizes an avatar in a chip to 20px, and pulls nothing with a negative margin', async () => {
+		const html = await read('dist/en/gallery.html');
+		// The chip's GH comes first; the group's is 40px.
+		expect(styleOf(html, 'GH', 'span')).toContain(
+			'width: 20px; height: 20px; line-height: 20px;',
+		);
+		expect(html).not.toMatch(/margin[a-z-]*: -/);
 	});
 
 	test.each([

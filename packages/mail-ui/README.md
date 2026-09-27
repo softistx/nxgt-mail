@@ -24,9 +24,10 @@ Your project stays a Maizzle project: `emails/`, `components/`, `public/`,
 `maizzle serve`, `maizzle build`. Maizzle's own components (`<Button>`,
 `<Spacer>`) stay available; ours carry the `Nx` prefix and never shadow them.
 
-<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-ui/previews/components-en.png" width="420" alt="An e-mail using every Nx component: layout, typography, code, buttons, separator, card with badge, summary data and status, alert, banner, link">
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-ui/previews/components-en.png" width="420" alt="An e-mail using the first Nx components: layout, typography, code, buttons, separator, card with badge, summary data and status, alert, banner, link">
 
-Every component in one e-mail, with the brand `Acme` and the default theme —
+The components from `NxLayout` to `NxCode` in one e-mail, with the brand
+`Acme` and the default theme —
 [in French](https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-ui/previews/components-fr.png).
 
 > **Not published yet.** The package is `private` while the rest of the
@@ -176,8 +177,8 @@ See [The theme](docs/guide/theme.md) for every token.
 i18n({ locales: ['en', 'fr'], catalogues: [uiCatalogues] });
 ```
 
-`common.greeting` (`Hello {name},`), `common.footer.why` and
-`common.footer.ignore`, in `en` and `fr`. Your `locales/<locale>.json`
+`common.greeting` (`Hello {name},`), `common.footer.why`,
+`common.footer.ignore` and `common.avatarGroup.more`, in `en` and `fr`. Your `locales/<locale>.json`
 overrides any of them, key by key:
 
 ```json
@@ -244,8 +245,8 @@ unless `catalogues: [uiCatalogues]` is passed, or your catalogues hold the
 key.
 
 **Another locale writes the `common` keys itself.** `uiCatalogues` has `en`
-and `fr` only: a project in `de` adds `common.greeting`, `common.footer.why`
-and `common.footer.ignore` to `locales/de.json`.
+and `fr` only: a project in `de` adds `common.greeting`, `common.footer.why`,
+`common.footer.ignore` and `common.avatarGroup.more` to `locales/de.json`.
 
 **Icons are slots.** An e-mail has no icon font: pass an `<img>` with an
 absolute URL, or a character, to `#icon`.

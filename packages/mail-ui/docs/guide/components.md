@@ -15,7 +15,7 @@ props, defaults and slots, and the `@nxgt/material-vue` component it mirrors.
 </template>
 ```
 
-<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-ui/previews/components-en.png" width="420" alt="An e-mail using every Nx component: layout, typography, code, buttons, separator, card with badge, summary data and status, alert, banner, link">
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-ui/previews/components-en.png" width="420" alt="An e-mail using the first Nx components: layout, typography, code, buttons, separator, card with badge, summary data and status, alert, banner, link">
 
 The components from `NxLayout` to `NxCode`, in one e-mail
 ([its template](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-ui/test/fixture/emails/welcome.vue)).
@@ -41,7 +41,7 @@ reads. They need no JavaScript and no web font.
   `NxDescription` and `NxAvatarGroup` carry `mb-4`, `NxListTile` `mb-2`. On
   `NxTypography`, `NxSummaryData`, `NxTable`, `NxDescription` and
   `NxAvatarGroup`, `class="mb-0"` removes it. `NxAlert`,
-  `NxBanner`, `NxCard` and `NxCode` put their `class` on the box inside, and
+  `NxBanner`, `NxCard`, `NxCode` and `NxListTile` put their `class` on the box inside, and
   keep their 16px below: to change it, replace the component with your own
   (see [Replacing a component](plugin.md#replacing-a-component)).
 - **Vertical space is Maizzle's `<Spacer>`**, which Outlook respects:
@@ -444,10 +444,10 @@ The parts are the HTML table's, so they nest as it does.
 | `NxTable` | — | `<table role="table">`, full width, `text-sm` |
 | `NxTableHeader`, `NxTableBody`, `NxTableFooter` | — | `<thead>`, `<tbody>`, `<tfoot>` |
 | `NxTableRow` | — | `<tr>` |
-| `NxTableHead` | — | `<th>`, `h-10 px-2`, left-aligned, `font-medium`, a line under it |
+| `NxTableHead` | — | `<th>`, `h-10 px-2`, left-aligned, `font-medium`, a line under it; in `NxTableFooter`, a line above it instead, `bg-muted` |
 | `NxTableCell` | — | `<td>`, `p-2`, a line under it; in `NxTableFooter`, a line above it instead, `bg-muted`, `font-medium` |
 | `NxTableCaption` | — | `<caption>`, under the table, `text-sm` muted |
-| `NxTableEmpty` | `colspan?: number` (`1`) | A row of one cell across `colspan` columns, centred, `py-10` — the text for a table with no rows |
+| `NxTableEmpty` | `colspan?: number` (`1`) | A row of one cell across `colspan` columns, centred, `py-10` — the text for a table with no rows. Its `class` goes on the cell |
 
 A cell's text wraps, where material-vue's does not: a long value would
 otherwise widen the e-mail past a phone's screen. `NxTableHead` keeps
@@ -537,11 +537,14 @@ material-vue's `Chip`, static: a rounded label, with the colours of
 | Slot | Effect |
 | --- | --- |
 | default | The text, in place of `label` |
-| `avatar`, `leading` | Before the text |
+| `avatar` | Before the text; an `NxAvatar` in it is 20px |
+| `leading` | Before the text, when there is no `avatar` |
 | `trailing` | After the text |
 
 An e-mail runs no script: a chip has no dismiss button and no click. It is
-inline; put several in an `NxTypography` to give them space below.
+inline; put several in an `NxTypography` to give them space below. Unlike
+material-vue's, the avatar is not pulled into the chip's padding: Gmail drops
+a negative margin.
 
 ## NxAvatar and NxAvatarGroup
 
@@ -563,15 +566,23 @@ background when there is none.
 | Part | Props | Renders |
 | --- | --- | --- |
 | `NxAvatar` | `size?: number`: pixels; its group's, else `32` | A round, inline box of that size |
-| `NxAvatarImage` | `src: string` (required), `alt?: string` | The `<img>`, with `width` and `height` set to the avatar's size |
+| `NxAvatarImage` | `src: string` (required), `alt?: string` (`''`, a decorative picture) | The `<img>`, with `width` and `height` set to the avatar's size |
 | `NxAvatarFallback` | — | Its text (initials), `text-[12px]`, centred on `bg-muted` |
-| `NxAvatarGroup` | `max?: number`, `size?: 'sm' \| 'md' \| 'lg'` (`'md'`) | Its avatars in a row, each ringed with the background, sized 24, 32 or 40px; past `max`, one more reading `+N` |
+| `NxAvatarGroup` | `max?: number`, `size?: 'sm' \| 'md' \| 'lg'` (`'md'`) | Its avatars in a row, each ringed with the background, sized 24, 32 or 40px; past `max`, one more reading `+N`. Without `max`, or with one under 1, all of them |
 
 Choose `NxAvatarImage` or `NxAvatarFallback`: an e-mail cannot fall back on a
 picture that fails to load, so there is no switching between them. Give the
 image an absolute URL, and a square picture. A group's avatars sit side by
 side, 4px apart, rather than overlapping as in material-vue: Gmail drops the
-negative margin that stacks them.
+negative margin that stacks them. Avatars from a `v-for` count one by one.
+
+The `+N` is labelled for a screen reader with the shared message
+`common.avatarGroup.more` (`2 more`, `2 autres`) when `@nxgt/mail-i18n` is
+listed, and in English otherwise; see [Shared messages](messages.md).
+
+Outlook on Windows ignores the width and height of an inline box: there,
+`NxAvatarFallback`'s initials show on a grey strip rather than in a circle. An
+`NxAvatarImage` keeps its size everywhere, from its `width` and `height`.
 
 ## A complete template
 

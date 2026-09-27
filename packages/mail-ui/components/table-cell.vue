@@ -13,8 +13,11 @@ const part = inject<TablePart>(TABLE_PART, 'body');
 const attrs = useAttrs();
 const classes = computed(() =>
 	twMerge(
-		'border-0 border-b border-solid border-border p-2 align-middle',
-		part === 'footer' && 'border-b-0 border-t bg-muted font-medium',
+		'p-2 align-middle',
+		// One side's style only: `border-0 border-solid` would end as `border: 0`.
+		part === 'footer'
+			? 'border-t [border-top-style:solid] border-border bg-muted font-medium'
+			: 'border-b [border-bottom-style:solid] border-border',
 		attrs.class as string,
 	),
 );

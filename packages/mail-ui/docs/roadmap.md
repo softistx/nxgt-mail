@@ -23,7 +23,8 @@ no dates here, and the version something shipped in is the only number.
   (`bg-primary-15`) are flattened to plain colours, and follow a colour you
   override. Built, not yet published.
 - **Shared messages** — `uiCatalogues`: `common.greeting`,
-  `common.footer.why` and `common.footer.ignore` in `en` and `fr`, given to
+  `common.footer.why`, `common.footer.ignore` and `common.avatarGroup.more`
+  in `en` and `fr`, given to
   `@nxgt/mail-i18n` as `i18n({ catalogues: [uiCatalogues] })`, and overridden
   key by key by your own `locales/<locale>.json`. Built, not yet published.
 

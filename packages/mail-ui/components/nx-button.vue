@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { twMerge } from '@maizzle/framework';
 import { computed, useAttrs } from 'vue';
-import type { Color } from './ui';
+import { type Color, type ColourVariant, colourVariant } from './ui';
 
 /**
  * material-vue's Button as a link: its variants, colours and sizes, on
  * Maizzle's `<Button>`, which pads it for Outlook. Named `nx-button.vue`,
  * not `button.vue`: there, Vue would read `<Button>` as this file itself.
  */
-type Variant = 'filled' | 'tonal' | 'outlined' | 'ghost' | 'link';
 type Size = 'xs' | 'sm' | 'default' | 'lg';
 
 defineOptions({ inheritAttrs: false });
@@ -16,7 +15,7 @@ defineOptions({ inheritAttrs: false });
 const props = withDefaults(
 	defineProps<{
 		href: string;
-		variant?: Variant;
+		variant?: ColourVariant;
 		color?: Color;
 		size?: Size;
 		align?: 'left' | 'center' | 'right';
@@ -24,19 +23,13 @@ const props = withDefaults(
 	{ variant: 'filled', color: 'primary', size: 'default' },
 );
 
-/** The token of a colour: `default` is the foreground. */
-const token = (color: Color) => (color === 'default' ? 'foreground' : color);
-
-const VARIANT: Record<Variant, (color: Color) => string> = {
-	filled: (c) =>
-		c === 'default'
-			? 'bg-foreground text-background'
-			: `bg-${c} text-${c}-foreground`,
-	tonal: (c) => `bg-${token(c)}-15 text-${token(c)}`,
-	outlined: (c) =>
-		`bg-transparent border border-solid border-${token(c)}-50 text-${token(c)}`,
-	ghost: () => 'bg-transparent text-foreground',
-	link: (c) => `text-${token(c)} no-underline`,
+/** The chip's colours, plus what a link must reset. */
+const EXTRA: Record<ColourVariant, string> = {
+	filled: '',
+	tonal: '',
+	outlined: 'bg-transparent',
+	ghost: 'bg-transparent',
+	link: 'no-underline',
 };
 
 /** Padding, and the Outlook values Maizzle's Button derives the same padding from. */
@@ -77,7 +70,8 @@ const classes = computed(() =>
 		props.variant === 'link'
 			? 'font-medium font-sans'
 			: `rounded-full font-medium font-sans ${size.value.class}`,
-		VARIANT[props.variant](props.color),
+		colourVariant(props.variant, props.color),
+		EXTRA[props.variant],
 		attrs.class as string,
 	),
 );

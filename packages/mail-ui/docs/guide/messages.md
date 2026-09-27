@@ -41,6 +41,7 @@ because you have an account with Acme.`
 | `common.greeting` | `Hello {name},` | `Bonjour {name},` | `name` |
 | `common.footer.why` | `You received this e-mail because you have an account with {brand}.` | `Vous recevez cet e-mail parce que vous avez un compte chez {brand}.` | `brand` |
 | `common.footer.ignore` | `If you did not ask for this, you can ignore this e-mail.` | `Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet e-mail.` | — |
+| `common.avatarGroup.more` | `{count, plural, other {# more}}` | `{count, plural, one {# autre} other {# autres}}` | `count`, a number |
 
 ```ts
 import type { Catalogues } from '@nxgt/mail-i18n';
@@ -50,7 +51,8 @@ const shared: Catalogues = uiCatalogues; // { en: { common: {…} }, fr: { commo
 ```
 
 `common.footer.why` is the one `<NxLayout>` writes itself, in its footer,
-with the brand's name. The other two are for your templates.
+with the brand's name; `common.avatarGroup.more` is the label `<NxAvatarGroup>`
+gives its `+N`, for a screen reader. The other two are for your templates.
 
 ## `<NxLayout>` needs `common.footer.why`
 

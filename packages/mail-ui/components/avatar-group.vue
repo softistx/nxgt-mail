@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { twMerge } from '@maizzle/framework';
-import { computed, Fragment, provide, useAttrs, useSlots, type VNode } from 'vue';
-import { AVATAR_SIZE } from './ui';
+import { computed, getCurrentInstance, provide, useAttrs, useSlots } from 'vue';
+import { AVATAR_SIZE, slotComponents } from './ui';
 
 /**
  * material-vue's AvatarGroup: its `NxAvatar`s in a row, each ringed with the
@@ -21,24 +21,25 @@ const SIZE: Record<Size, number> = { sm: 24, md: 32, lg: 40 };
 const attrs = useAttrs();
 const slots = useSlots();
 provide(AVATAR_SIZE, SIZE[props.size]);
-/** The slot's components, out of any `v-for` fragment, without its text or comments. */
-function components(nodes: VNode[]): VNode[] {
-	return nodes.flatMap((node) =>
-		node.type === Fragment
-			? components(node.children as VNode[])
-			: typeof node.type === 'symbol'
-				? []
-				: [node],
-	);
-}
-const avatars = computed(() => components(slots.default?.() ?? []));
+const avatars = computed(() => slotComponents(slots.default?.()));
+// As material-vue's: no `max`, or one under 1, shows them all.
 const shown = computed(() =>
-	props.max === undefined ? avatars.value : avatars.value.slice(0, props.max),
+	props.max === undefined || props.max < 1
+		? avatars.value
+		: avatars.value.slice(0, props.max),
 );
 const rest = computed(() => avatars.value.length - shown.value.length);
+// Read loosely: `t` exists only when @nxgt/mail-i18n is listed.
+const globals: Record<string, unknown> =
+	getCurrentInstance()?.appContext.config.globalProperties ?? {};
+const moreLabel = computed(() =>
+	typeof globals.t === 'function'
+		? (globals.t('common.avatarGroup.more', { count: rest.value }) as string)
+		: `${rest.value} more`,
+);
 const classes = computed(() => twMerge('mb-4', attrs.class as string));
 </script>
 
 <template>
-  <div v-bind="{ ...attrs, class: undefined }" :class="classes"><span v-for="(avatar, index) in shown" :key="index" class="mr-1 inline-block rounded-full border-2 border-solid border-background align-middle"><component :is="avatar" /></span><span v-if="rest > 0" class="inline-block rounded-full border-2 border-solid border-background align-middle" :aria-label="`+${rest} more`"><NxAvatar><NxAvatarFallback>+{{ rest }}</NxAvatarFallback></NxAvatar></span></div>
+  <div v-bind="{ ...attrs, class: undefined }" :class="classes"><span v-for="(avatar, index) in shown" :key="index" class="mr-1 inline-block rounded-full border-2 border-solid border-background align-middle"><component :is="avatar" /></span><span v-if="rest > 0" class="inline-block rounded-full border-2 border-solid border-background align-middle" :title="moreLabel" role="img" :aria-label="moreLabel"><NxAvatar><NxAvatarFallback>+{{ rest }}</NxAvatarFallback></NxAvatar></span></div>
 </template>
