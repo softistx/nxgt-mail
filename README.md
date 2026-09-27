@@ -47,8 +47,16 @@ mailer. CI builds, renders and serves it on every change.
 
 ## Status
 
-**Not released yet.** The plan was rewritten on 2026-09-26; work follows
-[docs/plan.md](./docs/plan.md).
+**Released, 0.1.0** — every package below is on npm, each still `0.x`: a
+minor version may change its surface, and its changelog says how. Work
+follows [docs/plan.md](./docs/plan.md).
+
+```sh
+bun add @nxgt/mail @nxgt/mail-config @nxgt/mail-i18n @nxgt/mail-ui @nxgt/mail-presets @maizzle/framework @maizzle/tailwindcss vue
+```
+
+Then a transport, `@nxgt/mail-smtp` or `@nxgt/mail-resend`; each package's
+README lists its peers.
 
 | Package | Role |
 | --- | --- |

@@ -17,10 +17,6 @@ generated/mail.ts          written by the build, committed: the e-mails and thei
 
 ## Start your own
 
-**Not published yet**: the packages are not on npm until their first
-release, so the lines below work once it is out. Until then, run the starter
-in this repository — see [Run it](#run-it).
-
 Create the official starter, then add the packages:
 
 ```sh
