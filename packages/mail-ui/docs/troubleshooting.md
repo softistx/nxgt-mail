@@ -48,6 +48,9 @@ The samples below use the locales `en` and `fr`, the template
 - [`ui: <NxButon> in emails/welcome.vue is no component — check its name, or add the plugin or the components folder that brings it`](#ui-nxbuton-in-emailswelcomevue-is-no-component--check-its-name-or-add-the-plugin-or-the-components-folder-that-brings-it)
 - [`i18n: en: welcome calls t('common.footer.why'), which is not a key of the catalogues`](#i18n-en-welcome-calls-tcommonfooterwhy-which-is-not-a-key-of-the-catalogues)
 - [`NxProgress: modelValue must be a number known when the e-mail is built — a placeholder is filled only when it is sent`](#nxprogress-modelvalue-must-be-a-number-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent)
+- [`NxAvatar: size must be a number known when the e-mail is built — a placeholder is filled only when it is sent`](#nxavatar-size-must-be-a-number-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent)
+- [`NxAvatarGroup: max must be a number known when the e-mail is built — a placeholder is filled only when it is sent`](#nxavatargroup-max-must-be-a-number-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent)
+- [`NxLayout: width must be a number known when the e-mail is built — a placeholder is filled only when it is sent`](#nxlayout-width-must-be-a-number-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent)
 - [`NxCountBadge: count must be a number known when the e-mail is built — a placeholder is filled only when it is sent`](#nxcountbadge-count-must-be-a-number-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent)
 - [`NxIconButton: icon must be known when the e-mail is built — a placeholder is filled only when it is sent`](#nxiconbutton-icon-must-be-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent)
 - [`NxHighlightText: query must be text known when the e-mail is built — a placeholder is filled only when it is sent`](#nxhighlighttext-query-must-be-text-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent)
@@ -431,6 +434,56 @@ draws no bar:
   <NxProgress :model-value="2" :max="3" />
   <NxTypography>{{ t('onboarding.progress', { done: placeholder('done') }) }}</NxTypography>
 </template>
+```
+
+### `NxAvatar: size must be a number known when the e-mail is built — a placeholder is filled only when it is sent`
+
+**When:** `maizzle build`, on a template whose `<NxAvatar>` is given a
+placeholder or any value that is not a number:
+`<NxAvatar :size="placeholder('size')" />`.
+**Why:** `size` is written into an inline `style` (`width: …px; height: …px;`)
+computed when the e-mail is built. A placeholder there — filled only when the
+e-mail is sent — used to reach the built file inside that `style`, where
+Maizzle's own CSS handling reads the stray `{` and `}` as its own syntax and
+silently cuts the attribute short, corrupting the markup rather than failing.
+The build now stops instead.
+**Fix:** pass a number with `v-bind`; an avatar's size is chosen when the
+e-mail is built, never per recipient:
+
+```vue
+<NxAvatar :size="48" />
+```
+
+### `NxAvatarGroup: max must be a number known when the e-mail is built — a placeholder is filled only when it is sent`
+
+**When:** `maizzle build`, on a template whose `<NxAvatarGroup>` is given a
+placeholder or any value that is not a number:
+`<NxAvatarGroup :max="placeholder('max')">`.
+**Why:** `max` decides, when the e-mail is built, how many avatars show and
+how many the "+N" reads. A placeholder there used to be silently treated as
+`0`: every avatar vanished, and "+N" over-counted them. The build now stops
+instead.
+**Fix:** pass a number with `v-bind`; `max` is chosen when the e-mail is
+built, never per recipient:
+
+```vue
+<NxAvatarGroup :max="4">…</NxAvatarGroup>
+```
+
+### `NxLayout: width must be a number known when the e-mail is built — a placeholder is filled only when it is sent`
+
+**When:** `maizzle build`, on a template whose `<NxLayout>` is given a
+placeholder or any value that is not a number:
+`<NxLayout :width="placeholder('width')">`.
+**Why:** the card's width is written into Outlook's fallback table and the
+card's own layout, computed when the e-mail is built. A placeholder there
+used to reach both, silently corrupting the Outlook fallback and dropping the
+card's max-width. The build now stops instead.
+**Fix:** pass a number with `v-bind`; a layout's width is chosen when the
+e-mail is built, never per recipient:
+
+```vue
+<NxLayout :width="600">…</NxLayout>
 ```
 
 ### `NxCountBadge: count must be a number known when the e-mail is built — a placeholder is filled only when it is sent`

@@ -19,6 +19,12 @@ const props = withDefaults(
 	{ width: 600 },
 );
 
+if (typeof props.width !== 'number' || !Number.isFinite(props.width)) {
+	throw new Error(
+		'NxLayout: width must be a number known when the e-mail is built — a placeholder is filled only when it is sent',
+	);
+}
+
 const { brand, css } = useUi('NxLayout');
 // Read loosely: `t` and `locale` exist only when @nxgt/mail-i18n is listed.
 const globals: Record<string, unknown> =

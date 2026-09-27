@@ -12,6 +12,15 @@ defineOptions({ inheritAttrs: false });
 
 const props = defineProps<{ size?: number }>();
 
+if (
+	props.size !== undefined &&
+	(typeof props.size !== 'number' || !Number.isFinite(props.size))
+) {
+	throw new Error(
+		'NxAvatar: size must be a number known when the e-mail is built — a placeholder is filled only when it is sent',
+	);
+}
+
 const attrs = useAttrs();
 const inherited = inject(AVATAR_SIZE, 32);
 const px = computed(() => props.size ?? inherited);

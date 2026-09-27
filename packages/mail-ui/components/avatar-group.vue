@@ -16,6 +16,15 @@ const props = withDefaults(defineProps<{ max?: number; size?: Size }>(), {
 	size: 'md',
 });
 
+if (
+	props.max !== undefined &&
+	(typeof props.max !== 'number' || !Number.isFinite(props.max))
+) {
+	throw new Error(
+		'NxAvatarGroup: max must be a number known when the e-mail is built — a placeholder is filled only when it is sent',
+	);
+}
+
 const SIZE: Record<Size, number> = { sm: 24, md: 32, lg: 40 };
 
 const attrs = useAttrs();

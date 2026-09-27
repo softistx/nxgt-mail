@@ -98,6 +98,16 @@
 					}
 				}
 			}
+		},
+		{
+			"includes": ["**/test/placeholder-props.ts"],
+			"linter": {
+				"rules": {
+					"style": {
+						"useNamingConvention": "off"
+					}
+				}
+			}
 		}
 	]
 }
