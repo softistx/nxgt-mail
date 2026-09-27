@@ -4,7 +4,7 @@ The official [Maizzle](https://maizzle.com) 6 starter with the `@nxgt/mail-*`
 packages wired in, as their READMEs say: one template per e-mail, its text as
 keys into `en` and `fr` catalogues, built once per locale by one
 `maizzle build`, then rendered and sent from TypeScript with the types the
-build wrote. CI builds it, serves it and renders it on every change, so what
+build wrote. CI builds it, renders it, and serves it in both locales on every change, so what
 this page shows is known to work.
 
 ```text
@@ -17,12 +17,16 @@ generated/mail.ts          written by the build, committed: the e-mails and thei
 
 ## Start your own
 
+**Not published yet**: the packages are not on npm until their first
+release, so the lines below work once it is out. Until then, run the starter
+in this repository — see [Run it](#run-it).
+
 Create the official starter, then add the packages:
 
 ```sh
-npx maizzle new
+bunx maizzle new
 bun add @nxgt/mail @nxgt/mail-config @nxgt/mail-i18n @nxgt/mail-ui @nxgt/mail-presets @maizzle/framework @maizzle/tailwindcss vue
-bun add -d vue-tsc
+bun add -d vue-tsc typescript
 ```
 
 `@maizzle/tailwindcss` must be in your own `package.json`, even though
@@ -31,9 +35,18 @@ layout's `@import "@maizzle/tailwindcss"` otherwise resolves to nothing, and
 the build succeeds with no style at all. `@nxgt/mail-presets` is only needed
 for its ready e-mails.
 
-Then copy this folder's `maizzle.config.ts`, `locales/`, `emails/` and
-`send.ts` over the starter's, and keep the starter's
-`"postinstall": "maizzle prepare"` — see [Differences](#differences-from-the-official-starter).
+Then:
+
+1. **Replace** the starter's `emails/` with this folder's — delete
+   Maizzle's example templates: the i18n plugin builds every template, and
+   one without a `<email>.subject` message fails the build.
+2. Copy `maizzle.config.ts`, `locales/` and `send.ts`, and delete
+   `tailwind.css` and `public/`, which nothing reads any more.
+3. Add `"send.ts"` (or your sending code) to `tsconfig.json`'s `include`,
+   so it is type-checked against `generated/mail.ts`.
+4. Add the `send` and `typecheck` scripts of this folder's `package.json`,
+   and keep the starter's `"postinstall": "maizzle prepare"` — see
+   [Differences](#differences-from-the-official-starter).
 
 ## Run it
 
@@ -107,7 +120,7 @@ not compile, without running a build first.
   image, so the brand's logo is an absolute URL (`ui({ brand: { logo } })`).
 - **`.gitignore`** also ignores `dist/`, which the build rewrites.
   `.maizzle/`, where the i18n plugin writes its files and the editor's
-  types, is ignored as in the official starter.
+  types, is ignored too.
 - **`tsconfig.json`** also includes `send.ts`. `.maizzle/*.d.ts` stays in it:
   that is where `t`, `placeholder` and `brand` are typed for the templates.
 - **No `postinstall`** in this copy's `package.json`, only here: in this

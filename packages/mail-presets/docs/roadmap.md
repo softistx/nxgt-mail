@@ -31,6 +31,12 @@ are no dates here, and the version something shipped in is the only number.
   filled and escaped; the build spec renders every preset with it. Built, not
   yet published.
 
+- **A starter that uses one** — the official Maizzle starter with
+  `presets({ only: ['sign-in-code'] })` next to its own e-mail, built,
+  rendered in `en` and `fr` and served in CI:
+  [`examples/starter`](https://github.com/softistx/nxgt-mail/tree/develop/examples/starter).
+  In the repository; the packages it installs are not yet published.
+
 ## Next
 
 - **The first release, 0.1.0** — `@nxgt/mail-presets` on npm, with
