@@ -34,8 +34,9 @@ a transport:
 
 ```ts
 import { createMailRenderer } from '@nxgt/mail/renderer';
+import type { MailEmails } from './generated/mail'; // written by the build
 
-const mails = createMailRenderer({ dir: 'dist', getLanguage: () => user.locale });
+const mails = createMailRenderer<MailEmails>({ dir: 'dist', getLanguage: () => user.locale });
 await mailer.send({ to, ...mails.render('verify-email', { name, link }) });
 ```
 

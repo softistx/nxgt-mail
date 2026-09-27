@@ -167,6 +167,7 @@ See [Templates](docs/guide/templates.md).
 | `layout` | `'nested' \| 'flat'` | `'nested'` | `nested` writes `dist/en/verify-email.html`; `flat` writes `dist/verify-email.en.html` |
 | `catalogues` | `readonly Catalogues[]` | `[]` | Catalogues a package ships, merged in order **under** your `<locale>.json`, key by key |
 | `templates` | `readonly TemplateSource[]` | `[]` | Folders of templates a package ships, built with yours; your template of the same name wins |
+| `rendererTypes` | `string \| false` | `'generated/mail.ts'` | The `.ts` module, relative to where `maizzle` runs, that each build writes `MailEmails` to, for `createMailRenderer<MailEmails>`. `false` writes none |
 
 ```ts
 // maizzle.config.ts — every file of one e-mail side by side
@@ -287,8 +288,33 @@ image URL starts with, its subject in each locale, and its files:
 
 `createMailRenderer` from `@nxgt/mail/renderer` reads it at send time:
 `createMailRenderer({ dir: 'dist' }).render('verify-email', { name, link })`
-answers the subject, HTML and text, every value escaped. See
-[The manifest](docs/guide/manifest.md).
+answers the subject, HTML and text, every value escaped.
+
+Next to it, each build writes `generated/mail.ts` — the manifest's e-mails
+and variables as a type, rewritten only when they change. **Commit it**: the
+code that sends then type-checks without running a build.
+
+```ts
+// generated/mail.ts — never edited
+export interface MailEmails {
+	"verify-email": { readonly link: string; readonly name: string | number };
+}
+```
+
+```ts
+// in the code that sends
+import { createMailRenderer } from '@nxgt/mail/renderer';
+import type { MailEmails } from './generated/mail';
+
+const mails = createMailRenderer<MailEmails>({ dir: 'dist' });
+mails.render('verify-email', { name: 'Ada', link: 'https://app.example.com/v' });
+// mails.render('verify-emial', …) and a missing `link` no longer compile
+```
+
+A URL variable is `string`, any other `string | number`. Set
+`rendererTypes` to write it elsewhere, or `false` for none. See
+[The manifest](docs/guide/manifest.md) and its
+[renderer's types](docs/guide/manifest.md#the-renderers-types--generatedmailts).
 
 ### Outside templates — `createTranslator`
 
@@ -384,7 +410,7 @@ layout, and the build fails when the manifest is written.
 
 ## Type safety, counted
 
-**17 plausible mistakes, 17 refused** at compile time. Each one is measured by
+**18 plausible mistakes, 18 refused** at compile time. Each one is measured by
 a `@ts-expect-error` in
 [`test/types/refusals.ts`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-i18n/test/types/refusals.ts),
 which fails the typecheck the moment it stops holding:
@@ -408,6 +434,7 @@ which fails the typecheck the moment it stops holding:
 15. `templates` given one folder rather than a list of them.
 16. A template folder's `emails` given as one name rather than a list.
 17. A template folder's `emails` given as an empty list.
+18. `rendererTypes` given as `true` rather than a path.
 
 The same file holds the calls that must keep compiling: a refusal that refuses
 the correct call is a bug.

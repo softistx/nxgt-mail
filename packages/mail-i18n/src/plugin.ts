@@ -17,7 +17,13 @@ import {
 } from './sources';
 import { templateProperties } from './template';
 import { createFormatter } from './translator';
-import { TYPES_FILE, templateTypes, writeIfChanged } from './types';
+import {
+	RENDERER_TYPES_FILE,
+	rendererTypes,
+	TYPES_FILE,
+	templateTypes,
+	writeIfChanged,
+} from './types';
 import {
 	type Layout,
 	parseEntry,
@@ -48,6 +54,14 @@ export interface I18nOptions {
 	 * project's `emails/` replaces a package's of the same name.
 	 */
 	readonly templates?: readonly TemplateSource[];
+	/**
+	 * The module typing the renderer, written after each build: `MailEmails`,
+	 * for `createMailRenderer<MailEmails>(…)` in the code that sends. A path
+	 * from where `maizzle` runs — outside the project too, as
+	 * `../api/src/generated/mail.ts` — or `false` to write none. Default
+	 * `generated/mail.ts`.
+	 */
+	readonly rendererTypes?: string | false;
 }
 
 /** Where the wrappers go, under the project. */
@@ -112,6 +126,16 @@ function checkOptions(options: I18nOptions): void {
 	) {
 		throw new TypeError(
 			'i18n: catalogues must be a list of catalogues by locale, as [{ en: {...}, fr: {...} }]',
+		);
+	}
+	const typesPath = options.rendererTypes;
+	if (
+		typesPath !== undefined &&
+		typesPath !== false &&
+		(typeof typesPath !== 'string' || !typesPath.endsWith('.ts'))
+	) {
+		throw new TypeError(
+			'i18n: rendererTypes must be the path of a .ts file, as generated/mail.ts, or false',
 		);
 	}
 	checkTemplates(options.templates);
@@ -240,6 +264,10 @@ export function i18n(options: I18nOptions): MailPlugin {
 				join(outputDir, MANIFEST_FILE),
 				`${JSON.stringify(manifest, null, '\t')}\n`,
 			);
+			const typesFile = options.rendererTypes ?? RENDERER_TYPES_FILE;
+			if (typesFile !== false) {
+				writeIfChanged(resolve(cwd, typesFile), rendererTypes(manifest));
+			}
 		},
 	});
 }

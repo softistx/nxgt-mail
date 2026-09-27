@@ -46,6 +46,7 @@ template `emails/verify-email.vue`, and keys such as `verifyEmail.title`.
 - [`i18n: templates[0] has no template sign-in.vue — name one of its e-mails`](#i18n-templates0-has-no-template-sign-invue--name-one-of-its-e-mails)
 - [`i18n: templates[0] holds no template — is … the folder of a package's e-mails?`](#i18n-templates0-holds-no-template--is--the-folder-of-a-packages-e-mails)
 - [`i18n: templates[0] and templates[1] both have welcome.vue — keep one with emails: [...], or write the project's own in its folder`](#i18n-templates0-and-templates1-both-have-welcomevue--keep-one-with-emails--or-write-the-projects-own-in-its-folder)
+- [`i18n: rendererTypes must be the path of a .ts file, as generated/mail.ts, or false`](#i18n-renderertypes-must-be-the-path-of-a-ts-file-as-generatedmailts-or-false)
 - [`createTranslator: catalogues must be an object of catalogues by locale, as { en, fr }`](#createtranslator-catalogues-must-be-an-object-of-catalogues-by-locale-as--en-fr-)
 - [`createTranslator: getLanguage must be a locale or a function that answers one`](#createtranslator-getlanguage-must-be-a-locale-or-a-function-that-answers-one)
 
@@ -350,6 +351,26 @@ i18n({
 
 With `@nxgt/mail-presets`, `presets({ only: [...] })` writes that entry, and
 leaves out the presets not named.
+
+### `i18n: rendererTypes must be the path of a .ts file, as generated/mail.ts, or false`
+
+**When:** loading `maizzle.config.ts`, when `rendererTypes` is `true`, an
+empty string, a number, or a path that does not end in `.ts`
+(`'generated/mail.d.json'`, `'generated/'`).
+**Why:** `rendererTypes` says where each build writes `MailEmails`, the type
+`createMailRenderer<MailEmails>` takes: a TypeScript module the code that
+sends imports, resolved against the folder `maizzle` runs in. It is written
+by default; there is nothing to turn on.
+**Fix:** leave it out for `generated/mail.ts`, give the path of a `.ts` file,
+or `false` for no file:
+
+```ts
+i18n({ locales: ['en', 'fr'] });                                        // generated/mail.ts
+i18n({ locales: ['en', 'fr'], rendererTypes: 'src/generated/mail.ts' }); // elsewhere
+i18n({ locales: ['en', 'fr'], rendererTypes: false });                  // none
+```
+
+See [The manifest — the renderer's types](guide/manifest.md#the-renderers-types--generatedmailts).
 
 ### `createTranslator: catalogues must be an object of catalogues by locale, as { en, fr }`
 

@@ -38,7 +38,7 @@ import without extensions, so `nodenext` is not supported.
 | Import | What it holds |
 | --- | --- |
 | `@nxgt/mail` | The port (`Mailer`, `MailMessage`, `Rendered`, `SentMail`, `Address`), the errors (`MailError`, `MailFailure`, `MailRefused`), `createMemoryMailer`, `pickLocale` and `parseAcceptLanguage`, and what a transport calls first: `checkMessage`, `recipientsOf`, `addressOf`. No Node built-in: it runs anywhere |
-| `@nxgt/mail/renderer` | The renderer: `createMailRenderer`, `MailRenderer`, `MailRendererOptions`, `RenderOptions`, `MailVariables`. Reads the build with `node:fs` |
+| `@nxgt/mail/renderer` | The renderer: `createMailRenderer`, `MailRenderer`, `MailRendererOptions`, `RenderOptions`, `MailVariables`, and the types that type it with a build's `MailEmails` (`MailEmailsOf`, `AnyMailEmails`, `RenderArguments`). Reads the build with `node:fs` |
 | `@nxgt/mail/conformance` | **For transport authors**: `describeMailer`, its cases as data, `runMailerCase`, and the memory mailer's harness as a worked example |
 
 ## Usage
@@ -53,8 +53,9 @@ so a missing build fails there, not at the first send:
 ```ts
 import { type Mailer, pickLocale } from '@nxgt/mail';
 import { createMailRenderer } from '@nxgt/mail/renderer';
+import type { MailEmails } from './generated/mail'; // written by the build, committed
 
-export const mails = createMailRenderer({ dir: 'dist' }); // throws now if dist/ is missing
+export const mails = createMailRenderer<MailEmails>({ dir: 'dist' }); // throws now if dist/ is missing
 
 export async function sendVerification(
 	mailer: Mailer,
@@ -70,8 +71,17 @@ Each value is HTML-escaped in `html` and written as is in `text` and the
 subject; line breaks in the subject become a space. A variable that starts an
 `href` or a `src` must be an `http:`, `https:` or `mailto:` URL, or `render`
 throws `MailRefused`. A missing or unknown variable, e-mail or locale throws an
-`Error`. See [Rendering](docs/guide/rendering.md) for the options, the locale
-chosen through `getLanguage`, and every error.
+`Error`.
+
+`<MailEmails>` is optional. `@nxgt/mail-i18n` writes it after each build, in
+`generated/mail.ts`, from the manifest; commit it. With it, the compiler
+refuses what `render` would throw: an e-mail the build does not have, a
+variable missing or unknown, and a number for a URL variable, as
+`Argument of type '"verify-emial"' is not assignable to parameter of type
+'"sign-in-code" | "verify-email"'`. Without it, any name and any
+`MailVariables` compile, and the same mistakes throw at run time. See
+[Rendering](docs/guide/rendering.md) for the options, typing the renderer,
+the locale chosen through `getLanguage`, and every error.
 
 ### Sending — the port and `MailMessage`
 
@@ -274,7 +284,7 @@ gives a test file `describe` and `it` as bare identifiers, not on `globalThis`.
 
 ## Type safety, counted
 
-**12 plausible mistakes, 12 refused** at compile time, each measured by a
+**17 plausible mistakes, 17 refused** at compile time, each measured by a
 `@ts-expect-error` in
 [`test/types/refusals.ts`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/test/types/refusals.ts)
 that fails the typecheck the moment it stops holding:
@@ -292,6 +302,15 @@ that fails the typecheck the moment it stops holding:
 10. A `createMailRenderer` without `dir`, the build's output folder.
 11. A `getLanguage` given as a locale rather than a function answering one.
 12. A `render` variable that is neither a string nor a number (a `URL`).
+
+With the renderer given the build's `MailEmails`
+(`createMailRenderer<MailEmails>(…)`):
+
+13. An e-mail the build does not have (`render('verify-emial', …)`).
+14. A variable the e-mail does not take.
+15. A variable the e-mail takes, left out.
+16. The variables left out altogether, for an e-mail that takes some.
+17. A number for a URL variable: a URL is a string.
 
 The same file holds the calls that must keep compiling: a refusal that refuses
 the correct call is a bug.

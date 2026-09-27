@@ -60,14 +60,29 @@ interface MailRendererOptions {
 	readonly fallbackLocale?: string;
 }
 
-interface MailRenderer {
-	readonly emails: readonly string[];
+type MailEmailsOf<E> = { readonly [K in keyof E]: MailVariables };
+type AnyMailEmails = Readonly<Record<string, MailVariables>>;
+type RenderArguments<V> =
+	Readonly<Record<string, never>> extends V
+		? [variables?: V, options?: RenderOptions]
+		: [variables: V, options?: RenderOptions];
+
+interface MailRenderer<E extends MailEmailsOf<E> = AnyMailEmails> {
+	readonly emails: readonly (keyof E & string)[];
 	readonly locales: readonly string[];
-	render(email: string, variables?: MailVariables, options?: RenderOptions): Rendered;
+	render<N extends keyof E & string>(email: N, ...rest: RenderArguments<E[N]>): Rendered;
 }
 
-function createMailRenderer(options: MailRendererOptions): MailRenderer;
+function createMailRenderer<E extends MailEmailsOf<E> = AnyMailEmails>(
+	options: MailRendererOptions,
+): MailRenderer<E>;
 ```
+
+`E` is optional: left out, it is `AnyMailEmails`, and `render` takes any
+name and `MailVariables`, as `render(email: string, variables?:
+MailVariables, options?: RenderOptions)`. Given the build's `MailEmails`, it
+checks the names and the variables at compile time: see
+[Typing the renderer](#typing-the-renderer).
 
 | Option | Type | Default | Effect |
 | --- | --- | --- | --- |
@@ -144,10 +159,85 @@ mails.render('sign-in-code', { code: 123456 }, { locale: 'fr' });
   `String(n)`; `NaN`, `Infinity`, `null`, `undefined`, an object, an array or
   a `URL` are refused, so nothing renders as `[object Object]`. Pass
   `url.href` for a `URL`.
-- **The names are checked at run time**, against the manifest: the compiler
-  checks that each value is a string or a number, not that `verify-email`
-  takes `link`. The manifest guide shows
-  [a test that holds the two sides together](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-i18n/docs/guide/manifest.md#checking-your-application-against-it).
+- **The names are checked at run time**, against the manifest, typed or not.
+  Untyped, the compiler checks that each value is a string or a number, not
+  that `verify-email` takes `link`; given the build's `MailEmails`, it checks
+  that too — see [Typing the renderer](#typing-the-renderer).
+
+## Typing the renderer
+
+After each `maizzle build`, `@nxgt/mail-i18n` writes `generated/mail.ts` in
+the project: `MailEmails`, each e-mail of the build with the variables it
+takes. Commit it, so the code that sends type-checks without running a build,
+and pass it to `createMailRenderer`:
+
+```ts
+// generated/mail.ts — written by the build, never edited
+export interface MailEmails {
+	"auth/reset-password": { readonly email: string | number; readonly resetLink: string };
+	"sign-in-code": { readonly code: string | number };
+	"verify-email": { readonly link: string; readonly name: string | number };
+	"welcome": Readonly<Record<string, never>>;
+}
+```
+
+```ts
+import { createMailRenderer } from '@nxgt/mail/renderer';
+import type { MailEmails } from './generated/mail';
+
+const mails = createMailRenderer<MailEmails>({ dir: 'dist' });
+
+mails.render('verify-email', { name: 'Ada', link: 'https://app.example.com/verify?token=abc' });
+mails.render('sign-in-code', { code: 123456 }, { locale: 'fr' }); // a number, where it is not a URL
+mails.render('welcome'); // an e-mail that takes no variable needs no variables argument
+mails.emails; // typed readonly ('auth/reset-password' | 'sign-in-code' | 'verify-email' | 'welcome')[]
+```
+
+A URL variable (one of the manifest's `urlVariables`) is `string`; any other
+variable is `string | number`, as `render` writes it. How the file is
+written, where, and how to turn it off is in `@nxgt/mail-i18n`'s
+[manifest guide](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-i18n/docs/guide/manifest.md#the-renderers-types--generatedmailts).
+
+### What it refuses
+
+Each is what `render` would throw at run time, moved to the compiler, with the
+message `tsc` prints:
+
+| Call | Compile error |
+| --- | --- |
+| `mails.render('verify-emial', { name, link })` | `TS2345: Argument of type '"verify-emial"' is not assignable to parameter of type '"auth/reset-password" \| "sign-in-code" \| "verify-email" \| "welcome"'.` |
+| `mails.render('sign-in-code', { code: 1, name: 'Ada' })` | `TS2353: Object literal may only specify known properties, and 'name' does not exist in type '{ readonly code: string \| number; }'.` |
+| `mails.render('verify-email', { link })` | `TS2345: … Property 'name' is missing in type '{ link: string; }' but required in type '{ readonly link: string; readonly name: string \| number; }'.` |
+| `mails.render('sign-in-code')` | `TS2554: Expected 2-3 arguments, but got 1.` |
+| `mails.render('verify-email', { link: 42, name: 'Ada' })` | `TS2322: Type 'number' is not assignable to type 'string'.` |
+
+The run-time checks are unchanged: a renderer typed with a `MailEmails` older
+than the deployed build still throws on a name or a variable the build does
+not have. When the build changes, the next `maizzle build` rewrites
+`generated/mail.ts`, and the compiler points at every call it breaks.
+
+### Untyped
+
+Without the type parameter, `E` is `AnyMailEmails`: every name compiles, and
+`variables` is `MailVariables`. That is the choice for variables built at run
+time, as a `Record<string, string>` read from a queue — the typed `render`
+refuses it — and for a renderer over a build this code does not know.
+
+```ts
+import { createMailRenderer, type MailVariables } from '@nxgt/mail/renderer';
+
+const mails = createMailRenderer({ dir: 'dist' });
+
+declare const job: { email: string; variables: MailVariables };
+mails.render(job.email, job.variables); // checked at run time only
+```
+
+A `MailRenderer<MailEmails>` is accepted where a `MailRenderer` is expected,
+so a helper written for any build takes a typed renderer.
+
+The manifest guide also shows
+[a test that holds the two sides together](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-i18n/docs/guide/manifest.md#checking-your-application-against-it),
+for a project that does not commit `generated/mail.ts`.
 
 ## Choosing the locale
 
@@ -354,6 +444,7 @@ the memory mailer:
 ```ts
 import { MailError, type Mailer, pickLocale } from '@nxgt/mail';
 import { type MailRenderer } from '@nxgt/mail/renderer';
+import type { MailEmails } from './generated/mail';
 
 interface User {
 	readonly email: string;
@@ -364,7 +455,7 @@ interface User {
 export class AccountMails {
 	constructor(
 		private readonly mailer: Mailer,
-		private readonly mails: MailRenderer,
+		private readonly mails: MailRenderer<MailEmails>, // a renamed variable fails tsc here
 	) {}
 
 	/** true when the e-mail left; false when it failed or was refused. */
@@ -392,8 +483,9 @@ import { expect, it } from 'bun:test';
 import { createMemoryMailer } from '@nxgt/mail';
 import { createMailRenderer } from '@nxgt/mail/renderer';
 import { AccountMails } from './account-mails';
+import type { MailEmails } from './generated/mail';
 
-const mails = createMailRenderer({ dir: 'dist' });
+const mails = createMailRenderer<MailEmails>({ dir: 'dist' });
 
 it("sends the verification e-mail in the recipient's locale", async () => {
 	const mailer = createMemoryMailer();

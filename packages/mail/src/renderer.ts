@@ -19,6 +19,24 @@ const MANIFEST_FILE = 'mail-manifest.json';
  */
 export type MailVariables = Readonly<Record<string, string | number>>;
 
+/**
+ * The e-mails of a build, each with the variables it takes: the `MailEmails`
+ * that `@nxgt/mail-i18n` writes in `generated/mail.ts`.
+ */
+export type MailEmailsOf<E> = { readonly [K in keyof E]: MailVariables };
+
+/** What any build takes, when the renderer is not given its `MailEmails`. */
+export type AnyMailEmails = Readonly<Record<string, MailVariables>>;
+
+/**
+ * `render`'s arguments after the e-mail's name: its variables, which may be
+ * left out when it takes none, and the options.
+ */
+export type RenderArguments<V> =
+	Readonly<Record<string, never>> extends V
+		? [variables?: V, options?: RenderOptions]
+		: [variables: V, options?: RenderOptions];
+
 export interface MailRendererOptions {
 	/** The build's output folder — where `mail-manifest.json` is — as `dist`. */
 	readonly dir: string;
@@ -38,9 +56,14 @@ export interface RenderOptions {
 	readonly locale?: string;
 }
 
-export interface MailRenderer {
+/**
+ * Given the build's `MailEmails`, an unknown e-mail, a missing or unknown
+ * variable, or a number for a URL is a compile error; without it, any name
+ * and any variables compile, and the same mistakes throw.
+ */
+export interface MailRenderer<E extends MailEmailsOf<E> = AnyMailEmails> {
 	/** The e-mails of the build, sorted, as `['reset-password', 'verify-email']`. */
-	readonly emails: readonly string[];
+	readonly emails: readonly (keyof E & string)[];
 	/** The locales of the build. */
 	readonly locales: readonly string[];
 	/**
@@ -49,10 +72,9 @@ export interface MailRenderer {
 	 * an unknown e-mail or locale **throws** an `Error`; a URL variable that
 	 * is not an `http:`, `https:` or `mailto:` URL throws `MailRefused`.
 	 */
-	render(
-		email: string,
-		variables?: MailVariables,
-		options?: RenderOptions,
+	render<N extends keyof E & string>(
+		email: N,
+		...rest: RenderArguments<E[N]>
 	): Rendered;
 }
 
@@ -281,7 +303,9 @@ const fill = (
  * `@nxgt/mail-i18n`, filled with the values of one send.
  *
  * ```ts
- * const mails = createMailRenderer({ dir: 'dist', getLanguage: () => user.locale });
+ * import type { MailEmails } from './generated/mail';
+ *
+ * const mails = createMailRenderer<MailEmails>({ dir: 'dist', getLanguage: () => user.locale });
  * await mailer.send({ to: user.email, ...mails.render('verify-email', { name, link }) });
  * ```
  *
@@ -289,7 +313,9 @@ const fill = (
  * **throws** when the renderer is created, not at the first send. A wrong
  * option is a `TypeError`.
  */
-export function createMailRenderer(options: MailRendererOptions): MailRenderer {
+export function createMailRenderer<E extends MailEmailsOf<E> = AnyMailEmails>(
+	options: MailRendererOptions,
+): MailRenderer<E> {
 	checkOptions(options);
 	const { dir } = options;
 	const manifest = readManifest(dir);
@@ -305,7 +331,7 @@ export function createMailRenderer(options: MailRendererOptions): MailRenderer {
 	}
 	const getLanguage = options.getLanguage;
 
-	return Object.freeze({
+	const renderer: MailRenderer = Object.freeze({
 		emails: Object.freeze([...emails.keys()].sort()),
 		locales: Object.freeze([...manifest.locales]),
 		render(
@@ -338,4 +364,6 @@ export function createMailRenderer(options: MailRendererOptions): MailRenderer {
 			};
 		},
 	});
+	// The types only narrow what the same checks refuse at run time.
+	return renderer as unknown as MailRenderer<E>;
 }

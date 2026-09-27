@@ -13,7 +13,7 @@
  * A message key is a `string`: whether it exists is checked by the build,
  * against the catalogues, not by the compiler.
  *
- * **Seventeen plausible mistakes, seventeen refused.**
+ * **Eighteen plausible mistakes, eighteen refused.**
  */
 
 import type { MailPlugin } from '@nxgt/mail-config';
@@ -29,7 +29,9 @@ const plugin: MailPlugin = i18n({
 	layout: 'flat',
 	catalogues: [{ en: { common: { greeting: 'Hello {name},' } } }],
 	templates: [{ dir: '/app/node_modules/pkg/emails', emails: ['welcome'] }],
+	rendererTypes: 'src/generated/mail.ts',
 });
+i18n({ locales: ['en'], rendererTypes: false });
 const catalogue: Catalogue = { verifyEmail: { subject: 'Confirm, {name}' } };
 const t = createTranslator({ en: catalogue }, () => 'en');
 t('verifyEmail.subject', { name: 'Ada', count: 2, at: new Date() }, 'en');
@@ -105,5 +107,9 @@ i18n({ locales: ['en'], templates: [{ dir: pkg, emails: 'welcome' }] });
 
 // @ts-expect-error — emails names at least one; leave it out for every one.
 i18n({ locales: ['en'], templates: [{ dir: pkg, emails: [] }] });
+
+// 18. The renderer's types turned on with true, not a path.
+// @ts-expect-error — a path, as 'generated/mail.ts', or false.
+i18n({ locales: ['en'], rendererTypes: true });
 
 export { broken, plugin };

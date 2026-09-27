@@ -3,3 +3,4 @@ components
 dist
 dist-project
 node_modules
+generated

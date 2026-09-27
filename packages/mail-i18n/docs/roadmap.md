@@ -48,6 +48,14 @@ no dates here, and the version something shipped in is the only number.
   `.maizzle/nxgt-mail-i18n.d.ts` from the catalogues each time the config
   loads, so an editor completes `t('…')` and flags an unknown key or a wrong
   argument, and `vue-tsc` checks templates in CI. Built, not yet published.
+- **The renderer typed by the build** — after each `maizzle build`, the
+  plugin writes `generated/mail.ts`: `MailEmails`, each e-mail with the
+  variables it takes, a URL variable as a `string`. Committed, it lets
+  `createMailRenderer<MailEmails>` from `@nxgt/mail/renderer` refuse an
+  unknown e-mail, a missing or unknown variable, or a number for a URL at
+  compile time, without a build in CI. Rewritten only when it changes;
+  `rendererTypes` moves it, or `false` turns it off. Built, not yet
+  published.
 
 ## Next
 
