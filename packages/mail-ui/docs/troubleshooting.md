@@ -43,6 +43,7 @@ The samples below use the locales `en` and `fr`, the template
 - [`i18n: en: welcome calls t('common.footer.why'), which is not a key of the catalogues`](#i18n-en-welcome-calls-tcommonfooterwhy-which-is-not-a-key-of-the-catalogues)
 - [`NxProgress: modelValue must be a number known when the e-mail is built — a placeholder is filled only when it is sent`](#nxprogress-modelvalue-must-be-a-number-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent)
 - [`NxCountBadge: count must be a number known when the e-mail is built — a placeholder is filled only when it is sent`](#nxcountbadge-count-must-be-a-number-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent)
+- [`NxIconButton: icon must be known when the e-mail is built — a placeholder is filled only when it is sent`](#nxiconbutton-icon-must-be-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent)
 - [`NxHighlightText: query must be text known when the e-mail is built — a placeholder is filled only when it is sent`](#nxhighlighttext-query-must-be-text-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent)
 
 **Traps: a build that succeeds and is wrong**
@@ -403,6 +404,24 @@ highlighting:
 ```vue
 <template>
   <NxHighlightText :text="t('search.results', { name: placeholder('name') })" query="invoice" />
+</template>
+```
+
+### `NxIconButton: icon must be known when the e-mail is built — a placeholder is filled only when it is sent`
+
+**When:** `maizzle build`, on a template whose `<NxIconButton>` has a
+placeholder in its `icon`: `<NxIconButton :href="placeholder('link')" :icon="placeholder('iconUrl')" />`.
+**Why:** whether `icon` is an image or a character is decided when the e-mail
+is built, from its start (`http://` or `https://`); a placeholder is only
+filled when it is sent. Rather than write a URL as text, the build stops.
+**Fix:** give an icon known at build time, or put the image in the default
+slot, where the renderer checks its URL when it fills it:
+
+```vue
+<template>
+  <NxIconButton :href="placeholder('link')" aria-label="Open">
+    <img :src="placeholder('iconUrl')" width="16" height="16" alt="">
+  </NxIconButton>
 </template>
 ```
 

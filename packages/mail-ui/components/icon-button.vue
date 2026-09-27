@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { twMerge } from '@maizzle/framework';
 import { computed, useAttrs } from 'vue';
-import type { Color, ColourVariant } from './ui';
+import { type Color, type ColourVariant, hasPlaceholder } from './ui';
 
 /**
  * material-vue's IconButton, as a link: a round `NxButton` holding one icon,
  * 36 pixels across. An e-mail has no icon font: `icon` is an image by absolute
  * URL (`https://…`), drawn at 16 pixels, or a character such as `★`; the
- * default slot takes any other content. Its name for a reader is its
+ * default slot takes any other content. Whether `icon` is an image is decided
+ * when the e-mail is built: a placeholder there **throws**; an image known
+ * only when it is sent is an `<img>` in the default slot. Its name for a reader is its
  * `aria-label`, else its `tooltip`, which is also its `title`; the plain-text
  * version writes that name before the link, or the character without one.
  */
@@ -20,6 +22,12 @@ const props = defineProps<{
 	color?: Color;
 	tooltip?: string;
 }>();
+
+if (props.icon !== undefined && hasPlaceholder(props.icon)) {
+	throw new Error(
+		'NxIconButton: icon must be known when the e-mail is built — a placeholder is filled only when it is sent',
+	);
+}
 
 const attrs = useAttrs();
 const label = computed(

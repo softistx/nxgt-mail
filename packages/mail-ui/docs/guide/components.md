@@ -1072,12 +1072,12 @@ count — `99+` past `max`, nothing at 0.
 
 The badge follows the content on its line, 4 pixels after it: a mail client
 does not place it over a corner as material-vue does. A screen reader hears
-the shared message `common.countBadge.label` (`3 notifications`; without
+the shared message `common.countBadge.label` (`3 notifications`, `1 notification`; without
 `@nxgt/mail-i18n`, in English), and the plain-text version writes the count
 in brackets: `Unread (3)`.
 
 The count is written at build time: a placeholder
-(`count="{{ unread }}"`) fails the build with
+(`:count="placeholder('unread')"`) fails the build with
 [`NxCountBadge: count must be a number known when the e-mail is built`](../troubleshooting.md#nxcountbadge-count-must-be-a-number-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent).
 A count known only at send time is text: write it with an `NxBadge`.
 
@@ -1188,7 +1188,10 @@ button a name — `aria-label` or `tooltip`: a reader hears it, the image takes
 it as its `alt`, and the plain-text version writes it before the link (the
 character, without one). The `icon` is read when the e-mail is built: one
 starting `http://` or `https://` is an image, anything else is written as
-text. Outlook on Windows pads it as Maizzle pads any button, so there it may
+text. A placeholder in `icon` fails the build with
+[`NxIconButton: icon must be known when the e-mail is built`](../troubleshooting.md#nxiconbutton-icon-must-be-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent):
+for an image known only when the e-mail is sent, put an `<img>` in the
+default slot, `<img :src="placeholder('iconUrl')" width="16" height="16" alt="">`. Outlook on Windows pads it as Maizzle pads any button, so there it may
 be wider than round. material-vue's `IconLinkButton` is this component: it already
 takes a URL.
 
@@ -1211,7 +1214,9 @@ No props. The default slot holds `NxButton`s, `NxLinkButton`s and
 `NxIconButton`s, a `v-for` included; each is a cell of one row, which every
 client keeps on a line. As in material-vue, the buttons inside are `rounded`
 rather than pills and `tonal`, and the one marked `data-state="active"` is
-`filled`; a button that says its `variant` keeps it. Its `class` is merged
+`filled`; a button that says its `variant` keeps it. Unlike material-vue's,
+which paints every button of a group in the primary colour, each keeps its
+own `color`. Its `class` is merged
 on the group's box, `bg-background p-2`, and it keeps 16 pixels below.
 
 ## A complete template

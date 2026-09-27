@@ -168,8 +168,11 @@ export interface SeeAlsoItem {
 /** Whether a component is inside an `NxButtonGroup`, which restyles its buttons. */
 export const BUTTON_GROUP = 'nxgt:mail-ui:button-group';
 
-/** A `{{ name }}` placeholder of `@nxgt/mail-i18n`, as the renderer finds one. */
-const PLACEHOLDER = /\{\{\s*[a-zA-Z][a-zA-Z0-9]*\s*\}\}/;
+/**
+ * A `{{ name }}` placeholder of `@nxgt/mail-i18n`, as the renderer finds one:
+ * copied from packages/mail/src/renderer.ts (PLACEHOLDER), change them together.
+ */
+const PLACEHOLDER = /\{\{\s*[a-z][a-zA-Z0-9]*\s*\}\}/;
 
 /** Whether `value` holds a placeholder, filled only when the e-mail is sent. */
 export const hasPlaceholder = (value: string): boolean =>

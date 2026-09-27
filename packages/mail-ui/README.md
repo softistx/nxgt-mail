@@ -132,7 +132,7 @@ its slots.
 ### The components
 
 Each one mirrors the `@nxgt/material-vue` component of the same name, without
-the `Nx`:
+the `Nx` — except `NxSpacer` and `NxCode`, the e-mail's own:
 
 - **Page and text** — `NxLayout`, `NxTypography`, `NxLink`, `NxSeparator`,
   `NxSpacer`, `NxExtendedLabel`, `NxHighlightText`, `NxKbd`, `NxCode`.
@@ -297,8 +297,8 @@ there is no dark theme.
 **Use `NxSpacer` for vertical space**: `<NxSpacer size="lg" />`, on
 Maizzle's `<Spacer>`, which Outlook keeps.
 
-**A count or a query is known at build time.** `NxCountBadge`'s `count` and
-`NxHighlightText`'s `query`, like `NxProgress`'s `modelValue`, fail the build
+**A count, a query or an icon is known at build time.** `NxCountBadge`'s
+`count`, `NxHighlightText`'s `query` and `NxIconButton`'s `icon`, like `NxProgress`'s `modelValue`, fail the build
 when given a placeholder: write a count known only at send time in an
 `NxBadge`.
 

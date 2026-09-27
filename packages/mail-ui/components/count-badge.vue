@@ -49,7 +49,7 @@ const label = computed(() =>
 	sharedMessage(
 		globals,
 		'common.countBadge.label',
-		`${props.count} notifications`,
+		`${props.count} notification${props.count === 1 ? '' : 's'}`,
 		{ count: props.count },
 	),
 );

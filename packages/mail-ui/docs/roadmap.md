@@ -12,8 +12,8 @@ Built, not yet published:
   `NxHighlightText`, `NxKbd`, `NxCountBadge`, `NxActionCard`, `NxFigure`,
   `NxLinkButton`, `NxIconButton` (its icon an image by URL or a character)
   and `NxButtonGroup`, with material-vue's names and props, and the shared
-  message `common.countBadge.label` in `en` and `fr`. A count or a query
-  given as a placeholder fails the build.
+  message `common.countBadge.label` in `en` and `fr`. A count, a query or
+  an icon given as a placeholder fails the build.
 
 ## Next
 
