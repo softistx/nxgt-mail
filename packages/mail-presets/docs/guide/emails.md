@@ -69,15 +69,15 @@ A number is written as is (`This link expires in 3600.`), so format it.
 Without `expiresIn`, the call does not compile against `MailEmails`, and
 `render` throws
 [`render: <email> needs the variable expiresIn`](../troubleshooting.md#render-reset-password-needs-the-variable-expiresin).
+To say nothing about expiry, replace the template (see
+[Replacing a template](presets.md#replacing-a-template)): a message override cannot drop the
+argument, because the template still passes it.
+
 The other presets do not take it: `password-changed`, `new-sign-in` and
 `welcome` link to your site, not to a token, and `email-changed` and
 `invitation` say nothing about a lifetime their link may not have. To tell an
 invitation's lifetime, replace `invitation.vue` with your own and pass it as
 a placeholder of yours.
-
-To say nothing about expiry, replace the template (see
-[Replacing a template](presets.md#replacing-a-template)): a message override cannot drop the
-argument, because the template still passes it.
 
 ## What they share
 

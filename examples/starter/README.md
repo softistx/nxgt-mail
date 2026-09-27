@@ -94,12 +94,14 @@ locale, a placeholder is left unfilled, or the name is not escaped.
 `send.ts` is the code that sends, with a memory mailer instead of a transport:
 
 ```ts
+import { pickLocale } from '@nxgt/mail';
 import { createMailRenderer } from '@nxgt/mail/renderer';
 import type { MailEmails } from './generated/mail';
 
-const mails = createMailRenderer<MailEmails>({ dir: 'dist', getLanguage: () => user.locale });
-const minutes = new Intl.NumberFormat(user.locale, { style: 'unit', unit: 'minute', unitDisplay: 'long' });
-await mailer.send({ to, from, ...mails.render('verify-email', { name, link, expiresIn: minutes.format(15) }) });
+const mails = createMailRenderer<MailEmails>({ dir: 'dist' });
+const locale = pickLocale(user.locale, mails.locales, 'en'); // the e-mail's locale, and the duration's
+const minutes = new Intl.NumberFormat(locale, { style: 'unit', unit: 'minute', unitDisplay: 'long' });
+await mailer.send({ to, from, ...mails.render('verify-email', { name, link, expiresIn: minutes.format(15) }, { locale }) });
 ```
 
 In production, `mailer` comes from
