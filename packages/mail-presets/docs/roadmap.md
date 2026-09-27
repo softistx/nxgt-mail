@@ -33,6 +33,8 @@ Nothing yet. A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **`@nxgt/mail-i18n` 0.3, v0.1.2** — the peer moves to `^0.3.0`, the version
+  that writes the manifest's `formatVersion`. The e-mails do not change.
 - **`@nxgt/mail-i18n` 0.2, v0.1.1** — the peer moves to `^0.2.0`, the version
   that writes its generated files under `.maizzle/emails/`. The e-mails and
   their output do not change.

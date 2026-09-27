@@ -5,11 +5,7 @@ no dates here, and the version something shipped in is the only number.
 
 ## Now
 
-- **A plain-text part that reads as one** — paragraphs separated by a blank
-  line, a line break for each `<br>`, row or list item, none of the invisible
-  characters a spacer or a divider holds, and a link whose text is its
-  address written once. `breakBlocks` and `tidyPlaintext` are exported for a
-  project that sets its own `plaintext` options. Built, not yet published.
+Nothing between releases.
 
 ## Next
 
@@ -49,6 +45,12 @@ Nothing yet. A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **A plain-text part that reads as one, v0.2.0** — a blank line after a
+  paragraph, a heading, a list or a table; a line break after a `<br>`, a row,
+  a list item or a `<div>`; none of the invisible characters a spacer or a
+  divider holds; a link whose text is its address written once.
+  `breakBlocks` and `tidyPlaintext` are exported. `maizzle serve`'s preview is
+  unchanged: only `maizzle build` writes this.
 - **A base Maizzle config, v0.1.0** — `defineMailConfig({ plugins, ...project })` for
   the `maizzle.config.ts` of a normal Maizzle 6 project (`maizzle serve`,
   `maizzle build`, unchanged). It turns plain text on (`baseConfig`), and

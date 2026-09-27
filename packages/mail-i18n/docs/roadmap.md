@@ -5,10 +5,7 @@ no dates here, and the version something shipped in is the only number.
 
 ## Now
 
-- **The manifest's format, versioned** — `mail-manifest.json` starts with
-  `formatVersion`, `MANIFEST_FORMAT` is exported, and the format changes only
-  with the manifest's shape: any later `@nxgt/mail` 0.x reads the build.
-  Built, not yet published.
+Nothing between releases.
 
 ## Next
 
@@ -41,6 +38,10 @@ Nothing yet. A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **The manifest's format, versioned, v0.3.0** — `mail-manifest.json` starts
+  with `formatVersion`, `MANIFEST_FORMAT` is exported, and the format changes
+  only with the manifest's shape: any later `@nxgt/mail` 0.x reads the build.
+  The `@nxgt/mail-config` peer moves to `^0.2.0`.
 - **The wrappers under `.maizzle/emails/`, v0.2.0** — the files generated per
   template and locale move from `.maizzle/i18n/` to `.maizzle/emails/`, so
   `maizzle serve` lists the e-mails under `.maizzle/emails/en` rather than a
@@ -85,10 +86,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   catalogues each time the config loads, so an editor completes `t('…')` and
   flags an unknown key or a wrong argument, and `vue-tsc` checks templates in
   CI.
-- **The renderer typed by the build, v0.1.0** — after each `maizzle build`, the
-  plugin writes `generated/mail.ts`: `MailEmails`, each e-mail with the
-  variables it takes, a URL variable as a `string`. With it,
-  `createMailRenderer<MailEmails>` from `@nxgt/mail/renderer` refuses an
-  unknown e-mail, a missing or unknown variable, or a number for a URL at
-  compile time. Rewritten only when it changes;
-  `rendererTypes` moves it, or `false` turns it off.

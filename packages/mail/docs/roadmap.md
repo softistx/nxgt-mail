@@ -6,12 +6,7 @@ the only number.
 
 ## Now
 
-- **A build read by any later renderer** — within 0.x, `createMailRenderer`
-  reads every manifest format up to its own (`MANIFEST_FORMAT`, exported from
-  `@nxgt/mail/renderer`), so a build from any earlier `@nxgt/mail-i18n` 0.x
-  keeps working, and a package that ships a prebuilt format-1 build can peer
-  `@nxgt/mail` `>=0.1.0 <1`. A newer format is refused at start-up. Built,
-  not yet published.
+Nothing between releases.
 
 ## Next
 
@@ -68,6 +63,12 @@ Nothing yet.
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **A build read by any later renderer, v0.5.1** — within 0.x,
+  `createMailRenderer` reads every manifest format up to its own
+  (`MANIFEST_FORMAT`, exported from `@nxgt/mail/renderer`), checked before any
+  other field: a newer format is refused at start-up, naming both numbers. A
+  manifest without `formatVersion` is format 1, so a package that ships a
+  prebuilt format-1 build can peer `@nxgt/mail` `>=0.1.0 <1`.
 - **The idempotency key in the conformance suite, and the unsubscribe URL as
   written, v0.5.0** — a fourteenth case, `send.idempotencyKey`, delivers a
   message with a fresh key and expects it never refused for it, the key in
@@ -124,10 +125,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   `mailto:` is refused with `MailRefused`; a missing variable, an unknown
   e-mail or locale throws. Its own entry because it reads files with
   `node:fs`: `@nxgt/mail` itself runs anywhere.
-- **A renderer typed by the build, v0.1.0** — `createMailRenderer<MailEmails>(…)`,
-  with the `MailEmails` that `@nxgt/mail-i18n` writes in `generated/mail.ts`:
-  an unknown e-mail, a variable missing or unknown, the variables left out, or
-  a number for a URL is a compile error rather than a throw at the send, in a
-  call written out. The
-  type parameter is optional; untyped, the renderer is unchanged, and the
-  run-time checks hold either way.
