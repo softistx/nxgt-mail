@@ -40,6 +40,36 @@ describe('breakBlocks', () => {
 			),
 		).toBe('Docs\n\nhttps://a.test/x\n');
 	});
+
+	test('joins a source line Maizzle wrapped back into the sentence it broke', () => {
+		expect(
+			tidyPlaintext(
+				strip(
+					'<p>If you did not ask for this, you can\nignore this e-mail.</p>',
+				),
+			),
+		).toBe('If you did not ask for this, you can ignore this e-mail.\n');
+	});
+
+	test("keeps a link's address on its own line, even where the wrap lands", () => {
+		expect(
+			tidyPlaintext(
+				strip(
+					'<p>Or paste this link into your browser:\n<a href="https://a.test/x">https://a.test/x</a></p>',
+				),
+			),
+		).toBe('Or paste this link into your browser:\nhttps://a.test/x\n');
+	});
+
+	test("keeps a <pre>'s lines, wrapped or not, between blank lines", () => {
+		expect(
+			tidyPlaintext(
+				strip(
+					'<p>Run:</p><pre>line one\nline two\nline three</pre><p>Done.</p>',
+				),
+			),
+		).toBe('Run:\n\nline one\nline two\nline three\n\nDone.\n');
+	});
 });
 
 describe('tidyPlaintext', () => {
@@ -47,6 +77,12 @@ describe('tidyPlaintext', () => {
 		expect(tidyPlaintext('\n\nHello,\n\n\n\nBye.\n\n')).toBe(
 			'Hello,\n\nBye.\n',
 		);
+	});
+
+	test('does not join lines when breakBlocks left no marker — plaintext: true lost the cb', () => {
+		expect(
+			tidyPlaintext('If you did not ask for this, you can\nignore it.'),
+		).toBe('If you did not ask for this, you can\nignore it.\n');
 	});
 
 	test('drops the invisible characters a spacer or a divider holds, and the lines they leave', () => {

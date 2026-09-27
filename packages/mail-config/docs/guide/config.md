@@ -301,12 +301,15 @@ tidyPlaintext(createPlaintext(html, { cb: breakBlocks }));
 ### `breakBlocks` — while the HTML is stripped
 
 The `cb` the base puts in `plaintext.options`, which Maizzle forwards to
-`string-strip-html`. It decides what each tag becomes:
+`string-strip-html`. It decides what each tag becomes — not a real line
+break yet, but a marker `tidyPlaintext` reads after the build, once it can
+tell one from a line Maizzle wrapped in the built HTML:
 
 | Tag | Becomes |
 | --- | --- |
-| `p`, `h1`–`h6`, `ul`, `ol`, `table`, `blockquote` | A blank line |
-| `br`, `hr`, and the end of a `div`, `tr` or `li` | A line break: two list items in a row are two lines, not two paragraphs |
+| `p`, `h1`–`h6`, `ul`, `ol`, `table`, `blockquote` | A blank line, marked |
+| `br`, `hr`, and the end of a `div`, `tr` or `li` | A line break, marked: two list items in a row are two lines, not two paragraphs |
+| `pre` | Its content, marked so `tidyPlaintext` keeps every line, between a blank line on either side |
 | Any other | What `string-strip-html` proposes — a link's address still written after it |
 
 ### `tidyPlaintext` — after the build
@@ -315,6 +318,12 @@ The base's `afterBuild` reads each file Maizzle wrote with the text part's
 extension (`plaintext.extension`, `txt` by default) and rewrites it with
 `tidyPlaintext`, which:
 
+- when `breakBlocks`'s markers are there, joins every source line Maizzle
+  wrapped in the built HTML back into the sentence it broke — a single
+  space, never a line break mid-word — except a `<pre>`'s lines, which stay,
+  and a link's address, which stays on its own line; then turns each marker
+  into the blank line or the line break it stands for. A project that
+  replaced the `cb` and marks nothing keeps its own line breaks as they are;
 - drops the invisible characters a `<Spacer>`, an `<Hr>` or the preheader's
   padding hold — zero-width joiner and space, byte-order mark, U+034F, figure
   space, soft hyphen, word joiner — and the empty lines they leave;

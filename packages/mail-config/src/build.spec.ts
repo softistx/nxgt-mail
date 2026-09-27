@@ -77,6 +77,17 @@ describe('a project built with maizzle build', () => {
 		expect(text).not.toStartWith('\n');
 	});
 
+	test('joins a long paragraph Maizzle wrapped over several source lines back into one', async () => {
+		const html = await read('dist/hello.html');
+		// The build itself keeps the source's wrap: prove this is exercised.
+		expect(html).toMatch(/If you did not ask for this, you can\nignore/);
+
+		const text = await read('dist/hello.txt');
+		expect(text).toContain(
+			'If you did not ask for this, you can ignore this e-mail: no changes were made to your account, and nothing else is required of you.\n',
+		);
+	});
+
 	test('the production config minifies, and keeps every hook', () => {
 		expect(html).toContain('</p> <p>');
 		expect(production).not.toContain('</p> <p>');

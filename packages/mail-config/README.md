@@ -60,8 +60,8 @@ resolve.
 | `defineMailPlugin(plugin)` | Checks a plugin and answers it unchanged |
 | `productionConfig(config, overrides?)` | `maizzle.config.production.ts`: minified HTML over your config |
 | `baseConfig` | The lowest layer, frozen: a plain-text part that reads as one (`plaintext` with `breakBlocks`, and an `afterBuild` that tidies it) |
-| `breakBlocks` | The `string-strip-html` `cb` the base hands Maizzle: a blank line after a paragraph, a line break after a `<br>` |
-| `tidyPlaintext(text)` | The text tidied: no invisible characters, one blank line at most, a link's address once |
+| `breakBlocks` | The `string-strip-html` `cb` the base hands Maizzle: marks a blank line after a paragraph, a line break after a `<br>`, and a `<pre>`'s content, so `tidyPlaintext` can tell these from a source line Maizzle wrapped |
+| `tidyPlaintext(text)` | The text tidied: no invisible characters, one blank line at most, a link's address once, a wrapped source line rejoined into its sentence |
 | `MailConfig` | The type `defineMailConfig` takes: a `MaizzleConfig` with `plugins` |
 | `MailPlugin` | The type of a plugin: a `MaizzleConfig` with a `name`, and no `plugins` |
 
@@ -139,10 +139,12 @@ the error reaches Maizzle, which fails the build.
 
 Without asking, each template gets a `.txt` part that reads as one: a blank
 line between paragraphs, a line break for each `<br>`, row or list item, a
-button's address on its own line, no invisible character from a `<Spacer>`,
-an `<Hr>` or the preheader's padding, and a link whose text is its address
-written once. `maizzle serve`'s plain-text preview does not show it: only
-`maizzle build` writes it.
+button's address on its own line, every line of a `<pre>` kept, no invisible
+character from a `<Spacer>`, an `<Hr>` or the preheader's padding, a link
+whose text is its address written once, and a long source line Maizzle
+wrapped rejoined into the sentence it broke — never a line break mid-word.
+`maizzle serve`'s plain-text preview does not show it: only `maizzle build`
+writes it.
 
 ```text
 Confirm my address
