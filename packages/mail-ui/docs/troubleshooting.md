@@ -48,7 +48,7 @@ The samples below use the locales `en` and `fr`, the template
 - [A side border (`border-b`) is gone, and the style ends with `border: 0`](#a-side-border-border-b-is-gone-and-the-style-ends-with-border-0)
 - [A project's own component does not replace the package's](#a-projects-own-component-does-not-replace-the-packages)
 - [An element placed directly in `NxCard` breaks the card](#an-element-placed-directly-in-nxcard-breaks-the-card)
-- [`class="mb-0"` leaves the space under an `NxAlert`, `NxBanner`, `NxCard`, `NxCode` or `NxListTile`](#classmb-0-leaves-the-space-under-an-nxalert-nxbanner-nxcard-nxcode-or-nxlisttile)
+- [`class="mb-0"` leaves the space under a boxed component (`NxAlert`, `NxCard`, `NxHero`, the metric cards…)](#classmb-0-leaves-the-space-under-a-boxed-component-nxalert-nxcard-nxhero-the-metric-cards)
 - [The editor says `Property 'brand' does not exist` in a template](#the-editor-says-property-brand-does-not-exist-in-a-template)
 - [Biome reports `parse` errors in a template as soon as you edit it](#biome-reports-parse-errors-in-a-template-as-soon-as-you-edit-it)
 - [A bug in `@nxgt/mail-ui` itself](#a-bug-in-nxgtmail-ui-itself)
@@ -309,7 +309,10 @@ The message names your locale and template; the key starts `common.`.
 footer calls `t('common.footer.why')`), or an `<NxAvatarGroup>` hiding avatars
 past its `max` (its `+N` calls `t('common.avatarGroup.more')`), an
 `<NxTimeline>` with no events and no `empty`
-(`t('common.timeline.empty')`), or that calls
+(`t('common.timeline.empty')`), an `<NxGoalCard>`
+(`t('common.metrics.ofTarget')`), an `<NxCompareCard>` whose boxes have no
+`label` (`t('common.metrics.thisPeriod')`, `t('common.metrics.lastPeriod')`),
+an `<NxSeeAlso>` with links and no `label` (`t('common.seeAlso')`), or that calls
 `t('common.greeting')` or another `common.` key, when `@nxgt/mail-i18n` is in the plugins without
 the package's messages.
 **Why:** the `common.*` messages ship in `uiCatalogues`, not in the
@@ -344,11 +347,16 @@ The prop named is `modelValue`, `max` or `height` (which must also be above 0).
 **When:** `maizzle build`, on a template whose `<NxProgress>` is given a
 placeholder or any value that is not a number:
 `<NxProgress :model-value="placeholder('share')" />`,
-`<NxProgress model-value="40" />` (a string, without the `:`).
+`<NxProgress model-value="40" />` (a string, without the `:`). The cards that
+draw an `NxProgress` fail the same way: `<NxGoalCard>`'s `value`
+(`modelValue`) and `target` (`max`), `<NxRatioCard>`'s `percent` and each
+`percent` of `<NxBreakdownCard>`'s `items` (`modelValue`) —
+`<NxGoalCard label="Seats" :value="placeholder('used')" :target="10" />`.
 **Why:** the bar's width is computed when the e-mail is built; a placeholder
 is only filled when it is sent. Rather than draw an empty bar, the build stops.
 **Fix:** pass a number with `v-bind`. For a share that differs per recipient,
-write it as text, which a placeholder fills:
+write it as text, which a placeholder fills — or use an `<NxStatCard>`, which
+draws no bar:
 
 ```vue
 <template>
@@ -433,7 +441,7 @@ a `<table>`, which clients render out of place or drop.
 </NxCard>
 ```
 
-### `class="mb-0"` leaves the space under an `NxAlert`, `NxBanner`, `NxCard`, `NxCode` or `NxListTile`
+### `class="mb-0"` leaves the space under a boxed component (`NxAlert`, `NxCard`, `NxHero`, the metric cards…)
 
 **When:** `<NxAlert class="mb-0">` still has 16px below it.
 **Why:** these components put their `class` on the box inside, where it
@@ -442,8 +450,10 @@ styles the box; the space below is on the table around it.
 change its outer `mb-4` (`mb-2` on `NxListTile`) — see
 [Replacing a component](guide/plugin.md#replacing-a-component). On
 `NxTypography`, `NxSummaryData`, `NxTable`, `NxDescription`,
-`NxAvatarGroup`, `NxProgress`, `NxSteps` and `NxTimeline`, `class="mb-0"`
-works.
+`NxAvatarGroup`, `NxProgress`, `NxSteps`, `NxTimeline` and `NxSeeAlso`,
+`class="mb-0"` works. `NxHero`, `NxEntityHeader` and the metric cards
+(`NxStatCard` to `NxBreakdownCard`) keep it, as `NxCard` does: their `class`
+goes on the box.
 
 ### The editor says `Property 'brand' does not exist` in a template
 

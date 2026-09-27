@@ -123,3 +123,44 @@ export function sharedMessage(
 		? (globals.t(key, args) as string)
 		: fallback;
 }
+
+/** Which way a figure moved, as material-vue's StatCard tones its delta. */
+export type DeltaTone = 'up' | 'down' | 'neutral';
+
+/** A tone's arrow and colour. */
+const DELTA_LOOK: Record<DeltaTone, { glyph: string; colour: string }> = {
+	up: { glyph: '\u25B2', colour: 'text-success' },
+	down: { glyph: '\u25BC', colour: 'text-error' },
+	neutral: { glyph: '\u2013', colour: 'text-muted-foreground' },
+};
+
+/**
+ * A delta as material-vue's `formatStatDelta` writes it — `+12`, `-3`, `0` —
+ * with its tone, a glyph for its arrow (an e-mail has no icon font), and its
+ * colour. A string is written as given, `neutral` unless `tone` says.
+ */
+export function deltaOf(
+	delta: number | string,
+	tone?: DeltaTone,
+): { label: string; tone: DeltaTone; glyph: string; colour: string } {
+	const resolved: { label: string; tone: DeltaTone } =
+		typeof delta === 'string'
+			? { label: delta, tone: tone ?? 'neutral' }
+			: delta > 0
+				? { label: `+${delta}`, tone: tone ?? 'up' }
+				: delta < 0
+					? { label: `${delta}`, tone: tone ?? 'down' }
+					: { label: '0', tone: tone ?? 'neutral' };
+	return { ...resolved, ...DELTA_LOOK[resolved.tone] };
+}
+
+/** material-vue's small uppercase label over a figure or a list. */
+export const EYEBROW =
+	'm-0 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground';
+
+/** A link of `NxSeeAlso`, as material-vue's. */
+export interface SeeAlsoItem {
+	readonly id?: string;
+	readonly title: string;
+	readonly href: string;
+}

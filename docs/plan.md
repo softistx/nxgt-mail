@@ -234,7 +234,7 @@ one message overridden ✅; the rendered HTML is checked against caniemail data
 for Gmail, Outlook and Apple Mail ✅ (Maizzle's own check, in the build spec)
 — and Steve's part, still open: looked at in the real clients.
 
-## Step 5b — `@nxgt/mail-ui`, the second set
+## Step 5b — `@nxgt/mail-ui`, the second set ✅
 
 The material-vue components that fit an e-mail and are not in the first set,
 each a table with inlined styles and material-vue's props: `NxTable` (and its
@@ -251,8 +251,11 @@ Progress: `NxTable` and its parts, `NxDescription`, `NxListTile`, `NxChip`,
 `NxAvatar`/`NxAvatarGroup` ✅ (fixture `gallery.vue`: caniemail reports only
 `css-caption-side`, with its `align` fallback, and `html-align`) ✅;
 `NxProgress`, `NxSteps`/`NxStepsItem`, `NxTimeline` ✅ (fixture
-`sequence.vue`: `html-align` and `html-aria-hidden`). Next: `NxHero`,
-`NxEntityHeader`, `NxSeeAlso`, `NxStatCard` and the metrics cards.
+`sequence.vue`: `html-align` and `html-aria-hidden`); `NxHero`,
+`NxEntityHeader`, `NxSeeAlso`, `NxStatCard` and the goal, ratio, compare and
+breakdown cards ✅ (fixture `summary.vue`: `html-align` and
+`html-aria-hidden`, the arrows being characters hidden from a reader and left
+out of the plain text).
 
 ## Step 5c — `@nxgt/mail-presets` ✅
 

@@ -97,9 +97,9 @@ as hex in the built HTML.
 
 | Tint | Used by |
 | --- | --- |
-| `-5` | `NxAlert`'s background; `NxListTile`'s; `paper` |
+| `-5` | `NxAlert`'s background; `NxListTile`'s; `NxHero`'s; `paper` |
 | `-10` | `NxBanner`'s background; a selected `NxListTile size="sm"` |
-| `-15` | `NxButton` and `NxChip variant="tonal"`; a selected `NxListTile`; an `NxTimeline` marker's ground |
+| `-15` | `NxButton` and `NxChip variant="tonal"`; a selected `NxListTile`; an `NxTimeline` marker's ground; `NxRatioCard`'s track |
 | `-20` | `NxProgress`'s track |
 | `-25` | `NxStepsItem`'s circle |
 | `-40` | `NxBanner`'s border; `NxSummaryData`'s lines; a selected `NxListTile`'s border; an `NxTimeline` marker's border |

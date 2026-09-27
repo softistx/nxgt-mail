@@ -10,5 +10,8 @@
 	},
 	"sequence": {
 		"subject": "Votre configuration"
+	},
+	"summary": {
+		"subject": "Votre mois"
 	}
 }

@@ -2,7 +2,8 @@
 
 E-mail components for a normal [Maizzle](https://maizzle.com) 6 project, in
 the style of `@nxgt/material-vue`: `<NxLayout>`, `<NxButton>`, `<NxCard>`,
-`<NxAlert>`… with its variants, colours and tokens, rendered with tables and
+`<NxAlert>`, `<NxTable>`, `<NxTimeline>`, `<NxStatCard>`… with its variants,
+colours and tokens, rendered with tables and
 inlined styles. One plugin gives every template the components, your brand
 and the theme; a second export gives `@nxgt/mail-i18n` the messages they share.
 
@@ -178,8 +179,9 @@ i18n({ locales: ['en', 'fr'], catalogues: [uiCatalogues] });
 ```
 
 `common.greeting` (`Hello {name},`), `common.footer.why`,
-`common.footer.ignore`, `common.avatarGroup.more` and
-`common.timeline.empty`, in `en` and `fr`. Your `locales/<locale>.json`
+`common.footer.ignore`, `common.avatarGroup.more`, `common.timeline.empty`,
+`common.metrics.ofTarget`, `common.metrics.thisPeriod`,
+`common.metrics.lastPeriod` and `common.seeAlso`, in `en` and `fr`. Your `locales/<locale>.json`
 overrides any of them, key by key:
 
 ```json
@@ -246,9 +248,11 @@ unless `catalogues: [uiCatalogues]` is passed, or your catalogues hold the
 key.
 
 **Another locale writes the `common` keys itself.** `uiCatalogues` has `en`
-and `fr` only: a project in `de` adds `common.greeting`, `common.footer.why`,
-`common.footer.ignore`, `common.avatarGroup.more` and `common.timeline.empty`
-to `locales/de.json`.
+and `fr` only: a project in `de` adds its nine keys — `common.greeting`,
+`common.footer.why`, `common.footer.ignore`, `common.avatarGroup.more`,
+`common.timeline.empty`, `common.metrics.ofTarget`,
+`common.metrics.thisPeriod`, `common.metrics.lastPeriod` and
+`common.seeAlso` — to `locales/de.json`.
 
 **Icons are slots.** An e-mail has no icon font: pass an `<img>` with an
 absolute URL, or a character, to `#icon`.
