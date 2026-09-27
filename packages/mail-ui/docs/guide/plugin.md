@@ -54,7 +54,7 @@ function ui(options: UiOptions): MailPlugin;
 The plugin it answers, named `ui`, does four things:
 
 - registers every component of the package's `components/` folder under the
-  prefix `Nx` (`nx-button.vue` is `<NxButton>`); Maizzle's own stay
+  prefix `Nx` (`button.vue` is `<NxButton>`); Maizzle's own stay
   available (`<Button>`, `<Spacer>`);
 - gives every template `brand`, the brand as passed;
 - provides the brand and the theme's CSS to the components, under
@@ -205,6 +205,11 @@ import { COMPONENTS_DIR } from '@nxgt/mail-ui';
 console.log(COMPONENTS_DIR); // /…/node_modules/@nxgt/mail-ui/components
 ```
 
+Ours are named without the prefix, which `ui()` adds: `badge.vue` is
+`<NxBadge>` (`nx-button.vue` keeps it, being built on Maizzle's `<Button>`). Your `components/` has no prefix, so **rename the copy with the
+tag's whole name**, `nx-badge.vue`: a `components/badge.vue` is `<Badge>`, a
+component of its own, and replaces nothing.
+
 A copied component imports `./ui` for its shared types; copy `ui.ts` from the
 same folder beside it, or inline what it uses.
 
@@ -223,7 +228,7 @@ this order:
 1. your project's `components/`: the file Maizzle names as the tag,
    `nx-badge.vue` or `NxBadge.vue` for `<NxBadge>` — so a component you
    replace is replaced in a package's templates too;
-2. ours, in `COMPONENTS_DIR`, where the files are in kebab case;
+2. ours, in `COMPONENTS_DIR`, named without the prefix (`badge.vue`);
 3. Maizzle's built-ins (`Container`, `Spacer`, `Button`, …).
 
 Only the top level of your `components/` counts there: a component in a

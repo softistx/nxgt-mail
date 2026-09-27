@@ -68,6 +68,12 @@ export const COMPONENTS_DIR = fileURLToPath(
 	new URL('../components', import.meta.url),
 );
 
+/**
+ * Our components, under the prefix `Nx`: `card-header.vue` is
+ * `<NxCardHeader>`, and Maizzle's own (`<Button>`) stay available.
+ */
+const COMPONENTS = { path: COMPONENTS_DIR, prefix: 'Nx' } as const;
+
 const isObject = (value: unknown): value is Record<string, unknown> =>
 	typeof value === 'object' && value !== null && !Array.isArray(value);
 
@@ -145,8 +151,8 @@ export function ui(options: UiOptions): MailPlugin {
 	if (isMainThread) writeTypes();
 	return defineMailPlugin({
 		name: 'ui',
-		components: { source: [{ path: COMPONENTS_DIR, prefix: 'Nx' }] },
-		vite: { plugins: packagedComponents(COMPONENTS_DIR) },
+		components: { source: [COMPONENTS] },
+		vite: { plugins: packagedComponents(COMPONENTS) },
 		vue: {
 			globalProperties: { brand },
 			plugins: [{ install: (app) => app.provide(UI_CONTEXT, context) }],

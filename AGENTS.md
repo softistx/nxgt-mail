@@ -129,9 +129,14 @@ Biome's `useNamingConvention`, as in `nxgt-janus`. Error codes are data values,
 `SCREAMING_SNAKE`, and that is not an exception. A provider's wire format
 (Resend's `reply_to`) is written where it is sent, with a comment.
 
-**File names are `kebab-case`**, Vue components included: `nx-card-header.vue`
-is `<NxCardHeader>` in a template, as Maizzle names a component from its file,
-and a project overrides it with its own `components/nx-card-header.vue`. Held
+**File names are `kebab-case`**, Vue components included, and without the
+prefix: mail-ui's `card-header.vue` is `<NxCardHeader>` in a template, because
+`ui()` registers the folder under the prefix `Nx`. A project overrides it with
+its own `components/nx-card-header.vue`: the project's folder has no prefix,
+so its file carries the tag's whole name. One exception in mail-ui: a
+component built on Maizzle's component of the same name keeps the prefix,
+`nx-button.vue` — in `button.vue`, Vue reads `<Button>` as the file itself,
+not Maizzle's, which is not importable by path. Held
 by Biome's `useFilenamingConvention`. The Markdown files a tool looks for by
 name (`README.md`, `AGENTS.md`, `CLAUDE.md`, `CHANGELOG.md`) are the exception,
 and Biome does not read them.

@@ -4,10 +4,10 @@ import { fileURLToPath } from 'node:url';
 import { fileForTag } from './packaged';
 
 const root = fileURLToPath(new URL('../test/.packaged', import.meta.url));
-const project = `${root}/project`;
-const ours = `${root}/ours`;
-const builtins = `${root}/builtins`;
-const dirs = [project, ours, builtins];
+const project = { path: `${root}/project` };
+const ours = { path: `${root}/ours`, prefix: 'Nx' };
+const builtins = { path: `${root}/builtins` };
+const folders = [project, ours, builtins];
 
 function write(path: string): void {
 	writeFileSync(path, '<template><slot /></template>\n');
@@ -16,58 +16,64 @@ function write(path: string): void {
 describe('fileForTag, which finds the file of a tag in an installed template', () => {
 	beforeAll(() => {
 		rmSync(root, { recursive: true, force: true });
-		for (const dir of dirs) mkdirSync(dir, { recursive: true });
+		for (const { path } of folders) mkdirSync(path, { recursive: true });
 		for (const name of [
-			'nx-card-header',
-			'nx-2fa',
-			'nx-code-2',
-			'nx-a-b',
-			'nx-badge',
+			'card-header',
+			'2fa',
+			'code-2',
+			'a-b',
+			'badge',
+			'nx-chip',
 		]) {
-			write(`${ours}/${name}.vue`);
+			write(`${ours.path}/${name}.vue`);
 		}
-		write(`${builtins}/Button.vue`);
-		write(`${builtins}/NxBadge.vue`);
-		write(`${project}/NxBadge.vue`);
-		write(`${project}/nx-card-header.vue`);
-		write(`${ours}/notes.md`);
-		mkdirSync(`${project}/brand`);
-		write(`${project}/brand/logo.vue`);
+		write(`${builtins.path}/Button.vue`);
+		write(`${builtins.path}/NxBadge.vue`);
+		write(`${project.path}/NxBadge.vue`);
+		write(`${project.path}/nx-card-header.vue`);
+		write(`${project.path}/card.vue`);
+		write(`${ours.path}/notes.md`);
+		mkdirSync(`${project.path}/brand`);
+		write(`${project.path}/brand/logo.vue`);
 	});
 	afterAll(() => rmSync(root, { recursive: true, force: true }));
 
-	test('finds a kebab-case file as Maizzle names it', () => {
+	test('names a file of a prefixed folder with the prefix, once', () => {
 		expect(fileForTag([ours], 'NxCardHeader')).toBe(
-			`${ours}/nx-card-header.vue`,
+			`${ours.path}/card-header.vue`,
 		);
+		expect(fileForTag([ours], 'NxChip')).toBe(`${ours.path}/nx-chip.vue`);
+		expect(fileForTag([ours], 'CardHeader')).toBeUndefined();
 	});
 
 	test('finds the names no case conversion of the tag gives back', () => {
-		expect(fileForTag([ours], 'Nx2fa')).toBe(`${ours}/nx-2fa.vue`);
-		expect(fileForTag([ours], 'NxCode2')).toBe(`${ours}/nx-code-2.vue`);
-		expect(fileForTag([ours], 'NxAB')).toBe(`${ours}/nx-a-b.vue`);
+		expect(fileForTag([ours], 'Nx2fa')).toBe(`${ours.path}/2fa.vue`);
+		expect(fileForTag([ours], 'NxCode2')).toBe(`${ours.path}/code-2.vue`);
+		expect(fileForTag([ours], 'NxAB')).toBe(`${ours.path}/a-b.vue`);
 	});
 
 	test("finds a Pascal-case file, as Maizzle's built-ins are", () => {
-		expect(fileForTag(dirs, 'Button')).toBe(`${builtins}/Button.vue`);
+		expect(fileForTag(folders, 'Button')).toBe(`${builtins.path}/Button.vue`);
 	});
 
 	test("takes the project's file first, in either case, then ours, then the built-ins", () => {
-		expect(fileForTag(dirs, 'NxBadge')).toBe(`${project}/NxBadge.vue`);
-		expect(fileForTag(dirs, 'NxCardHeader')).toBe(
-			`${project}/nx-card-header.vue`,
+		expect(fileForTag(folders, 'NxBadge')).toBe(`${project.path}/NxBadge.vue`);
+		expect(fileForTag(folders, 'NxCardHeader')).toBe(
+			`${project.path}/nx-card-header.vue`,
 		);
 		expect(fileForTag([ours, builtins], 'NxBadge')).toBe(
-			`${ours}/nx-badge.vue`,
+			`${ours.path}/badge.vue`,
 		);
+		// A project's card.vue is <Card>, not ours.
+		expect(fileForTag(folders, 'Card')).toBe(`${project.path}/card.vue`);
 	});
 
 	test('reads only the top of a folder, only .vue files, and skips a missing folder', () => {
-		expect(fileForTag(dirs, 'BrandLogo')).toBeUndefined();
-		expect(fileForTag(dirs, 'Notes')).toBeUndefined();
-		expect(fileForTag([`${root}/missing`, ours], 'Nx2fa')).toBe(
-			`${ours}/nx-2fa.vue`,
+		expect(fileForTag(folders, 'BrandLogo')).toBeUndefined();
+		expect(fileForTag(folders, 'NxNotes')).toBeUndefined();
+		expect(fileForTag([{ path: `${root}/missing` }, ours], 'Nx2fa')).toBe(
+			`${ours.path}/2fa.vue`,
 		);
-		expect(fileForTag(dirs, 'NxUnknown')).toBeUndefined();
+		expect(fileForTag(folders, 'NxUnknown')).toBeUndefined();
 	});
 });
