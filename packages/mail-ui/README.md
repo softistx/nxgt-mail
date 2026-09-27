@@ -176,7 +176,7 @@ the `Nx` — except `NxSpacer` and `NxCode`, the e-mail's own:
 </template>
 ```
 
-<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-ui@0.2.0/packages/mail-ui/previews/details-components.png" width="420" alt="An e-mail using the details components: event chips, a list of attributes, postal addresses, opening hours, contacts, a file list with a download link and empty ones, a rating of four stars and a row of five review stars">
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-ui/previews/details-components.png" width="420" alt="An e-mail using the details components: event chips, a list of attributes, postal addresses, opening hours, contacts, a file list with a download link and empty ones, a rating of four stars and a row of five review stars">
 
 ### The plugin — `ui({ brand, theme })`
 

@@ -40,7 +40,7 @@ The components from `NxHero` to `NxSeeAlso`
 The components from `NxSpacer` to `NxButtonGroup`
 ([their template](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-ui/test/fixture/emails/content.vue)).
 
-<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-ui@0.2.0/packages/mail-ui/previews/details-components.png" width="420" alt="An e-mail using the details components: event chips, a list of attributes, postal addresses, opening hours, contacts, a file list with a download link and empty ones, a rating of four stars and a row of five review stars">
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-ui/previews/details-components.png" width="420" alt="An e-mail using the details components: event chips, a list of attributes, postal addresses, opening hours, contacts, a file list with a download link and empty ones, a rating of four stars and a row of five review stars">
 
 The components from `NxEventChip` to `NxRating`
 ([their template](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-ui/test/fixture/emails/details.vue)).
