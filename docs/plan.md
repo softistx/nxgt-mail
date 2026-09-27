@@ -136,7 +136,9 @@ names a removed package except as history.
 
 Merged in PR #8. `defineMailConfig({ plugins, ...project })`:
 
-- A base config of one key, `plaintext: true`: `dist/`, `public/` as static
+- A base config of one key, `plaintext: true` (since mail-config 0.2, PR #38:
+  `plaintext.options.cb`, paragraphs, and an `afterBuild` that tidies each
+  text part): `dist/`, `public/` as static
   files and CSS inlined and purged are already Maizzle's defaults, and
   `url.base` is off unless set.
 - Plugins are partial configs with a `name`, merged with Maizzle's own rules
