@@ -1,5 +1,14 @@
 # @nxgt/mail-presets
 
+## 0.1.1
+
+### Patch Changes
+
+- [#36](https://github.com/softistx/nxgt-mail/pull/36) [`e9ed33d`](https://github.com/softistx/nxgt-mail/commit/e9ed33d3d813a6bcafb7c7e166839efc7113866b) Thanks [@SteveGT96](https://github.com/SteveGT96)! - The `@nxgt/mail-i18n` peer moves to `^0.2.0`: upgrade `@nxgt/mail-i18n` with it.
+- Updated dependencies [[`7cac016`](https://github.com/softistx/nxgt-mail/commit/7cac016adddc10e7c4f5ff73c304838168239149), [`e9ed33d`](https://github.com/softistx/nxgt-mail/commit/e9ed33d3d813a6bcafb7c7e166839efc7113866b)]:
+  - @nxgt/mail-i18n@0.2.0
+  - @nxgt/mail-ui@0.1.0
+
 ## 0.1.0
 
 ### Minor Changes

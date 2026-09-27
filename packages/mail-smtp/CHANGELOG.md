@@ -1,5 +1,13 @@
 # @nxgt/mail-smtp
 
+## 0.3.2
+
+### Patch Changes
+
+- [#35](https://github.com/softistx/nxgt-mail/pull/35) [`59a82e4`](https://github.com/softistx/nxgt-mail/commit/59a82e42bf5a6577cbad1653d76b0068f94f8eb7) Thanks [@SteveGT96](https://github.com/SteveGT96)! - The `@nxgt/mail` peer moves to `^0.5.0`: upgrade `@nxgt/mail` with it.
+- Updated dependencies [[`59a82e4`](https://github.com/softistx/nxgt-mail/commit/59a82e42bf5a6577cbad1653d76b0068f94f8eb7), [`7cac016`](https://github.com/softistx/nxgt-mail/commit/7cac016adddc10e7c4f5ff73c304838168239149)]:
+  - @nxgt/mail@0.5.0
+
 ## 0.3.1
 
 ### Patch Changes

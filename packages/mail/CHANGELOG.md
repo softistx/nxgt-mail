@@ -1,5 +1,26 @@
 # @nxgt/mail
 
+## 0.5.0
+
+### Minor Changes
+
+- [#35](https://github.com/softistx/nxgt-mail/pull/35) [`59a82e4`](https://github.com/softistx/nxgt-mail/commit/59a82e42bf5a6577cbad1653d76b0068f94f8eb7) Thanks [@SteveGT96](https://github.com/SteveGT96)! - The conformance suite checks the idempotency key: a fourteenth case,
+  `send.idempotencyKey`, sends a message with an `idempotencyKey` and expects it
+  delivered, answering `SentMail`, with the key in none of its recipients,
+  subject, HTML or text. The key is fresh on every run. A transport that refused
+  keyed messages now fails the suite.
+  
+  `listUnsubscribe` writes the URL as a parser reads it — `new URL(url).href`,
+  so `https://EXAMPLE.test` is written `https://example.test/` and a `'` in the
+  query becomes `%27` — and checks what it writes as well as what it was given:
+  a `%` that starts no escape (`%`, `%zz`), and a host escape the parser decodes
+  into a refused character (`https://a%2Cb.test/`), are refused with
+  `MailRefused`.
+
+### Patch Changes
+
+- [#33](https://github.com/softistx/nxgt-mail/pull/33) [`7cac016`](https://github.com/softistx/nxgt-mail/commit/7cac016adddc10e7c4f5ff73c304838168239149) Thanks [@SteveGT96](https://github.com/SteveGT96)! - Docs: `generated/mail.ts`, which types `createMailRenderer<MailEmails>`, is git-ignored and written by a build run before type-checking, no longer committed.
+
 ## 0.4.0
 
 ### Minor Changes

@@ -1,5 +1,20 @@
 # @nxgt/mail-i18n
 
+## 0.2.0
+
+### Minor Changes
+
+- [#36](https://github.com/softistx/nxgt-mail/pull/36) [`e9ed33d`](https://github.com/softistx/nxgt-mail/commit/e9ed33d3d813a6bcafb7c7e166839efc7113866b) Thanks [@SteveGT96](https://github.com/SteveGT96)! - The wrappers move from `.maizzle/i18n/` to `.maizzle/emails/`, and
+  `WRAPPERS_DIR` is now `'.maizzle/emails'`: `maizzle serve` lists the e-mails
+  under `.maizzle/emails/en` and `.maizzle/emails/fr`, which says what they are.
+  The build output is unchanged — `dist/en/verify-email.html` and the manifest
+  stay where they were. After upgrading, delete the old `.maizzle/i18n/` folder:
+  nothing reads it any more.
+
+### Patch Changes
+
+- [#33](https://github.com/softistx/nxgt-mail/pull/33) [`7cac016`](https://github.com/softistx/nxgt-mail/commit/7cac016adddc10e7c4f5ff73c304838168239149) Thanks [@SteveGT96](https://github.com/SteveGT96)! - `generated/mail.ts` is output of the build, as `dist/` is: git-ignore it and build before type-checking (`"typecheck": "maizzle build && tsc --noEmit"`), rather than commit it. Its header now says so (`// Never edited, never committed: git-ignore it, and build before type-checking.`), and the troubleshooting page covers `Cannot find module './generated/mail'` in a fresh clone.
+
 ## 0.1.0
 
 ### Minor Changes
