@@ -22,8 +22,8 @@ Your project stays a Maizzle project: `emails/`, `components/`, `public/`,
 `maizzle serve`, `maizzle build`. Nothing here replaces a Maizzle command.
 
 > **Not published yet.** The package is `private` while the rest of the
-> repository — the transports and a starter — is written. It is published at
-> `0.1.0` with them; the surface below is the one that will ship.
+> repository — a starter — is written. It is published at
+> `0.1.0` with the other packages; the surface below is the one that will ship.
 
 ## Install
 

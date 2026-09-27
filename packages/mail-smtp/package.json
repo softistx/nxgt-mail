@@ -1,0 +1,62 @@
+{
+	"name": "@nxgt/mail-smtp",
+	"version": "0.0.0",
+	"private": true,
+	"description": "An SMTP transport for @nxgt/mail, on the nodemailer you install: it throws the MailFailure and MailRefused of its @nxgt/mail peer, and passes the conformance suite.",
+	"license": "MIT",
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"files": [
+		"dist",
+		"docs",
+		"README.md",
+		"package.json",
+		"LICENSE"
+	],
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.js",
+			"default": "./dist/index.js"
+		},
+		"./package.json": "./package.json"
+	},
+	"keywords": [
+		"email",
+		"transactional",
+		"mailer",
+		"smtp",
+		"nodemailer",
+		"typescript"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/softistx/nxgt-mail.git",
+		"directory": "packages/mail-smtp"
+	},
+	"publishConfig": {
+		"registry": "https://registry.npmjs.org",
+		"access": "public"
+	},
+	"scripts": {
+		"build": "bun run ../../build.ts",
+		"test": "bun test src",
+		"typecheck": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"@nxgt/mail": "workspace:*",
+		"@types/bun": "^1.4.2",
+		"@types/mailparser": "^3.4.6",
+		"@types/nodemailer": "^8.0.2",
+		"@types/smtp-server": "^3.5.13",
+		"mailparser": "^3.9.28",
+		"nodemailer": "^10.0.10",
+		"smtp-server": "^3.19.13"
+	},
+	"peerDependencies": {
+		"@nxgt/mail": "workspace:^",
+		"nodemailer": ">=7.0.0 <11",
+		"typescript": "^6.0.3"
+	}
+}

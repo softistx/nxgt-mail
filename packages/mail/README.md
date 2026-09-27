@@ -10,7 +10,7 @@ import { createMemoryMailer } from '@nxgt/mail';
 import { createMailRenderer } from '@nxgt/mail/renderer';
 
 const mails = createMailRenderer({ dir: 'dist' }); // the folder `maizzle build` wrote
-const mailer = createMemoryMailer(); // in production, a transport's mailer
+const mailer = createMemoryMailer(); // in production, a transport's mailer — see below
 
 const { messageId } = await mailer.send({
 	to: { name: 'Ada Lovelace', address: 'ada@example.com' },
@@ -19,9 +19,15 @@ const { messageId } = await mailer.send({
 }); // 'memory-1' — or it throws
 ```
 
+In production, `mailer` comes from a transport:
+[`@nxgt/mail-smtp`](https://github.com/softistx/nxgt-mail/tree/develop/packages/mail-smtp)
+on your nodemailer, or
+[`@nxgt/mail-resend`](https://github.com/softistx/nxgt-mail/tree/develop/packages/mail-resend)
+over `fetch`.
+
 > **Not published yet.** The package is `private` while the rest of the
-> repository — the transports and a starter — is written. It is published at
-> `0.1.0` with them; the surface below is the one that will ship.
+> repository — a starter — is written. It is published at
+> `0.1.0` with the other packages; the surface below is the one that will ship.
 
 ## Install
 
@@ -124,7 +130,7 @@ import { MailError, type MailErrorCode, type Mailer, type MailMessage } from '@n
 function statusOf(code: MailErrorCode): number {
 	switch (code) {
 		case 'MAIL_FAILED':
-			return 503; // nothing was sent: retry later, or say it failed
+			return 503; // nothing is known to have been sent: retry later, or say it failed
 		case 'MAIL_REFUSED':
 			return 422; // the e-mail itself is malformed: sending it again fails again
 	}
@@ -266,6 +272,11 @@ with `MailRefused`; write `{ name: 'Ada', address: 'ada@example.com' }`.
 **Never fire and forget a send.** `void mailer.send(message)` turns a failure
 into an unhandled rejection and the user into someone waiting for an e-mail
 that never comes. `await` it, or hand it to a queue that does.
+
+**A custom header cannot set an address.** `headers: { Bcc: '…' }` would add
+a recipient no check saw: `checkMessage` refuses `To`, `Cc`, `Bcc`, `From`,
+`Sender`, `Reply-To`, `Return-Path`, `Subject`, `MIME-Version` and
+`Content-*` among `headers`, in any case. Use `to`, `from` and `replyTo`.
 
 **A refusal is not worth retrying; a failure may be.** `MAIL_REFUSED` fails
 again unchanged. Nothing in this package retries a `MAIL_FAILED`: a retry is

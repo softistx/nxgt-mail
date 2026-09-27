@@ -38,6 +38,14 @@ the only number.
   call written out. The
   type parameter is optional; untyped, the renderer is unchanged, and the
   run-time checks hold either way. Built, not yet published.
+- **An SMTP transport** — `@nxgt/mail-smtp`, on the `nodemailer` you install,
+  passing the conformance suite against a local SMTP server. Built, not yet
+  published — see
+  [its roadmap](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-smtp/docs/roadmap.md).
+- **A Resend transport** — `@nxgt/mail-resend`, over `fetch` with no SDK,
+  passing the conformance suite against a local server answering as Resend
+  does. Built, not yet published — see
+  [its roadmap](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-resend/docs/roadmap.md).
 
 ## Next
 
@@ -61,11 +69,8 @@ the only number.
   components an e-mail needs (`<NxButton>`, `<NxHeading>`, `<NxText>`…), and
   shared messages in English and French. Replace one component or one message
   by name in your project, and keep the rest.
-- **An SMTP transport** — `@nxgt/mail-smtp`, on the `nodemailer` you install,
-  passing the conformance suite.
-- **A Resend transport** — `@nxgt/mail-resend`, over `fetch` with no SDK,
-  passing the conformance suite.
-- **The first release, 0.1.0** — every package above on npm, installable into
+- **The first release, 0.1.0** — every package on this page on npm, the SMTP
+  and Resend transports included, installable into
   an empty project that builds and sends an e-mail with the README's own
   snippet.
 

@@ -132,7 +132,8 @@ type Address = string | { readonly name: string; readonly address: string };
 ```
 
 A string is **only** an address. A display name goes in the object form, so a
-transport never parses one. A name is free text — `Doe, John` is a name — and
+transport never parses one — and a string a parser would read as more than
+one mailbox is refused. A name is free text — `Doe, John` is a name — and
 is refused only when it holds a line break; quoting or encoding it in a header
 is the transport's job, which the conformance suite checks:
 
@@ -149,15 +150,17 @@ const message: MailMessage = {
 };
 ```
 
-What is checked is deliberately loose: one `@`, something on each side, no
-whitespace and no angle bracket. Whether the mailbox exists is the receiving
-server's question.
+What is checked is deliberately loose: one `@`, something on each side, and
+none of what an address list reads as structure — no whitespace, no angle
+bracket, no `,` or `;` (a second address), no `:` (a group). Whether the
+mailbox exists is the receiving server's question.
 
 | Written | Answer |
 | --- | --- |
 | `'ada@example.com'` | accepted |
 | `{ name: 'Ada', address: 'ada@example.com' }` | accepted |
 | `'Ada <ada@example.com>'` | `MailRefused`: `send: to is not an e-mail address` |
+| `'root,ada@example.com'` | `MailRefused`: `send: to is not an e-mail address` — a provider parsing it would send to `ada` alone, or to two mailboxes |
 | `{ name: 'Doe, John', address: 'john@example.com' }` | accepted: a name is free text |
 | no `to`, or `to: []` | `MailRefused`: `send: to must hold at least one address` |
 | `to: [undefined]` | `MailRefused`: `send: to[0] is not an e-mail address` |
@@ -183,7 +186,11 @@ recipientsOf({
 ## Headers
 
 A header name is letters, digits and hyphens; neither a name nor a value may
-hold a line break:
+hold a line break. What the transport writes from the message — the
+addresses, the subject, the MIME structure — cannot be set here: `To`, `Cc`,
+`Bcc`, `From`, `Sender`, `Reply-To`, `Return-Path`, `Subject`,
+`MIME-Version` and any `Content-*` are refused, in any case. A `Bcc` among
+the headers would reach an SMTP envelope as a recipient no check saw:
 
 ```ts
 import type { MailMessage, Rendered } from '@nxgt/mail';
@@ -204,6 +211,8 @@ const message: MailMessage = {
 | --- | --- |
 | `{ 'X Bad': 'v' }` | `MailRefused`: `send: a header name must be letters, digits and hyphens` |
 | `{ 'X-Ref': 'a\r\nb' }` | `MailRefused`: `send: header X-Ref must be a string without a line break` |
+| `{ Bcc: 'eve@example.com' }` | `MailRefused`: `send: header Bcc is reserved — addresses, the subject and the MIME structure are never custom headers` |
+| `{ 'content-type': 'text/plain' }` | `MailRefused`: `send: header content-type is reserved — …` |
 
 ## Errors
 
@@ -228,8 +237,8 @@ class MailRefused extends MailError {
 
 | Code | Class | When | Sending it again |
 | --- | --- | --- | --- |
-| `MAIL_FAILED` | `MailFailure` | The transport could not hand the e-mail over: a refused connection, a timeout, a 5xx from the provider, an expired credential. The transport's error is the `cause`. **Nothing was sent** | May work later. Never report it as sent |
-| `MAIL_REFUSED` | `MailRefused` | The e-mail itself was refused, before or by the transport: no recipient, something that is not an address, a line break in the subject or a header, or the provider answering that the message is malformed | Fails again, unchanged |
+| `MAIL_FAILED` | `MailFailure` | The transport could not hand the e-mail over: a refused connection, a timeout, a 5xx from the provider, an expired credential. The transport's error is the `cause`. **Nothing is known to have been sent**: after a timeout or a dropped connection the provider may have taken it all the same | May work later. Never report it as sent |
+| `MAIL_REFUSED` | `MailRefused` | The e-mail itself was refused, before or by the transport: no recipient, something that is not an address, a line break in the subject or a header, a reserved header, or the provider answering that the message is malformed | Fails again, unchanged |
 
 `MailError` is **abstract**: catch it, test `instanceof MailError`, but
 `new MailError(…)` does not compile — a bare one would pass a `code` check and

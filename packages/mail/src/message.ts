@@ -2,11 +2,18 @@ import { MailRefused } from './errors';
 import type { Address, MailMessage } from './types';
 
 const LINE_BREAK = /[\r\n]/;
-// Deliberately loose: one `@`, something on each side, no whitespace and no
-// angle bracket. Whether the mailbox exists is the receiving server's
-// question; this only refuses what would break a header.
-const ADDRESS = /^[^\s@<>]+@[^\s@<>]+$/;
+// Deliberately loose: one `@`, something on each side, and none of what an
+// address list parser reads as structure — whitespace, `<` `>` (a display
+// name), `,` `;` (a second address), `:` (a group). A provider that parses
+// the string then finds one mailbox, the one checked. Whether the mailbox
+// exists is the receiving server's question.
+const ADDRESS = /^[^\s@<>,;:]+@[^\s@<>,;:]+$/;
 const HEADER_NAME = /^[A-Za-z0-9-]+$/;
+// The headers a transport writes from the message: the addresses, the subject
+// and the MIME structure. Set through `headers`, a Bcc reaches an SMTP
+// envelope unchecked, and a Content-Type rewrites how the parts are read.
+const RESERVED_HEADER =
+	/^(?:to|cc|bcc|from|sender|reply-to|return-path|subject|mime-version|content-.*)$/i;
 
 /** Every recipient of a message, as bare addresses, in order. */
 export function recipientsOf(message: MailMessage): string[] {
@@ -51,8 +58,10 @@ function checkAddress(address: Address | undefined, where: string): void {
  * - `from` and `replyTo`, when present, are addresses;
  * - `subject`, `html` and `text` are strings, and `subject` holds no line
  *   break — a line break in a subject is a header injection;
- * - every header name is letters, digits and hyphens, and no header value
- *   holds a line break.
+ * - every header name is letters, digits and hyphens, none names what the
+ *   transport writes from the message (`To`, `Cc`, `Bcc`, `From`, `Sender`,
+ *   `Reply-To`, `Return-Path`, `Subject`, `MIME-Version`, `Content-*`, in
+ *   any case), and no header value holds a line break.
  */
 export function checkMessage(message: MailMessage): void {
 	if (typeof message !== 'object' || message === null) {
@@ -84,6 +93,11 @@ export function checkMessage(message: MailMessage): void {
 		if (!HEADER_NAME.test(name)) {
 			throw new MailRefused(
 				'send: a header name must be letters, digits and hyphens',
+			);
+		}
+		if (RESERVED_HEADER.test(name)) {
+			throw new MailRefused(
+				`send: header ${name} is reserved — addresses, the subject and the MIME structure are never custom headers`,
 			);
 		}
 		if (typeof value !== 'string' || LINE_BREAK.test(value)) {
