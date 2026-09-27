@@ -132,13 +132,13 @@ export const sendCases: readonly MailerCase[] = [
 	{
 		id: 'send.idempotencyKey',
 		title:
-			'a message with an idempotency key is delivered, and the key is written nowhere in it',
+			'a message with an idempotency key is delivered, and the key is in none of its recipients, subject, HTML or text',
 		async run(context) {
 			// A transport either passes the key to a provider that deduplicates, or
 			// ignores it. Neither refuses the message, and neither writes the key
-			// into the e-mail — spreading the message into the provider's request
-			// is how it gets there.
-			const key = 'conformance-7f3a/idempotency';
+			// where the reader sees it. A key per run: a harness that remembers
+			// keys, as a provider's sandbox does, would otherwise replay the send.
+			const key = `conformance-${crypto.randomUUID()}`;
 			const sent = await context.mailer.send({
 				...sampleMessage,
 				idempotencyKey: key,

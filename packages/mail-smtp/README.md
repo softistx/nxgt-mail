@@ -37,8 +37,8 @@ bun add @nxgt/mail-smtp @nxgt/mail nodemailer
 
 Peers, all required:
 
-- `@nxgt/mail` — the port, the errors and the checks: `^0.3`, the version
-  with attachments and `idempotencyKey`. One copy in your tree, so `error instanceof MailFailure`
+- `@nxgt/mail` — the port, the errors and the checks: `^0.5`, the version
+  whose conformance suite checks `idempotencyKey`. One copy in your tree, so `error instanceof MailFailure`
   holds.
 - `nodemailer` (`>=7 <11`; tested with 10). This package never imports it:
   you create the transporter, with every SMTP option nodemailer has.

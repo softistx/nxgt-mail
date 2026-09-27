@@ -33,8 +33,8 @@ bun add @nxgt/mail-resend @nxgt/mail
 
 Peers, all required:
 
-- `@nxgt/mail` — the port, the errors and the checks: `^0.3`, the version
-  with attachments and `idempotencyKey`. One copy in your tree, so `error instanceof MailFailure`
+- `@nxgt/mail` — the port, the errors and the checks: `^0.5`, the version
+  whose conformance suite checks `idempotencyKey`. One copy in your tree, so `error instanceof MailFailure`
   holds.
 - `typescript` (6). Bundler resolution (`"moduleResolution": "bundler"`) is
   what is supported and tested; `nodenext` is out of contract.

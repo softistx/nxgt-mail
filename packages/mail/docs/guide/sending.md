@@ -387,7 +387,8 @@ The URL and the address are checked when the headers are built, before
 anything is sent, and the URL is written as a parser reads it —
 `new URL(url).href`: the host lowered, `https:///host` or an empty `@`
 dropped, and any character a query cannot hold as is percent-encoded
-(`'` becomes `%27`). A `MailRefused` names the rule, never the value:
+(a `'` in the query becomes `%27`). A host's escapes are decoded, so the URL
+written is checked as well: `https://a%2Cb.test/` is refused. A `MailRefused` names the rule, never the value:
 
 | Written | Answer |
 | --- | --- |

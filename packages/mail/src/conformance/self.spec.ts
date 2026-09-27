@@ -278,6 +278,54 @@ describe('the suite fails a bad transport', () => {
 		},
 	});
 
+	it('fails a transport that refuses a message with an idempotency key', async () => {
+		const refusing: MailerHarness = {
+			async open() {
+				const opened = await referenceMailerHarness().open();
+				return {
+					...opened,
+					mailer: {
+						send: async (message) => {
+							if (message.idempotencyKey !== undefined) {
+								throw new TypeError('idempotencyKey is not supported');
+							}
+							return opened.mailer.send(message);
+						},
+					},
+				};
+			},
+		};
+		expect(
+			await failureOf(runMailerCase(byId('send.idempotencyKey'), refusing)),
+		).toContain('idempotencyKey is not supported');
+	});
+
+	it('fails a transport that writes the idempotency key into the text', async () => {
+		let key = '';
+		const leaking: MailerHarness = {
+			async open() {
+				const opened = await referenceMailerHarness().open();
+				return {
+					...opened,
+					mailer: {
+						send: async (message) => {
+							key = message.idempotencyKey ?? '';
+							return opened.mailer.send(message);
+						},
+					},
+					delivered: async () =>
+						(await opened.delivered()).map((mail) => ({
+							...mail,
+							text: `${mail.text} ${key}`,
+						})),
+				};
+			},
+		};
+		expect(
+			await failureOf(runMailerCase(byId('send.idempotencyKey'), leaking)),
+		).toContain('the idempotency key was written into the e-mail');
+	});
+
 	it('fails a transport that drops the attachments', async () => {
 		expect(
 			await failureOf(

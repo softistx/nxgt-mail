@@ -225,9 +225,10 @@ Document which one yours does, and for how long the provider remembers a key:
 past that window, a retry delivers again.
 
 The conformance suite checks what both kinds share, in `send.idempotencyKey`:
-a message with a key is delivered, and the key is written nowhere in the
-e-mail. Whether a retry is deduplicated is the provider's, so test it in your
-own specs: the key reaches the provider where it should, and nowhere else.
+a message with a key is delivered, and the key is in none of its recipients,
+subject, HTML or text. The suite reads back no header and no provider request,
+so where the key goes is yours to test, as is whether a retry is
+deduplicated: the key reaches the provider where it should, and nowhere else.
 
 ```ts
 import { expect, test } from 'bun:test';
@@ -299,7 +300,7 @@ and when `skip` names a case that does not exist
 | `send.recipients` | every recipient is delivered to, written as a string or with a name | no |
 | `send.hostileName` | a name holding `<…>`, a comma and quotes — `Ada <mallory@example.test>, "Eve" <eve@example.test>;` — reaches only its own address: quoting the name is the transport's job | no |
 | `send.attachment` | an attachment — `sampleAttachment`, every byte from 0 to 255 named `reçu n° 42.pdf`, `application/pdf` — is delivered byte for byte, with its file name and its type (compared without case), and the parts beside it as sent | no |
-| `send.idempotencyKey` | a message with an `idempotencyKey` is delivered — never refused for it — and the key appears in none of its recipients, its subject, its HTML or its text: spreading the message into the provider's request is how it gets there | no |
+| `send.idempotencyKey` | a message with an `idempotencyKey` is delivered — never refused for it — and the key appears in none of its recipients, its subject, its HTML or its text. A fresh key per run, so a harness that remembers keys still delivers | no |
 | `send.refusesNoRecipient` | no recipient throws `MailRefused`, and nothing is delivered | no |
 | `send.refusesLineBreakInSubject` | a line break in the subject throws `MailRefused`, and nothing is delivered | no |
 | `send.refusesAddressHeader` | a `Bcc` among the custom headers throws `MailRefused` without the address in its message, and nothing is delivered: it would add a recipient no check saw | no |

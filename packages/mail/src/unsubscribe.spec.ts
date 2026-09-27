@@ -49,9 +49,8 @@ describe('listUnsubscribe', () => {
 	it('keeps a percent-encoded comma, a port, and what encodeURIComponent leaves', () => {
 		const encoded = `https://example.test:8443/u?list=a%2Cb&t=${encodeURIComponent("o'brien(1)*")}`;
 		expect(listUnsubscribe({ url: encoded })['List-Unsubscribe']).toBe(
-			`<${new URL(encoded).href}>`,
+			'<https://example.test:8443/u?list=a%2Cb&t=o%27brien(1)*>',
 		);
-		expect(new URL(encoded).href).toContain('list=a%2Cb');
 	});
 
 	it.each([
@@ -81,6 +80,11 @@ describe('listUnsubscribe', () => {
 		['no //', 'https:example.test/u'],
 		['a double quote', 'https://example.test/u?t="a"'],
 		['a brace', 'https://example.test/u?t={a}'],
+		// The parser decodes a host's escapes: each would be written raw.
+		['a comma escaped in the host', 'https://a%2Cb.test/u'],
+		['a double quote escaped in the host', 'https://a%22b.test/u'],
+		['a backtick escaped in the host', 'https://a%60b.test/u'],
+		['braces escaped in the host', 'https://a%7Bb%7D.test/u'],
 		['a user and a password', 'https://user:pass@example.test/u'],
 		['a user alone', 'https://user@example.test/u'],
 		[
