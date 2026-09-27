@@ -290,3 +290,29 @@ const tagged: MailMessage = {
 	},
 };
 void [unsubscribable, tagged];
+
+// ── 24. An inline image named with nodemailer's cid ──────────────────────────
+// The port's field is contentId; `cid` is nodemailer's name for it, and
+// Resend's is content_id. A field the port does not know would be dropped.
+const logo: MailAttachment = {
+	filename: 'logo.png',
+	content: pdf,
+	contentType: 'image/png',
+	// @ts-expect-error — the field is contentId.
+	cid: 'logo@acme.test',
+};
+// Must compile: an inline image, the HTML showing it, and a harness reading
+// its content id back.
+const withLogo: MailMessage = {
+	...rendered,
+	to: 'ada@example.test',
+	html: '<img src="cid:logo@acme.test" alt="Acme">',
+	attachments: [
+		{ ...invoice, contentType: 'image/png', contentId: 'logo@acme.test' },
+	],
+};
+const logoBack: DeliveredMail = {
+	...readBack,
+	attachments: [{ ...invoice, contentId: 'logo@acme.test' }],
+};
+void [logo, withLogo, logoBack];

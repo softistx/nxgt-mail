@@ -5,7 +5,11 @@ no dates here, and the version something shipped in is the only number.
 
 ## Now
 
-Nothing yet.
+### Built, not yet published
+
+- **Inline images (`cid:`)** — an attachment's `contentId` is sent as Resend's
+  `content_id`, so the HTML shows it as `<img src="cid:…">`. The `@nxgt/mail`
+  peer moves to `^0.6.0`.
 
 ## Next
 

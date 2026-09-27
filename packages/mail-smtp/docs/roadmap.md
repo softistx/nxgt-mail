@@ -5,7 +5,12 @@ no dates here, and the version something shipped in is the only number.
 
 ## Now
 
-Nothing yet.
+### Built, not yet published
+
+- **Inline images (`cid:`)** — an attachment's `contentId` is sent as
+  nodemailer's `cid`: a `Content-ID` header, `inline`, in a
+  `multipart/related` beside the HTML, so the HTML shows it as `<img
+  src="cid:…">`. The `@nxgt/mail` peer moves to `^0.6.0`.
 
 ## Next
 

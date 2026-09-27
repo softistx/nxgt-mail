@@ -160,6 +160,8 @@ function startResend() {
 				content: string;
 				// biome-ignore lint/style/useNamingConvention: Resend's wire format names the field, not us.
 				content_type: string;
+				// biome-ignore lint/style/useNamingConvention: Resend's wire format names the field, not us.
+				content_id?: string;
 			}[];
 			delivered.push({
 				to: to.flatMap(addressesIn),
@@ -173,6 +175,9 @@ function startResend() {
 						char.charCodeAt(0),
 					),
 					contentType: file.content_type,
+					...(file.content_id === undefined
+						? {}
+						: { contentId: file.content_id }),
 				})),
 			});
 			const id = `resend-${delivered.length}`;
@@ -474,6 +479,38 @@ describe('createResendMailer, the request', () => {
 			});
 			// Longer than one slice of the encoder: every slice joins up.
 			expect(second?.content).toBe(Buffer.from(large).toString('base64'));
+		} finally {
+			await resend.close();
+		}
+	});
+
+	test("sends an inline image's content id as content_id, and none for a plain file", async () => {
+		const resend = startResend();
+		try {
+			await createResendMailer({
+				apiKey: API_KEY,
+				baseUrl: resend.baseUrl,
+			}).send({
+				...sampleMessage,
+				html: '<img src="cid:logo@acme.test">',
+				attachments: [
+					{
+						filename: 'logo.png',
+						content: new Uint8Array([0x89]),
+						contentType: 'image/png',
+						contentId: 'logo@acme.test',
+					},
+					{
+						filename: 'invoice.pdf',
+						content: new Uint8Array([0x25]),
+						contentType: 'application/pdf',
+					},
+				],
+			});
+			const [logo, invoice] = (resend.received[0]?.body.attachments ??
+				[]) as Record<string, unknown>[];
+			expect(logo?.content_id).toBe('logo@acme.test');
+			expect(invoice !== undefined && 'content_id' in invoice).toBe(false);
 		} finally {
 			await resend.close();
 		}

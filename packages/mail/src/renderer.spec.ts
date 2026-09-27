@@ -89,6 +89,9 @@ describe('createMailRenderer — a value is data, never markup or a header', () 
 			'https://app.example/"onmouseover="alert(1)',
 			'https://app.example/\nx',
 			'https://',
+			// An inline image's cid: is written in the template, never a value
+			// filled at send time: a URL from outside would pick an attachment.
+			'cid:logo@acme.test',
 		]) {
 			expect(() =>
 				mails.render('verify-email', { name: 'Ada', link: value }),

@@ -112,6 +112,28 @@ base64** — a third larger than the files — and refuses more (`MailRefused`).
 **A large or sensitive file is a signed link in the template**, not an
 attachment. See [Setting up — what a message becomes](docs/guide/setup.md#what-a-message-becomes).
 
+### Inline images — `cid:`
+
+An attachment with a `contentId` is sent with Resend's `content_id`, and the
+HTML shows it as `cid:<contentId>`:
+
+```ts
+const logo = new Uint8Array(await (await fetch('https://files.acme.test/logo.png')).arrayBuffer());
+
+await mailer.send({
+	to: 'ada@example.com',
+	subject: 'Your receipt',
+	html: '<img src="cid:logo@acme.test" alt="Acme"><p>Thank you.</p>',
+	text: 'Thank you.',
+	attachments: [{ filename: 'logo.png', content: logo, contentType: 'image/png', contentId: 'logo@acme.test' }],
+});
+```
+
+`checkMessage` refuses an id over 127 characters — Resend takes fewer than
+128 — and a `cid:` the HTML shows with no attachment of that `contentId`,
+with `MailRefused`. Resend's dashboard preview does not show inline images
+yet; the recipient's mail client does. Needs `@nxgt/mail` 0.6 or later.
+
 ### Idempotency — a retry that delivers once
 
 A message's `idempotencyKey` is sent as Resend's `Idempotency-Key` header.

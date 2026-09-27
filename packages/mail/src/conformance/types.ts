@@ -18,6 +18,10 @@ export interface DeliveredMail {
 	 * **its absence is reported, never passed over**: `send.attachment` fails
 	 * on a harness that leaves it out, until it reads them back or skips the
 	 * case with a reason.
+	 *
+	 * An inline image carries its `contentId` as the receiving end read it,
+	 * without angle brackets: `send.inlineImage` fails a harness or a
+	 * transport that leaves it out.
 	 */
 	readonly attachments?: readonly MailAttachment[];
 }

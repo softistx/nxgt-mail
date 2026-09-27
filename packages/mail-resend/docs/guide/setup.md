@@ -199,6 +199,17 @@ Content-Type: application/json
   edge runtime — and its type as `content_type`, Resend's name for it.
   Resend's `path`, a URL it would fetch, is never used. `attachments` is left
   out when the list is empty.
+- An attachment's `contentId` is sent as `content_id`, Resend's name for it:
+  the attachment is then an inline image the HTML shows as
+  `cid:<contentId>`. `content_id` is left out of an attachment without one.
+  `checkMessage` has refused, first, an id Resend would not take (128
+  characters or more, or outside letters, digits, `.` `_` `~` `+` `-` and one
+  `@`) and a `cid:` in the HTML that no attachment names — see
+  [`@nxgt/mail` — inline images](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/guide/sending.md#inline-images--cid).
+
+  ```json
+  { "filename": "logo.png", "content": "iVBORw0K…", "content_type": "image/png", "content_id": "logo@acme.test" }
+  ```
 - Resend takes at most 40 MB per e-mail **after** base64, which makes a file
   a third larger; over it, the answer is a `4xx` and `send` throws
   `MailRefused`. A large or sensitive file is a signed link in the template

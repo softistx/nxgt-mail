@@ -401,6 +401,88 @@ describe('the suite fails a bad transport', () => {
 		);
 	});
 
+	it('fails a transport that drops the content id of an inline image', async () => {
+		// The file still arrives, as an ordinary attachment: the HTML shows a
+		// broken image, and nothing threw.
+		const dropped = readingBack((mail) => ({
+			...mail,
+			attachments: (mail.attachments ?? []).map(
+				({ contentId: _, ...file }) => file,
+			),
+		}));
+		expect(
+			await failureOf(runMailerCase(byId('send.inlineImage'), dropped)),
+		).toContain(
+			'the inline image was not delivered with its content id — the HTML shows a broken image',
+		);
+	});
+
+	it('fails a transport that delivers the inline image twice, or retyped', async () => {
+		const twice = readingBack((mail) => ({
+			...mail,
+			attachments: [...(mail.attachments ?? []), ...(mail.attachments ?? [])],
+		}));
+		const retyped = readingBack((mail) => ({
+			...mail,
+			attachments: (mail.attachments ?? []).map((file) => ({
+				...file,
+				contentType: 'application/octet-stream',
+			})),
+		}));
+		expect(
+			await failureOf(runMailerCase(byId('send.inlineImage'), twice)),
+		).toContain('expected 1 delivered attachment, got 2');
+		expect(
+			await failureOf(runMailerCase(byId('send.inlineImage'), retyped)),
+		).toContain('the inline image was not delivered with its content type');
+	});
+
+	it('fails a transport that delivers a content id other than the one sent', async () => {
+		const bracketed = readingBack((mail) => ({
+			...mail,
+			attachments: (mail.attachments ?? []).map((file) => ({
+				...file,
+				contentId: `<${file.contentId}>`,
+			})),
+		}));
+		expect(
+			await failureOf(runMailerCase(byId('send.inlineImage'), bracketed)),
+		).toContain('the inline image was not delivered with its content id');
+	});
+
+	it('fails a transport that mangles the bytes or the HTML of an inline image', async () => {
+		const asText = readingBack((mail) => ({
+			...mail,
+			attachments: (mail.attachments ?? []).map((file) => ({
+				...file,
+				content: new TextEncoder().encode(
+					new TextDecoder().decode(file.content),
+				),
+			})),
+		}));
+		const rewritten = readingBack((mail) => ({
+			...mail,
+			html: mail.html.replace('cid:', 'https://example.test/'),
+		}));
+		expect(
+			await failureOf(runMailerCase(byId('send.inlineImage'), asText)),
+		).toContain('the inline image was not delivered byte for byte');
+		expect(
+			await failureOf(runMailerCase(byId('send.inlineImage'), rewritten)),
+		).toContain(
+			'the html part of a message with an inline image was not delivered as sent',
+		);
+	});
+
+	it('fails a harness that reads back no attachments on the inline image case, saying so', async () => {
+		const older = readingBack(({ attachments: _, ...mail }) => mail);
+		expect(
+			await failureOf(runMailerCase(byId('send.inlineImage'), older)),
+		).toContain(
+			"the harness's delivered() reads back no attachments — read them from the receiving end, or skip send.inlineImage with the reason",
+		);
+	});
+
 	it('fails a transport that hands over an attachment named with a path', async () => {
 		const unchecked: MailerHarness = {
 			async open() {

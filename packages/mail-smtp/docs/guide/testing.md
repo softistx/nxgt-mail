@@ -52,7 +52,9 @@ export async function startSmtpServer() {
 		onData(stream, session, callback) {
 			const refuse = faults[0] === 'refusal';
 			if (refuse) faults.shift();
-			simpleParser(stream).then(
+			// skipImageLinks: by default mailparser rewrites each cid: in the HTML
+			// as a data: URL, and the HTML read back is not the HTML sent.
+			simpleParser(stream, { skipImageLinks: true }).then(
 				(parsed) => {
 					if (refuse) return callback(reply('Message rejected', 554));
 					delivered.push({
@@ -64,6 +66,7 @@ export async function startSmtpServer() {
 							filename: file.filename ?? '',
 							content: new Uint8Array(file.content), // a Buffer, read back as bytes
 							contentType: file.contentType,
+							...(file.cid === undefined ? {} : { contentId: file.cid }), // an inline image, no angle brackets
 						})),
 					});
 					callback();
@@ -88,7 +91,10 @@ export async function startSmtpServer() {
 is who the server was asked to deliver to, and what proves a name did not
 smuggle a second recipient in. `attachments` is what `mailparser` decoded,
 the file name included: `send.attachment` fails on a harness that leaves it
-out.
+out. An inline image carries its `contentId`, read from `mailparser`'s `cid`:
+`send.inlineImage` fails on a harness that leaves it out. Parse with
+`skipImageLinks: true`, or `mailparser` rewrites the HTML's `cid:` URLs as
+`data:` URLs and the HTML read back is not the HTML sent.
 
 ## The conformance suite
 
@@ -127,10 +133,10 @@ describeMailer({
 });
 ```
 
-All fourteen cases pass: a send answers `SentMail`, the message arrives byte for
+All fifteen cases pass: a send answers `SentMail`, the message arrives byte for
 byte (accents, an emoji, `&amp;` in a link), every recipient is delivered to,
 a hostile name reaches only its own address, an attachment arrives byte for
-byte with its name and type, a message with an idempotency key is delivered
+byte with its name and type, an inline image arrives with its content id, a message with an idempotency key is delivered
 without the key written in it, the refusals — a `Bcc` among the custom headers
 and an attachment named with a path included — and the three
 failure cases — an outage is a `MailFailure` with its `cause` and one attempt,
@@ -161,6 +167,8 @@ add what the suite does not ask of every transport:
 - attachments are handed over as `{ filename, content, contentType }` with a
   `Buffer` copied from the bytes — a change to the caller's array during the
   send reaches no one — and an empty list sends none;
+- an inline image's `contentId` is handed over as nodemailer's `cid`, and a
+  plain file gets none;
 - a message over the server's size limit (`552`, from `smtp-server`'s `size`)
   is a `MailRefused`, and nothing is delivered.
 

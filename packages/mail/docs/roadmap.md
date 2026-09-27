@@ -6,7 +6,17 @@ the only number.
 
 ## Now
 
-Nothing between releases.
+### Built, not yet published
+
+- **Inline images (`cid:`)** — `contentId` on a `MailAttachment` makes it an
+  image the HTML shows as `<img src="cid:…">`. `checkMessage` refuses an id
+  that is not 1 to 127 letters, digits and `.` `_` `~` `+` `-` with at most
+  one `@`, two attachments under one id, and a `cid:` the HTML uses — an
+  attribute value or a CSS `url()` — that no attachment names, before a
+  broken image goes out. A `cid:` is written in the template: a URL variable holding one
+  is refused. The memory mailer keeps the id; the conformance suite gains
+  `send.inlineImage`, fifteen cases in all. The SMTP transport sends it as
+  nodemailer's `cid`, Resend's as `content_id`.
 
 ## Next
 
@@ -14,8 +24,6 @@ Nothing yet.
 
 ## Later
 
-- **Inline images (`cid:`)** — an attachment the HTML shows by its content
-  id. Until then, an image is an `https:` URL, as `@nxgt/mail-ui`'s logo is.
 - **More transports** — Amazon SES, Postmark and Mailgun, one package each,
   each passing the conformance suite and throwing `@nxgt/mail`'s errors.
 

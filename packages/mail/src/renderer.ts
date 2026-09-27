@@ -112,7 +112,11 @@ const PLACEHOLDER = /\{\{\s*([a-z][a-zA-Z0-9]*)\s*\}\}/g;
 /** A line break a header would split on: each run becomes one space. */
 const LINE_BREAKS = /[\r\n\v\f\u0085\u2028\u2029]+/g;
 
-/** What a URL variable may hold: a scheme a mail client cannot run. */
+/**
+ * What a URL variable may hold: a scheme a mail client cannot run. Not
+ * `cid:`: an inline image is named in the template, never by a value filled
+ * at send time — a URL from outside would pick which attachment to show.
+ */
 const SAFE_URL = /^(?:https?:\/\/|mailto:)/i;
 
 /** Whitespace, a control, a quote or a bracket: what no URL holds as is. */
