@@ -107,6 +107,25 @@ export interface MailMessage extends Rendered {
 	 * and no personal data: an id, never an address.
 	 */
 	readonly tags?: Readonly<Record<string, string>>;
+	/**
+	 * Sends the message later, at this moment, instead of now. Refused with
+	 * `MailRefused` unless it is a valid `Date`, no earlier than now (a small
+	 * tolerance for clock skew between the caller and the transport), and no
+	 * later than 30 days ahead — Resend's own limit, "Emails can be scheduled
+	 * up to 30 days in advance"
+	 * (https://resend.com/docs/dashboard/emails/schedule-email) — held by
+	 * `checkMessage` for every transport, so a message built for one works on
+	 * another.
+	 *
+	 * **A transport that cannot schedule refuses the message rather than
+	 * sending it now**: SMTP has no such thing, and sending early would be
+	 * wrong. `@nxgt/mail-resend` sends it as Resend's `scheduled_at`, ISO
+	 * 8601 — Resend still answers an id right away, the e-mail itself going
+	 * out later; cancelling one already accepted is Resend's
+	 * `POST /emails/{id}/cancel`, out of scope here, no package wraps it yet.
+	 * The memory mailer records it on the delivered message.
+	 */
+	readonly scheduledAt?: Date;
 }
 
 /** What a transport answers once it has handed a message over. */

@@ -123,6 +123,7 @@ your logs must not hold one.
 | `send: the SMTP server refused <n> of <total> recipients, and may have delivered to the others` | `MailRefused` | Some recipients refused for good, the others accepted |
 | `send: the SMTP server could not take <n> of <total> recipients, and may have delivered to the others` | `MailFailure` | Some recipients refused, one at least for now, the others accepted |
 | `send: from is missing — give the message a from, or createSmtpMailer a default one` | `MailRefused` | A message without `from`, on a mailer without a default. The transporter is not called |
+| `send: scheduledAt is not supported — SMTP has no way to schedule a send, and sending it now would be wrong` | `MailRefused` | A message with `scheduledAt`. The transporter is not called |
 | `send: …` from `checkMessage` | `MailRefused` | A message no transport hands over — see [`@nxgt/mail`'s troubleshooting](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/troubleshooting.md#sending) |
 
 ## Wiring — a `TypeError`

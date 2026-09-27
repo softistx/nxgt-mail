@@ -74,6 +74,10 @@ How the messages are shaped:
 - [`send: idempotencyKey must be 1 to 256 visible ASCII characters, as order-42/receipt`](#send-idempotencykey-must-be-1-to-256-visible-ascii-characters-as-order-42receipt)
 - [`send: idempotencyKey was already used for a different message — a key names one e-mail`](#send-idempotencykey-was-already-used-for-a-different-message--a-key-names-one-e-mail)
 - [An e-mail is delivered twice although it has an `idempotencyKey`](#an-e-mail-is-delivered-twice-although-it-has-an-idempotencykey)
+- [`send: scheduledAt must be a valid Date`](#send-scheduledat-must-be-a-valid-date)
+- [`send: scheduledAt is in the past`](#send-scheduledat-is-in-the-past)
+- [`send: scheduledAt is more than 30 days ahead — Resend's own limit`](#send-scheduledat-is-more-than-30-days-ahead--resends-own-limit)
+- [`send: scheduledAt is not supported — SMTP has no way to schedule a send, and sending it now would be wrong`](#send-scheduledat-is-not-supported--smtp-has-no-way-to-schedule-a-send-and-sending-it-now-would-be-wrong)
 - [`send: the memory mailer was told to fail this send`](#send-the-memory-mailer-was-told-to-fail-this-send)
 
 **Unsubscribe**
@@ -984,6 +988,69 @@ different e-mail to that user is refused — by the memory mailer, as
 [`send: idempotencyKey was already used for a different message — a key names one e-mail`](#send-idempotencykey-was-already-used-for-a-different-message--a-key-names-one-e-mail),
 and by Resend, as `send: Resend refused the message`. When a random key is
 what you have, create it once, store it with the job, and reuse it on retry.
+
+### `send: scheduledAt must be a valid Date`
+
+**When:** `send`, with a `scheduledAt` that is not a `Date` — an ISO string,
+a number, `new Date(Number.NaN)` — or is not a `Date` at all.
+**Why:** `scheduledAt` is typed and checked as a `Date`, never a string a
+provider's wire format happens to want: `@nxgt/mail-resend` converts it with
+`.toISOString()` itself.
+**Fix:** pass a `Date`:
+
+```ts
+// ✗ a string, however well formed
+await mailer.send({ ...message, scheduledAt: '2027-01-01T09:00:00.000Z' });
+
+// ✓ a Date
+await mailer.send({ ...message, scheduledAt: new Date('2027-01-01T09:00:00.000Z') });
+```
+
+### `send: scheduledAt is in the past`
+
+**When:** `send`, with a `scheduledAt` more than about a minute earlier than
+now.
+**Why:** a send in the past is not a schedule, it is a mistake — a date built
+from the wrong field, a time zone dropped, a value the caller meant to add to
+rather than read as is. A few seconds' tolerance absorbs clock skew between
+where the message is built and the transport; it is not room for a real delay.
+**Fix:** check the moment before sending, or drop `scheduledAt` to send now:
+
+```ts
+declare const remindAt: Date; // computed elsewhere, maybe already past
+
+const scheduledAt = remindAt.getTime() > Date.now() ? remindAt : undefined;
+await mailer.send({ ...message, ...(scheduledAt === undefined ? {} : { scheduledAt }) });
+```
+
+### `send: scheduledAt is more than 30 days ahead — Resend's own limit`
+
+**When:** `send`, with a `scheduledAt` more than 30 days from now.
+**Why:** [Resend accepts a scheduled send up to 30 days ahead](https://resend.com/docs/dashboard/emails/schedule-email)
+and no further; `checkMessage` holds every transport to the same bound, so a
+message that would be refused on Resend is refused the same way on SMTP or in
+a test, rather than only in production.
+**Fix:** schedule closer, or keep the date and send it yourself when the
+moment comes — a scheduled job that calls `mailer.send` with no `scheduledAt`
+once it is within the window:
+
+```ts
+declare const sendAt: Date; // more than 30 days out today
+
+// Store sendAt, and send without scheduledAt once you are within 30 days of it.
+```
+
+### `send: scheduledAt is not supported — SMTP has no way to schedule a send, and sending it now would be wrong`
+
+**When:** `send`, through `@nxgt/mail-smtp`, with a message that carries
+`scheduledAt`.
+**Why:** SMTP has no notion of "send this later" — the message goes to the
+server the moment it is handed over. `@nxgt/mail-smtp` refuses it rather than
+silently sending it now, which would look like success while doing the
+opposite of what was asked.
+**Fix:** schedule through a transport that supports it (`@nxgt/mail-resend`),
+or hold the e-mail yourself — a job scheduled for that moment, calling `send`
+with no `scheduledAt` — and send it through SMTP when the moment comes.
 
 ### `send: the memory mailer was told to fail this send`
 

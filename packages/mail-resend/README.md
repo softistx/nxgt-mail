@@ -186,6 +186,28 @@ The same key while its first send is **still in progress**
 reaches the e-mail. See
 [Setting up — the idempotency key](docs/guide/setup.md#the-idempotency-key).
 
+### Scheduling — `scheduledAt`
+
+A message's `scheduledAt` is sent as Resend's `scheduled_at`, ISO 8601:
+
+```ts
+await mailer.send({
+	to: 'ada@example.com',
+	subject: 'Your trial ends in three days',
+	html: '<p>…</p>',
+	text: '…',
+	scheduledAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // '2026-09-30T14:00:00.000Z'
+});
+```
+
+Resend answers an id right away, as any send does; the e-mail itself goes out
+later. `@nxgt/mail`'s `checkMessage` already refuses a `scheduledAt` more than
+30 days ahead — [Resend's own limit](https://resend.com/docs/dashboard/emails/schedule-email) —
+before anything is sent, so a message accepted here is never refused by
+Resend for being too far out. Cancelling one already accepted is Resend's own
+[`POST /emails/{id}/cancel`](https://resend.com/docs/api-reference/emails/cancel-email):
+out of scope here, no method wraps it yet. Needs `@nxgt/mail` 0.7 or later.
+
 ### Errors — a refusal or a failure
 
 | When | Throws | `cause` |

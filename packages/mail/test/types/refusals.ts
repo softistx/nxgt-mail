@@ -10,7 +10,7 @@
  * The calls that **must keep compiling** are here too, unmarked: a refusal
  * that refuses the correct call is a bug.
  *
- * **Twenty-one plausible mistakes, twenty-one refused.**
+ * **26 plausible mistakes, 26 refused.**
  */
 
 import type { DeliveredMail, MailerHarness } from '../../src/conformance/index';
@@ -334,3 +334,21 @@ const labelled: MailMessage = {
 	tags: { category: 'receipt', plan },
 };
 void [listed, labelled];
+
+// ── 26. scheduledAt given as a string ────────────────────────────────────────
+// ISO text looks right but is not a Date: checkMessage would refuse it at run
+// time, and every transport reads the same field, so the mistake is caught
+// once, here.
+const isoText: MailMessage = {
+	...rendered,
+	to: 'ada@example.test',
+	// @ts-expect-error — scheduledAt is a Date, not an ISO string.
+	scheduledAt: '2027-01-01T00:00:00.000Z',
+};
+// Must compile: a Date, a day ahead.
+const scheduled: MailMessage = {
+	...rendered,
+	to: 'ada@example.test',
+	scheduledAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+};
+void [isoText, scheduled];

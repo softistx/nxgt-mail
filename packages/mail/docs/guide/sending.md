@@ -2,7 +2,8 @@
 
 This page is for calling `mailer.send`: the shape of what it takes, the
 addresses, headers and attachments it accepts, one-click unsubscribe, the
-idempotency key that makes a retry safe, what it answers, and what it throws.
+idempotency key that makes a retry safe, scheduling a send ahead, what it
+answers, and what it throws.
 
 ```ts
 import { createMemoryMailer } from '@nxgt/mail';
@@ -77,6 +78,7 @@ interface MailMessage extends Rendered {
 	readonly attachments?: readonly MailAttachment[];
 	readonly idempotencyKey?: string;
 	readonly tags?: Readonly<Record<string, string>>;
+	readonly scheduledAt?: Date;
 }
 
 interface MailAttachment {
@@ -98,6 +100,7 @@ interface MailAttachment {
 | `attachments` | `readonly MailAttachment[]` | no | Files sent with the e-mail, in order, as bytes — see [Attachments](#attachments). An empty list is the same as none |
 | `idempotencyKey` | `string` | no | Names this send, so sending it again delivers it once where the transport can deduplicate — see [Idempotency](#idempotency--sending-once). 1 to 256 visible ASCII characters |
 | `tags` | `Record<string, string>` | no | Labels for the provider's dashboard and webhooks, never part of the e-mail — see [Tags](#tags--labels-for-the-provider). Each name and value 1 to 256 ASCII letters, digits, `_` or `-` |
+| `scheduledAt` | `Date` | no | Sends the e-mail later instead of now — see [Scheduling](#scheduling--scheduledat). No more than 30 days ahead |
 
 `Rendered` is what the renderer answers — `mails.render('verify-email', { name, link })`
 fills the values only known at send time into a built Maizzle template — and a
@@ -741,6 +744,51 @@ The rule already refuses `@` and `.`, so an e-mail address cannot be a tag.
 | `tags: [{ name: 'category', value: 'receipt' }]` — Resend's wire format | a compile error; at run time `MailRefused`: `send: tags must be an object of names to values, as { category: 'receipt' }` |
 | a name that is empty, over 256 characters, or holds a space, a `.` or a letter outside ASCII | `MailRefused`: `send: a tag name must be 1 to 256 ASCII letters, digits, _ or -` |
 | `tags: { category: 'reçu' }`, `''`, `'ada@example.com'`, a number | `MailRefused`: `send: tag category must be 1 to 256 ASCII letters, digits, _ or -` |
+
+## Scheduling — `scheduledAt`
+
+`scheduledAt` sends the e-mail later instead of now, in place of a queue you
+would otherwise build yourself:
+
+```ts
+import type { Mailer, Rendered } from '@nxgt/mail';
+
+export async function sendTrialEndingSoon(mailer: Mailer, user: { email: string }, rendered: Rendered, trialEndsAt: Date): Promise<void> {
+	const scheduledAt = new Date(trialEndsAt.getTime() - 3 * 24 * 60 * 60 * 1000); // three days before it ends
+	await mailer.send({ ...rendered, to: user.email, scheduledAt });
+}
+```
+
+**`checkMessage` refuses it the same way on every transport**, so a message
+that is accepted on one is accepted on any other:
+
+| Written | Answer |
+| --- | --- |
+| a `Date` up to 30 days ahead | accepted |
+| a `Date` a few seconds in the past | accepted — a small tolerance for clock skew between the caller and the transport |
+| `'2027-01-01'`, a number, `new Date(Number.NaN)` | `MailRefused`: `send: scheduledAt must be a valid Date` |
+| a `Date` more than a minute in the past | `MailRefused`: `send: scheduledAt is in the past` |
+| a `Date` more than 30 days ahead | `MailRefused`: `send: scheduledAt is more than 30 days ahead — Resend's own limit` |
+
+The 30-day bound is [Resend's own limit](https://resend.com/docs/dashboard/emails/schedule-email)
+("Emails can be scheduled up to 30 days in advance"), held here for every
+transport — not only Resend's — so a message built against `@nxgt/mail`
+alone is never accepted in testing and refused in production because the
+transport changed.
+
+**What each transport does with it:**
+
+| Transport | Effect |
+| --- | --- |
+| `createMemoryMailer()` | Accepts it and records it on the message in `mailer.sent`. Included in the idempotency fingerprint: the same key rescheduled to a different moment is a `MailRefused`, as a different message under that key always is |
+| `@nxgt/mail-resend` | Sent as Resend's `scheduled_at`, ISO 8601 (`message.scheduledAt.toISOString()`). Resend answers an id right away; the e-mail itself goes out later. Resend's own [`POST /emails/{id}/cancel`](https://resend.com/docs/api-reference/emails/cancel-email) cancels one it has not sent yet — out of scope here, no package wraps it |
+| `@nxgt/mail-smtp` | Refused with `MailRefused`: `send: scheduledAt is not supported — SMTP has no way to schedule a send, and sending it now would be wrong`. SMTP has no notion of a later send, and sending it at once instead would silently ignore what was asked |
+
+**A transport that cannot schedule must refuse the message, never send it at
+once**: the conformance suite's `send.scheduled` sends a message a day ahead
+and requires one of the two — delivered with its `scheduledAt`, or a
+`MailRefused` — and fails a transport that drops the field and sends
+regardless.
 
 ## Errors
 

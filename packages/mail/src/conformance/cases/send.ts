@@ -1,4 +1,5 @@
-import { check, same } from '../assert';
+import { MailRefused } from '../../errors';
+import { check, nothingDelivered, same } from '../assert';
 import { sampleAttachment, sampleInlineImage, sampleMessage } from '../sample';
 import type { MailerCase } from '../types';
 import { refusalCases } from './refusals';
@@ -236,6 +237,44 @@ export const sendCases: readonly MailerCase[] = [
 					(part) => part?.includes(run),
 				),
 				'a tag was written into the e-mail',
+			);
+		},
+	},
+	{
+		id: 'send.scheduled',
+		title:
+			'a message scheduled ahead is honoured — delivered with its scheduledAt, or refused with MailRefused — never sent as if it were absent',
+		async run(context) {
+			// A day ahead: inside Resend's 30-day limit, and past checkMessage's
+			// clock-skew tolerance, so every honest answer is unambiguous.
+			const scheduledAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+			const outcome = await context.mailer
+				.send({ ...sampleMessage, scheduledAt })
+				.then(
+					(sent) => ({ sent, error: null as unknown }),
+					(error: unknown) => ({ sent: null, error }),
+				);
+			if (outcome.error !== null) {
+				check(
+					outcome.error instanceof MailRefused,
+					'a transport that cannot honour scheduledAt must refuse it with MailRefused, never send it at once',
+				);
+				await nothingDelivered(context, 'a scheduled send that was refused');
+				return;
+			}
+			const delivered = await context.delivered();
+			check(
+				delivered.length === 1,
+				`expected 1 delivered message, got ${delivered.length}`,
+			);
+			const [mail] = delivered;
+			check(
+				mail?.scheduledAt !== undefined,
+				"the harness's delivered() reads back no scheduledAt — read it back from the receiving end, or skip send.scheduled with the reason",
+			);
+			check(
+				mail.scheduledAt.getTime() === scheduledAt.getTime(),
+				'the message was not delivered with the scheduledAt it was sent with',
 			);
 		},
 	},

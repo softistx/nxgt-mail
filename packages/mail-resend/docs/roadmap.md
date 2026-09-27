@@ -24,14 +24,19 @@ Nothing planned yet. Say what you need in an issue.
   send the same e-mail twice.
 - **A transport's own error class** — it throws `@nxgt/mail`'s `MailFailure`
   and `MailRefused`, so `instanceof` holds whichever transport you wire.
-- **Scheduling and batch sending** — a message is sent now, one per request;
-  the port has no room for more.
+- **Batch sending** — one message per request; the port has no room for more.
+- **Cancelling a scheduled send** — Resend's own
+  `POST /emails/{id}/cancel`; see
+  [`@nxgt/mail`'s roadmap](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/roadmap.md).
 
 ## Shipped
 
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **Scheduled send, v0.5.0** — a message's `scheduledAt` is sent as Resend's
+  `scheduled_at`, ISO 8601: Resend answers an id right away, and sends the
+  e-mail itself later. The `@nxgt/mail` peer moves to `^0.7.0`.
 - **Inline images (`cid:`), v0.4.0** — an attachment's `contentId` is sent as
   Resend's `content_id`, so the HTML shows it as `<img src="cid:…">`. The
   `@nxgt/mail` peer moves to `^0.6.0`.

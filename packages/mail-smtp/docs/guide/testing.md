@@ -133,11 +133,13 @@ describeMailer({
 });
 ```
 
-All sixteen cases pass: a send answers `SentMail`, the message arrives byte for
+All seventeen cases pass: a send answers `SentMail`, the message arrives byte for
 byte (accents, an emoji, `&amp;` in a link), every recipient is delivered to,
 a hostile name reaches only its own address, an attachment arrives byte for
 byte with its name and type, an inline image arrives with its content id, a message with an idempotency key is delivered
-without the key written in it, a message with tags is delivered without a tag written in it, the refusals — a `Bcc` among the custom headers
+without the key written in it, a message with tags is delivered without a tag written in it, a message scheduled
+ahead is refused with `MailRefused` — SMTP cannot honour it, and this counts as passing `send.scheduled` —
+the refusals — a `Bcc` among the custom headers
 and an attachment named with a path included — and the three
 failure cases — an outage is a `MailFailure` with its `cause` and one attempt,
 a refusal a `MailRefused`, and the next send goes through.
@@ -164,6 +166,8 @@ add what the suite does not ask of every transport:
 - nodemailer is told never to read a file or a URL;
 - `idempotencyKey` is ignored: the same message sent twice is handed over
   twice, and the key appears nowhere in what nodemailer receives;
+- a message with `scheduledAt` is refused with `MailRefused`, before
+  `transporter.sendMail` is ever called — nothing reaches nodemailer;
 - attachments are handed over as `{ filename, content, contentType }` with a
   `Buffer` copied from the bytes — a change to the caller's array during the
   send reaches no one — and an empty list sends none;

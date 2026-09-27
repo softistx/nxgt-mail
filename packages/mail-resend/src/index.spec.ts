@@ -179,6 +179,9 @@ function startResend() {
 						? {}
 						: { contentId: file.content_id }),
 				})),
+				...(typeof body.scheduled_at === 'string'
+					? { scheduledAt: new Date(body.scheduled_at) }
+					: {}),
 			});
 			const id = `resend-${delivered.length}`;
 			if (key !== null) keys.set(key, { body: JSON.stringify(body), id });
@@ -566,6 +569,25 @@ describe('createResendMailer, the request', () => {
 				tags: Object.fromEntries(Object.entries(tags).slice(0, 75)),
 			});
 			expect(resend.received).toHaveLength(1);
+		} finally {
+			await resend.close();
+		}
+	});
+
+	test("sends scheduledAt as Resend's scheduled_at, ISO 8601, and none without one", async () => {
+		const resend = startResend();
+		try {
+			const mailer = createResendMailer({
+				apiKey: API_KEY,
+				baseUrl: resend.baseUrl,
+			});
+			const scheduledAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+			await mailer.send({ ...sampleMessage, scheduledAt });
+			await mailer.send(sampleMessage);
+			expect(resend.received[0]?.body.scheduled_at).toBe(
+				scheduledAt.toISOString(),
+			);
+			expect('scheduled_at' in (resend.received[1]?.body ?? {})).toBe(false);
 		} finally {
 			await resend.close();
 		}

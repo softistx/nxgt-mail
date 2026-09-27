@@ -203,6 +203,7 @@ describe('createMemoryMailer', () => {
 			},
 			{ ...message, attachments: [{ ...pdf, contentId: 'receipt' }] },
 			{ ...message, tags: { category: 'receipt' } },
+			{ ...message, scheduledAt: new Date(Date.now() + 60_000) },
 		]) {
 			const error = await mailer
 				.send({
@@ -311,6 +312,47 @@ describe('createMemoryMailer', () => {
 		const retried = await mailer.send(once);
 
 		expect(retried.messageId).toBe('memory-1');
+		expect(mailer.sent).toHaveLength(1);
+	});
+
+	it('records scheduledAt on the delivered message, and retries the same send once', async () => {
+		const mailer = createMemoryMailer();
+		const scheduledAt = new Date(Date.now() + 60 * 60 * 1000);
+		const first = await mailer.send({
+			...message,
+			idempotencyKey: 'k',
+			scheduledAt,
+		});
+		const retried = await mailer.send({
+			...message,
+			idempotencyKey: 'k',
+			scheduledAt,
+		});
+
+		expect(mailer.sent[0]?.scheduledAt).toEqual(scheduledAt);
+		expect(retried).toEqual(first);
+		expect(mailer.sent).toHaveLength(1);
+	});
+
+	it('refuses a retry under the same key rescheduled to a different moment', async () => {
+		const mailer = createMemoryMailer();
+		await mailer.send({
+			...message,
+			idempotencyKey: 'k',
+			scheduledAt: new Date(Date.now() + 60_000),
+		});
+		const error = await mailer
+			.send({
+				...message,
+				idempotencyKey: 'k',
+				scheduledAt: new Date(Date.now() + 120_000),
+			})
+			.then(
+				() => null,
+				(e: unknown) => e,
+			);
+
+		expect(error).toBeInstanceOf(MailRefused);
 		expect(mailer.sent).toHaveLength(1);
 	});
 

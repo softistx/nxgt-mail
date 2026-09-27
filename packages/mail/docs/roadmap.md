@@ -16,6 +16,10 @@ Nothing yet.
 
 - **More transports** — Amazon SES, Postmark and Mailgun, one package each,
   each passing the conformance suite and throwing `@nxgt/mail`'s errors.
+- **Cancelling a scheduled send** — Resend's own
+  `POST /emails/{id}/cancel`. `scheduledAt` ships without it: a package that
+  wraps it needs the id `send` already answers, and a shape for "cancel"
+  that a memory mailer and a future transport could share.
 
 ## Not planned
 
@@ -61,6 +65,15 @@ Nothing yet.
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **Scheduled send, v0.7.0** — `scheduledAt` on a `MailMessage`, a `Date` that
+  sends the e-mail later instead of now. `checkMessage` refuses a value that
+  is not a valid `Date`, one in the past (a small tolerance for clock skew),
+  or more than 30 days ahead — Resend's own limit, held for every transport.
+  `@nxgt/mail-resend` sends it as Resend's `scheduled_at`, ISO 8601;
+  `@nxgt/mail-smtp` refuses it — SMTP cannot schedule, and sending it now
+  would be wrong. The memory mailer records it, and includes it in the
+  idempotency fingerprint; the conformance suite gains `send.scheduled`,
+  seventeen cases in all.
 - **Inline images (`cid:`), v0.6.0** — `contentId` on a `MailAttachment` makes
   it an image the HTML shows as `<img src="cid:…">`. `checkMessage` refuses an
   id that is not 1 to 127 letters, digits and `.` `_` `~` `+` `-` with at most
@@ -123,6 +136,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
 - **A memory transport for tests, v0.1.0** — `createMemoryMailer()`: an outbox you can
   read (`mailer.sent`), and a next send you can make fail, to test the path
   where an e-mail does not go.
-- **Choosing the recipient's locale, v0.1.0** — `pickLocale(wanted, supported,
-  fallback)` and `parseAcceptLanguage()`: a stored preference first, then the
-  browser's languages, `fr-CA` matching `fr`, the fallback when nothing does.

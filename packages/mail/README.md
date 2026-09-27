@@ -260,6 +260,40 @@ secret. A name or value outside the rule is refused with `MailRefused`,
 naming the tag and never the value. See
 [Sending — tags](docs/guide/sending.md#tags--labels-for-the-provider).
 
+### Scheduling — `scheduledAt`
+
+`scheduledAt` sends the e-mail later instead of now — a `Date`, no more than
+30 days ahead:
+
+```ts
+import type { Mailer, Rendered } from '@nxgt/mail';
+
+export async function sendReminder(mailer: Mailer, to: string, rendered: Rendered, remindAt: Date): Promise<void> {
+	await mailer.send({ ...rendered, to, scheduledAt: remindAt });
+}
+```
+
+**A transport either honours it or refuses it — never sends it now instead.**
+`@nxgt/mail-resend` sends it as Resend's `scheduled_at`, ISO 8601: Resend
+answers an id right away, and sends the e-mail itself later.
+`@nxgt/mail-smtp` has no way to schedule a send, and refuses one with
+`MailRefused` rather than sending it early. The memory mailer records it, and
+includes it in the idempotency fingerprint — the same key rescheduled to a
+different moment is a different message. See
+[Sending — scheduling](docs/guide/sending.md#scheduling--scheduledat).
+
+`checkMessage` refuses, before anything is sent:
+
+| Written | Answer |
+| --- | --- |
+| a `Date` up to 30 days ahead, or a few seconds in the past (clock skew) | accepted |
+| `'2027-01-01'`, `new Date(Number.NaN)` | `MailRefused`: `send: scheduledAt must be a valid Date` |
+| a `Date` more than a minute in the past | `MailRefused`: `send: scheduledAt is in the past` |
+| a `Date` more than 30 days ahead — Resend's own limit | `MailRefused`: `send: scheduledAt is more than 30 days ahead — Resend's own limit` |
+
+Cancelling a send Resend already accepted is its `POST /emails/{id}/cancel`;
+no package wraps it yet.
+
 ### One-click unsubscribe — `listUnsubscribe`
 
 Gmail and Yahoo require bulk senders to offer one-click unsubscribe on
@@ -497,6 +531,12 @@ your decision, made where you can see it.
 ``idempotencyKey: `receipt-${Date.now()}` `` gives the retry a new key, and
 the e-mail goes out twice; write ``idempotencyKey: `order-${order.id}/receipt` ``.
 
+**`scheduledAt` is not a queue.** It sends later through the transport's own
+mechanism (Resend keeps it, SMTP has none); it does not survive a process
+restart on its own, and rescheduling it is not supported — send a new message
+with a new `scheduledAt` instead, under a new `idempotencyKey` if the old one
+already reached the transport.
+
 **The locale is the recipient's, not the request's.** An administrator who
 invites a user sends the invitation in the *user's* locale:
 `pickLocale(invitee.locale, supported, fallback)`.
@@ -510,7 +550,7 @@ gives a test file `describe` and `it` as bare identifiers, not on `globalThis`.
 
 ## Type safety, counted
 
-**25 plausible mistakes, 25 refused** at compile time, each measured by a
+**26 plausible mistakes, 26 refused** at compile time, each measured by a
 `@ts-expect-error` in
 [`test/types/refusals.ts`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/test/types/refusals.ts)
 that fails the typecheck the moment it stops holding:
@@ -565,6 +605,11 @@ And tags:
 
 25. Tags written as Resend's list of `{ name, value }`: the port's are a
     record, `{ category: 'receipt' }`.
+
+And scheduling:
+
+26. `scheduledAt` given as an ISO string: the field is a `Date`, checked at
+    run time.
 
 The same file holds the calls that must keep compiling: a refusal that refuses
 the correct call is a bug.

@@ -19,6 +19,11 @@ export interface MemoryMail extends MailMessage {
  * not delivered again; a different message under that key is a
  * {@link MailRefused}. A send that failed delivered nothing, so its key stays
  * free.
+ *
+ * It honours `scheduledAt` too: a scheduled message is accepted and kept in
+ * `sent` with it, rather than sent at once — there being nothing else to
+ * "send" to, it is simply recorded, as `@nxgt/mail-resend` hands it to Resend
+ * and Resend answers before the e-mail itself goes out.
  */
 export interface MemoryMailer extends Mailer {
 	/** Every message accepted so far, oldest first. A copy: mutating it changes nothing. */
@@ -72,7 +77,9 @@ const hexOf = (bytes: Uint8Array) =>
  * prototype counts and a field the port does not know does not — in one
  * form, however the object was written: `to` as one address or a list of
  * one, no `headers`, `attachments` or `tags` or an empty one, headers and
- * tags in any order, bytes in a `Buffer` or a plain `Uint8Array`.
+ * tags in any order, bytes in a `Buffer` or a plain `Uint8Array`. Includes
+ * `scheduledAt`: the same e-mail sent at a different moment is a different
+ * send, and a key must not answer one for the other.
  */
 function fingerprintOf(message: MailMessage): string {
 	const address = (value: Address | undefined) =>
@@ -97,6 +104,7 @@ function fingerprintOf(message: MailMessage): string {
 			hexOf(file.content),
 		]),
 		sorted(message.tags),
+		message.scheduledAt?.getTime() ?? null,
 	]);
 }
 

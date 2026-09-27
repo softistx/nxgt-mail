@@ -1,8 +1,9 @@
 # Testing with the memory mailer
 
 This page is for testing code that sends e-mail: `createMemoryMailer()` keeps
-what it accepts in an outbox, refuses what every transport refuses, and can be
-told to fail, so a test proves what your code does when a send throws.
+what it accepts in an outbox, records a scheduled send's `scheduledAt`,
+refuses what every transport refuses, and can be told to fail, so a test
+proves what your code does when a send throws.
 
 ```ts
 import { expect, it } from 'bun:test';
@@ -243,15 +244,47 @@ it('delivers the retry of a send that failed', async () => {
 ```
 
 "The same message" is what it would deliver: every field of `MailMessage`,
-read by name, the attachments by their bytes. How the object was written
-does not count — the order of its fields, of its headers or of its tags,
-`to` as one address or a list of one, no `headers`, `attachments` or `tags`
-or an empty one,
+read by name, the attachments by their bytes, `scheduledAt` included. How the
+object was written does not count — the order of its fields, of its headers
+or of its tags, `to` as one address or a list of one, no `headers`,
+`attachments` or `tags` or an empty one,
 the bytes in a `Buffer` or a plain `Uint8Array` — and neither does a field
 `MailMessage` does not have. SMTP ignores
 the key altogether, so this is the behaviour of a deduplicating transport,
 not of every one. A queued `failNext` fails the next send even when its key
 was already delivered.
+
+## `scheduledAt` — recorded, and part of the fingerprint
+
+The memory mailer accepts a message's
+[`scheduledAt`](sending.md#scheduling--scheduledat) and records it on the
+delivered message, rather than sending at once — there being nothing else to
+send it to:
+
+```ts
+import { expect, it } from 'bun:test';
+import { createMemoryMailer } from '@nxgt/mail';
+
+it('records scheduledAt on the delivered message', async () => {
+	const mailer = createMemoryMailer();
+	const scheduledAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+	await mailer.send({
+		to: 'ada@example.com',
+		subject: 'Your trial ends soon',
+		html: '<p>Your trial ends soon.</p>',
+		text: 'Your trial ends soon.',
+		scheduledAt,
+	});
+
+	expect(mailer.sent[0]?.scheduledAt).toEqual(scheduledAt);
+});
+```
+
+It counts in the idempotency fingerprint too: the same key sent again with a
+**different** `scheduledAt` is refused as any other different message under
+that key is — rescheduling is not "the same send", and a caller that meant to
+reschedule needs a new key.
 
 ## `clear()`
 
@@ -264,8 +297,9 @@ Exactly what every transport refuses, because it calls
 [`checkMessage`](transports.md#checkmessage-first) first: no recipient, something
 that is not an address, a line break in a name, the subject or a header, a
 missing part, an attachment that is not bytes or whose file name or type is
-malformed, or an idempotency key that is not 1 to 256 visible ASCII
-characters. A test that passes against the memory mailer does not pass by
+malformed, an idempotency key that is not 1 to 256 visible ASCII characters,
+or a `scheduledAt` that is not a valid `Date`, in the past, or more than 30
+days ahead. A test that passes against the memory mailer does not pass by
 accident a message a real transport would refuse. The full list is in
 [Sending](sending.md#addresses) and
 [Sending — attachments](sending.md#attachments).

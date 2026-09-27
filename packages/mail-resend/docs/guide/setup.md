@@ -219,6 +219,15 @@ Content-Type: application/json
   ```json
   "tags": [{ "name": "category", "value": "passwordReset" }, { "name": "plan", "value": "enterprise" }]
   ```
+- `scheduledAt` is sent as Resend's `scheduled_at`, ISO 8601
+  (`message.scheduledAt.toISOString()`), and left out of a message that has
+  none. `checkMessage` has already refused a value that is not a valid
+  `Date`, in the past, or more than 30 days ahead — Resend's own limit — so a
+  message that reaches Resend is always within it.
+
+  ```json
+  "scheduled_at": "2026-09-30T14:00:00.000Z"
+  ```
 - Resend takes at most 40 MB per e-mail **after** base64, which makes a file
   a third larger; over it, the answer is a `4xx` and `send` throws
   `MailRefused`. A large or sensitive file is a signed link in the template

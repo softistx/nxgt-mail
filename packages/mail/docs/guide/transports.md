@@ -273,6 +273,23 @@ or `-`, which Resend and Amazon SES both take; a provider's own limit on how
 many — Resend's 75 — is the transport's to refuse with `MailRefused`, before
 sending.
 
+## Scheduling
+
+`scheduledAt` sends a message later instead of now. `checkMessage` has
+already refused anything but a valid `Date` up to 30 days ahead — Resend's own
+limit, held for every transport — so a transport only decides what to do with
+one that is left:
+
+| Can the provider schedule? | The transport |
+| --- | --- |
+| yes, an API field or header | sends it there, in the format the provider wants (Resend: `scheduled_at`, ISO 8601, `message.scheduledAt.toISOString()`) |
+| no | throws `MailRefused` — never sends the message at once, which would be exactly the mistake `scheduledAt` exists to prevent |
+
+`send.scheduled` sends a message a day ahead and accepts either answer, never
+a silent send: it fails a transport whose `delivered()` shows the message
+without the `scheduledAt` it was sent with, which is what a transport that
+drops the field and sends anyway looks like.
+
 ## The conformance suite
 
 ```ts
@@ -325,6 +342,7 @@ and when `skip` names a case that does not exist
 | `send.inlineImage` | an inline image — `sampleInlineImage`, a PNG with `contentId: 'logo-7f3a@example.test'` — is delivered with that content id (no angle brackets), byte for byte, with its type, and the HTML that shows it as `cid:logo-7f3a@example.test` as sent | no |
 | `send.idempotencyKey` | a message with an `idempotencyKey` is delivered — never refused for it — and the key appears in none of its recipients, its subject, its HTML or its text. A fresh key per run, so a harness that remembers keys still delivers | no |
 | `send.tags` | a message with `tags` is delivered — never refused for them — and no tag value appears in its recipients, its subject, its HTML or its text. A fresh value per run | no |
+| `send.scheduled` | a message scheduled a day ahead is either delivered with its `scheduledAt`, or refused with `MailRefused` — never sent as though `scheduledAt` were absent | no |
 | `send.refusesNoRecipient` | no recipient throws `MailRefused`, and nothing is delivered | no |
 | `send.refusesLineBreakInSubject` | a line break in the subject throws `MailRefused`, and nothing is delivered | no |
 | `send.refusesAddressHeader` | a `Bcc` among the custom headers throws `MailRefused` without the address in its message, and nothing is delivered: it would add a recipient no check saw | no |
@@ -336,7 +354,7 @@ and when `skip` names a case that does not exist
 
 The message they send is exported as `sampleMessage`, its attachment as
 `sampleAttachment`, its inline image as `sampleInlineImage`, and the cases as
-data: `sendCases` (the thirteen `send.*`), `failureCases` (the three `failure.*`) and
+data: `sendCases` (the fourteen `send.*`), `failureCases` (the three `failure.*`) and
 `allMailerCases` (both, in the order above). A transport's own tests can reuse
 them — send the sample through your transport, or run only the cases that
 need no faults:
@@ -386,6 +404,7 @@ interface DeliveredMail {
 	readonly html: string;
 	readonly text: string;
 	readonly attachments?: readonly MailAttachment[]; // as they arrived: [] when none did, with each contentId
+	readonly scheduledAt?: Date; // when the message it delivered carried one
 }
 
 interface MailerFaults {
@@ -407,7 +426,10 @@ interface MailerFaults {
   brackets: `mailparser`'s `cid`, or the id in the JSON body. Over SMTP, parse
   with `simpleParser(stream, { skipImageLinks: true })`: by default
   `mailparser` rewrites each `cid:` in the HTML as a `data:` URL, and
-  `send.inlineImage` then reads back HTML that was never sent.
+  `send.inlineImage` then reads back HTML that was never sent. `scheduledAt`
+  is optional the same way: read back for a message that carried one — Resend's
+  `scheduled_at`, re-parsed — or left out on a transport that refuses instead
+  of scheduling, whose `send.scheduled` never reaches `delivered()`.
 - `close()`, when present, is called after the case, pass or fail.
 
 ### Faults — failing the way the provider fails
@@ -475,7 +497,7 @@ export function fakeProvider() {
 ```
 
 With the transport and the fake above, the example at the top of this page
-passes all sixteen cases.
+passes all seventeen cases.
 
 ### Without faults
 
