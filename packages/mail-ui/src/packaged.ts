@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { MaizzleConfig } from '@maizzle/framework';
@@ -34,12 +34,36 @@ function maizzleComponentsDir(from: string): string {
 }
 
 /**
- * The file name of a tag, as Maizzle names a component from its file:
- * `NxCardHeader` is `nx-card-header.vue`. `NxCardHeader.vue` is found too,
- * as Maizzle's own `Button.vue` is.
+ * The name Maizzle gives the component of a file name: `nx-card-header` is
+ * `NxCardHeader`, `Button` stays `Button`. A copy of its `pascalCase`
+ * (`@maizzle/framework/dist/utils/componentSources.js`), which the package does
+ * not export: change them together.
  */
-const kebabCase = (name: string): string =>
-	name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+const pascalCase = (name: string): string =>
+	name
+		.replace(/[-_\s]+(.)/g, (_, c: string) => c.toUpperCase())
+		.replace(/^(.)/, (c) => c.toUpperCase());
+
+/**
+ * The first `.vue` file at the top of `dirs`, in order, that Maizzle names
+ * `tag` — `nx-card-header.vue` or `NxCardHeader.vue` for `<NxCardHeader>`.
+ * Named, not guessed: `nx-2fa.vue` is `<Nx2fa>`, which no case conversion of
+ * the tag gives back. A missing folder is skipped.
+ */
+export function fileForTag(
+	dirs: readonly string[],
+	tag: string,
+): string | undefined {
+	for (const dir of dirs) {
+		if (!existsSync(dir)) continue;
+		const file = readdirSync(dir)
+			.filter((entry) => entry.endsWith('.vue'))
+			.sort()
+			.find((entry) => pascalCase(entry.slice(0, -'.vue'.length)) === tag);
+		if (file !== undefined) return join(dir, file);
+	}
+	return undefined;
+}
 
 /**
  * Maizzle resolves the tags of a template (`<NxButton>`, `<Container>`) with
@@ -54,15 +78,6 @@ export function packagedComponents(componentsDir: string): VitePlugins {
 		dirname(fileURLToPath(import.meta.url)),
 	);
 	let root = process.cwd();
-	const resolveTag = (name: string): string | undefined => {
-		for (const dir of [resolve(root, 'components'), componentsDir, builtins]) {
-			for (const base of [kebabCase(name), name]) {
-				const file = join(dir, `${base}.vue`);
-				if (existsSync(file)) return file;
-			}
-		}
-		return undefined;
-	};
 	return [
 		{
 			name: 'nxgt:mail-ui:root',
@@ -74,7 +89,13 @@ export function packagedComponents(componentsDir: string): VitePlugins {
 			include: [PACKAGED],
 			exclude: [MAIZZLE],
 			dirs: [],
-			resolvers: [(name) => resolveTag(name)],
+			resolvers: [
+				(name) =>
+					fileForTag(
+						[resolve(root, 'components'), componentsDir, builtins],
+						name,
+					),
+			],
 			dts: false,
 		}),
 	];

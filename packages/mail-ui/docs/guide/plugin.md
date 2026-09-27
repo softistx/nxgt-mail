@@ -220,9 +220,9 @@ build would pass.
 `.vue` file under `node_modules`, Maizzle's own excepted. It looks a tag up in
 this order:
 
-1. your project's `components/`, as the tag in kebab case (`nx-badge.vue`
-   for `<NxBadge>`), then as the tag itself (`NxBadge.vue`) — so a component
-   you replace is replaced in a package's templates too;
+1. your project's `components/`: the file Maizzle names as the tag,
+   `nx-badge.vue` or `NxBadge.vue` for `<NxBadge>` — so a component you
+   replace is replaced in a package's templates too;
 2. ours, in `COMPONENTS_DIR`, where the files are in kebab case;
 3. Maizzle's built-ins (`Container`, `Spacer`, `Button`, …).
 
