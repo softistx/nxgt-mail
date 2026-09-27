@@ -26,8 +26,6 @@ const PASSWORD = 'smtp-5ecr3t';
 async function startServer(
 	options: {
 		readonly auth?: boolean;
-		/** The largest message it takes, advertised as `SIZE`. */
-		readonly size?: number;
 		/** The code it answers to `RCPT TO` for these recipients, every time. */
 		readonly refuse?: Readonly<Record<string, number>>;
 	} = {},
@@ -43,7 +41,6 @@ async function startServer(
 		allowInsecureAuth: true,
 		disabledCommands: ['STARTTLS'],
 		logger: false,
-		...(options.size === undefined ? {} : { size: options.size }),
 		onAuth(auth, _session, callback) {
 			if (auth.password === PASSWORD)
 				return callback(null, { user: auth.username });
@@ -431,39 +428,6 @@ describe('createSmtpMailer, beyond the suite', () => {
 			command: 'MAIL FROM',
 			responseCode: 550,
 		});
-	});
-
-	test('a message larger than the SIZE the server advertises is a refusal, though nodemailer answers no code', async () => {
-		const server = await startServer({ size: 100 });
-		const smtp = transporterFor(server.port);
-		// nodemailer compares the SIZE the server advertises with the envelope's
-		// size, and refuses before DATA — with its own error and no SMTP code.
-		const transporter: SmtpTransporter = {
-			sendMail: (mail) =>
-				smtp.sendMail({
-					...mail,
-					envelope: {
-						from: 'noreply@example.test',
-						to: ['ada@example.test'],
-						size: 10_000,
-					},
-				} as Parameters<typeof smtp.sendMail>[0]),
-		};
-		try {
-			const error = await createSmtpMailer({ transporter })
-				.send(sampleMessage)
-				.then(
-					() => null,
-					(caught: unknown) => caught as Error,
-				);
-			expect(error).toBeInstanceOf(MailRefused);
-			expect(error?.cause).toMatchObject({ code: 'EMESSAGE' });
-			expect(error?.cause).not.toHaveProperty('responseCode');
-			expect(server.delivered).toHaveLength(0);
-		} finally {
-			smtp.close();
-			await server.close();
-		}
 	});
 
 	test('hands a string address to nodemailer as an object, so it never parses it', async () => {

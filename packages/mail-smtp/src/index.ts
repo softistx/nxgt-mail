@@ -87,22 +87,14 @@ const fieldsOf = (error: unknown): SmtpError =>
 
 /**
  * Whether one nodemailer error is the server refusing **this message** for
- * good — a permanent `5xx` on a recipient or on the content, or nodemailer
- * refusing a message larger than the `SIZE` the server advertised — rather
+ * good — a permanent `5xx` on a recipient or on the content (`552` for a
+ * message too large) — rather
  * than the server, the network or the wiring failing. Two `5xx` are
  * failures: authentication (`530`–`539`), and a sender refused at
  * `MAIL FROM` — the next message would be refused the same way.
  */
 function isPermanentRefusal(error: unknown): boolean {
-	const { code, responseCode, command, message } = fieldsOf(error);
-	if (
-		code === 'EMESSAGE' &&
-		responseCode === undefined &&
-		typeof message === 'string' &&
-		message.startsWith('Message size larger than allowed')
-	) {
-		return true;
-	}
+	const { code, responseCode, command } = fieldsOf(error);
 	return (
 		(code === 'EENVELOPE' || code === 'EMESSAGE') &&
 		command !== 'MAIL FROM' &&

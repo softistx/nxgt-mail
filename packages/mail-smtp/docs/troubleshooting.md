@@ -85,10 +85,7 @@ A `MailRefused`, code `MAIL_REFUSED`.
 
 **When:** the server answered a permanent `5xx` to every recipient (`550` no
 such mailbox, `553` address not allowed) or to the content (`552` too large,
-`554` rejected — as spam, for example). Also a message larger than the
-`SIZE` the server advertises: nodemailer refuses it before sending, with
-`cause.code` `EMESSAGE`, `Message size larger than allowed …` and no
-`responseCode`.
+`554` rejected — as spam, for example).
 
 **Why:** the server will refuse the same message again; retrying it
 unchanged is pointless.

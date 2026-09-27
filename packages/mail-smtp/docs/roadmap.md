@@ -11,7 +11,7 @@ no dates here, and the version something shipped in is the only number.
   quoted by nodemailer so it names one recipient, and nothing is read from a
   file or a URL. Built, not yet published.
 - **Errors you can act on** — a permanent `5xx` on the recipients or the
-  content, or a message over the server's `SIZE`, is a `MailRefused`; an
+  content (`552` for a message too large) is a `MailRefused`; an
   unreachable server, a timeout, a `4xx`, refused credentials or a refused
   sender is a `MailFailure`, nodemailer's error on `cause`. Some recipients
   refused while others were accepted throws too, and says the others may

@@ -59,7 +59,6 @@ a `responseCode`. The transport reads both:
 | A recipient refused for good (`550`, `553`) | `EENVELOPE` with a `5xx` | `MailRefused` |
 | Every recipient refused | `EENVELOPE`, one error per recipient on `rejectedErrors` | `MailRefused` if every one is a permanent `5xx` (not `530`–`539`), else `MailFailure` |
 | The content refused for good (`552` too large, `554` rejected) | `EMESSAGE` with a `5xx` | `MailRefused` |
-| A message larger than the `SIZE` the server advertises, refused by nodemailer before sending | `EMESSAGE`, no `responseCode`, `Message size larger than allowed …` | `MailRefused` |
 | Anything else | — | `MailFailure` |
 
 Two `5xx` are failures: authentication, and a sender refused at
@@ -118,7 +117,7 @@ your logs must not hold one.
 | `message` | Class | When |
 | --- | --- | --- |
 | `send: the SMTP server could not take the message` | `MailFailure` | Every failure in the table above |
-| `send: the SMTP server refused the message` | `MailRefused` | A permanent `5xx` on every recipient or on the content, or a message over the server's `SIZE` |
+| `send: the SMTP server refused the message` | `MailRefused` | A permanent `5xx` on every recipient or on the content |
 | `send: the SMTP server refused <n> of <total> recipients, and may have delivered to the others` | `MailRefused` | Some recipients refused for good, the others accepted |
 | `send: the SMTP server could not take <n> of <total> recipients, and may have delivered to the others` | `MailFailure` | Some recipients refused, one at least for now, the others accepted |
 | `send: from is missing — give the message a from, or createSmtpMailer a default one` | `MailRefused` | A message without `from`, on a mailer without a default. The transporter is not called |
