@@ -66,7 +66,7 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   `NxHighlightText`, `NxKbd`, `NxCountBadge`, `NxActionCard`, `NxFigure`,
   `NxLinkButton`, `NxIconButton` (its icon an image by URL or a character)
   and `NxButtonGroup`, with material-vue's names and props, and the shared
-  message `common.count-badge.label` in `en` and `fr`. A count, a query or
+  message `common.countBadge.label` in `en` and `fr`. A count, a query or
   an icon given as a placeholder fails the build.
 - **A tag that resolves to no component fails the build, v0.2.0** —
   `<NxButon>` for `<NxButton>`, nested anywhere in a template, a component or
@@ -104,10 +104,10 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   (`bg-primary-15`) are flattened to plain colours, and follow a colour you
   override.
 - **Shared messages, v0.1.0** — `uiCatalogues`: `common.greeting`,
-  `common.footer.why`, `common.footer.ignore`, `common.avatar-group.more`,
-  `common.timeline.empty`, `common.metrics.of-target`,
-  `common.metrics.this-period`, `common.metrics.last-period` and
-  `common.see-also` in `en` and `fr`, given to
+  `common.footer.why`, `common.footer.ignore`, `common.avatarGroup.more`,
+  `common.timeline.empty`, `common.metrics.ofTarget`,
+  `common.metrics.thisPeriod`, `common.metrics.lastPeriod` and
+  `common.seeAlso` in `en` and `fr`, given to
   `@nxgt/mail-i18n` as `i18n({ catalogues: [uiCatalogues] })`, and overridden
   key by key by your own `locales/<locale>.json`.
 - **Components and templates installed from npm, v0.1.0** — `ui()` resolves the

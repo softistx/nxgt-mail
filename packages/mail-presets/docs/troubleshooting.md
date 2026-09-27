@@ -409,7 +409,7 @@ template with your own in `emails/`; see
 ### `i18n: en: verify-email calls t('presets.linkExpires'), which is not a key of the catalogues`
 
 **When:** after upgrading `@nxgt/mail-presets` to a version whose messages
-moved to `kebab-case` keys (0.2), on your own override in
+moved to `kebab-case` keys (0.3), on your own override in
 `locales/<locale>.json` for a preset or a shared `presets.*` message, or a
 template of your own that still calls the old `camelCase` key.
 **Why:** `@nxgt/mail-i18n` accepts a `camelCase` or a `kebab-case` key, so

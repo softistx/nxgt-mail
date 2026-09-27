@@ -60,7 +60,7 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   that is not camelCase, a message that does not parse, a key missing in one
   locale, an argument a translation invents or types differently: the build
   fails, naming the locale and the key.
-- **`t`, `locale` and `placeholder` in templates, v0.1.0** — `{{ t('verify-email.title')
+- **`t`, `locale` and `placeholder` in templates, v0.1.0** — `{{ t('verifyEmail.title')
   }}` translates in the template's locale, and fails the build on an unknown
   key or a wrong, missing or unused argument; `placeholder('name')` writes
   `{{ name }}` for a value only known at send time, and can be passed as an

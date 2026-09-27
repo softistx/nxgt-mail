@@ -103,8 +103,8 @@ The `common` keys come from `@nxgt/mail-ui`'s `uiCatalogues`; see its
 [Shared messages](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-ui/docs/guide/messages.md).
 The `presets` keys come with every `presets()` answer, whatever `only` holds.
 
-Each preset below has its own group, named after it (`verify-email` →
-`verify-email`). `subject` is its subject; `preheader` is the line a mail
+Each preset below has its own group, named after its file: `verify-email`'s
+messages are under `verify-email`. `subject` is its subject; `preheader` is the line a mail
 client shows after the subject in the inbox.
 
 ## `verify-email`

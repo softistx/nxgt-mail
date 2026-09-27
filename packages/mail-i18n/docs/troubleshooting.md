@@ -984,8 +984,8 @@ keys, on a template of your own that still calls `t()` with the old
 `camelCase` key, or on a catalogue override you wrote under the old key.
 **Why:** `@nxgt/mail-i18n` 0.x accepts a `camelCase` or a `kebab-case` key —
 this is not a format refusal — but a specific key that moved, such as
-`verifyEmail` becoming `verify-email` in `@nxgt/mail-presets` 0.2 and
-`@nxgt/mail-ui` 0.2, is gone under its old name. An override under the old
+`verifyEmail` becoming `verify-email` in `@nxgt/mail-presets` 0.3 and
+`@nxgt/mail-ui` 0.3, is gone under its old name. An override under the old
 key in `locales/<locale>.json` is not an error by itself: it becomes a key
 of its own, unread by any template, so the build succeeds and your override
 is silently ignored — until a template still calls the old key, which then

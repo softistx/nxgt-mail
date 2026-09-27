@@ -548,7 +548,7 @@ contact a `label` and the closest type — `WEBSITE` for a profile page:
 ### `i18n: en: welcome calls t('common.avatarGroup.more'), which is not a key of the catalogues`
 
 **When:** after upgrading `@nxgt/mail-ui` to a version whose shared
-`common.*` messages moved to `kebab-case` keys (0.2), on your own override in
+`common.*` messages moved to `kebab-case` keys (0.3), on your own override in
 `locales/<locale>.json`, or a template of your own that still calls the old
 `camelCase` key.
 **Why:** `@nxgt/mail-i18n` accepts a `camelCase` or a `kebab-case` key, so
