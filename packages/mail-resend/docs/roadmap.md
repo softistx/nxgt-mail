@@ -13,7 +13,9 @@ Nothing yet.
 
 ## Later
 
-Nothing planned yet. Say what you need in an issue.
+- **Cancelling a scheduled send** — Resend's own
+  `POST /emails/{id}/cancel`; see
+  [`@nxgt/mail`'s roadmap](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/roadmap.md).
 
 ## Not planned
 
@@ -25,9 +27,6 @@ Nothing planned yet. Say what you need in an issue.
 - **A transport's own error class** — it throws `@nxgt/mail`'s `MailFailure`
   and `MailRefused`, so `instanceof` holds whichever transport you wire.
 - **Batch sending** — one message per request; the port has no room for more.
-- **Cancelling a scheduled send** — Resend's own
-  `POST /emails/{id}/cancel`; see
-  [`@nxgt/mail`'s roadmap](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/roadmap.md).
 
 ## Shipped
 
