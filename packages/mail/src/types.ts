@@ -95,6 +95,18 @@ export interface MailMessage extends Rendered {
 	 * different message under that key is a `MailRefused`, as Resend's `409`.
 	 */
 	readonly idempotencyKey?: string;
+	/**
+	 * Labels this send for the provider's dashboard, webhooks and statistics —
+	 * what the e-mail is (`category: 'passwordReset'`), who it is for
+	 * (`plan: 'enterprise'`). A name maps to a value; each is 1 to 256 ASCII
+	 * letters, digits, `_` or `-`, the rule Resend and Amazon SES share.
+	 *
+	 * **Never part of the e-mail.** A transport whose provider takes tags sends
+	 * them there (Resend's `tags`); one whose provider has none ignores them,
+	 * as SMTP does. They reach the provider's logs, so a tag holds no secret
+	 * and no personal data: an id, never an address.
+	 */
+	readonly tags?: Readonly<Record<string, string>>;
 }
 
 /** What a transport answers once it has handed a message over. */

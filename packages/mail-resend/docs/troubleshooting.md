@@ -28,6 +28,7 @@ A `send: …` message not on this page comes from `checkMessage` in
 - [`send: Resend could not be reached`](#send-resend-could-not-be-reached)
 - [`send: Resend did not answer within <timeoutMs> ms`](#send-resend-did-not-answer-within-timeoutms-ms)
 - [`send: from is missing — give the message a from, or createResendMailer a default one`](#send-from-is-missing--give-the-message-a-from-or-createresendmailer-a-default-one)
+- [`send: Resend takes at most 75 tags on one e-mail`](#send-resend-takes-at-most-75-tags-on-one-e-mail)
 - [`Resend answered <status> <name>`](#resend-answered-status-name)
 
 **Wiring**
@@ -184,6 +185,21 @@ const mailer = createResendMailer({
 	apiKey: process.env.RESEND_API_KEY ?? '',
 	from: { name: 'Acme', address: 'noreply@acme.test' },
 });
+```
+
+### `send: Resend takes at most 75 tags on one e-mail`
+
+A `MailRefused`, `code: 'MAIL_REFUSED'`.
+
+**When:** `send`, with a message whose `tags` hold more than 75 entries.
+Nothing is sent.
+**Why:** Resend takes at most 75 tags per e-mail and refuses more; the
+transport refuses first, so the request is never made.
+**Fix:** keep the tags you filter or group by in Resend's dashboard — a
+category, a plan, an account id — and drop the rest:
+
+```ts
+const tags = { category: 'receipt', plan: 'enterprise' };
 ```
 
 ### `Resend answered <status> <name>`

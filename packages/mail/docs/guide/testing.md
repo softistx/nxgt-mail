@@ -244,8 +244,9 @@ it('delivers the retry of a send that failed', async () => {
 
 "The same message" is what it would deliver: every field of `MailMessage`,
 read by name, the attachments by their bytes. How the object was written
-does not count — the order of its fields or of its headers, `to` as one
-address or a list of one, no `headers` or `attachments` or an empty one,
+does not count — the order of its fields, of its headers or of its tags,
+`to` as one address or a list of one, no `headers`, `attachments` or `tags`
+or an empty one,
 the bytes in a `Buffer` or a plain `Uint8Array` — and neither does a field
 `MailMessage` does not have. SMTP ignores
 the key altogether, so this is the behaviour of a deduplicating transport,

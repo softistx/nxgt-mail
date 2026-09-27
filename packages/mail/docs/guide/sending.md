@@ -76,6 +76,7 @@ interface MailMessage extends Rendered {
 	readonly headers?: Readonly<Record<string, string>>;
 	readonly attachments?: readonly MailAttachment[];
 	readonly idempotencyKey?: string;
+	readonly tags?: Readonly<Record<string, string>>;
 }
 
 interface MailAttachment {
@@ -96,6 +97,7 @@ interface MailAttachment {
 | `headers` | `Record<string, string>` | no | Extra headers, such as `X-Entity-Ref-ID`, or the two of [one-click unsubscribe](#one-click-unsubscribe) |
 | `attachments` | `readonly MailAttachment[]` | no | Files sent with the e-mail, in order, as bytes — see [Attachments](#attachments). An empty list is the same as none |
 | `idempotencyKey` | `string` | no | Names this send, so sending it again delivers it once where the transport can deduplicate — see [Idempotency](#idempotency--sending-once). 1 to 256 visible ASCII characters |
+| `tags` | `Record<string, string>` | no | Labels for the provider's dashboard and webhooks, never part of the e-mail — see [Tags](#tags--labels-for-the-provider). Each name and value 1 to 256 ASCII letters, digits, `_` or `-` |
 
 `Rendered` is what the renderer answers — `mails.render('verify-email', { name, link })`
 fills the values only known at send time into a built Maizzle template — and a
@@ -691,6 +693,54 @@ export async function runSendJob(mailer: Mailer, job: { message: MailMessage }):
 	}
 }
 ```
+
+## Tags — labels for the provider
+
+`tags` label a send where the provider shows or reports it — its dashboard,
+its webhooks, its statistics — so you can count the password resets apart
+from the receipts, or find every e-mail of one account. A record maps a name
+to a value:
+
+```ts
+import type { Mailer } from '@nxgt/mail';
+import { createMailRenderer } from '@nxgt/mail/renderer';
+
+const mails = createMailRenderer({ dir: 'dist' });
+
+export async function sendPasswordReset(mailer: Mailer, user: { id: string; email: string; plan: 'free' | 'enterprise' }, link: string): Promise<void> {
+	await mailer.send({
+		to: user.email,
+		...mails.render('reset-password', { link }),
+		tags: { category: 'passwordReset', plan: user.plan, account: user.id }, // user.id: letters, digits, _ or - only
+	});
+}
+```
+
+**The rule.** Each name and each value is 1 to 256 ASCII letters, digits, `_`
+or `-` — the rule Resend and Amazon SES share, so a tag that passes is taken
+by either. Names are yours: `camelCase`, as every key here, reads best, but
+nothing enforces it. An empty record is the same as none.
+
+**Never part of the e-mail.** A tag is metadata for the provider; the
+recipient never sees it, and no transport writes it into the message:
+
+| Transport | `tags` become |
+| --- | --- |
+| `@nxgt/mail-resend` | Resend's `tags`, a list of `{ name, value }`: shown in its dashboard, sent with its webhook events. At most 75 per e-mail, as Resend allows — more is a `MailRefused` before anything is sent |
+| `@nxgt/mail-smtp` | nothing: SMTP has no tags, and the transport ignores them, as it ignores `idempotencyKey` |
+| the memory mailer | kept on the message in `mailer.sent`, and part of what makes two messages the same under an `idempotencyKey` |
+
+**Not personal data.** Tags land in the provider's logs and in every webhook
+you receive: an id, a category, a plan — never an address, a name or a token.
+The rule already refuses `@` and `.`, so an e-mail address cannot be a tag.
+
+`checkMessage` refuses, naming the tag and never its value:
+
+| Written | Answer |
+| --- | --- |
+| `tags: [{ name: 'category', value: 'receipt' }]` — Resend's wire format | a compile error; at run time `MailRefused`: `send: tags must be an object of names to values, as { category: 'receipt' }` |
+| a name that is empty, over 256 characters, or holds a space, a `.` or a letter outside ASCII | `MailRefused`: `send: a tag name must be 1 to 256 ASCII letters, digits, _ or -` |
+| `tags: { category: 'reçu' }`, `''`, `'ada@example.com'`, a number | `MailRefused`: `send: tag category must be 1 to 256 ASCII letters, digits, _ or -` |
 
 ## Errors
 

@@ -68,6 +68,9 @@ How the messages are shaped:
 - [`send: attachments[<n>].contentId must be 1 to 127 letters, digits and . _ ~ + -, with at most one @, as logo@acme.test`](#send-attachmentsncontentid-must-be-1-to-127-letters-digits-and--_-----with-at-most-one--as-logoacmetest)
 - [`send: attachments[<n>].contentId is already another attachment's — a contentId names one file`](#send-attachmentsncontentid-is-already-another-attachments--a-contentid-names-one-file)
 - [`send: html shows a cid: URL that no attachment's contentId names — attach the image with that contentId`](#send-html-shows-a-cid-url-that-no-attachments-contentid-names--attach-the-image-with-that-contentid)
+- [`send: tags must be an object of names to values, as { category: 'receipt' }`](#send-tags-must-be-an-object-of-names-to-values-as--category-receipt-)
+- [`send: a tag name must be 1 to 256 ASCII letters, digits, _ or -`](#send-a-tag-name-must-be-1-to-256-ascii-letters-digits-_-or--)
+- [`send: tag <name> must be 1 to 256 ASCII letters, digits, _ or -`](#send-tag-name-must-be-1-to-256-ascii-letters-digits-_-or--)
 - [`send: idempotencyKey must be 1 to 256 visible ASCII characters, as order-42/receipt`](#send-idempotencykey-must-be-1-to-256-visible-ascii-characters-as-order-42receipt)
 - [`send: idempotencyKey was already used for a different message — a key names one e-mail`](#send-idempotencykey-was-already-used-for-a-different-message--a-key-names-one-e-mail)
 - [An e-mail is delivered twice although it has an `idempotencyKey`](#an-e-mail-is-delivered-twice-although-it-has-an-idempotencykey)
@@ -854,6 +857,48 @@ export async function send(mailer: Mailer, to: string, rendered: Rendered): Prom
 
 A `cid:` in the text part or in the HTML's prose is not read. To show an
 image from a server instead, write its `https:` URL in the template.
+
+### `send: tags must be an object of names to values, as { category: 'receipt' }`
+
+**When:** `send`, with `tags` that is not a plain object — typically Resend's
+wire format, a list of `{ name, value }`, or `null`.
+**Why:** the port's tags are a record, so a name appears once; each transport
+writes them in its provider's shape.
+**Fix:**
+
+```ts
+import type { MailMessage } from '@nxgt/mail';
+
+declare const rendered: Omit<MailMessage, 'to'>;
+
+const message: MailMessage = { ...rendered, to: 'ada@example.com', tags: { category: 'receipt' } }; // not [{ name, value }]
+```
+
+### `send: a tag name must be 1 to 256 ASCII letters, digits, _ or -`
+
+**When:** `send`, with a tag name that is empty, longer than 256 characters,
+or holds anything but ASCII letters, digits, `_` and `-` — a space, a `.`, an
+accent.
+**Why:** Resend and Amazon SES take only those; a tag that passes here is
+taken by either, and none reaches the provider to be refused there.
+**Fix:** name it with those characters, as `category` or `plan-tier`.
+
+### `send: tag <name> must be 1 to 256 ASCII letters, digits, _ or -`
+
+**When:** `send`, when the value of the tag `<name>` is empty, longer than
+256 characters, not a string, or holds anything but ASCII letters, digits,
+`_` and `-` — an e-mail address, a `.`, a space, an accent, a number not
+written as a string.
+**Why:** the same rule as a name. The refusal names the tag and never the
+value: a value refused for an `@` may be an address.
+**Fix:** use an id or a category, as a string — never an address or a name,
+which would land in the provider's logs:
+
+```ts
+declare const user: { id: number; plan: 'free' | 'enterprise' };
+
+const tags = { account: String(user.id), plan: user.plan }; // not { account: user.email }
+```
 
 ### `send: idempotencyKey must be 1 to 256 visible ASCII characters, as order-42/receipt`
 
@@ -1961,6 +2006,8 @@ test title:
 | `conformance: the inline image was not delivered with its content type` | `send.inlineImage` | pass `contentType` through |
 | `conformance: the inline image was not delivered byte for byte` | `send.inlineImage` | encode the bytes, never a string made of them |
 | `conformance: the html part of a message with an inline image was not delivered as sent` | `send.inlineImage` | send the HTML as is — never rewrite its `cid:` URLs; over SMTP, parse with `skipImageLinks: true` in the harness |
+| `conformance: a send with tags did not answer SentMail` | `send.tags` | accept the tags and resolve as for any message: a provider that has no tags is no reason to refuse |
+| `conformance: a tag was written into the e-mail` | `send.tags` | send the tags to the provider's own field (Resend's `tags`), or leave them out — never in the recipients, subject, HTML or text |
 | `conformance: the send after a failure was not delivered` | `failure.recovers` | do not leave the transport broken after a failure: reopen the connection on the next send |
 | `conformance: faults are required` | a `failure.*` case whose `run` you called yourself | pass `faults` in the context, or go through `runMailerCase`, which skips the case instead |
 

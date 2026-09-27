@@ -10,6 +10,9 @@ no dates here, and the version something shipped in is the only number.
 - **Inline images (`cid:`)** — an attachment's `contentId` is sent as Resend's
   `content_id`, so the HTML shows it as `<img src="cid:…">`. The `@nxgt/mail`
   peer moves to `^0.6.0`.
+- **Tags** — a message's `tags` are sent as Resend's `tags`, to group sends
+  in its dashboard and webhooks; more than 75 is a `MailRefused` before
+  sending.
 
 ## Next
 
@@ -17,7 +20,7 @@ Nothing yet.
 
 ## Later
 
-- **Tags** — Resend's `tags`, to group sends in its dashboard.
+Nothing planned yet. Say what you need in an issue.
 
 ## Not planned
 

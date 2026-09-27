@@ -98,6 +98,9 @@ await mailer.send({
 - `idempotencyKey` is ignored: SMTP has no such mechanism, so a message sent
   twice is delivered twice. See
   [Setting up — the idempotency key](docs/guide/setup.md#the-idempotency-key).
+- `tags` are ignored: SMTP has no tags, so nothing names them in the e-mail.
+  `checkMessage` still checks them, so a message that passes here passes a
+  transport that sends them.
 
 ### Attachments
 

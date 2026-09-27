@@ -409,6 +409,19 @@ describe('createSmtpMailer, beyond the suite', () => {
 		expect('attachments' in options).toBe(false);
 	});
 
+	test('ignores the tags: SMTP has none, so nothing names them', async () => {
+		let options: Record<string, unknown> = {};
+		await createSmtpMailer({
+			transporter: {
+				async sendMail(mail) {
+					options = mail;
+					return {};
+				},
+			},
+		}).send({ ...sampleMessage, tags: { category: 'receipt-7f3a' } });
+		expect(JSON.stringify(options)).not.toContain('receipt-7f3a');
+	});
+
 	test('ignores the idempotency key: SMTP has none, so nothing names it', async () => {
 		const handed: Record<string, unknown>[] = [];
 		const mailer = createSmtpMailer({

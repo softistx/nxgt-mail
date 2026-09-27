@@ -316,3 +316,21 @@ const logoBack: DeliveredMail = {
 	attachments: [{ ...invoice, contentId: 'logo@acme.test' }],
 };
 void [logo, withLogo, logoBack];
+
+// ── 25. Tags written as Resend's list ────────────────────────────────────────
+// The port's tags are a record of names to values; Resend's wire format, a
+// list of { name, value }, is the transport's business.
+const listed: MailMessage = {
+	...rendered,
+	to: 'ada@example.test',
+	// @ts-expect-error — tags map a name to a value.
+	tags: [{ name: 'category', value: 'receipt' }],
+};
+// Must compile: tags as a record, built from what the e-mail is about.
+declare const plan: 'free' | 'enterprise';
+const labelled: MailMessage = {
+	...rendered,
+	to: 'ada@example.test',
+	tags: { category: 'receipt', plan },
+};
+void [listed, labelled];

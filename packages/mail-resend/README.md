@@ -134,6 +134,27 @@ await mailer.send({
 with `MailRefused`. Resend's dashboard preview does not show inline images
 yet; the recipient's mail client does. Needs `@nxgt/mail` 0.6 or later.
 
+### Tags — grouping sends in Resend's dashboard
+
+A message's `tags` are sent as Resend's `tags`, a list of `{ name, value }`:
+Resend shows them in its dashboard and sends them with every webhook event.
+
+```ts
+await mailer.send({
+	to: 'ada@example.com',
+	subject: 'Reset your password',
+	html: '<p>…</p>',
+	text: '…',
+	tags: { category: 'passwordReset', plan: 'enterprise' }, // [{ name: 'category', value: 'passwordReset' }, …]
+});
+```
+
+`checkMessage` holds each name and value to Resend's rule — 1 to 256 ASCII
+letters, digits, `_` or `-` — and the transport refuses more than 75 tags,
+Resend's limit, with `MailRefused` before sending. No address or secret in a
+tag: it lands in Resend's logs and your webhooks. Needs `@nxgt/mail` 0.6 or
+later.
+
 ### Idempotency — a retry that delivers once
 
 A message's `idempotencyKey` is sent as Resend's `Idempotency-Key` header.

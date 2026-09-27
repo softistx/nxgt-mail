@@ -14,7 +14,8 @@
  * **A failure throws** the `MailFailure` or `MailRefused` of the `@nxgt/mail`
  * peer, what Resend answered as the `cause`. Nothing is retried; a message's
  * `idempotencyKey` is sent as Resend's `Idempotency-Key`, so a retry the
- * caller makes delivers once.
+ * caller makes delivers once. A message's `tags` are sent as Resend's `tags`,
+ * to group sends in its dashboard and webhooks.
  */
 
 import {
@@ -162,8 +163,19 @@ function bodyOf(
 								}),
 					})),
 				}),
+		...(message.tags === undefined || Object.keys(message.tags).length === 0
+			? {}
+			: {
+					tags: Object.entries(message.tags).map(([name, value]) => ({
+						name,
+						value,
+					})),
+				}),
 	};
 }
+
+/** How many tags Resend takes on one e-mail. */
+const MAX_TAGS = 75;
 
 /** The largest delay a timer takes, 2³¹ − 1 ms — about 24.8 days. */
 const MAX_TIMEOUT_MS = 2_147_483_647;
@@ -243,6 +255,11 @@ export function createResendMailer(options: ResendMailerOptions): Mailer {
 			if (sender === undefined) {
 				throw new MailRefused(
 					'send: from is missing — give the message a from, or createResendMailer a default one',
+				);
+			}
+			if (Object.keys(message.tags ?? {}).length > MAX_TAGS) {
+				throw new MailRefused(
+					`send: Resend takes at most ${MAX_TAGS} tags on one e-mail`,
 				);
 			}
 			const body = bodyOf(message, sender);

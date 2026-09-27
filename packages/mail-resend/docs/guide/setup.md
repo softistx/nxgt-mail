@@ -210,6 +210,15 @@ Content-Type: application/json
   ```json
   { "filename": "logo.png", "content": "iVBORw0K…", "content_type": "image/png", "content_id": "logo@acme.test" }
   ```
+- `tags` are sent as Resend's `tags`, a list of `{ name, value }` in the
+  record's order, and left out when there are none. `checkMessage` has held
+  each name and value to 1 to 256 ASCII letters, digits, `_` or `-`; more
+  than 75 tags is refused with `MailRefused` —
+  `send: Resend takes at most 75 tags on one e-mail` — and nothing is sent.
+
+  ```json
+  "tags": [{ "name": "category", "value": "passwordReset" }, { "name": "plan", "value": "enterprise" }]
+  ```
 - Resend takes at most 40 MB per e-mail **after** base64, which makes a file
   a third larger; over it, the answer is a `4xx` and `send` throws
   `MailRefused`. A large or sensitive file is a signed link in the template

@@ -49,6 +49,8 @@ const CID_URL_END = /[\s,]/;
 // Written into a header by the transports that use it (Resend's
 // `Idempotency-Key`): visible ASCII only, so no line break, and Resend's length.
 const IDEMPOTENCY_KEY = /^[\x21-\x7E]{1,256}$/;
+// A tag's name and value: what Resend and Amazon SES both take.
+const TAG = /^[A-Za-z0-9_-]{1,256}$/;
 
 /** Every recipient of a message, as bare addresses, in order. */
 export function recipientsOf(message: MailMessage): string[] {
@@ -191,7 +193,9 @@ function checkInlineImages(message: MailMessage): void {
  * - every `cid:` URL `html` uses — an attribute value, quoted or not, or a
  *   CSS `url()` — names an attachment's `contentId`, percent-decoded as RFC
  *   2392 says;
- * - `idempotencyKey`, when present, is 1 to 256 visible ASCII characters.
+ * - `idempotencyKey`, when present, is 1 to 256 visible ASCII characters;
+ * - `tags`, when present, is an object whose every name and value is 1 to 256
+ *   ASCII letters, digits, `_` or `-`.
  */
 export function checkMessage(message: MailMessage): void {
 	if (typeof message !== 'object' || message === null) {
@@ -256,5 +260,28 @@ export function checkMessage(message: MailMessage): void {
 		throw new MailRefused(
 			'send: idempotencyKey must be 1 to 256 visible ASCII characters, as order-42/receipt',
 		);
+	}
+
+	if (message.tags !== undefined) checkTags(message.tags);
+}
+
+/** Refuses `tags` unless each name and value is 1 to 256 of `[A-Za-z0-9_-]`. */
+function checkTags(tags: Readonly<Record<string, string>>): void {
+	if (typeof tags !== 'object' || tags === null || Array.isArray(tags)) {
+		throw new MailRefused(
+			"send: tags must be an object of names to values, as { category: 'receipt' }",
+		);
+	}
+	for (const [name, value] of Object.entries(tags)) {
+		if (!TAG.test(name)) {
+			throw new MailRefused(
+				'send: a tag name must be 1 to 256 ASCII letters, digits, _ or -',
+			);
+		}
+		if (typeof value !== 'string' || !TAG.test(value)) {
+			throw new MailRefused(
+				`send: tag ${name} must be 1 to 256 ASCII letters, digits, _ or -`,
+			);
+		}
 	}
 }

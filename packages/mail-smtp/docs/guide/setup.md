@@ -173,6 +173,7 @@ A string is only an address: `'Acme <noreply@acme.test>'` is refused. Write
 | `subject`, `html`, `text` | the same, as strings — the e-mail is `multipart/alternative` |
 | `headers` | `headers`, copied — `List-Unsubscribe` from [`listUnsubscribe`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/guide/sending.md#one-click-unsubscribe) included, which your relay or nodemailer's `dkim` option must DKIM-sign |
 | `idempotencyKey` | nothing: ignored — see [below](#the-idempotency-key) |
+| `tags` | nothing: ignored — SMTP has no tags. Still checked by `checkMessage` |
 | `attachments`, each `{ filename, content, contentType }` | `attachments`, each `{ filename, content: Buffer, contentType }` — the bytes copied into a `Buffer`, never a `path` or an `href`; the e-mail is then `multipart/mixed`. Left out when the list is empty |
 | an attachment's `contentId` | its `cid`: nodemailer writes the `Content-ID` header, marks the file `inline` and puts it in a `multipart/related` beside the HTML. Left out when the attachment has none |
 | — | `disableFileAccess: true`, `disableUrlAccess: true`: a part or an attachment is never read from a file or fetched from a URL |

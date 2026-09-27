@@ -7,7 +7,7 @@ mailer, transport, hand-over, refusal, failure — are defined once, in the
 
 | Page | Read it when |
 | --- | --- |
-| [Setting up](guide/setup.md) | You are wiring `createResendMailer`: the key, the default sender, a proxy or another `baseUrl`, your own `fetch`, the timeout, the request each message becomes, and the idempotency key |
+| [Setting up](guide/setup.md) | You are wiring `createResendMailer`: the key, the default sender, a proxy or another `baseUrl`, your own `fetch`, the timeout, the request each message becomes — tags and inline images included — and the idempotency key |
 | [Errors](guide/errors.md) | You are handling what `send` throws: which Resend answers are a `MailRefused`, which a `MailFailure`, what is on `cause`, and every `TypeError` at wiring |
 | [Testing](guide/testing.md) | You are testing the transport against a local server answering as Resend does, with `describeMailer` — or an application that uses it |
 | [Troubleshooting](troubleshooting.md) | You have an error message and want its cause and its fix |

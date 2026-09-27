@@ -417,6 +417,62 @@ describe('checkMessage', () => {
 		});
 	});
 
+	describe('tags', () => {
+		it('accepts names and values of ASCII letters, digits, _ and -, up to 256', () => {
+			expect(() =>
+				checkMessage({
+					...message,
+					tags: {
+						category: 'password_reset',
+						'plan-tier': 'Enterprise-2',
+						['n'.repeat(256)]: 'v'.repeat(256),
+					},
+				}),
+			).not.toThrow();
+			expect(() => checkMessage({ ...message, tags: {} })).not.toThrow();
+		});
+
+		it.each([
+			['an array', [{ name: 'category', value: 'receipt' }]],
+			['null', null],
+			['a string', 'category:receipt'],
+		])('refuses tags given as %s', (_, tags) => {
+			expect(refusal({ ...message, tags }).message).toBe(
+				"send: tags must be an object of names to values, as { category: 'receipt' }",
+			);
+		});
+
+		it.each([
+			['empty', ''],
+			['longer than 256 characters', 'n'.repeat(257)],
+			['holding a space', 'the category'],
+			['holding a dot', 'app.category'],
+			['outside ASCII', 'catégorie'],
+		])('refuses a tag name %s, never quoting it', (_, name) => {
+			expect(refusal({ ...message, tags: { [name]: 'receipt' } }).message).toBe(
+				'send: a tag name must be 1 to 256 ASCII letters, digits, _ or -',
+			);
+		});
+
+		it.each([
+			['empty', ''],
+			['longer than 256 characters', 'v'.repeat(257)],
+			['holding an address', 'ada@example.test'],
+			['holding a line break', 'receipt\r\nX-Evil: 1'],
+			['outside ASCII', 'reçu'],
+			['not a string', 42],
+		])(
+			'refuses a tag value %s, naming the tag and never the value',
+			(_, value) => {
+				const error = refusal({ ...message, tags: { category: value } });
+				expect(error.message).toBe(
+					'send: tag category must be 1 to 256 ASCII letters, digits, _ or -',
+				);
+				expect(error.message).not.toContain('example.test');
+			},
+		);
+	});
+
 	it('never puts a refused file name in the message', () => {
 		const error = refusal({
 			...message,
