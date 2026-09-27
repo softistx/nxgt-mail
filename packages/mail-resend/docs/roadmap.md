@@ -32,6 +32,11 @@ Nothing yet.
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **`@nxgt/mail` 0.5, v0.3.2** — the peer moves to `^0.5.0`, whose conformance
+  suite also checks that a message with an idempotency key is delivered. This
+  transport passes it unchanged.
+- **`@nxgt/mail` 0.4, v0.3.1** — the peer moves to `^0.4.0`, the version with
+  `listUnsubscribe`: its headers travel as any other. No change here.
 - **An idempotency key per send, v0.3.0** — a message's `idempotencyKey` is sent as
   Resend's `Idempotency-Key` header, so a retry the caller decides, within
   Resend's 24 hours, answers the first send's id and cannot send the same
