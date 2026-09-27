@@ -145,45 +145,110 @@ describe('a project built with the ui plugin', () => {
 		expect(await read('dist/en/welcome.html')).not.toContain('data-badge');
 	});
 
-	test('caniemail reports for Gmail, Outlook and Apple Mail only the known partial support', async () => {
-		const port = 39_000 + Math.floor(Math.random() * 900);
-		const child = Bun.spawn([maizzle, 'serve', '--port', String(port)], {
-			cwd: fixture,
-			stdout: 'ignore',
-			stderr: 'ignore',
-		});
-		try {
-			const url = `http://localhost:${port}/__maizzle/compatibility/emails/welcome.vue`;
-			let issues:
-				| {
-						kind: string;
-						slug: string;
-						severity?: string;
-						supportLevel?: string;
-				  }[]
-				| null = null;
-			for (let attempt = 0; attempt < 60 && issues === null; attempt++) {
-				issues = await fetch(url)
-					.then((response) => (response.ok ? response.json() : null))
-					.catch(() => Bun.sleep(500).then(() => null));
+	test('rules a table with borders a client keeps, its footer on a muted ground', async () => {
+		const html = await read('dist/en/gallery.html');
+		// A data table, which a screen reader reads as one, not a layout's role="none".
+		expect(html).toContain('<table role="table"');
+		expect(styleOf(html, 'Pro plan', 'td')).toContain(
+			'border-bottom-width: 1px; border-style: solid; border-color: #e2e8f0;',
+		);
+		expect(styleOf(html, 'Total', 'td')).toContain('border-top-width: 1px;');
+		expect(styleOf(html, 'Total', 'td')).toContain(
+			'background-color: #f1f5f9;',
+		);
+		expect(html).toContain(
+			'<caption align="bottom" style="caption-side: bottom;',
+		);
+		expect(html).toContain('<td colspan="2" style="padding: 40px 16px;');
+	});
+
+	test('leaves out a description without a value, but not 0', async () => {
+		const html = await read('dist/en/gallery.html');
+		expect(html).toContain('>Credits left</p>');
+		expect(html).not.toContain('>Coupon</p>');
+	});
+
+	test('rings a selected list tile with a border, and links its title', async () => {
+		const html = await read('dist/en/gallery.html');
+		expect(html).toContain(
+			'border-radius: 4px; border: 1px solid #b6b9d5; background-color: #e4e5ef;',
+		);
+		expect(html).toContain('<a href="https://acme.example/team/ada"');
+		// A disabled tile's title is text, muted.
+		expect(styleOf(html, 'Grace Hopper', 'span')).toContain('color: #62748e;');
+	});
+
+	test('colours a chip by its variant, and an active one as filled', async () => {
+		const html = await read('dist/en/gallery.html');
+		expect(styleOf(html, ' Outlined ', 'span')).toContain(
+			'border: 1px solid #a4a7cb;',
+		);
+		expect(styleOf(html, ' Active ', 'span')).toContain(
+			'background-color: #d9efed;',
+		);
+		const active = html.slice(html.indexOf(' Outlined '));
+		expect(styleOf(active, ' Active ', 'span')).toContain(
+			'background-color: #485096;',
+		);
+	});
+
+	test('sizes the avatars of a group, and counts the ones past max', async () => {
+		const html = await read('dist/en/gallery.html');
+		expect(html).toContain(
+			'<img src="https://acme.example/ada.png" alt="Ada" width="40" height="40"',
+		);
+		expect(html).toContain('<span aria-label="+2 more"');
+		expect(styleOf(html, '+2', 'span')).toContain('line-height: 40px;');
+		expect(html).not.toContain('>AT<');
+		// An avatar out of a group takes its own size.
+		expect(html).toContain('alt="Ada" width="48" height="48"');
+	});
+
+	test.each([
+		['welcome.vue', ['html-align', 'html-aria-hidden']],
+		// The caption's caption-side falls back on its align="bottom".
+		['gallery.vue', ['css-caption-side', 'html-align', 'html-align']],
+	])(
+		'caniemail reports for Gmail, Outlook and Apple Mail only the known partial support of %s',
+		async (email, known) => {
+			const port = 39_000 + Math.floor(Math.random() * 900);
+			const child = Bun.spawn([maizzle, 'serve', '--port', String(port)], {
+				cwd: fixture,
+				stdout: 'ignore',
+				stderr: 'ignore',
+			});
+			try {
+				const url = `http://localhost:${port}/__maizzle/compatibility/emails/${email}`;
+				let issues:
+					| {
+							kind: string;
+							slug: string;
+							severity?: string;
+							supportLevel?: string;
+					  }[]
+					| null = null;
+				for (let attempt = 0; attempt < 60 && issues === null; attempt++) {
+					issues = await fetch(url)
+						.then((response) => (response.ok ? response.json() : null))
+						.catch(() => Bun.sleep(500).then(() => null));
+				}
+				// Everything reported is partial support with a fallback, and known:
+				// a new finding shows up here as a diff.
+				expect(issues?.map((issue) => issue.slug).sort()).toEqual(known);
+				expect(
+					issues?.filter(
+						(issue) =>
+							issue.supportLevel === 'unsupported' ||
+							issue.severity === 'error',
+					),
+				).toEqual([]);
+			} finally {
+				child.kill();
+				await child.exited;
 			}
-			// Everything reported is partial support with a fallback, and known:
-			// a new finding shows up here as a diff.
-			expect(issues?.map((issue) => issue.slug).sort()).toEqual([
-				'html-align',
-				'html-aria-hidden',
-			]);
-			expect(
-				issues?.filter(
-					(issue) =>
-						issue.supportLevel === 'unsupported' || issue.severity === 'error',
-				),
-			).toEqual([]);
-		} finally {
-			child.kill();
-			await child.exited;
-		}
-	}, 60_000);
+		},
+		60_000,
+	);
 });
 
 describe('a component without the ui plugin', () => {

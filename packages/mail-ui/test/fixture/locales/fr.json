@@ -4,5 +4,8 @@
 		"title": "Votre compte est prêt",
 		"body": "Vous pouvez vous connecter avec le code ci-dessous.",
 		"action": "Ouvrir mon compte"
+	},
+	"gallery": {
+		"subject": "Votre facture"
 	}
 }

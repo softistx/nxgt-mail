@@ -417,7 +417,8 @@ styles the box; the space below is on the table around it.
 **Fix:** replace the component with your own, copied from the package's, and
 change its outer `mb-4` — see
 [Replacing a component](guide/plugin.md#replacing-a-component). On
-`NxTypography` and `NxSummaryData`, `class="mb-0"` works.
+`NxTypography`, `NxSummaryData`, `NxTable`, `NxDescription` and
+`NxAvatarGroup`, `class="mb-0"` works.
 
 ### The editor says `Property 'brand' does not exist` in a template
 

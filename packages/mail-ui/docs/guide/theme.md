@@ -52,11 +52,11 @@ Name a token in `theme` without its `--`: `--color-primary` is
 | `color-card`, `color-card-foreground` | white, near black | The layout's card, `NxCard` |
 | `color-primary`, `color-primary-foreground` | indigo, near white | The default colour of buttons, badges, alerts |
 | `color-secondary`, `color-secondary-foreground` | blue, near white | `color="secondary"` |
-| `color-muted`, `color-muted-foreground` | light grey, grey | `NxCode`'s background; descriptions, captions, the footer |
+| `color-muted`, `color-muted-foreground` | light grey, grey | `NxCode`'s background, a table's footer, an avatar's initials; descriptions, captions, the footer |
 | `color-accent`, `color-accent-foreground` | light grey, near black | `bg-accent` in your markup |
 | `color-error`, `color-success`, `color-info`, `color-warning` | red, teal, blue, orange | The status colours |
 | `color-error-foreground`, … `color-warning-foreground` | near white | Text on a status colour |
-| `color-border` | light grey | Card, separator and outlined borders |
+| `color-border` | light grey | Card, separator, table and outlined borders |
 | `color-paper` | 5% primary over background | The page behind the layout's card |
 | `color-<colour>-5`, `-10`, `-15`, `-40`, `-50` | the colour mixed over background | Tints — see below |
 
@@ -97,11 +97,11 @@ as hex in the built HTML.
 
 | Tint | Used by |
 | --- | --- |
-| `-5` | `NxAlert`'s background; `paper` |
-| `-10` | `NxBanner`'s background |
-| `-15` | `NxButton variant="tonal"` |
-| `-40` | `NxBanner`'s border; `NxSummaryData`'s lines |
-| `-50` | `NxButton variant="outlined"`'s border |
+| `-5` | `NxAlert`'s background; `NxListTile`'s; `paper` |
+| `-10` | `NxBanner`'s background; a selected `NxListTile size="sm"` |
+| `-15` | `NxButton` and `NxChip variant="tonal"`; a selected `NxListTile` |
+| `-40` | `NxBanner`'s border; `NxSummaryData`'s lines; a selected `NxListTile`'s border |
+| `-50` | `NxButton` and `NxChip variant="outlined"`'s border |
 
 They exist for `primary`, `secondary`, `info`, `success`, `warning`, `error`
 and `foreground`, so your own markup can use them too:

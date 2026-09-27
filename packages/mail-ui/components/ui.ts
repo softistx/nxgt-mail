@@ -32,6 +32,13 @@ export interface UiContext {
 	readonly css: string;
 }
 
+/** Which part of an `NxTable` a cell is in, as its `NxTableHeader`/`Body`/`Footer` says. */
+export const TABLE_PART = 'nxgt:mail-ui:table-part';
+export type TablePart = 'header' | 'body' | 'footer';
+
+/** The pixel size of the `NxAvatar`s inside, as `NxAvatar` or `NxAvatarGroup` says. */
+export const AVATAR_SIZE = 'nxgt:mail-ui:avatar-size';
+
 /** The brand and theme `ui()` provides. A component used without it **throws**. */
 export function useUi(component: string): UiContext {
 	const context = inject<UiContext | undefined>('nxgt:mail-ui', undefined);

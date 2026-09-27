@@ -17,8 +17,13 @@ props, defaults and slots, and the `@nxgt/material-vue` component it mirrors.
 
 <img src="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-ui/previews/components-en.png" width="420" alt="An e-mail using every Nx component: layout, typography, code, buttons, separator, card with badge, summary data and status, alert, banner, link">
 
-Every component on this page, in one e-mail
+The components from `NxLayout` to `NxCode`, in one e-mail
 ([its template](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-ui/test/fixture/emails/welcome.vue)).
+
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-ui/previews/data-components.png" width="420" alt="An e-mail using the data components: a table with a footer and caption, an empty table, descriptions, list tiles with an avatar and a chip, chips, an avatar group and an avatar">
+
+The components from `NxTable` to `NxAvatar`
+([their template](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-ui/test/fixture/emails/gallery.vue)).
 
 Every component is registered by [`ui()`](plugin.md) and used with no import.
 They keep material-vue's names (with the `Nx` prefix), its props and its
@@ -32,8 +37,10 @@ reads. They need no JavaScript and no web font.
   `<NxButton class="rounded-md">` replaces its `rounded-full`. Other
   attributes (`style`, `id`, `data-*`) go to the same element as `class`.
 - **Block components end with space below.** `NxTypography`, `NxAlert`,
-  `NxBanner`, `NxCard`, `NxCode` and `NxSummaryData` carry `mb-4`. On
-  `NxTypography` and `NxSummaryData`, `class="mb-0"` removes it. `NxAlert`,
+  `NxBanner`, `NxCard`, `NxCode`, `NxSummaryData`, `NxTable`,
+  `NxDescription` and `NxAvatarGroup` carry `mb-4`, `NxListTile` `mb-2`. On
+  `NxTypography`, `NxSummaryData`, `NxTable`, `NxDescription` and
+  `NxAvatarGroup`, `class="mb-0"` removes it. `NxAlert`,
   `NxBanner`, `NxCard` and `NxCode` put their `class` on the box inside, and
   keep their 16px below: to change it, replace the component with your own
   (see [Replacing a component](plugin.md#replacing-a-component)).
@@ -68,6 +75,17 @@ reads. They need no JavaScript and no web font.
 | [`NxStatusIndicator`](#nxstatusindicator) | `StatusIndicator` | `tone` (`'neutral'`) | default |
 | [`NxSummaryData`](#nxsummarydata) | `SummaryData` | `data` (`[]`), `inline` (`false`), `showEmpty` (`false`) | — |
 | [`NxCode`](#nxcode) | — (e-mail's own) | — | default |
+| [`NxTable`](#nxtable-and-its-parts) | `Table` | — | default: its parts |
+| `NxTableHeader`, `NxTableBody`, `NxTableFooter` | `TableHeader`, `TableBody`, `TableFooter` | — | default: `NxTableRow`s |
+| `NxTableRow`, `NxTableHead`, `NxTableCell`, `NxTableCaption` | `TableRow`, `TableHead`, `TableCell`, `TableCaption` | — | default |
+| `NxTableEmpty` | `TableEmpty` | `colspan` (`1`) | default |
+| [`NxDescription`](#nxdescription) | `Description` | `label` (required), `value` | default |
+| [`NxListTile`](#nxlisttile) | `ListTile` | `title` (required), `subtitle`, `href`, `selected` (`false`), `disabled` (`false`), `size` (`'md'`) | `leading`, `trailing` |
+| [`NxChip`](#nxchip) | `Chip` | `label`, `variant` (`'outlined'`), `color` (`'primary'`), `active` (`false`) | default, `avatar`, `leading`, `trailing` |
+| [`NxAvatar`](#nxavatar-and-nxavatargroup) | `Avatar` | `size` (`32`, or its group's) | default: `NxAvatarImage` or `NxAvatarFallback` |
+| `NxAvatarImage` | `AvatarImage` | `src` (required), `alt` | — |
+| `NxAvatarFallback` | `AvatarFallback` | — | default |
+| `NxAvatarGroup` | `AvatarGroup` | `max`, `size` (`'md'`) | default: `NxAvatar`s |
 
 ## NxLayout
 
@@ -388,6 +406,172 @@ counterpart.
 ```
 
 No props; the code is the default slot.
+
+## NxTable and its parts
+
+material-vue's `Table`: rows ruled by a line under each, a header in
+`font-medium`, and a footer on the `muted` background with a line above it.
+The parts are the HTML table's, so they nest as it does.
+
+```vue
+<template>
+  <NxTable>
+    <NxTableCaption>Prices include VAT.</NxTableCaption>
+    <NxTableHeader>
+      <NxTableRow>
+        <NxTableHead>Item</NxTableHead>
+        <NxTableHead class="text-right">Amount</NxTableHead>
+      </NxTableRow>
+    </NxTableHeader>
+    <NxTableBody>
+      <NxTableRow>
+        <NxTableCell>Pro plan</NxTableCell>
+        <NxTableCell class="text-right">{{ placeholder('amount') }}</NxTableCell>
+      </NxTableRow>
+    </NxTableBody>
+    <NxTableFooter>
+      <NxTableRow>
+        <NxTableCell>Total</NxTableCell>
+        <NxTableCell class="text-right">{{ placeholder('total') }}</NxTableCell>
+      </NxTableRow>
+    </NxTableFooter>
+  </NxTable>
+</template>
+```
+
+| Part | Props | Renders |
+| --- | --- | --- |
+| `NxTable` | — | `<table role="table">`, full width, `text-sm` |
+| `NxTableHeader`, `NxTableBody`, `NxTableFooter` | — | `<thead>`, `<tbody>`, `<tfoot>` |
+| `NxTableRow` | — | `<tr>` |
+| `NxTableHead` | — | `<th>`, `h-10 px-2`, left-aligned, `font-medium`, a line under it |
+| `NxTableCell` | — | `<td>`, `p-2`, a line under it; in `NxTableFooter`, a line above it instead, `bg-muted`, `font-medium` |
+| `NxTableCaption` | — | `<caption>`, under the table, `text-sm` muted |
+| `NxTableEmpty` | `colspan?: number` (`1`) | A row of one cell across `colspan` columns, centred, `py-10` — the text for a table with no rows |
+
+A cell's text wraps, where material-vue's does not: a long value would
+otherwise widen the e-mail past a phone's screen. `NxTableHead` keeps
+`whitespace-nowrap`. Align a column with `class="text-right"` on its head and
+its cells.
+
+`NxTable` carries `role="table"`: Maizzle marks every other table
+`role="none"`, a layout, and a screen reader then reads its rows as plain text.
+The caption is placed under the table by `align="bottom"` as well as
+`caption-side`, which some clients drop.
+
+## NxDescription
+
+material-vue's `Description`: a label in `font-semibold`, and its value under
+it, muted.
+
+```vue
+<template>
+  <NxDescription label="Billing period" value="September 2026" />
+  <NxDescription label="Credits left" :value="0" />
+  <NxDescription label="Coupon" :value="null" />
+</template>
+```
+
+| Prop | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `label` | `string` | required | The first line |
+| `value` | `string \| number \| null` | none | The second line |
+
+Like a row of `NxSummaryData`, a description without a value (`undefined`,
+`null`, `''`) is left out entirely, and `0` is a value: above, `Coupon` is
+not written. The default slot is written under the value.
+
+## NxListTile
+
+material-vue's `ListTile`: a title, a subtitle under it, and `leading` and
+`trailing` slots on its sides, on a rounded box tinted at 5% of the primary
+colour.
+
+```vue
+<template>
+  <NxListTile title="Ada Lovelace" subtitle="Owner" href="https://acme.example/team/ada" selected>
+    <template #leading>
+      <NxAvatar><NxAvatarFallback>AL</NxAvatarFallback></NxAvatar>
+    </template>
+    <template #trailing><NxChip variant="tonal" color="success">Active</NxChip></template>
+  </NxListTile>
+  <NxListTile title="Grace Hopper" subtitle="Invited" size="sm" disabled />
+</template>
+```
+
+| Prop | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `title` | `string` | required | `text-sm` semibold (`md`) or `text-[13px]` medium (`sm`) |
+| `subtitle` | `string` | none | Muted, under the title |
+| `href` | `string` | none | Makes the title a link |
+| `selected` | `boolean` | `false` | A border at 40% of the primary colour, on a 15% tint (`md`) or a 10% one (`sm`) |
+| `disabled` | `boolean` | `false` | A muted title, and no link even with `href` |
+| `size` | `'sm' \| 'md'` | `'md'` | `md` is `px-4 py-2` on the tint; `sm` is `px-2 py-1.5` with no tint until selected |
+
+material-vue's ring is a border here: a mail client draws no `box-shadow`.
+Only the title is a link, not the whole tile: a mail client cannot make a
+table cell clickable.
+
+## NxChip
+
+material-vue's `Chip`, static: a rounded label, with the colours of
+[`NxButton`](#nxbutton).
+
+```vue
+<template>
+  <NxTypography>
+    <NxChip label="Design" />
+    <NxChip label="Selected" active />
+    <NxChip variant="tonal" color="success">Paid</NxChip>
+  </NxTypography>
+</template>
+```
+
+| Prop | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `label` | `string` | none | The text, when the default slot is empty |
+| `variant` | `'filled' \| 'tonal' \| 'outlined' \| 'ghost' \| 'link'` | `'outlined'` | As `NxButton`'s |
+| `color` | `'default' \| 'primary' \| 'secondary' \| 'error' \| 'success' \| 'info' \| 'warning'` | `'primary'` | As `NxButton`'s |
+| `active` | `boolean` | `false` | Makes it `filled`, whatever its `variant` |
+
+| Slot | Effect |
+| --- | --- |
+| default | The text, in place of `label` |
+| `avatar`, `leading` | Before the text |
+| `trailing` | After the text |
+
+An e-mail runs no script: a chip has no dismiss button and no click. It is
+inline; put several in an `NxTypography` to give them space below.
+
+## NxAvatar and NxAvatarGroup
+
+material-vue's `Avatar`: a round picture, or initials on the `muted`
+background when there is none.
+
+```vue
+<template>
+  <NxAvatar :size="48"><NxAvatarImage src="https://acme.example/ada.png" alt="Ada" /></NxAvatar>
+  <NxAvatarGroup :max="3" size="lg">
+    <NxAvatar><NxAvatarImage src="https://acme.example/ada.png" alt="Ada" /></NxAvatar>
+    <NxAvatar><NxAvatarFallback>GH</NxAvatarFallback></NxAvatar>
+    <NxAvatar><NxAvatarFallback>AT</NxAvatarFallback></NxAvatar>
+    <NxAvatar><NxAvatarFallback>KJ</NxAvatarFallback></NxAvatar>
+  </NxAvatarGroup>
+</template>
+```
+
+| Part | Props | Renders |
+| --- | --- | --- |
+| `NxAvatar` | `size?: number`: pixels; its group's, else `32` | A round, inline box of that size |
+| `NxAvatarImage` | `src: string` (required), `alt?: string` | The `<img>`, with `width` and `height` set to the avatar's size |
+| `NxAvatarFallback` | — | Its text (initials), `text-[12px]`, centred on `bg-muted` |
+| `NxAvatarGroup` | `max?: number`, `size?: 'sm' \| 'md' \| 'lg'` (`'md'`) | Its avatars in a row, each ringed with the background, sized 24, 32 or 40px; past `max`, one more reading `+N` |
+
+Choose `NxAvatarImage` or `NxAvatarFallback`: an e-mail cannot fall back on a
+picture that fails to load, so there is no switching between them. Give the
+image an absolute URL, and a square picture. A group's avatars sit side by
+side, 4px apart, rather than overlapping as in material-vue: Gmail drops the
+negative margin that stacks them.
 
 ## A complete template
 

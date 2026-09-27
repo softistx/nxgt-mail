@@ -247,6 +247,12 @@ Icons are images or characters: an e-mail has no icon font.
 **Done when:** each renders in the fixture, is checked by caniemail as in
 Step 5, and is documented with its props.
 
+Progress: `NxTable` and its parts, `NxDescription`, `NxListTile`, `NxChip`,
+`NxAvatar`/`NxAvatarGroup` ✅ (fixture `gallery.vue`: caniemail reports only
+`css-caption-side`, with its `align` fallback, and `html-align`). Next:
+`NxProgress`, `NxSteps`, `NxTimeline`; then `NxHero`, `NxEntityHeader`,
+`NxSeeAlso`, `NxStatCard` and the metrics cards.
+
 ## Step 5c — `@nxgt/mail-presets` ✅
 
 Steve's request (2026-09-26): « ajouter mail-presets avec des samples de
