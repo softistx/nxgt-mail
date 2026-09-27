@@ -56,6 +56,8 @@ export function fileForTag(
 ): string | undefined {
 	for (const dir of dirs) {
 		if (!existsSync(dir)) continue;
+		// Sorted, so that of two files Maizzle would give the same name, as
+		// `nx-badge.vue` and `NxBadge.vue`, the same one wins on every machine.
 		const file = readdirSync(dir)
 			.filter((entry) => entry.endsWith('.vue'))
 			.sort()
