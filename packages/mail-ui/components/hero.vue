@@ -15,7 +15,7 @@ const attrs = useAttrs();
 const slots = useSlots();
 const classes = computed(() =>
 	twMerge(
-		'rounded-2xl border border-solid border-border bg-primary-5 px-8 py-10',
+		'rounded-2xl border border-solid border-border nx-dark-border-border bg-primary-5 px-8 py-10',
 		attrs.class as string,
 	),
 );
@@ -26,6 +26,8 @@ const classes = computed(() =>
     <tr>
       <td v-bind="{ ...attrs, class: undefined }" :class="classes">
         <p v-if="eyebrow" class="m-0 text-xs font-semibold uppercase tracking-wider text-primary">{{ eyebrow }}</p>
+        <!-- `bg-primary-5` keeps the same value in dark mode (see theme.css): its
+             text stays `text-foreground`, un-flipped, too. -->
         <h1 :class="['m-0 text-3xl font-semibold tracking-tight text-foreground', eyebrow && 'mt-3']">{{ title }}</h1>
         <p v-if="description" class="m-0 mt-4 text-base text-muted-foreground">{{ description }}</p>
         <div v-if="slots.actions" class="mt-6"><slot name="actions" /></div>

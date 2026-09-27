@@ -12,7 +12,17 @@ import { computed, useAttrs } from 'vue';
  */
 defineOptions({ inheritAttrs: false });
 
-defineProps<{ src?: string; alt?: string; caption?: string }>();
+defineProps<{
+	src?: string;
+	/**
+	 * Shown instead of `src` under `prefers-color-scheme: dark` and for
+	 * Outlook.com/Outlook's own dark mode — a dark image on a dark background
+	 * otherwise disappears. Absent, `src` shows in both modes.
+	 */
+	darkSrc?: string;
+	alt?: string;
+	caption?: string;
+}>();
 
 const attrs = useAttrs();
 const classes = computed(() => twMerge('mb-4 w-full', attrs.class as string));
@@ -22,7 +32,13 @@ const classes = computed(() => twMerge('mb-4 w-full', attrs.class as string));
   <table v-bind="{ ...attrs, class: undefined }" :class="classes" role="presentation" cellpadding="0" cellspacing="0">
     <tr>
       <td>
-        <slot><Img v-if="src" :src="src" :alt="alt ?? ''" class="block h-auto w-full rounded-xl border border-solid border-border" /></slot>
+        <slot>
+          <template v-if="src">
+            <Img v-if="darkSrc" :src="src" :alt="alt ?? ''" class="block h-auto w-full rounded-xl border border-solid border-border nx-dark-border-border nx-light-only" />
+            <Img v-else :src="src" :alt="alt ?? ''" class="block h-auto w-full rounded-xl border border-solid border-border nx-dark-border-border" />
+            <Img v-if="darkSrc" :src="darkSrc" :alt="alt ?? ''" class="block h-auto w-full rounded-xl border border-solid border-border nx-dark-border-border nx-dark-only" />
+          </template>
+        </slot>
       </td>
     </tr>
     <tr v-if="caption">

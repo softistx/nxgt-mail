@@ -10,6 +10,8 @@ const attrs = useAttrs();
 const px = inject(AVATAR_SIZE, 32);
 const classes = computed(() =>
 	twMerge(
+		// `bg-muted` keeps the same value in dark mode (see theme.css): its text
+		// stays `text-foreground`, un-flipped, too.
 		'block rounded-full bg-muted text-center text-[12px] font-medium text-foreground',
 		attrs.class as string,
 	),

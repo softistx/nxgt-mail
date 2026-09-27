@@ -8,7 +8,7 @@
  * A theme token is a `string`: whether `theme.css` declares it is checked
  * when `ui()` is called, not by the compiler.
  *
- * **Eight plausible mistakes, eight refused.**
+ * **Nine plausible mistakes, nine refused.**
  */
 
 import type { MailPlugin } from '@nxgt/mail-config';
@@ -25,9 +25,14 @@ const plugin: MailPlugin = ui({
 	brand: {
 		name: 'Acme',
 		url: 'https://acme.example',
-		logo: { src: 'https://acme.example/logo.png', width: 96, alt: 'Acme' },
+		logo: {
+			src: 'https://acme.example/logo.png',
+			width: 96,
+			alt: 'Acme',
+			darkSrc: 'https://acme.example/logo-dark.png',
+		},
 	},
-	theme: { 'color-primary': '#0f766e' },
+	theme: { 'color-primary': '#0f766e', 'color-background-dark': '#0b1220' },
 });
 const catalogues: Catalogues = uiCatalogues;
 declare const template: ComponentCustomProperties;
@@ -66,5 +71,8 @@ ui({ brand: { name: 'Acme', logo: { width: 96 } } });
 
 // @ts-expect-error — a URL is a string.
 ui({ brand: { name: 'Acme', url: 1 } });
+
+// @ts-expect-error — a logo's darkSrc is a string, an absolute http(s) URL.
+ui({ brand: { name: 'Acme', logo: { src, darkSrc: 1 } } });
 
 export { catalogues, name, plugin, sameBrand, sameContext };

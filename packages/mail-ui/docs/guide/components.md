@@ -135,7 +135,7 @@ reads. They need no JavaScript and no web font.
 | [`NxKbd`](#nxkbd) | `Kbd` | — | default |
 | [`NxCountBadge`](#nxcountbadge) | `CountBadge` | `count` (required), `max` (`99`), `variant` (`'error'`) | default |
 | [`NxActionCard`](#nxactioncard) | `ActionCard` | `title`, `description`, `active` (`false`), `variant` (`'sm'`), `withIndicator` (`true`), `href` | `icon` |
-| [`NxFigure`](#nxfigure) | `Figure` | `src`, `alt`, `caption` | default |
+| [`NxFigure`](#nxfigure) | `Figure` | `src`, `darkSrc`, `alt`, `caption` | default |
 | [`NxLinkButton`](#nxlinkbutton) | `LinkButton` | `to` (required), `variant` (`'link'`), `color`, `size`, `align` | default |
 | [`NxIconButton`](#nxiconbutton) | `IconButton` | `href` (required), `icon`, `variant` (`'filled'`), `color` (`'primary'`), `tooltip` | default |
 | [`NxButtonGroup`](#nxbuttongroup) | `ButtonGroup` | — | default: buttons |
@@ -1142,6 +1142,7 @@ caption centred under it.
 | Prop | Type | Default | Effect |
 | --- | --- | --- | --- |
 | `src` | `string` | none | The image, by absolute URL. A placeholder is fine |
+| `darkSrc` | `string` | none | Shown instead of `src` under dark mode — a dark image on a dark background otherwise disappears: [Dark mode](dark-mode.md) |
 | `alt` | `string` | `''` | Its text for a reader |
 | `caption` | `string` | none | Under it, `text-sm` muted, centred; also in the plain-text version |
 

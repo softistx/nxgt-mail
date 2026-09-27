@@ -33,7 +33,7 @@ const delta = computed(() =>
           <td v-if="slots.icon" class="w-1 whitespace-nowrap pl-3 text-right align-top text-muted-foreground"><slot name="icon" /></td>
         </tr>
       </table>
-      <p class="m-0 mt-2 text-2xl font-semibold text-foreground">{{ value }}</p>
+      <p class="m-0 mt-2 text-2xl font-semibold text-foreground nx-dark-text-foreground">{{ value }}</p>
       <p v-if="hint || delta" class="m-0 mt-2 text-xs">
         <span v-if="delta" :class="`pr-2 font-medium ${delta.colour}`"><span aria-hidden="true"><span data-maizzle-html-only>{{ delta.glyph }}</span></span> {{ delta.label }}</span>
         <span v-if="hint" class="text-muted-foreground">{{ hint }}</span>

@@ -10,7 +10,7 @@ withDefaults(defineProps<{ colspan?: number }>(), { colspan: 1 });
 const attrs = useAttrs();
 const classes = computed(() =>
 	twMerge(
-		'px-4 py-10 text-center align-middle text-sm text-foreground',
+		'px-4 py-10 text-center align-middle text-sm text-foreground nx-dark-text-foreground',
 		attrs.class as string,
 	),
 );

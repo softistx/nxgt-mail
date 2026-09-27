@@ -52,7 +52,7 @@ const attrs = useAttrs();
 const tag = computed(() => props.as ?? TAG[props.variant] ?? 'p');
 const classes = computed(() =>
 	twMerge(
-		'm-0 mb-4 text-foreground',
+		'm-0 mb-4 text-foreground nx-dark-text-foreground',
 		VARIANT[props.variant],
 		attrs.class as string,
 	),

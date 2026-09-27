@@ -49,6 +49,8 @@ const titleClass = computed(() =>
 	twMerge(
 		'no-underline',
 		size.value.title,
+		// idle/selected are `bg-primary-5/10/15`, a light tint keeping the same
+		// value in dark mode (see theme.css): the title stays un-flipped too.
 		props.disabled ? 'text-muted-foreground' : 'text-foreground',
 	),
 );

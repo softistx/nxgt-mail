@@ -21,7 +21,7 @@ const attrs = useAttrs();
 const slots = useSlots();
 const classes = computed(() =>
 	twMerge(
-		'rounded border border-solid border-border bg-background p-4',
+		'rounded border border-solid border-border nx-dark-border-border bg-background nx-dark-bg-background p-4',
 		attrs.class as string,
 	),
 );
@@ -35,7 +35,7 @@ const classes = computed(() =>
           <tr>
             <td v-if="slots.icon" class="w-1 whitespace-nowrap pr-4 align-middle text-3xl leading-none"><slot name="icon" /></td>
             <td class="align-middle">
-              <h2 class="m-0 text-lg font-semibold tracking-tight text-foreground">{{ title }} <span v-if="slots.status" class="pl-2 align-middle"><slot name="status" /></span></h2>
+              <h2 class="m-0 text-lg font-semibold tracking-tight text-foreground nx-dark-text-foreground">{{ title }} <span v-if="slots.status" class="pl-2 align-middle"><slot name="status" /></span></h2>
               <NxSummaryData v-if="metadata.length > 0" inline class="mb-0 mt-0.5" :data="metadata" />
             </td>
             <td v-if="slots.actions" class="w-1 whitespace-nowrap pl-4 text-right align-middle"><slot name="actions" /></td>

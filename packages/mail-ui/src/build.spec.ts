@@ -114,7 +114,7 @@ describe('a project built with the ui plugin', () => {
 	test("shows the brand's logo, linked, and its name in the footer", async () => {
 		const html = await read('dist/en/welcome.html');
 		expect(html).toContain(
-			'<a href="https://acme.example" style="font-size: 18px;',
+			'<a href="https://acme.example" class="nx-dark-text-foreground" style="font-size: 18px;',
 		);
 		expect(html).toContain(
 			'<img src="https://acme.example/logo.png" width="96" alt="Acme"',
@@ -157,7 +157,9 @@ describe('a project built with the ui plugin', () => {
 
 	test('shows the name, unlinked, for a brand without a URL or logo', async () => {
 		const html = await read('dist-override/en/welcome.html');
-		expect(html).toMatch(/<span style="[^"]*">Acme<\/span>/);
+		expect(html).toMatch(
+			/<span class="nx-dark-text-foreground" style="[^"]*">Acme<\/span>/,
+		);
 		expect(html).not.toContain('<a href="https://acme.example"');
 	});
 
@@ -177,7 +179,9 @@ describe('a project built with the ui plugin', () => {
 	test('rules a table with borders a client keeps, its footer on a muted ground', async () => {
 		const html = await read('dist/en/gallery.html');
 		// A data table, which a screen reader reads as one, not a layout's role="none".
-		expect(html).toContain('<table role="table"');
+		expect(html).toContain(
+			'<table class="nx-dark-text-foreground" role="table"',
+		);
 		expect(styleOf(html, 'Pro plan', 'td')).toContain(
 			'border-bottom-width: 1px; border-bottom-style: solid; border-color: #e2e8f0;',
 		);
@@ -191,7 +195,9 @@ describe('a project built with the ui plugin', () => {
 		expect(html).toContain(
 			'<caption align="bottom" style="caption-side: bottom;',
 		);
-		expect(html).toContain('<td colspan="2" style="padding: 40px 16px;');
+		expect(html).toContain(
+			'<td colspan="2" class="nx-dark-text-foreground" style="padding: 40px 16px;',
+		);
 	});
 
 	test('leaves out a description without a value, but not 0', async () => {
@@ -420,7 +426,7 @@ describe('a project built with the ui plugin', () => {
 	test('underlines an extended label with a bar, left out of the plain text, and its trailing slot on the right', async () => {
 		const html = await read('dist/en/content.html');
 		expect(html).toMatch(
-			/<h3 style="margin: 0; font-size: 18px;[^>]*font-weight: 600;[^>]*>\s*Your inbox\s*<\/h3>/,
+			/<h3 class="nx-dark-text-foreground" style="margin: 0; font-size: 18px;[^>]*font-weight: 600;[^>]*>\s*Your inbox\s*<\/h3>/,
 		);
 		expect(html).toContain(
 			'<td height="4" style="height: 4px; line-height: 4px; font-size: 4px; mso-line-height-rule: exactly; width: 56px; border-radius: 4px; background-color: #485096;',
@@ -474,10 +480,10 @@ describe('a project built with the ui plugin', () => {
 	test('rings an active action card, ticks its indicator, links its title, and leaves the indicator out of the text', async () => {
 		const html = await read('dist/en/content.html');
 		expect(html).toContain(
-			'<td style="border-radius: 8px; border: 1px solid #a4a7cb;',
+			'<td class="nx-dark-border-border nx-dark-bg-card nx-dark-text-card-foreground" style="border-radius: 8px; border: 1px solid #a4a7cb;',
 		);
 		expect(html).toContain(
-			'<a href="https://acme.example/digest" style="color: #020618;',
+			'<a href="https://acme.example/digest" class="nx-dark-text-card-foreground" style="color: #020618;',
 		);
 		expect(styleOf(html, '✓', 'span')).toContain('background-color: #485096;');
 		// Two indicators: the active card's, and the md card's; none for with-indicator false.
@@ -496,7 +502,7 @@ describe('a project built with the ui plugin', () => {
 	test("frames a figure's image at the card's width, its caption under it", async () => {
 		const html = await read('dist/en/content.html');
 		expect(html).toMatch(
-			/<img src="https:\/\/acme\.example\/chart\.png" alt="Messages per day" style="display: block;[^"]*border-radius: 14px;[^"]*" height="auto" width="534">/,
+			/<img src="https:\/\/acme\.example\/chart\.png" alt="Messages per day" class="nx-dark-border-border" style="display: block;[^"]*border-radius: 14px;[^"]*" height="auto" width="534">/,
 		);
 		expect(styleOf(html, 'Your messages this week', 'td')).toContain(
 			'text-align: center;',
@@ -615,7 +621,7 @@ describe('a project built with the ui plugin', () => {
 		);
 		// Heads it with a bar, left out of the plain text.
 		expect(await read('dist/en/details.html')).toMatch(
-			/<h3 style="margin: 0; font-size: 18px;[^>]*>\s*Address\s*<\/h3>/,
+			/<h3 class="nx-dark-text-foreground" style="margin: 0; font-size: 18px;[^>]*>\s*Address\s*<\/h3>/,
 		);
 	});
 
@@ -679,7 +685,7 @@ describe('a project built with the ui plugin', () => {
 		expect(html.match(/color: #f05100;[^>]*>★</g)).toHaveLength(4);
 		for (const star of [1, 2, 3, 4, 5]) {
 			expect(html).toContain(
-				`<a href="https://acme.example/review?rating=${star}" title="${star} of 5" aria-label="${star} of 5"`,
+				`<a href="https://acme.example/review?rating=${star}" class="nx-dark-text-foreground-25" title="${star} of 5" aria-label="${star} of 5"`,
 			);
 		}
 		expect(await read('dist/fr/details.html')).toContain(

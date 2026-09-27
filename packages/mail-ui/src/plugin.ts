@@ -20,6 +20,13 @@ export interface Brand {
 		readonly width?: number;
 		/** Default the brand's name. */
 		readonly alt?: string;
+		/**
+		 * Shown instead of `src` under `prefers-color-scheme: dark` and for
+		 * Outlook.com/Outlook's own dark mode — a dark logo on a dark
+		 * background otherwise disappears. Absent, `src` shows in both
+		 * modes: docs/guide/dark-mode.md.
+		 */
+		readonly darkSrc?: string;
 	};
 }
 
@@ -110,6 +117,11 @@ function checkBrand(brand: unknown): asserts brand is Brand {
 	}
 	if (logo.alt !== undefined && typeof logo.alt !== 'string') {
 		throw new TypeError('ui: brand.logo.alt must be a string');
+	}
+	if (logo.darkSrc !== undefined && !isAbsoluteUrl(logo.darkSrc)) {
+		throw new TypeError(
+			'ui: brand.logo.darkSrc must be an absolute http(s) URL — a mail client loads nothing relative',
+		);
 	}
 }
 

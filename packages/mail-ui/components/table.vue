@@ -15,7 +15,7 @@ provide(TABLE_PART, 'body');
 
 const attrs = useAttrs();
 const classes = computed(() =>
-	twMerge('mb-4 w-full text-sm text-foreground', attrs.class as string),
+	twMerge('mb-4 w-full text-sm text-foreground nx-dark-text-foreground', attrs.class as string),
 );
 </script>
 

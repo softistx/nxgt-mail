@@ -17,7 +17,7 @@ const classes = computed(() => twMerge('mb-4', attrs.class as string));
 
 <template>
   <div v-if="shown" v-bind="{ ...attrs, class: undefined }" :class="classes">
-    <p class="m-0 text-base font-semibold text-foreground">{{ label }}</p>
+    <p class="m-0 text-base font-semibold text-foreground nx-dark-text-foreground">{{ label }}</p>
     <p class="m-0 text-sm text-muted-foreground">{{ value }}</p>
     <slot />
   </div>

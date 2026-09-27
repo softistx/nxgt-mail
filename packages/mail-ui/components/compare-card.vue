@@ -49,9 +49,9 @@ const delta = computed(() =>
           <td v-for="(point, side) in points" :key="side" :class="['w-1/2 align-top', side === 0 ? 'pr-1.5' : 'pl-1.5']">
             <table class="w-full" role="presentation" cellpadding="0" cellspacing="0">
               <tr>
-                <td class="rounded border border-solid border-border bg-background p-3">
+                <td class="rounded border border-solid border-border nx-dark-border-border bg-background nx-dark-bg-background p-3">
                   <p :class="EYEBROW">{{ point.label }}</p>
-                  <p :class="['m-0 mt-0.5 text-2xl font-semibold tracking-tight', side === 0 ? 'text-foreground' : 'text-muted-foreground']">{{ point.value }}</p>
+                  <p :class="['m-0 mt-0.5 text-2xl font-semibold tracking-tight', side === 0 ? 'text-foreground nx-dark-text-foreground' : 'text-muted-foreground']">{{ point.value }}</p>
                 </td>
               </tr>
             </table>

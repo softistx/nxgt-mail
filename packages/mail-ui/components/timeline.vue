@@ -16,7 +16,7 @@ defineOptions({ inheritAttrs: false });
 const props = defineProps<{ items: readonly TimelineItem[]; empty?: string }>();
 
 const MARKER: Record<TimelineTone, string> = {
-	default: 'border-border bg-muted text-muted-foreground',
+	default: 'border-border nx-dark-border-border bg-muted text-muted-foreground',
 	primary: 'border-primary-40 bg-primary-15 text-primary',
 	success: 'border-success-40 bg-success-15 text-success',
 	info: 'border-info-40 bg-info-15 text-info',
@@ -51,14 +51,14 @@ const emptyClasses = computed(() =>
         <td class="pl-3 align-top">
           <table class="w-full" role="presentation" cellpadding="0" cellspacing="0">
             <tr>
-              <td class="pt-1 align-top text-sm font-medium leading-6 text-foreground">{{ item.title }}</td>
+              <td class="pt-1 align-top text-sm font-medium leading-6 text-foreground nx-dark-text-foreground">{{ item.title }}</td>
               <td v-if="item.timestampLabel" class="whitespace-nowrap pl-3 pt-1 text-right align-top text-xs leading-6 text-muted-foreground">{{ item.timestampLabel }}</td>
             </tr>
           </table>
         </td>
       </tr>
       <tr>
-        <td :class="['w-4 text-[1px] leading-px', position < props.items.length - 1 && 'border-r [border-right-style:solid] border-border']"><span data-maizzle-html-only>&zwj;</span></td>
+        <td :class="['w-4 text-[1px] leading-px', position < props.items.length - 1 && 'border-r [border-right-style:solid] border-border nx-dark-border-border']"><span data-maizzle-html-only>&zwj;</span></td>
         <td class="w-4 text-[1px] leading-px"><span data-maizzle-html-only>&zwj;</span></td>
         <td :class="['pl-3 align-top', position < props.items.length - 1 && 'pb-6']">
           <p v-if="item.description" class="m-0 text-sm text-muted-foreground">{{ item.description }}</p>

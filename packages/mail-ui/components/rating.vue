@@ -63,9 +63,9 @@ const stars = computed(() =>
 			colour:
 				star <= current.value
 					? props.color === 'default'
-						? 'text-foreground'
+						? 'text-foreground nx-dark-text-foreground'
 						: `text-${props.color}`
-					: 'text-foreground-25',
+					: 'text-foreground-25 nx-dark-text-foreground-25',
 		};
 	}),
 );
@@ -75,7 +75,7 @@ const classes = computed(() => twMerge('mb-4', attrs.class as string));
 
 <template>
   <div v-bind="{ ...attrs, class: undefined }" :class="classes">
-    <p v-if="label" class="m-0 mb-1.5 text-sm font-medium text-foreground">{{ label }}</p>
+    <p v-if="label" class="m-0 mb-1.5 text-sm font-medium text-foreground nx-dark-text-foreground">{{ label }}</p>
     <p v-if="href" class="m-0 text-xl leading-7"><template v-for="item in stars" :key="item.star"><a :href="item.href" :class="`${item.colour} mr-1 no-underline`" :title="item.label" :aria-label="item.label"><span data-maizzle-html-only>&#9733;</span><span data-maizzle-plaintext-only>{{ item.label }}</span></a> </template></p>
     <p v-else class="m-0 text-xl leading-7" role="img" :aria-label="of(current)"><span data-maizzle-html-only><span v-for="item in stars" :key="item.star" :class="`${item.colour} mr-1`" aria-hidden="true">&#9733;</span></span><span data-maizzle-plaintext-only>{{ of(current) }}</span></p>
     <p v-if="helperText" class="m-0 mt-1.5 text-xs text-muted-foreground">{{ helperText }}</p>

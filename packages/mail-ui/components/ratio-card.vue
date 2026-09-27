@@ -22,7 +22,7 @@ defineProps<{
         <tr>
           <td class="align-top">
             <p :class="EYEBROW">{{ left.label }}</p>
-            <p class="m-0 mt-0.5 text-lg font-semibold tracking-tight text-foreground">{{ left.value }}</p>
+            <p class="m-0 mt-0.5 text-lg font-semibold tracking-tight text-foreground nx-dark-text-foreground">{{ left.value }}</p>
           </td>
           <td class="pl-3 text-right align-top">
             <p :class="EYEBROW">{{ right.label }}</p>

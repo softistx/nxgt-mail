@@ -36,6 +36,7 @@ The samples below use the locales `en` and `fr`, the template
 - [`ui: brand.logo.src must be an absolute http(s) URL — a mail client loads nothing relative`](#ui-brandlogosrc-must-be-an-absolute-https-url--a-mail-client-loads-nothing-relative)
 - [`ui: brand.logo.width must be a width in pixels`](#ui-brandlogowidth-must-be-a-width-in-pixels)
 - [`ui: brand.logo.alt must be a string`](#ui-brandlogoalt-must-be-a-string)
+- [`ui: brand.logo.darkSrc must be an absolute http(s) URL — a mail client loads nothing relative`](#ui-brandlogodarksrc-must-be-an-absolute-https-url--a-mail-client-loads-nothing-relative)
 - [`ui: theme must be an object of tokens, as { 'color-primary': '#0f766e' }`](#ui-theme-must-be-an-object-of-tokens-as--color-primary-0f766e-)
 - [`ui: theme.--color-primary is not a token of the theme — name one of theme.css without its --, as color-primary`](#ui-theme--color-primary-is-not-a-token-of-the-theme--name-one-of-themecss-without-its----as-color-primary)
 - [`ui: theme.color-primary must be a CSS value, as #0f766e or 8px`](#ui-themecolor-primary-must-be-a-css-value-as-0f766e-or-8px)
@@ -178,6 +179,24 @@ logo: { src: 'https://acme.example/logo.png', alt: 'Acme' }
 ```
 
 Leave `alt` out to use the brand's name.
+
+### `ui: brand.logo.darkSrc must be an absolute http(s) URL — a mail client loads nothing relative`
+
+**When:** loading `maizzle.config.ts`, when `brand.logo.darkSrc` is set and
+is relative, or not a string.
+**Why:** shown instead of `src` under dark mode, it is loaded by the mail
+client the same way `src` is; only an absolute URL points somewhere from
+there. See [Dark mode](guide/dark-mode.md).
+**Fix:**
+
+```ts
+logo: {
+  src: 'https://acme.example/logo-dark-on-transparent.png',
+  darkSrc: 'https://acme.example/logo-light-on-transparent.png', // not '/logo-light.png'
+}
+```
+
+Leave `darkSrc` out for `src` to show in both modes.
 
 ### `ui: theme must be an object of tokens, as { 'color-primary': '#0f766e' }`
 

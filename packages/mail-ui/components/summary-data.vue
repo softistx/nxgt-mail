@@ -39,7 +39,7 @@ const classes = computed(() => twMerge('mb-4 w-full', attrs.class as string));
   <table v-else v-bind="{ ...attrs, class: undefined }" :class="classes" role="presentation" cellpadding="0" cellspacing="0">
     <tr v-for="(row, index) in rows" :key="index">
       <td class="border-b [border-bottom-style:solid] border-primary-40 py-2 pr-2 text-sm text-muted-foreground">{{ row.label }}</td>
-      <td class="border-b [border-bottom-style:solid] border-primary-40 py-2 text-right text-sm text-foreground">{{ row.value }}</td>
+      <td class="border-b [border-bottom-style:solid] border-primary-40 py-2 text-right text-sm text-foreground nx-dark-text-foreground">{{ row.value }}</td>
     </tr>
   </table>
 </template>

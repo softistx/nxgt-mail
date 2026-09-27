@@ -59,6 +59,7 @@ Name a token in `theme` without its `--`: `--color-primary` is
 | `color-border` | light grey | Card, separator, table and outlined borders |
 | `color-paper` | 5% primary over background | The page behind the layout's card |
 | `color-<colour>-5`, `-10`, `-15`, `-20`, `-25`, `-40`, `-50` | the colour mixed over background | Tints — see below |
+| `color-background-dark`, `color-foreground-dark`, `color-card-dark`, `color-card-foreground-dark`, `color-accent-dark`, `color-accent-foreground-dark`, `color-border-dark`, `color-paper-dark` | `@nxgt/material-vue`'s dark values | Shown under dark mode — see [Dark mode](dark-mode.md) |
 
 The exact values are in the file itself:
 
@@ -139,15 +140,18 @@ ui({ brand: { name: 'Acme' }, theme: { 'color-primay': '#0f766e' } });
 
 The full list of errors is in [The plugin](plugin.md#errors).
 
-## Light only
+## Light and dark
 
-The layout declares `<meta name="color-scheme" content="light">` and
-`supported-color-schemes` `light`, and the theme has no dark tokens. A client
-in dark mode may still invert the colours on its own; the e-mail asks it not
-to, and does not ship a second palette.
+The layout declares `<meta name="color-scheme" content="light dark">` and
+ships `@nxgt/material-vue`'s dark palette, in the clients that read it. The
+inlined styles a template shows without a client's own help stay the
+light ones; see [Dark mode](dark-mode.md) for the technique, which client
+reads it, and how to override a dark token.
 
 ## See also
 
 - [Components](components.md) — which tokens each component uses.
+- [Dark mode](dark-mode.md) — the technique, per client, and the brand's
+  `darkSrc`.
 - [The plugin](plugin.md) — `theme` among the other options, and your own
   layout on the same CSS.
