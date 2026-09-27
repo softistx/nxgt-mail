@@ -66,6 +66,9 @@ and the brand `Acme`.
 - [`i18n: en/new-sign-in.html is empty — a tag of its template resolved to no component; list the plugin that brings it, as ui()`](#i18n-ennew-sign-inhtml-is-empty--a-tag-of-its-template-resolved-to-no-component-list-the-plugin-that-brings-it-as-ui)
 - [`i18n: en: verify-email passes {brand} to verifyEmail.body, which does not use it`](#i18n-en-verify-email-passes-brand-to-verifyemailbody-which-does-not-use-it)
 
+**Sending**: when your code renders a built preset
+- [`render: reset-password needs the variable expiresIn`](#render-reset-password-needs-the-variable-expiresin)
+
 **Traps: a build that succeeds and is wrong**
 - [A bug in `@nxgt/mail-presets` itself](#a-bug-in-nxgtmail-presets-itself)
 
@@ -180,6 +183,10 @@ It wins over the preset, and this error does not apply to it.
 The message names your locale. The key starts `presets.` or with a preset's
 key (`verifyEmail.`, `signInCode.`, …), or `common.` when the `common` keys
 are missing as well (`i18n: de: common.footer.ignore is missing — …`).
+After an upgrade to 0.2, a catalogue written for 0.1 misses the two keys it
+added, `presets.codeExpires` and `presets.linkExpires`
+(`i18n: de: presets.codeExpires is missing — …`): translate them with the
+`{expiresIn}` argument, as `"Dieser Link läuft in {expiresIn} ab."`.
 
 **When:** loading `maizzle.config.ts`, when the project builds a locale other
 than `en` and `fr`, such as `locales: ['en', 'de']`.
@@ -192,7 +199,7 @@ fallback locale.
 // locales/de.json
 {
   "common": { "greeting": "Hallo {name},", "footer": { "why": "…", "ignore": "…" } },
-  "presets": { "linkFallback": "…", "notYou": "…" },
+  "presets": { "codeExpires": "…", "linkExpires": "…", "linkFallback": "…", "notYou": "…" },
   "verifyEmail": { "subject": "…", "preheader": "…", "title": "…", "body": "…", "action": "…" }
 }
 ```
@@ -356,6 +363,39 @@ template in `emails/verify-email.vue`, which replaces the preset's:
 When only `en` leaves the argument out, the build stops earlier, when the
 config loads, on `i18n: fr: verifyEmail.body uses {brand}, which en does not
 declare`.
+
+---
+
+## Sending
+
+These come from `@nxgt/mail`'s renderer, `createMailRenderer` from
+`@nxgt/mail/renderer`, when your code renders a preset the build wrote.
+
+### `render: reset-password needs the variable expiresIn`
+
+An `Error`, from `@nxgt/mail`'s renderer: its
+[`render: <email> needs the variable <key>`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/troubleshooting.md#render-email-needs-the-variable-key).
+The e-mail named may be `verify-email`, `reset-password`, `magic-link` or
+`sign-in-code`. Typed with `MailEmails`, the same call does not compile:
+`Property 'expiresIn' is missing in type '…' but required in type …`.
+
+**When:** `mails.render(…)`, after an upgrade to 0.2, with the values that
+0.1's e-mails took (`{ name, link }`, `{ code }`).
+**Why:** from 0.2, the four presets whose link or code expires say how long
+it lives, `This link expires in {{ expiresIn }}.`, and the server is the one
+that knows.
+**Fix:** pass `expiresIn`, a duration already written in the recipient's
+language:
+
+```ts
+const hours = new Intl.NumberFormat(locale, { style: 'unit', unit: 'hour', unitDisplay: 'long' });
+mails.render('reset-password', { name, link, expiresIn: hours.format(1) }, { locale }); // '1 hour', '1 heure'
+```
+
+Pass text, not a number: `expiresIn: 3600` renders
+`This link expires in 3600.` To say nothing about expiry, replace the
+template with your own in `emails/`; see
+[Replacing a template](guide/presets.md#replacing-a-template).
 
 ---
 

@@ -1,5 +1,7 @@
 {
 	"presets": {
+		"codeExpires": "Ce code expire dans {expiresIn}.",
+		"linkExpires": "Ce lien expire dans {expiresIn}.",
 		"linkFallback": "Si le bouton ne fonctionne pas, ouvrez ce lien :",
 		"notYou": "Si ce n'était pas vous, sécurisez votre compte dès maintenant."
 	},

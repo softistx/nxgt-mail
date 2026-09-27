@@ -97,6 +97,25 @@ describe('the presets, built by a project', () => {
 		expect(emails['sign-in-code'].urlVariables).toEqual([]);
 	});
 
+	test('each preset whose link or code expires takes expiresIn, in its HTML and its text', async () => {
+		const { emails } = JSON.parse(await read('dist/mail-manifest.json'));
+		const expiring = Object.keys(emails)
+			.filter((name) => emails[name].variables.includes('expiresIn'))
+			.sort();
+		expect(expiring).toEqual([
+			'magic-link',
+			'reset-password',
+			'sign-in-code',
+			'verify-email',
+		]);
+		expect(await read('dist/en/magic-link.html')).toContain(
+			'This link expires in {{ expiresIn }}.',
+		);
+		expect(await read('dist/fr/sign-in-code.txt')).toContain(
+			'Ce code expire dans {{ expiresIn }}.',
+		);
+	});
+
 	test("builds only the presets asked for, the project's template replacing one", async () => {
 		const { emails } = JSON.parse(
 			await read('dist-override/mail-manifest.json'),
@@ -148,8 +167,21 @@ describe('the presets, built by a project', () => {
 		expect(fr.html).toContain('<html lang="fr"');
 		expect(fr.text).not.toContain('{{');
 		expect(() =>
-			mails.render('magic-link', { link: 'javascript:alert(1)' }),
+			mails.render('magic-link', {
+				link: 'javascript:alert(1)',
+				expiresIn: '1 hour',
+			}),
 		).toThrow(MailRefused);
+		const code = mails.render(
+			'sign-in-code',
+			{ code: '621739', expiresIn: '10 minutes' },
+			{ locale: 'fr' },
+		);
+		expect(code.html).toContain('Ce code expire dans 10 minutes.');
+		expect(code.text).toContain('Ce code expire dans 10 minutes.');
+		expect(() =>
+			mails.render('magic-link', { link: 'https://acme.example/in' }),
+		).toThrow('render: magic-link needs the variable expiresIn');
 	});
 
 	test('caniemail reports for Gmail, Outlook and Apple Mail only the known partial support', async () => {

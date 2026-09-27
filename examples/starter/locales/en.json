@@ -5,7 +5,7 @@
 		"title": "Confirm your e-mail address",
 		"body": "Confirm that this address is yours to finish creating your {brand} account.",
 		"action": "Confirm my address",
-		"expires": "The link expires in {minutes, plural, one {# minute} other {# minutes}}.",
+		"expires": "The link expires in {expiresIn}.",
 		"linkFallback": "Or paste this link into your browser:"
 	}
 }

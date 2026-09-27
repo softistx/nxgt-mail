@@ -103,19 +103,55 @@ manifest:
 
 | E-mail | Placeholders | Subject (`en`) |
 | --- | --- | --- |
-| `verify-email` | `link`, `name` | Confirm your e-mail address |
-| `reset-password` | `link`, `name` | Reset your password |
+| `verify-email` | `expiresIn`, `link`, `name` | Confirm your e-mail address |
+| `reset-password` | `expiresIn`, `link`, `name` | Reset your password |
 | `password-changed` | `link`, `name` | Your password was changed |
 | `email-changed` | `link`, `name`, `newEmail` | Your e-mail address was changed |
-| `sign-in-code` | `code` | Your sign-in code: `{{ code }}` |
-| `magic-link` | `link` | Your sign-in link |
+| `sign-in-code` | `code`, `expiresIn` | Your sign-in code: `{{ code }}` |
+| `magic-link` | `expiresIn`, `link` | Your sign-in link |
 | `new-sign-in` | `device`, `link`, `location`, `name`, `time` | New sign-in to your account |
 | `welcome` | `link`, `name` | Welcome, `{{ name }}` |
 | `invitation` | `inviter`, `link`, `organization` | `{{ inviter }}` invited you to join `{{ organization }}` |
 
 `link` is a URL in each of them: the sender fills it with an `http:` or `https:` URL.
-See [The e-mails](docs/guide/emails.md) for what each one says, in both
-locales, and every message key.
+`expiresIn` is how long the link or the code stays valid, already written in
+the recipient's language — `'1 hour'`, `'1 heure'` — shown as
+`This link expires in {{ expiresIn }}.` (`This code expires in …` for
+`sign-in-code`). See [The e-mails](docs/guide/emails.md) for what each one
+says, in both locales, and every message key.
+
+### Sending one
+
+At send time, with [`@nxgt/mail`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/README.md)'s renderer, reading your build:
+
+```ts
+import { type Mailer, pickLocale } from '@nxgt/mail';
+import { createMailRenderer } from '@nxgt/mail/renderer';
+import type { MailEmails } from './generated/mail'; // written by each build, git-ignored
+
+export const mails = createMailRenderer<MailEmails>({ dir: 'dist' });
+
+export async function sendReset(
+	mailer: Mailer,
+	user: { email: string; name: string; locale: string | null },
+	link: string,
+): Promise<void> {
+	const locale = pickLocale(user.locale, mails.locales, 'en');
+	const hours = new Intl.NumberFormat(locale, { style: 'unit', unit: 'hour', unitDisplay: 'long' });
+	await mailer.send({
+		to: user.email,
+		from: 'noreply@acme.example',
+		// expiresIn: '1 hour' in en, '1 heure' in fr
+		...mails.render('reset-password', { name: user.name, link, expiresIn: hours.format(1) }, { locale }),
+	});
+}
+```
+
+The server knows how long the token it made lives; the build does not, so
+the sender writes the duration in the recipient's language. Leaving
+`expiresIn` out does not compile against `MailEmails`, and throws
+[`render: reset-password needs the variable expiresIn`](docs/troubleshooting.md#render-reset-password-needs-the-variable-expiresin)
+untyped.
 
 ### Replacing a template
 
@@ -177,6 +213,10 @@ does not use it`. Replace the template to change what it passes.
 
 **`only` keeps only those presets' messages.** A template of yours named
 like a preset left out of `only` writes all of its messages itself.
+
+**`expiresIn` is text, not a number.** Pass `'1 hour'`, not `1` or
+`3600`: the renderer writes a number as is, so the e-mail would say
+`This link expires in 3600.`
 
 **Three subjects hold placeholders.** `welcome`, `sign-in-code` and
 `invitation` put `{{ name }}`, `{{ code }}`, `{{ inviter }}` and
