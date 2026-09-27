@@ -65,7 +65,7 @@ How the messages are shaped:
 - [`send: attachments[<n>].content must be a Uint8Array — the file's bytes, never a path or a URL`](#send-attachmentsncontent-must-be-a-uint8array--the-files-bytes-never-a-path-or-a-url)
 - [`send: attachments[<n>].filename must be a file name — not empty, not . or .., without / or \, a line break or a control character`](#send-attachmentsnfilename-must-be-a-file-name--not-empty-not--or--without--or--a-line-break-or-a-control-character)
 - [`send: attachments[<n>].contentType must be a file's type/subtype, as application/pdf — never multipart/* or message/*`](#send-attachmentsncontenttype-must-be-a-files-typesubtype-as-applicationpdf--never-multipart-or-message)
-- [`send: attachments[<n>].contentId must be 1 to 127 letters, digits and . _ ~ + -, with at most one @, as logo@acme.test`](#send-attachmentsncontentid-must-be-1-to-127-letters-digits-and-_-----with-at-most-one--as-logoacmetest)
+- [`send: attachments[<n>].contentId must be 1 to 127 letters, digits and . _ ~ + -, with at most one @, as logo@acme.test`](#send-attachmentsncontentid-must-be-1-to-127-letters-digits-and--_-----with-at-most-one--as-logoacmetest)
 - [`send: attachments[<n>].contentId is already another attachment's — a contentId names one file`](#send-attachmentsncontentid-is-already-another-attachments--a-contentid-names-one-file)
 - [`send: html shows a cid: URL that no attachment's contentId names — attach the image with that contentId`](#send-html-shows-a-cid-url-that-no-attachments-contentid-names--attach-the-image-with-that-contentid)
 - [`send: idempotencyKey must be 1 to 256 visible ASCII characters, as order-42/receipt`](#send-idempotencykey-must-be-1-to-256-visible-ascii-characters-as-order-42receipt)
@@ -826,11 +826,12 @@ const attachments = [logo, ...others.filter((file) => file.contentId !== logo.co
 
 ### `send: html shows a cid: URL that no attachment's contentId names — attach the image with that contentId`
 
-**When:** `send`, when the HTML holds a `cid:` URL as a quoted attribute
-value — `src="cid:logo"`, `background='cid:bg'` — and no attachment has that
-`contentId`: the image was not attached, was attached without its
-`contentId`, or under an id spelled otherwise (another case, angle
-brackets). The ids are compared as written.
+**When:** `send`, when the HTML uses a `cid:` URL — an attribute value,
+quoted or not (`src="cid:logo"`, `background=cid:bg`), or a CSS
+`url(cid:bg)` — and no attachment has that `contentId`: the image was not
+attached, was attached without its `contentId`, or under an id spelled
+otherwise (another case, angle brackets). The ids are compared as written,
+after the URL's `%` escapes are decoded; a malformed escape names nothing.
 **Why:** the e-mail would go out with a broken image, and nothing would tell
 anyone. The refusal names no id: find it in the template.
 **Fix:** attach the image on every send of that e-mail, with the id the

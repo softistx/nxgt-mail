@@ -564,14 +564,18 @@ without its angle brackets. It is 1 to 127 characters — letters, digits and
 `logo` or `logo@acme.test` — so the `cid:` URL is the id as written, with
 nothing to percent-encode, and every provider takes it (Resend takes fewer
 than 128). Two attachments of one message never share an id. The id is
-compared as written: `cid:Logo` does not name `logo`.
+compared as written — `cid:Logo` does not name `logo` — once the URL is
+percent-decoded, as RFC 2392 says: `cid:logo%40acme.test` names
+`logo@acme.test`.
 
 **Every `cid:` the HTML shows needs its attachment.** `checkMessage` reads
-each `cid:` URL written as a quoted attribute value — `src="cid:…"`,
-`background='cid:…'`, in any case of `cid:` — and refuses the message when
-no attachment's `contentId` names it. Without the check, the e-mail goes out
-with a broken image, and nothing tells anyone. A `cid:` in the text part, or
-in the HTML's prose, is not a reference and is not read. The reverse is
+each `cid:` URL where HTML uses one — an attribute value, quoted or not
+(`src="cid:…"`, `background=cid:…`, the first candidate of a `srcset`), or a
+CSS `url(cid:…)`, quoted or not, in a `style` attribute or element — in any
+case of `cid:`, and refuses the message when no attachment's `contentId`
+names it. Without the check, the e-mail goes out with a broken image, and
+nothing tells anyone. A `cid:` in the text part, or in the HTML's prose, is
+not a reference and is not read. The reverse is
 allowed: an attachment whose id the HTML never names is sent, and a mail
 client usually lists it as a file.
 

@@ -304,7 +304,7 @@ await mailer.send({
 
 - `checkMessage` checks the id first — 1 to 127 letters, digits and `.` `_`
   `~` `+` `-` with at most one `@`, unique in the message — and refuses a
-  `cid:` the HTML quotes as an attribute value that no attachment's
+  `cid:` the HTML uses — an attribute value or a CSS `url()` — that no attachment's
   `contentId` names: see
   [`@nxgt/mail` — inline images](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/guide/sending.md#inline-images--cid).
 - The id is passed without angle brackets; nodemailer adds them in the header.

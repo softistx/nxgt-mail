@@ -191,9 +191,9 @@ export async function sendReceipt(mailer: Mailer, to: string, rendered: Rendered
 
 A `contentId` is the file's `Content-ID` (RFC 2392) without its angle
 brackets: 1 to 127 letters, digits and `.` `_` `~` `+` `-`, with at most one
-`@`, unique in the message. **Every `cid:` the HTML quotes as an attribute
-value must name an attachment's `contentId`**, or `checkMessage` refuses the
-message with `MailRefused` — a broken image is never sent silently. A `cid:`
+`@`, unique in the message. **Every `cid:` the HTML uses — an attribute value
+or a CSS `url()` — must name an attachment's `contentId`**, or `checkMessage`
+refuses the message with `MailRefused`, before a broken image goes out. A `cid:`
 is written in the template, never filled at send time: a URL variable holding
 `cid:…` is refused, like any URL that is not `http:`, `https:` or `mailto:`.
 Some webmails show inline images as plain attachments, or not at all: an

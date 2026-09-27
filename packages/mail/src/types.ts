@@ -49,10 +49,11 @@ export interface MailAttachment {
 	 * the `cid:` URL is the id as is, with nothing to percent-encode. Unique
 	 * among the message's attachments, compared as written.
 	 *
-	 * Every `cid:` URL the HTML quotes as an attribute value
-	 * (`src="cid:…"`, `background='cid:…'`) must name an attachment's
-	 * `contentId`, or `checkMessage` refuses the message: a broken image is
-	 * sent, and nobody hears of it. An attachment whose id the HTML never
+	 * Every `cid:` URL the HTML uses — an attribute value, quoted or not
+	 * (`src="cid:…"`, `background=cid:…`), or a CSS `url(cid:…)` — must name
+	 * an attachment's `contentId`, percent-decoded as RFC 2392 says, or
+	 * `checkMessage` refuses the message: otherwise a broken image is sent,
+	 * and nobody hears of it. A `cid:` in prose is not read. An attachment whose id the HTML never
 	 * names is sent all the same; a mail client usually lists it as a file.
 	 */
 	readonly contentId?: string;

@@ -37,9 +37,13 @@ const CONTAINER_TYPE = /^(?:multipart|message)\//i;
 // characters: Resend takes "less than 128".
 const CONTENT_ID = /^[A-Za-z0-9._~+-]+(?:@[A-Za-z0-9._~+-]+)?$/;
 const CONTENT_ID_MAX = 127;
-// A `cid:` URL as a quoted attribute value, `src="cid:…"` or `='cid:…'` —
-// how a built template writes one. The scheme is case-insensitive.
-const CID_REFERENCE = /=\s*(["'])cid:([^"']*)\1/gi;
+// A `cid:` URL where the HTML uses one: an attribute value, quoted or not
+// (`src="cid:…"`, `background=cid:…`), or a CSS `url(…)`, quoted or not. The
+// scheme is case-insensitive. A `cid:` in prose is not a reference.
+const CID_REFERENCE =
+	/(?:=|url\()\s*(?:"cid:([^"]*)"|'cid:([^']*)'|cid:([^\s"'<>)]*))/gi;
+// What ends the URL inside a value: a `srcset` descriptor (`cid:logo 2x`).
+const CID_URL_END = /[\s,]/;
 // Written into a header by the transports that use it (Resend's
 // `Idempotency-Key`): visible ASCII only, so no line break, and Resend's length.
 const IDEMPOTENCY_KEY = /^[\x21-\x7E]{1,256}$/;
@@ -120,8 +124,23 @@ function checkAttachment(attachment: MailAttachment, where: string): void {
 }
 
 /**
+ * The content id a `cid:` URL names: RFC 2392 percent-encodes it, so
+ * `cid:logo%40acme.test` names `logo@acme.test`. A malformed escape names
+ * nothing.
+ */
+function contentIdOf(url: string): string {
+	const [id = ''] = url.split(CID_URL_END);
+	try {
+		return decodeURIComponent(id);
+	} catch {
+		return '';
+	}
+}
+
+/**
  * Refuses two attachments under one `contentId`, and a `cid:` URL the HTML
- * quotes as an attribute value that no attachment's `contentId` names.
+ * uses — an attribute value or a CSS `url()` — that no attachment's
+ * `contentId` names.
  */
 function checkInlineImages(message: MailMessage): void {
 	const ids = new Set<string>();
@@ -134,8 +153,10 @@ function checkInlineImages(message: MailMessage): void {
 		}
 		ids.add(attachment.contentId);
 	});
-	for (const [, , id] of message.html.matchAll(CID_REFERENCE)) {
-		if (!ids.has(id ?? '')) {
+	for (const [, doubled, single, bare] of message.html.matchAll(
+		CID_REFERENCE,
+	)) {
+		if (!ids.has(contentIdOf(doubled ?? single ?? bare ?? ''))) {
 			throw new MailRefused(
 				"send: html shows a cid: URL that no attachment's contentId names — attach the image with that contentId",
 			);
@@ -165,8 +186,9 @@ function checkInlineImages(message: MailMessage): void {
  *   `type/subtype`, never `multipart/*` or `message/*`, and a `contentId`,
  *   when present, of 1 to 127 letters, digits and `.` `_` `~` `+` `-` with at
  *   most one `@`, unique among the attachments;
- * - every `cid:` URL `html` quotes as an attribute value (`src="cid:…"`)
- *   names an attachment's `contentId`;
+ * - every `cid:` URL `html` uses — an attribute value, quoted or not, or a
+ *   CSS `url()` — names an attachment's `contentId`, percent-decoded as RFC
+ *   2392 says;
  * - `idempotencyKey`, when present, is 1 to 256 visible ASCII characters.
  */
 export function checkMessage(message: MailMessage): void {

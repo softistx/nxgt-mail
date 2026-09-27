@@ -11,9 +11,9 @@ the only number.
 - **Inline images (`cid:`)** — `contentId` on a `MailAttachment` makes it an
   image the HTML shows as `<img src="cid:…">`. `checkMessage` refuses an id
   that is not 1 to 127 letters, digits and `.` `_` `~` `+` `-` with at most
-  one `@`, two attachments under one id, and a `cid:` the HTML quotes as an
-  attribute value that no attachment names — a broken image is never sent
-  silently. A `cid:` is written in the template: a URL variable holding one
+  one `@`, two attachments under one id, and a `cid:` the HTML uses — an
+  attribute value or a CSS `url()` — that no attachment names, before a
+  broken image goes out. A `cid:` is written in the template: a URL variable holding one
   is refused. The memory mailer keeps the id; the conformance suite gains
   `send.inlineImage`, fifteen cases in all. The SMTP transport sends it as
   nodemailer's `cid`, Resend's as `content_id`.

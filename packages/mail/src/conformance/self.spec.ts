@@ -417,6 +417,26 @@ describe('the suite fails a bad transport', () => {
 		);
 	});
 
+	it('fails a transport that delivers the inline image twice, or retyped', async () => {
+		const twice = readingBack((mail) => ({
+			...mail,
+			attachments: [...(mail.attachments ?? []), ...(mail.attachments ?? [])],
+		}));
+		const retyped = readingBack((mail) => ({
+			...mail,
+			attachments: (mail.attachments ?? []).map((file) => ({
+				...file,
+				contentType: 'application/octet-stream',
+			})),
+		}));
+		expect(
+			await failureOf(runMailerCase(byId('send.inlineImage'), twice)),
+		).toContain('expected 1 delivered attachment, got 2');
+		expect(
+			await failureOf(runMailerCase(byId('send.inlineImage'), retyped)),
+		).toContain('the inline image was not delivered with its content type');
+	});
+
 	it('fails a transport that delivers a content id other than the one sent', async () => {
 		const bracketed = readingBack((mail) => ({
 			...mail,

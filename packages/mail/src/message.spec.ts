@@ -363,7 +363,50 @@ describe('checkMessage', () => {
 			expect(error.message).not.toContain('secret-7f3a');
 		});
 
-		it('reads a cid: only as a quoted attribute value, never in the text or prose', () => {
+		it.each([
+			['an unquoted attribute', '<img src=cid:bg alt="">'],
+			['a CSS url()', '<td style="background-image:url(cid:bg)">'],
+			['a quoted CSS url()', '<td style="background-image:url(\'cid:bg\')">'],
+			[
+				'a CSS url() in a style element',
+				'<style>.hero{background:url("cid:bg")}</style>',
+			],
+			['a value that runs on past the id', '<img src="cid:bg\'x">'],
+		])('refuses an unattached cid: in %s', (_, html) => {
+			expect(refusal({ ...message, html, attachments: [pdf] }).message).toBe(
+				"send: html shows a cid: URL that no attachment's contentId names — attach the image with that contentId",
+			);
+			const attached = () =>
+				checkMessage({
+					...message,
+					html,
+					attachments: [{ ...logo, contentId: 'bg' }],
+				});
+			// A quoted value is the whole URL: cid:bg'x names bg'x, not bg.
+			if (html.includes("bg'x")) expect(attached).toThrow(MailRefused);
+			else expect(attached).not.toThrow();
+		});
+
+		it('reads a percent-encoded cid: as RFC 2392 does, and a srcset descriptor as the end of it', () => {
+			expect(() =>
+				checkMessage({
+					...message,
+					html: '<img src="cid:logo%40acme.test" srcset="cid:logo@acme.test 2x">',
+					attachments: [logo],
+				}),
+			).not.toThrow();
+			expect(
+				refusal({
+					...message,
+					html: '<img src="cid:logo%4">',
+					attachments: [logo],
+				}).message,
+			).toBe(
+				"send: html shows a cid: URL that no attachment's contentId names — attach the image with that contentId",
+			);
+		});
+
+		it('reads a cid: only where HTML uses a URL, never in the text or prose', () => {
 			expect(() =>
 				checkMessage({
 					...message,
