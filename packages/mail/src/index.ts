@@ -28,6 +28,11 @@ export {
 	type MemoryMailer,
 } from './memory';
 export { addressOf, checkMessage, recipientsOf } from './message';
+export {
+	type RetryExhausted,
+	type RetryOptions,
+	withRetry,
+} from './retry';
 export type {
 	Address,
 	MailAttachment,

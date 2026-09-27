@@ -10,7 +10,7 @@
  * The calls that **must keep compiling** are here too, unmarked: a refusal
  * that refuses the correct call is a bug.
  *
- * **26 plausible mistakes, 26 refused.**
+ * **27 plausible mistakes, 27 refused.**
  */
 
 import type { DeliveredMail, MailerHarness } from '../../src/conformance/index';
@@ -26,6 +26,7 @@ import {
 	pickLocale,
 	type Rendered,
 	type SentMail,
+	withRetry,
 } from '../../src/index';
 import { createMailRenderer } from '../../src/renderer';
 
@@ -352,3 +353,19 @@ const scheduled: MailMessage = {
 	scheduledAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
 };
 void [isoText, scheduled];
+
+// ── 27. withRetry's attempts given as a string ───────────────────────────────
+// A count looks like it could be written either way; it is a number, checked
+// at wiring time, not text.
+declare const memoryMailer: Mailer;
+withRetry(memoryMailer, {
+	// @ts-expect-error — attempts is a number, not a numeral string.
+	attempts: '5',
+});
+// Must compile: every option as a number, and an AbortSignal.
+withRetry(memoryMailer, {
+	attempts: 5,
+	baseDelayMs: 200,
+	maxDelayMs: 30_000,
+	signal: new AbortController().signal,
+});

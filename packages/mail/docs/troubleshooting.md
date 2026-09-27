@@ -80,6 +80,14 @@ How the messages are shaped:
 - [`send: scheduledAt is not supported — SMTP has no way to schedule a send, and sending it now would be wrong`](#send-scheduledat-is-not-supported--smtp-has-no-way-to-schedule-a-send-and-sending-it-now-would-be-wrong)
 - [`send: the memory mailer was told to fail this send`](#send-the-memory-mailer-was-told-to-fail-this-send)
 
+**Retrying**
+- [`withRetry: mailer must be a Mailer, as { send }`](#withretry-mailer-must-be-a-mailer-as--send-)
+- [`withRetry: options must be an object, as { attempts }`](#withretry-options-must-be-an-object-as--attempts-)
+- [`withRetry: attempts must be a positive integer`](#withretry-attempts-must-be-a-positive-integer)
+- [`withRetry: baseDelayMs must be a non-negative integer` / `withRetry: maxDelayMs must be a non-negative integer`](#withretry-basedelayms-must-be-a-non-negative-integer--withretry-maxdelayms-must-be-a-non-negative-integer)
+- [`withRetry: maxDelayMs must be at least baseDelayMs`](#withretry-maxdelayms-must-be-at-least-basedelayms)
+- [`withRetry: signal must be an AbortSignal`](#withretry-signal-must-be-an-abortsignal)
+
 **Unsubscribe**
 - [`listUnsubscribe: url must be an https:// URL in printable ASCII, without credentials, <, >, quotes or a raw comma`](#listunsubscribe-url-must-be-an-https-url-in-printable-ascii-without-credentials---quotes-or-a-raw-comma)
 - [`listUnsubscribe: mailto must be a bare e-mail address, as unsubscribe@example.com`](#listunsubscribe-mailto-must-be-a-bare-e-mail-address-as-unsubscribeexamplecom)
@@ -993,6 +1001,15 @@ different e-mail to that user is refused — by the memory mailer, as
 and by Resend, as `send: Resend refused the message`. When a random key is
 what you have, create it once, store it with the job, and reuse it on retry.
 
+`withRetry` already generates and reuses a key for a message that has none —
+see [Retrying](#retrying) below — so this usually shows up over
+`@nxgt/mail-smtp`, which ignores the key outright: an *ambiguous* SMTP
+failure (a timeout waiting for the response to `DATA`, after the message was
+already transmitted) is thrown as `MailFailure`, retried like any other, and
+can duplicate the e-mail because SMTP has nothing to deduplicate with. That
+is a documented trade-off of retrying over SMTP, not a bug: pass `attempts: 1`
+to `withRetry` for a mailer built on it if the risk is not acceptable.
+
 ### `send: scheduledAt must be a valid Date`
 
 **When:** `send`, with a `scheduledAt` that is not a `Date` — an ISO string,
@@ -1075,6 +1092,85 @@ import { createMemoryMailer } from '@nxgt/mail';
 const mailer = createMemoryMailer();
 beforeEach(() => mailer.clear());
 ```
+
+---
+
+## Retrying
+
+### `withRetry: mailer must be a Mailer, as { send }`
+
+**When:** `withRetry(mailer, …)`, with a first argument that is not an object
+with a `send` function — `undefined`, a transport's factory itself rather
+than what it answers, a plain object.
+**Why:** `withRetry` wraps a `Mailer`; without one there is nothing to retry.
+**Fix:** pass what a transport's factory answers:
+
+```ts
+import { withRetry } from '@nxgt/mail';
+import { createResendMailer } from '@nxgt/mail-resend';
+
+const mailer = withRetry(createResendMailer({ apiKey: process.env.RESEND_API_KEY ?? '' }));
+```
+
+### `withRetry: options must be an object, as { attempts }`
+
+**When:** `withRetry(mailer, options)`, with `options` given as something
+other than an object — a number, a string, `null`.
+**Why:** every option is read off it; there is nothing to read off anything
+else.
+**Fix:** an object, or leave it out for the defaults: `withRetry(mailer)`.
+
+### `withRetry: attempts must be a positive integer`
+
+**When:** `withRetry(mailer, { attempts })`, with `attempts` that is not an
+integer of at least `1` — `0`, a negative number, `1.5`, `'5'`.
+**Why:** `attempts` counts how many times `send` is tried, the first try
+included; `0` or fewer would mean never sending at all.
+**Fix:** a whole number, `1` or more — `1` disables retrying outright:
+
+```ts
+const mailer = withRetry(resend, { attempts: 1 }); // never retries
+```
+
+### `withRetry: baseDelayMs must be a non-negative integer` / `withRetry: maxDelayMs must be a non-negative integer`
+
+**When:** `withRetry(mailer, { baseDelayMs })` or `{ maxDelayMs }`, with a
+value that is not an integer of `0` or more — a negative number, a fraction,
+a string.
+**Why:** both are read as milliseconds for a real timer, which takes no
+fraction and no negative delay.
+**Fix:** a whole number of milliseconds, `0` or more:
+
+```ts
+const mailer = withRetry(resend, { baseDelayMs: 500, maxDelayMs: 60_000 });
+```
+
+### `withRetry: maxDelayMs must be at least baseDelayMs`
+
+**When:** `withRetry(mailer, { baseDelayMs, maxDelayMs })`, with `maxDelayMs`
+smaller than `baseDelayMs`.
+**Why:** the backoff grows from `baseDelayMs` up to `maxDelayMs`; a cap below
+the starting point is not a cap that could ever apply, and is almost always a
+mistake in which option got which value.
+**Fix:** swap them, or drop the smaller one and keep the default.
+
+### `withRetry: signal must be an AbortSignal`
+
+**When:** `withRetry(mailer, { signal })`, with `signal` given as something
+other than an `AbortSignal` — an `AbortController` itself, rather than its
+`.signal`.
+**Why:** only a `signal` is checked for `.aborted` and listened to for
+`'abort'`; the controller that creates it is a different object.
+**Fix:** pass the controller's `signal`:
+
+```ts
+const controller = new AbortController();
+const mailer = withRetry(resend, { signal: controller.signal }); // not `controller`
+```
+
+See [Sending — retrying](guide/sending.md#retrying--withretry) for the
+backoff, the idempotency key `withRetry` generates, the ambiguous SMTP case,
+and the outbox pattern for a send that must survive a restart.
 
 ---
 
