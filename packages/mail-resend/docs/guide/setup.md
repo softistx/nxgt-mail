@@ -205,6 +205,70 @@ Content-Type: application/json
 `send` answers `{ messageId }`: Resend's `id`, or `null` when a `2xx` answer
 carries none, or is not JSON — the message was accepted, the id is absent.
 
+## The idempotency key
+
+A message's `idempotencyKey` is sent as Resend's `Idempotency-Key` header —
+never in the JSON body, so it never reaches the e-mail — and a message
+without one sends no such header:
+
+```ts
+await mailer.send({
+	to: 'ada@example.com',
+	subject: 'Your receipt',
+	html: '<p>Thank you for your order.</p>',
+	text: 'Thank you for your order.',
+	idempotencyKey: 'order-42/receipt',
+});
+```
+
+```http
+POST /emails HTTP/1.1
+Host: api.resend.com
+Authorization: Bearer re_…
+Content-Type: application/json
+Idempotency-Key: order-42/receipt
+
+{ "from": "\"Acme\" <noreply@acme.test>", "to": ["ada@example.com"], "subject": "Your receipt", … }
+```
+
+Resend remembers a key for **24 hours**. What it answers a second request
+with the same key:
+
+| The second request | Resend answers | `send` |
+| --- | --- | --- |
+| the same message, after the first was accepted | `200`, the first send's `id` | resolves with that `messageId`; nothing more is delivered |
+| a different message — another subject, recipient, attachment | `409 invalid_idempotent_request` | rejects with `MailRefused`: sending it again fails again. Give that e-mail its own key |
+| any message, while the first is still in progress | `409 concurrent_idempotent_requests` | rejects with `MailFailure`: retry later, with the same key |
+| any message, more than 24 hours later | a new send | resolves with a new id: the e-mail is delivered again |
+
+Derive the key from what the e-mail is about — `order-42/receipt`,
+`user-7/welcome` — never from the time or a random value, or every retry
+carries a new key. `checkMessage` refuses a key that is not 1 to 256 visible
+ASCII characters, before any request. The transport itself retries nothing:
+the key is what makes **your** retry safe.
+
+A job that retries after a failure, with the key it was queued with:
+
+```ts
+import { MailFailure, type MailMessage } from '@nxgt/mail';
+import { createResendMailer } from '@nxgt/mail-resend';
+
+const mailer = createResendMailer({ apiKey: process.env.RESEND_API_KEY ?? '', from: 'noreply@acme.test' });
+
+// Yours: the queue that runs a job again later — well within 24 hours.
+declare function retryIn(seconds: number): Promise<void>;
+
+export async function sendReceiptJob(order: { id: string; email: string }, rendered: Omit<MailMessage, 'to'>): Promise<void> {
+	try {
+		await mailer.send({ ...rendered, to: order.email, idempotencyKey: `order-${order.id}/receipt` });
+	} catch (error) {
+		// A timeout, a 5xx, a 409 still in progress: the same key, later, delivers at most once.
+		if (error instanceof MailFailure) return retryIn(60);
+		throw error; // MailRefused: fix the message, or its key
+	}
+}
+```
+
 ## With the renderer
 
 ```ts

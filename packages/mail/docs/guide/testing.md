@@ -143,18 +143,103 @@ await mailer
 mailer.attempts; // 0 — and the failure is still queued for the next well-formed send
 ```
 
+## `idempotencyKey` — a retry delivers once
+
+The memory mailer honours a message's
+[`idempotencyKey`](sending.md#idempotency--sending-once) as Resend does:
+
+- the **same message** under a key it already delivered answers that
+  delivery's `messageId`, and nothing more reaches `sent`;
+- a **different message** under that key — another subject, another
+  recipient, other attachment bytes, any field — is refused with
+  `MailRefused`: `send: idempotencyKey was already used for a different message — a key names one e-mail`,
+  as Resend answers `409 invalid_idempotent_request`;
+- a send that **failed** delivered nothing, so its key stays free, and the
+  retry delivers;
+- each send still counts in `attempts`, the answered duplicate and the
+  refused reuse included: both reached the hand-over;
+- `clear()` forgets the keys.
+
+A test proving that a job run twice e-mails once:
+
+```ts
+import { expect, it } from 'bun:test';
+import { createMemoryMailer, type Mailer, MailRefused } from '@nxgt/mail';
+
+// The code under test: a job that may run more than once for the same order.
+async function sendReceipt(mailer: Mailer, orderId: string): Promise<string | null> {
+	const { messageId } = await mailer.send({
+		to: 'ada@example.com',
+		subject: 'Your receipt',
+		html: '<p>Thank you for your order.</p>',
+		text: 'Thank you for your order.',
+		idempotencyKey: `order-${orderId}/receipt`,
+	});
+	return messageId;
+}
+
+it('sends one receipt, however often the job runs', async () => {
+	const mailer = createMemoryMailer();
+
+	const first = await sendReceipt(mailer, '42');
+	const again = await sendReceipt(mailer, '42');
+
+	expect(again).toBe(first); // 'memory-1', both times
+	expect(mailer.sent).toHaveLength(1);
+	expect(mailer.attempts).toBe(2);
+});
+
+it('refuses another e-mail under the same key', async () => {
+	const mailer = createMemoryMailer();
+	await sendReceipt(mailer, '42');
+
+	const error = await mailer
+		.send({
+			to: 'ada@example.com',
+			subject: 'Your order has shipped', // another e-mail, the receipt's key
+			html: '<p>Your order has shipped.</p>',
+			text: 'Your order has shipped.',
+			idempotencyKey: 'order-42/receipt',
+		})
+		.then(() => null, (e: unknown) => e);
+
+	expect(error).toBeInstanceOf(MailRefused); // give it its own key: order-42/shipped
+	expect(mailer.sent).toHaveLength(1);
+});
+
+it('delivers the retry of a send that failed', async () => {
+	const mailer = createMemoryMailer();
+	mailer.failNext();
+
+	await sendReceipt(mailer, '42').then(() => null, (e: unknown) => e); // MailFailure
+	await sendReceipt(mailer, '42');
+
+	expect(mailer.sent).toHaveLength(1);
+	expect(mailer.sent[0]?.idempotencyKey).toBe('order-42/receipt');
+});
+```
+
+"The same message" is what it would deliver: every field, the attachments
+by their bytes. How the object was written does not count — the order of
+its fields, `to` as one address or a list of one, no `attachments` or an
+empty list, the bytes in a `Buffer` or a plain `Uint8Array`. SMTP ignores
+the key altogether, so this is the behaviour of a deduplicating transport,
+not of every one. A queued `failNext` fails the next send even when its key
+was already delivered.
+
 ## `clear()`
 
-Forgets the outbox, the attempts, and any queued failure. The id counter keeps
-going, so an id is never reused within one mailer.
+Forgets the outbox, the attempts, any queued failure, and the idempotency
+keys. The id counter keeps going, so an id is never reused within one mailer.
 
 ## What it refuses
 
 Exactly what every transport refuses, because it calls
 [`checkMessage`](transports.md#checkmessage-first) first: no recipient, something
 that is not an address, a line break in a name, the subject or a header, a
-missing part, an attachment that is not bytes, or whose file name or type is
-malformed. A test that passes against the memory mailer does not pass by
+missing part, an attachment that is not bytes or whose file name or type is
+malformed, or an idempotency key that is not 1 to 256 visible ASCII
+characters. A test that passes against the memory mailer does not pass by
 accident a message a real transport would refuse. The full list is in
 [Sending](sending.md#addresses) and
 [Sending — attachments](sending.md#attachments).

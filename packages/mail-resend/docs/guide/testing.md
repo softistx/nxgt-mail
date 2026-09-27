@@ -135,6 +135,13 @@ add what the suite does not ask of every transport:
 
 - a `400` and a `413` are a `MailRefused`; a `403`, a `429` and a `503` are a `MailFailure`
   with the status on `cause`, each tried once;
+- a `409 invalid_idempotent_request` — a key sent again with another
+  message — is a `MailRefused`, and a `409 concurrent_idempotent_requests` a
+  `MailFailure`, both with `status` and `errorName` on `cause`;
+- `idempotencyKey` is sent as the `Idempotency-Key` header, never in the
+  body, and no header is sent without one; a retry with the same key
+  answers the first id and delivers once, as the local server keeps keys as
+  Resend does;
 - a server that is not listening ends in `MailFailure` —
   `send: Resend could not be reached` — with the `fetch` error as `cause`;
 - a server that does not answer within `timeoutMs` ends in `MailFailure`, a

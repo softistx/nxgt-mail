@@ -33,8 +33,8 @@ bun add @nxgt/mail-resend @nxgt/mail
 
 Peers, all required:
 
-- `@nxgt/mail` — the port, the errors and the checks: `^0.2`, the version
-  with attachments. One copy in your tree, so `error instanceof MailFailure`
+- `@nxgt/mail` — the port, the errors and the checks: `^0.3`, the version
+  with attachments and `idempotencyKey`. One copy in your tree, so `error instanceof MailFailure`
   holds.
 - `typescript` (6). Bundler resolution (`"moduleResolution": "bundler"`) is
   what is supported and tested; `nodenext` is out of contract.
@@ -109,12 +109,43 @@ base64** — a third larger than the files — and refuses more (`MailRefused`).
 **A large or sensitive file is a signed link in the template**, not an
 attachment. See [Setting up — what a message becomes](docs/guide/setup.md#what-a-message-becomes).
 
+### Idempotency — a retry that delivers once
+
+A message's `idempotencyKey` is sent as Resend's `Idempotency-Key` header.
+Resend keeps a key for **24 hours**: a retry within them answers the first
+send's id, and delivers nothing more.
+
+```ts
+import { MailFailure } from '@nxgt/mail';
+
+const receipt = {
+	to: 'ada@example.com',
+	subject: 'Your receipt',
+	html: '<p>Thank you for your order.</p>',
+	text: 'Thank you for your order.',
+	idempotencyKey: 'order-42/receipt', // from what the e-mail is about, never the time or a random value
+};
+
+const sent = await mailer.send(receipt).catch(async (error: unknown) => {
+	if (!(error instanceof MailFailure)) throw error;
+	return mailer.send(receipt); // a timeout may have delivered it: the key keeps it to one e-mail
+});
+```
+
+The same key with a **different** message is refused by Resend
+(`409 invalid_idempotent_request`, a `MailRefused`): a key names one e-mail.
+The same key while its first send is **still in progress**
+(`409 concurrent_idempotent_requests`) is a `MailFailure`: retry later. Past
+24 hours, the key is forgotten and a retry delivers again. The key never
+reaches the e-mail. See
+[Setting up — the idempotency key](docs/guide/setup.md#the-idempotency-key).
+
 ### Errors — a refusal or a failure
 
 | When | Throws | `cause` |
 | --- | --- | --- |
-| `400`, `422` — Resend refuses the message, an attachment over the size limit included; `413` — a request too large for what sits in front of the API | `MailRefused` — `send: Resend refused the message` | an `Error` with `status`, `errorName` and Resend's `detail` |
-| `401`, `403`, `429`, `5xx`, any other status | `MailFailure` — `send: Resend could not take the message` | the same |
+| `400`, `422` — Resend refuses the message, an attachment over the size limit included; `413` — a request too large for what sits in front of the API; `409 invalid_idempotent_request` — the `idempotencyKey` already used for a different message | `MailRefused` — `send: Resend refused the message` | an `Error` with `status`, `errorName` and Resend's `detail` |
+| `401`, `403`, `429`, `5xx`, `409 concurrent_idempotent_requests` — the same key's first send still in progress — any other status | `MailFailure` — `send: Resend could not take the message` | the same |
 | A network error | `MailFailure` — `send: Resend could not be reached` | the `fetch` error |
 | No answer within `timeoutMs` | `MailFailure` — `send: Resend did not answer within <timeoutMs> ms` | the `TimeoutError` |
 | No sender, on the message or as a default | `MailRefused` — `send: from is missing — give the message a from, or createResendMailer a default one` | — |
@@ -168,7 +199,8 @@ The transport does not wait and retry for you.
 
 **A timeout does not mean nothing was sent.** After `timeoutMs`, or a
 connection dropped mid-request, Resend may have accepted the e-mail: a retry
-can send it twice. Weigh that before retrying.
+without a key can send it twice. Set `idempotencyKey: 'order-42/receipt'`,
+and retry within Resend's 24 hours.
 
 ## Type safety, counted
 

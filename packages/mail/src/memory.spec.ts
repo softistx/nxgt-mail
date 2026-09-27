@@ -134,14 +134,123 @@ describe('createMemoryMailer', () => {
 		expect(mailer.sent).toEqual([]);
 	});
 
+	it('delivers a message once per idempotency key, answering the first id', async () => {
+		const mailer = createMemoryMailer();
+		const once = { ...message, idempotencyKey: 'order-42/receipt' };
+
+		const first = await mailer.send(once);
+		const again = await mailer.send({ ...once });
+		const other = await mailer.send({ ...once, idempotencyKey: 'order-43' });
+		const unkeyed = await mailer.send(message);
+
+		expect(again).toEqual(first);
+		expect(other.messageId).not.toBe(first.messageId);
+		expect(unkeyed.messageId).not.toBe(first.messageId);
+		expect(mailer.sent).toHaveLength(3);
+		expect(mailer.sent[0]?.idempotencyKey).toBe('order-42/receipt');
+		// Each send reached the hand-over: a retry is still an attempt.
+		expect(mailer.attempts).toBe(4);
+	});
+
+	it('refuses a different message under a key it already delivered, as Resend does', async () => {
+		const mailer = createMemoryMailer();
+		const pdf = {
+			filename: 'receipt.pdf',
+			content: new Uint8Array([1, 2]),
+			contentType: 'application/pdf',
+		};
+		await mailer.send({ ...message, idempotencyKey: 'k', attachments: [pdf] });
+
+		for (const different of [
+			{ ...message, subject: 'Other' },
+			{
+				...message,
+				attachments: [{ ...pdf, content: new Uint8Array([1, 3]) }],
+			},
+		]) {
+			const error = await mailer
+				.send({
+					...different,
+					idempotencyKey: 'k',
+					attachments: different.attachments ?? [pdf],
+				})
+				.then(
+					() => null,
+					(e: unknown) => e,
+				);
+			expect(error).toBeInstanceOf(MailRefused);
+			expect((error as MailRefused).message).toBe(
+				'send: idempotencyKey was already used for a different message — a key names one e-mail',
+			);
+		}
+		expect(mailer.sent).toHaveLength(1);
+	});
+
+	it('knows a retry written differently for the same message', async () => {
+		const mailer = createMemoryMailer();
+		const bytes = [37, 80, 68, 70];
+		const first = await mailer.send({
+			...message,
+			idempotencyKey: 'k',
+			attachments: [
+				{
+					filename: 'a.pdf',
+					content: Buffer.from(bytes),
+					contentType: 'application/pdf',
+				},
+			],
+		});
+		const retried = await mailer.send({
+			idempotencyKey: 'k',
+			text: message.text,
+			html: message.html,
+			subject: message.subject,
+			to: [message.to as string],
+			attachments: [
+				{
+					contentType: 'application/pdf',
+					content: new Uint8Array(bytes),
+					filename: 'a.pdf',
+				},
+			],
+		});
+		const unattached = await mailer.send({ ...message, idempotencyKey: 'u' });
+		const emptied = await mailer.send({
+			...message,
+			idempotencyKey: 'u',
+			attachments: [],
+		});
+
+		expect(retried).toEqual(first);
+		expect(emptied).toEqual(unattached);
+		expect(mailer.sent).toHaveLength(2);
+	});
+
+	it('leaves the key of a failed send free, so the retry delivers', async () => {
+		const mailer = createMemoryMailer();
+		const once = { ...message, idempotencyKey: 'order-42' };
+		mailer.failNext();
+
+		await mailer.send(once).then(
+			() => null,
+			() => null,
+		);
+		const retried = await mailer.send(once);
+
+		expect(retried.messageId).toBe('memory-1');
+		expect(mailer.sent).toHaveLength(1);
+	});
+
 	it('forgets everything on clear', async () => {
 		const mailer = createMemoryMailer();
 		await mailer.send(message);
+		await mailer.send({ ...message, idempotencyKey: 'k' });
 		mailer.failNext();
 		mailer.clear();
 
 		await mailer.send(message);
-		expect(mailer.sent).toHaveLength(1);
-		expect(mailer.attempts).toBe(1);
+		await mailer.send({ ...message, idempotencyKey: 'k' });
+		expect(mailer.sent).toHaveLength(2);
+		expect(mailer.attempts).toBe(2);
 	});
 });

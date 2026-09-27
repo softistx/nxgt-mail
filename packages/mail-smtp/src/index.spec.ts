@@ -374,6 +374,23 @@ describe('createSmtpMailer, beyond the suite', () => {
 		expect('attachments' in options).toBe(false);
 	});
 
+	test('ignores the idempotency key: SMTP has none, so nothing names it', async () => {
+		const handed: Record<string, unknown>[] = [];
+		const mailer = createSmtpMailer({
+			transporter: {
+				async sendMail(mail) {
+					handed.push(mail);
+					return {};
+				},
+			},
+		});
+		const once = { ...sampleMessage, idempotencyKey: 'order-42/receipt' };
+		await mailer.send(once);
+		await mailer.send(once);
+		expect(handed).toHaveLength(2);
+		expect(JSON.stringify(handed)).not.toContain('order-42/receipt');
+	});
+
 	test('a message too large for the server (552) is a refusal of the message', async () => {
 		const server = await startServer({ size: 16 * 1024 });
 		const transporter = transporterFor(server.port);

@@ -17,6 +17,7 @@ type Fault =
 	| 'tooLarge'
 	| 'rateLimit'
 	| 'keyRefused'
+	| 'keyInUse'
 	| 'noId'
 	| 'notJson'
 	| 'hang';
@@ -74,6 +75,8 @@ function startResend() {
 	const received: Received[] = [];
 	const delivered: DeliveredMail[] = [];
 	const faults: Fault[] = [];
+	// Idempotency keys, as Resend keeps them: the body first sent, and its id.
+	const keys = new Map<string, { body: string; id: string }>();
 	let attempts = 0;
 	const error = (statusCode: number, name: string, message: string) =>
 		Response.json({ statusCode, name, message }, { status: statusCode });
@@ -125,6 +128,12 @@ function startResend() {
 					return error(429, 'rate_limit_exceeded', 'Too many requests.');
 				case 'keyRefused':
 					return error(403, 'invalid_api_key', 'API key is invalid.');
+				case 'keyInUse':
+					return error(
+						409,
+						'concurrent_idempotent_requests',
+						'Same idempotency key used while original request is still in progress.',
+					);
 				case 'noId':
 					return Response.json({});
 				case 'notJson':
@@ -133,6 +142,17 @@ function startResend() {
 					await Bun.sleep(1_000);
 					return Response.json({ id: 'too-late' });
 				default:
+			}
+			const key = request.headers.get('idempotency-key');
+			const known = key === null ? undefined : keys.get(key);
+			if (known !== undefined) {
+				return known.body === JSON.stringify(body)
+					? Response.json({ id: known.id })
+					: error(
+							409,
+							'invalid_idempotent_request',
+							'Same idempotency key used with a different request payload.',
+						);
 			}
 			const to = body.to as string[];
 			const attachments = (body.attachments ?? []) as {
@@ -155,7 +175,9 @@ function startResend() {
 					contentType: file.content_type,
 				})),
 			});
-			return Response.json({ id: `resend-${delivered.length}` });
+			const id = `resend-${delivered.length}`;
+			if (key !== null) keys.set(key, { body: JSON.stringify(body), id });
+			return Response.json({ id });
 		},
 	});
 	return {
@@ -261,6 +283,45 @@ describe('createResendMailer, refusals and failures', () => {
 			expect(attempts).toBe(1);
 		});
 	}
+
+	test('a 409 for a key used on another message is a refusal', async () => {
+		const resend = startResend();
+		try {
+			const mailer = createResendMailer({
+				apiKey: API_KEY,
+				baseUrl: resend.baseUrl,
+			});
+			await mailer.send({ ...sampleMessage, idempotencyKey: 'order-42' });
+			const error = await mailer
+				.send({
+					...sampleMessage,
+					subject: 'Other',
+					idempotencyKey: 'order-42',
+				})
+				.then(
+					() => null,
+					(e: unknown) => e,
+				);
+			expect(error).toBeInstanceOf(MailRefused);
+			expect((error as MailRefused).cause).toMatchObject({
+				status: 409,
+				errorName: 'invalid_idempotent_request',
+			});
+			expect(resend.delivered).toHaveLength(1);
+		} finally {
+			await resend.close();
+		}
+	});
+
+	test('a 409 for a send with the same key still in progress is a failure', async () => {
+		const { error, attempts } = await sendWith('keyInUse');
+		expect(error).toBeInstanceOf(MailFailure);
+		expect((error as MailFailure).cause).toMatchObject({
+			status: 409,
+			errorName: 'concurrent_idempotent_requests',
+		});
+		expect(attempts).toBe(1);
+	});
 
 	test('a Resend that cannot be reached ends in MailFailure, with the cause', async () => {
 		const resend = startResend();
@@ -426,6 +487,45 @@ describe('createResendMailer, the request', () => {
 				baseUrl: resend.baseUrl,
 			}).send({ ...sampleMessage, attachments: [] });
 			expect('attachments' in (resend.received[0]?.body ?? {})).toBe(false);
+		} finally {
+			await resend.close();
+		}
+	});
+
+	test('sends the idempotency key as Idempotency-Key, and none without one', async () => {
+		const resend = startResend();
+		try {
+			const mailer = createResendMailer({
+				apiKey: API_KEY,
+				baseUrl: resend.baseUrl,
+			});
+			await mailer.send({
+				...sampleMessage,
+				idempotencyKey: 'order-42/receipt',
+			});
+			await mailer.send(sampleMessage);
+			expect(resend.received[0]?.headers.get('idempotency-key')).toBe(
+				'order-42/receipt',
+			);
+			expect(resend.received[1]?.headers.has('idempotency-key')).toBe(false);
+			expect('idempotencyKey' in (resend.received[0]?.body ?? {})).toBe(false);
+		} finally {
+			await resend.close();
+		}
+	});
+
+	test('a retry with the same key answers the first id, and delivers once', async () => {
+		const resend = startResend();
+		try {
+			const mailer = createResendMailer({
+				apiKey: API_KEY,
+				baseUrl: resend.baseUrl,
+			});
+			const once = { ...sampleMessage, idempotencyKey: 'order-42/receipt' };
+			const first = await mailer.send(once);
+			const again = await mailer.send(once);
+			expect(again).toEqual(first);
+			expect(resend.delivered).toHaveLength(1);
 		} finally {
 			await resend.close();
 		}

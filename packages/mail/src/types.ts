@@ -64,6 +64,19 @@ export interface MailMessage extends Rendered {
 	 * Each is bytes, checked by `checkMessage`: see {@link MailAttachment}.
 	 */
 	readonly attachments?: readonly MailAttachment[];
+	/**
+	 * Names this send, so sending it again — a retry after a timeout, a job run
+	 * twice — delivers it once. 1 to 256 visible ASCII characters, as
+	 * `order-42/receipt`; derive it from what the e-mail is about, never from
+	 * the time or a random value, or a retry carries a new one.
+	 *
+	 * **A transport that can deduplicate uses it; one that cannot ignores it.**
+	 * Resend keeps a key for 24 hours; SMTP has no such thing, and ignores it.
+	 * The memory mailer answers the same message under a key it already
+	 * delivered with the same `messageId`, and delivers nothing more; a
+	 * different message under that key is a `MailRefused`, as Resend's `409`.
+	 */
+	readonly idempotencyKey?: string;
 }
 
 /** What a transport answers once it has handed a message over. */

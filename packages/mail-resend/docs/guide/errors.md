@@ -47,6 +47,8 @@ Resend answers an error as `{ statusCode, name, message }`:
 | `400` | `validation_error` | `MailRefused` |
 | `413` | — (not in Resend's reference: a request too large for what sits in front of the API; refused, as a resend would fail again) | `MailRefused` |
 | `422` | `validation_error`, `missing_required_field`, `invalid_attachment` | `MailRefused` |
+| `409` | `invalid_idempotent_request` — the `idempotencyKey` was already used, within 24 hours, for a different message | `MailRefused` |
+| `409` | `concurrent_idempotent_requests` — a send with the same key is still in progress | `MailFailure` |
 | `401`, `403` | `missing_api_key`, `invalid_api_key`, an unverified domain | `MailFailure` |
 | `429` | `rate_limit_exceeded`, `daily_quota_exceeded` | `MailFailure` |
 | `5xx` | `internal_server_error` | `MailFailure` |
@@ -57,6 +59,26 @@ Resend answers an error as `{ statusCode, name, message }`:
 A `401` or `403` is a failure although it is a `4xx`: a bad key or an
 unverified domain refuses every message alike. It is the wiring that is
 wrong, not the message.
+
+A `409` is decided by its `name`. `invalid_idempotent_request` is a refusal:
+the key names another e-mail, and sending this one again under it fails
+again — give it its own key. `concurrent_idempotent_requests` is a failure:
+the first send with that key has not finished, and a retry later answers
+its id. See [Setting up — the idempotency key](setup.md#the-idempotency-key).
+
+```ts
+import { MailError, MailRefused } from '@nxgt/mail';
+
+try {
+	await mailer.send(message);
+} catch (error) {
+	const cause = error instanceof MailError ? (error.cause as { status?: number; errorName?: string | null }) : undefined;
+	if (error instanceof MailRefused && cause?.errorName === 'invalid_idempotent_request') {
+		// a bug in how keys are derived: two different e-mails were given the same one
+	}
+	throw error;
+}
+```
 
 ## What `cause` holds
 
@@ -96,8 +118,8 @@ hold one.
 
 | `message` | Class | When |
 | --- | --- | --- |
-| `send: Resend refused the message` | `MailRefused` | A `400`, `413` or `422` |
-| `send: Resend could not take the message` | `MailFailure` | Any other answer that is not `2xx` |
+| `send: Resend refused the message` | `MailRefused` | A `400`, `413` or `422`, or a `409 invalid_idempotent_request` |
+| `send: Resend could not take the message` | `MailFailure` | Any other answer that is not `2xx` — a `409 concurrent_idempotent_requests` included |
 | `send: Resend could not be reached` | `MailFailure` | `fetch` threw |
 | `send: Resend did not answer within <timeoutMs> ms` | `MailFailure` | The timeout aborted the request |
 | `send: from is missing — give the message a from, or createResendMailer a default one` | `MailRefused` | A message without `from`, on a mailer without a default. No request is made |

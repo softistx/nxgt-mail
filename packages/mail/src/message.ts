@@ -30,6 +30,9 @@ const CONTENT_TYPE =
 // multipart/* and message/* are MIME containers, not files: nodemailer writes
 // them unencoded, and the receiving end reads back no attachment at all.
 const CONTAINER_TYPE = /^(?:multipart|message)\//i;
+// Written into a header by the transports that use it (Resend's
+// `Idempotency-Key`): visible ASCII only, so no line break, and Resend's length.
+const IDEMPOTENCY_KEY = /^[\x21-\x7E]{1,256}$/;
 
 /** Every recipient of a message, as bare addresses, in order. */
 export function recipientsOf(message: MailMessage): string[] {
@@ -115,7 +118,8 @@ function checkAttachment(attachment: MailAttachment, where: string): void {
  *   same as absent — and each entry has its bytes as a `Uint8Array`, a
  *   `filename` that is not empty, `.` or `..` and holds no `/`, `\`, line
  *   break, control or format character, and a `contentType` that is a bare
- *   `type/subtype`, never `multipart/*` or `message/*`.
+ *   `type/subtype`, never `multipart/*` or `message/*`;
+ * - `idempotencyKey`, when present, is 1 to 256 visible ASCII characters.
  */
 export function checkMessage(message: MailMessage): void {
 	if (typeof message !== 'object' || message === null) {
@@ -169,5 +173,15 @@ export function checkMessage(message: MailMessage): void {
 		for (let index = 0; index < message.attachments.length; index++) {
 			checkAttachment(message.attachments[index], `attachments[${index}]`);
 		}
+	}
+
+	if (
+		message.idempotencyKey !== undefined &&
+		(typeof message.idempotencyKey !== 'string' ||
+			!IDEMPOTENCY_KEY.test(message.idempotencyKey))
+	) {
+		throw new MailRefused(
+			'send: idempotencyKey must be 1 to 256 visible ASCII characters, as order-42/receipt',
+		);
 	}
 }

@@ -19,7 +19,9 @@ recipients may already have the message. The message says so
 ([below](#some-recipients-refused)); retrying it whole sends it to them again.
 
 Nothing is retried. Whether and when to retry is yours to decide, where you
-can see it.
+can see it. SMTP cannot deduplicate — the transport ignores
+`idempotencyKey` — so a retry after a timeout may deliver the e-mail twice
+([Setting up — the idempotency key](setup.md#the-idempotency-key)).
 
 ```ts
 import { MailError, type MailErrorCode, type Mailer, type MailMessage } from '@nxgt/mail';
