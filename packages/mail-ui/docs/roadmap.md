@@ -23,7 +23,8 @@ no dates here, and the version something shipped in is the only number.
   (`bg-primary-15`) are flattened to plain colours, and follow a colour you
   override. Built, not yet published.
 - **Shared messages** — `uiCatalogues`: `common.greeting`,
-  `common.footer.why` and `common.footer.ignore` in `en` and `fr`, given to
+  `common.footer.why`, `common.footer.ignore` and `common.avatarGroup.more`
+  in `en` and `fr`, given to
   `@nxgt/mail-i18n` as `i18n({ catalogues: [uiCatalogues] })`, and overridden
   key by key by your own `locales/<locale>.json`. Built, not yet published.
 
@@ -36,17 +37,18 @@ no dates here, and the version something shipped in is the only number.
   `.maizzle/nxgt-mail-ui.d.ts`, which a Maizzle project's `tsconfig.json`
   includes, so templates see `brand` without importing anything. Built, not
   yet published.
+- **The second set, first part** — `NxTable` and its parts (a footer on the
+  muted background, a caption, an empty row), `NxDescription`, `NxListTile`,
+  `NxChip` (static) and `NxAvatar`/`NxAvatarGroup`, with material-vue's props,
+  checked against the same support data. Built, not yet published.
 
 ## Next
 
-- **The second set of components** — the material-vue components that fit an
-  e-mail and are not in the first set, each a table with inlined styles and
-  material-vue's props: `NxTable` and its parts, `NxTimeline`,
-  `NxSteps`/`NxStepsItem`, `NxProgress`, `NxStatCard`,
-  `NxAvatar`/`NxAvatarGroup`, `NxListTile`, `NxDescription`,
-  `NxEntityHeader`, `NxSeeAlso`, `NxHero`, `NxChip`, and the metrics cards
-  that are bars and numbers (goal, ratio, compare, breakdown) — each checked
-  against mail-client support data and documented with its props.
+- **The rest of the second set** — `NxTimeline`, `NxSteps`/`NxStepsItem`,
+  `NxProgress`, `NxStatCard`, `NxEntityHeader`, `NxSeeAlso`, `NxHero`, and
+  the metrics cards that are bars and numbers (goal, ratio, compare,
+  breakdown), each a table with inlined styles and material-vue's props,
+  checked against mail-client support data and documented with its props.
 - **A starter project** — the official Maizzle starter with
   `@nxgt/mail-config`, `@nxgt/mail-i18n` and this plugin wired in, built in
   CI, so the README's snippet is known to work.

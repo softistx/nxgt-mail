@@ -41,6 +41,7 @@ because you have an account with Acme.`
 | `common.greeting` | `Hello {name},` | `Bonjour {name},` | `name` |
 | `common.footer.why` | `You received this e-mail because you have an account with {brand}.` | `Vous recevez cet e-mail parce que vous avez un compte chez {brand}.` | `brand` |
 | `common.footer.ignore` | `If you did not ask for this, you can ignore this e-mail.` | `Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet e-mail.` | — |
+| `common.avatarGroup.more` | `{count, plural, other {# more}}` | `{count, plural, one {# autre} other {# autres}}` | `count`, a number |
 
 ```ts
 import type { Catalogues } from '@nxgt/mail-i18n';
@@ -50,7 +51,8 @@ const shared: Catalogues = uiCatalogues; // { en: { common: {…} }, fr: { commo
 ```
 
 `common.footer.why` is the one `<NxLayout>` writes itself, in its footer,
-with the brand's name. The other two are for your templates.
+with the brand's name; `common.avatarGroup.more` is the label `<NxAvatarGroup>`
+gives its `+N`, for a screen reader. The other two are for your templates.
 
 ## `<NxLayout>` needs `common.footer.why`
 
@@ -83,15 +85,15 @@ keys you want to change, and keep the others.
 ```
 
 ```json
-// locales/fr.json — no common: the three French messages are uiCatalogues'
+// locales/fr.json — no common: the four French messages are uiCatalogues'
 {
 	"welcome": { "subject": "Bienvenue chez Acme, {name}", "body": "Votre compte est prêt." }
 }
 ```
 
 The English build writes `Hi {{ name }},`, the French one
-`Bonjour {{ name }},`; both keep `common.footer.why` and
-`common.footer.ignore` from the package. The merge rules — several sources, a
+`Bonjour {{ name }},`; both keep `common.footer.why`,
+`common.footer.ignore` and `common.avatarGroup.more` from the package. The merge rules — several sources, a
 message replacing a group — are in `@nxgt/mail-i18n`'s
 [Catalogues](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-i18n/docs/guide/catalogues.md#catalogues-from-a-package).
 
@@ -102,7 +104,7 @@ the `en` message does not declare.
 ## Another locale
 
 `uiCatalogues` has `en` and `fr`. For any other locale, your catalogue writes
-the three `common` keys, or the build fails on the first one missing:
+the four `common` keys, or the build fails on the first one missing:
 
 ```text
 Error: i18n: de: common.footer.ignore is missing — en, the fallback locale, has it
@@ -116,7 +118,8 @@ Error: i18n: de: common.footer.ignore is missing — en, the fallback locale, ha
 		"footer": {
 			"why": "Sie erhalten diese E-Mail, weil Sie ein Konto bei {brand} haben.",
 			"ignore": "Wenn Sie dies nicht angefordert haben, können Sie diese E-Mail ignorieren."
-		}
+		},
+		"avatarGroup": { "more": "{count, plural, other {# weitere}}" }
 	},
 	"welcome": { "subject": "Willkommen bei Acme, {name}", "body": "Ihr Konto ist bereit." }
 }

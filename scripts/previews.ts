@@ -2,13 +2,14 @@
 
 /**
  * Writes the PNG previews the READMEs show: each mail-presets sample in `en`
- * and `fr`, and mail-ui's fixture e-mail, which uses every component.
+ * and `fr`, and mail-ui's fixture e-mails, which use every component.
  *
  * Each built file is filled with example values where its `{{ name }}`
  * placeholders are, as the renderer would at send time, then shot by a
  * headless Chromium at the width a mail client gives an e-mail, and trimmed to
- * the e-mail plus a margin of its background. The fixture's logo points at
- * `acme.example`, which does not exist: it is swapped for an inline wordmark.
+ * the e-mail plus a margin of its background. The fixture's logo and avatar
+ * point at `acme.example`, which does not exist: they are swapped for inline
+ * pictures.
  *
  * It first builds the packages and rewrites mail-presets' `samples/`, so the
  * pictures are of the current look. A placeholder with no example value, or an
@@ -81,6 +82,10 @@ const LOGO = `data:image/svg+xml,${encodeURIComponent(
 	'<svg xmlns="http://www.w3.org/2000/svg" width="96" height="28"><text x="0" y="22" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#0f766e">Acme</text></svg>',
 )}`;
 
+const AVATAR = `data:image/svg+xml,${encodeURIComponent(
+	'<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="48" height="48" fill="#0f766e"/><text x="24" y="31" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#ffffff">A</text></svg>',
+)}`;
+
 // The renderer's own filling, copied from packages/mail/src/renderer.ts
 // (PLACEHOLDER and its escaping): change them together.
 const PLACEHOLDER = /\{\{\s*([a-z][a-zA-Z0-9]*)\s*\}\}/g;
@@ -118,7 +123,8 @@ function shoot(html: string, locale: string, email: string, out: string): void {
 			if (value === undefined) missing.add(name);
 			return value === undefined ? mark : escapeHtml(value);
 		})
-		.replaceAll('https://acme.example/logo.png', LOGO);
+		.replaceAll('https://acme.example/logo.png', LOGO)
+		.replaceAll('https://acme.example/ada.png', AVATAR);
 	if (missing.size > 0) {
 		throw new Error(
 			`previews: ${locale}/${email} has placeholders with no example value: ${[...missing].join(', ')} — add them to EXAMPLES`,
@@ -200,6 +206,13 @@ try {
 			`${ui}/previews/components-${locale}.png`,
 		);
 	}
+	// The data components' e-mail is written in English only.
+	shoot(
+		readFileSync(`${ui}/test/fixture/dist/en/gallery.html`, 'utf8'),
+		'en',
+		'gallery',
+		`${ui}/previews/data-components.png`,
+	);
 } finally {
 	rmSync(scratch, { recursive: true, force: true });
 }
