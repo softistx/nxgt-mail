@@ -202,7 +202,7 @@ through untouched, and never branches or computes on it
   throws the peer's, so `instanceof` holds. The one-class-per-entry-point scan
   in `scripts/verify-artifacts.ts` guards it, from the first commit.
 - The repository skeleton (`build.ts`, `scripts/verify-artifacts.ts`,
-  `scripts/publish.ts`, the workflows, `bunfig.toml`, the tsconfigs,
+  `scripts/publish.ts`, `scripts/check-changesets.ts`, the workflows, `bunfig.toml`, the tsconfigs,
   `biome.json`) is **copied from nxgt-janus, never shared** — the fifth copy.
   Change the copies together when the reason holds for all of them.
 - **Generated code lives in a `generated/` folder**, never beside the sources
@@ -214,6 +214,12 @@ through untouched, and never branches or computes on it
 - `bunfig.toml` carries the npm token, **never `.npmrc`**.
 - **A new package starts `"private": true`.** Removing the flag is a
   deliberate commit of its own, with the changeset that versions it.
+- **A private package never gets a changeset before that commit.**
+  `changeset version` would consume it and `publish.ts` skip the package,
+  keeping the release in version mode. `bun run changeset:private`
+  (`scripts/check-changesets.ts`, run by CI, copied from nxgt-janus) refuses a
+  changeset naming a private package, one that does not exist, or one it
+  cannot read.
 - `*.spec.ts` colocated in `src/`; `test/` holds helpers; `test/types/` is
   typechecked and never run.
 - Settle an expected rejection where it is created, with `.then(ok, ko)`.
@@ -259,6 +265,7 @@ bun run typecheck    # includes test/types/, the fixtures' templates and the sta
                      # the type-safety measurement
 bun run test
 bun run verify:artifacts   # on the tarball actually packed
+bun run changeset:private  # no changeset names a private or unknown package
 ```
 
 `bun run previews` builds the packages, rewrites mail-presets' `samples/`, then
