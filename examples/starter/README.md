@@ -35,7 +35,8 @@ Then:
 
 1. **Replace** the starter's `emails/` with this folder's — delete
    Maizzle's example templates: the i18n plugin builds every template, and
-   one without a `<email>.subject` message fails the build.
+   one without its subject message (`verifyEmail.subject` for
+   `verify-email`) fails the build.
 2. Copy `maizzle.config.ts`, `locales/` and `send.ts`, and delete
    `tailwind.css` and `public/`, which nothing reads any more.
 3. Add `"send.ts"` (or your sending code) to `tsconfig.json`'s `include`,
