@@ -188,6 +188,11 @@ It is built on Maizzle's `<Html>`, `<Head>`, `<Body>`, `<Preheader>` and
 `<Container>` writes the fixed-width table that holds the card at `width` in
 Outlook.
 
+`width` is written into that table when the e-mail is built, so it is a
+number, never a placeholder: one that is not
+[fails the build](../troubleshooting.md#nxlayout-width-must-be-a-number-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent).
+It is chosen when the e-mail is built, never per recipient.
+
 ## NxTypography
 
 Text, on the tag an e-mail reads it as.
@@ -645,6 +650,13 @@ listed, and in English otherwise; see [Shared messages](messages.md).
 Outlook on Windows ignores the width and height of an inline box: there,
 `NxAvatarFallback`'s initials show on a grey strip rather than in a circle. An
 `NxAvatarImage` keeps its size everywhere, from its `width` and `height`.
+
+`NxAvatar`'s `size` and `NxAvatarGroup`'s `max` are written into a computed
+layout when the e-mail is built, so each is a number, never a placeholder:
+one that is not fails the build —
+[`NxAvatar`](../troubleshooting.md#nxavatar-size-must-be-a-number-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent),
+[`NxAvatarGroup`](../troubleshooting.md#nxavatargroup-max-must-be-a-number-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent).
+Both are chosen when the e-mail is built, never per recipient.
 
 ## NxProgress
 

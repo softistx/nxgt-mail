@@ -180,8 +180,9 @@ export const TABLE: Readonly<
 		}),
 	},
 	NxFigure: {
-		// alt's <Img> only renders `v-if="src"`.
+		// alt's and darkSrc's <Img>s only render `v-if="src"`.
 		src: pass('src="https://acme.example/photo.png"'),
+		darkSrc: pass(),
 		alt: pass(),
 		caption: pass(),
 	},
