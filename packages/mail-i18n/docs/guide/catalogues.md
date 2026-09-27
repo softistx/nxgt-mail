@@ -75,9 +75,123 @@ Every locale needs its file, and the file must be valid JSON:
 | `i18n: locales/fr.json is missing — every locale has a catalogue` | `fr` is in `locales`, and there is no `locales/fr.json` |
 | `i18n: locales/fr.json is not valid JSON` | The file is empty, or does not parse |
 
-`maizzle serve` watches `locales/` already. For another `dir`, the plugin adds
-that folder to Maizzle's `server.watch`. Either way, saving a catalogue reloads
-the config, which checks the catalogues again.
+`maizzle serve` watches `locales/**` already, folder layout included (see
+below). For another `dir`, the plugin adds that folder's own `**` glob to
+Maizzle's `server.watch`. Either way, saving a catalogue reloads the config,
+which checks the catalogues again.
+
+## Splitting catalogues
+
+`<dir>/<locale>.json` does not have to hold every message. A file at
+`<dir>/<locale>/**/*.json` is read too, and its **path is a key prefix**: the
+folder names and the file's own basename, each a key segment, dotted.
+
+```text
+locales/
+  en.json               # the keys it already had
+  en/
+    mails.json           # mails.*
+    auth/
+      sign-in.json        # auth.sign-in.*
+```
+
+```json
+// locales/en/mails.json
+{ "welcome": { "subject": "Welcome to the app" } }
+```
+
+is exactly
+
+```json
+// as if locales/en.json held it
+{ "mails": { "welcome": { "subject": "Welcome to the app" } } }
+```
+
+The file's own content is nested under the prefix as written — kebab-case or
+camelCase keys inside it work exactly as in the flat file. A segment of the
+path (a folder name or the file's basename) is a key segment too, so it must
+be camelCase or kebab-case as well:
+
+```json
+// locales/en/sign_in.json — refused, naming the file
+{ "title": "Sign in" }
+```
+
+Only files: `dir` still names one folder, read both ways — nothing else to
+configure. Every locale must have the same files, at the same paths, as the
+fallback locale: a file `en/mails.json` with no `fr/mails.json` **fails the
+build**, naming the locale and the file — the same parity a missing flat key
+already had.
+
+A file's own prefix is its alone — the flat file's included: whichever file
+first declares an object at a key, that key stays that file's, and no other
+file may add to it, even a sibling the first file does not itself have.
+**Fails the build**, naming both files: pick one place to write it.
+
+```json
+// locales/en.json
+{ "mails": { "subject": "…" } }
+```
+```json
+// locales/en/mails.json — refused: mails is locales/en.json's already
+{ "title": "…" }
+```
+
+| Build failure | Cause |
+| --- | --- |
+| `i18n: locales/fr/mails.json is missing — locales/en/mails.json exists` | `en/mails.json` exists, and the same path is missing for another locale |
+| `i18n: locales/en/sign_in.json: sign_in is not camelCase or kebab-case — a file path segment is a key segment too, as mails or sign-in` | A folder name or a file's basename in snake_case, or with a capital |
+| `i18n: en: mails is defined by both locales/en.json and locales/en/mails.json` | Two files — flat and folder, or two folder files — both claim the same key |
+
+The subject scan and every other check on this page run on the merged result:
+a key from a folder file is checked exactly as one from the flat file, keys
+sorted the same way, `catalogues` layered under all of it.
+
+## Messages from a module
+
+Instead of `dir`, `messages` names a module — a path from the project's
+root — whose default export is the resources object (`{ en: {...}, fr: {...}
+}`), or a function that returns one:
+
+```ts
+// i18n/messages.ts
+import en from './locales/en.json';
+import fr from './locales/fr.json';
+
+export default { en, fr };
+```
+
+```ts
+// maizzle.config.ts
+import { defineMailConfig } from '@nxgt/mail-config';
+import { i18n } from '@nxgt/mail-i18n';
+
+export default defineMailConfig({
+	plugins: [await i18n({ locales: ['en', 'fr'], messages: './i18n/messages.ts' })],
+});
+```
+
+**Reading `messages` is asynchronous** — a plain dynamic `import()` of the
+module — so `i18n()` answers a `Promise<MailPlugin>` instead of the plugin
+directly. `await` it, with a plain top-level `await` in `maizzle.config.ts`:
+Maizzle's config loader (native ESM, or jiti for a `.ts` file) awaits the
+module's own evaluation before reading its default export, so this works
+without anything else changing. Without `messages`, `i18n()` still answers
+the plugin directly, as before.
+
+`dir` and `messages` cannot both be set:
+
+| Wiring mistake | Cause |
+| --- | --- |
+| `i18n: messages must be a module path, as './i18n/messages.ts'` | `messages` is not a non-empty string |
+| `i18n: dir and messages cannot both be set — messages replaces the folder` | Both `dir` and `messages` are set |
+
+`messages` must be something your runtime can run directly with a plain
+`import()`: a built `.js`/`.mjs` file always works, and so does `.ts` under
+Bun or a Node build with native TypeScript support. **`maizzle serve` does not
+reload it**: the module is loaded once, with no cache-busting, so editing it
+needs a full restart of `maizzle serve` — see
+[the troubleshooting entry](../troubleshooting.md#a-messages-module-does-not-reload-under-maizzle-serve).
 
 ## Catalogues from a package
 

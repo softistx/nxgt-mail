@@ -5,7 +5,7 @@
   moment the directive goes unused. The calls that must keep compiling are
   here too, unmarked.
 
-  Seven plausible mistakes, seven refused.
+  Eight plausible mistakes, eight refused.
 -->
 <script setup lang="ts">
 import type { TemplateKey } from '@nxgt/mail-i18n';
@@ -23,6 +23,8 @@ const key = 'verify-email.greeting' as TemplateKey;
   <p>{{ t(locale === 'fr' ? 'verify-email.title' : 'verify-email.action') }}</p>
   <p>{{ t(locale === 'fr' ? 'verify-email.greeting' : 'verify-email.subject', { name: placeholder('name') }) }}</p>
   <p>{{ t(key, { name: placeholder('name') }) }}</p>
+  <!-- A catalogue split into folders: the prefix is a key too. -->
+  <p>{{ t('mails.welcome.subject') }}</p>
 
   <!-- 1. A key the catalogues do not have. -->
   <!-- @vue-expect-error -->
@@ -51,4 +53,8 @@ const key = 'verify-email.greeting' as TemplateKey;
   <!-- 7. The same, given the arguments of only one of them. -->
   <!-- @vue-expect-error -->
   {{ t(locale === 'fr' ? 'verify-email.greeting' : 'verify-email.expires', { minutes: 1 }) }}
+
+  <!-- 8. A folder file's own key, called without its prefix. -->
+  <!-- @vue-expect-error -->
+  {{ t('welcome.subject') }}
 </template>

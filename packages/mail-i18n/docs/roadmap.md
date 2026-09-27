@@ -38,6 +38,12 @@ Nothing yet. A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **Catalogues split into folders, and `messages` from a module, v0.6.0** —
+  `<dir>/<locale>/**/*.json` is read beside `<dir>/<locale>.json`, a file's
+  path a key prefix (`en/mails.json` is `mails.*`); `messages` names a module
+  whose default export is the resources object, instead of `dir` — `i18n()`
+  then answers a `Promise<MailPlugin>`, `await`ed in `maizzle.config.ts`. Read
+  with `@nxgt/i18n-vue`'s own shared loader.
 - **`dir` beside `locale`, v0.5.0** — every template gets `dir`, `'ltr'` or
   `'rtl'`, derived from its locale with the runtime's own `Intl.Locale`
   (Bun's `getTextInfo()`, Node's `textInfo`) and a fallback list of
@@ -82,7 +88,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   `createMailRenderer` from `@nxgt/mail/renderer` reads to send the built
   `html` and `text` of a locale, every placeholder filled and escaped at send
   time.
-- **Catalogues from a package, v0.1.0** — `i18n({ catalogues: [uiCatalogues] })`:
-  catalogues a package ships, as `@nxgt/mail-ui`'s shared messages, merged key
-  by key under your project's `locales/<locale>.json`, which overrides any of
-  them, and checked with it.

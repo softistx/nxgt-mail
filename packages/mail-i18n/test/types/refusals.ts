@@ -13,7 +13,7 @@
  * A message key is a `string`: whether it exists is checked by the build,
  * against the catalogues, not by the compiler.
  *
- * **Eighteen plausible mistakes, eighteen refused.**
+ * **Twenty plausible mistakes, twenty refused.**
  */
 
 import type { MailPlugin } from '@nxgt/mail-config';
@@ -32,6 +32,10 @@ const plugin: MailPlugin = i18n({
 	rendererTypes: 'src/generated/mail.ts',
 });
 i18n({ locales: ['en'], rendererTypes: false });
+// `messages` answers a Promise: awaited where a config awaits it.
+async function loadWithMessages(): Promise<MailPlugin> {
+	return i18n({ locales: ['en'], messages: './i18n/messages.ts' });
+}
 const catalogue: Catalogue = { 'verify-email': { subject: 'Confirm, {name}' } };
 const t = createTranslator({ en: catalogue }, () => 'en');
 t('verify-email.subject', { name: 'Ada', count: 2, at: new Date() }, 'en');
@@ -112,4 +116,15 @@ i18n({ locales: ['en'], templates: [{ dir: pkg, emails: [] }] });
 // @ts-expect-error — a path, as 'generated/mail.ts', or false.
 i18n({ locales: ['en'], rendererTypes: true });
 
-export { broken, plugin };
+// 19. `messages` given as something that is not a module path.
+// @ts-expect-error — messages is a string.
+i18n({ locales: ['en'], messages: 1 });
+
+// 20. `messages` set, and the plugin used without awaiting it.
+// @ts-expect-error — i18n({ messages }) answers a Promise<MailPlugin>.
+const notAwaited: MailPlugin = i18n({
+	locales: ['en'],
+	messages: './i18n/messages.ts',
+});
+
+export { broken, loadWithMessages, notAwaited, plugin };

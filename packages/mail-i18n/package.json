@@ -47,7 +47,7 @@
 	},
 	"dependencies": {
 		"@formatjs/icu-messageformat-parser": "3.5.20",
-		"@nxgt/i18n-vue": "^0.1.1"
+		"@nxgt/i18n-vue": "^0.2.0"
 	},
 	"devDependencies": {
 		"@maizzle/framework": "6.1.7",

@@ -326,6 +326,39 @@ describe('a build failure names the locale, the template and the key', () => {
 			},
 			'i18n: fr: verify-email.title is missing — en, the fallback locale, has it',
 		],
+		[
+			'folder-collides-with-flat',
+			{
+				'locales/en.json': { ...en, mails: { subject: 'Welcome' } },
+				'locales/fr.json': { ...fr, mails: { subject: 'Bienvenue' } },
+				'locales/en/mails.json': { title: 'Welcome' },
+				'locales/fr/mails.json': { title: 'Bienvenue' },
+			},
+			'i18n: en: mails is defined by both locales/en.json and locales/en/mails.json',
+		],
+		[
+			'folder-collides-with-folder',
+			{
+				'locales/en/auth.json': { 'sign-in': { title: 'Sign in' } },
+				'locales/fr/auth.json': { 'sign-in': { title: 'Connexion' } },
+				'locales/en/auth/sign-in.json': { title: 'Sign in' },
+				'locales/fr/auth/sign-in.json': { title: 'Connexion' },
+			},
+			'i18n: en: auth is defined by both locales/en/auth.json and locales/en/auth/sign-in.json',
+		],
+		[
+			'folder-file-missing-in-a-locale',
+			{ 'locales/en/mails.json': { welcome: 'Welcome' } },
+			'i18n: locales/fr/mails.json is missing — locales/en/mails.json exists',
+		],
+		[
+			'folder-bad-path-segment',
+			{
+				'locales/en/sign_in.json': { title: 'Sign in' },
+				'locales/fr/sign_in.json': { title: 'Connexion' },
+			},
+			'i18n: locales/en/sign_in.json: sign_in is not camelCase or kebab-case — a file path segment is a key segment too, as mails or sign-in',
+		],
 	])(
 		'%s',
 		async (name, files, message) => {
@@ -387,5 +420,104 @@ describe('a right-to-left locale', () => {
 		expect(ar).toContain('dir="rtl"');
 		expect(ar).toContain('تأكيد عنوانك');
 		expect(en).toContain('dir="ltr"');
+	});
+});
+
+describe('catalogues split into folders', () => {
+	const root = `${cases}/folders`;
+	afterAll(() => rmSync(root, { recursive: true, force: true }));
+
+	beforeAll(async () => {
+		rmSync(root, { recursive: true, force: true });
+		const files: Record<string, string | object> = {
+			'maizzle.config.ts': [
+				"import { defineMailConfig } from '@nxgt/mail-config';",
+				"import { i18n } from '../../../src/index';",
+				"const shared = { en: { common: { greeting: 'Hi {name},' } }, fr: { common: { greeting: 'Salut {name},' } } };",
+				"export default defineMailConfig({ plugins: [i18n({ locales: ['en', 'fr'], catalogues: [shared] })] });",
+			].join('\n'),
+			// The flat file keeps its usual keys.
+			'locales/en.json': {
+				'verify-email': { subject: 'Confirm', title: 'Confirm your address' },
+			},
+			'locales/fr.json': {
+				'verify-email': {
+					subject: 'Confirmez',
+					title: 'Confirmez votre adresse',
+				},
+			},
+			// A folder file at the top of the locale directory: mails.*
+			'locales/en/mails.json': { welcome: { subject: 'Welcome to the app' } },
+			'locales/fr/mails.json': {
+				welcome: { subject: "Bienvenue dans l'appli" },
+			},
+			// A nested folder file: auth.sign-in.*
+			'locales/en/auth/sign-in.json': { title: 'Sign in' },
+			'locales/fr/auth/sign-in.json': { title: 'Connexion' },
+			'emails/verify-email.vue': [
+				'<template>',
+				"  <p>{{ t('verify-email.title') }}</p>",
+				"  <p>{{ t('common.greeting', { name: 'Ada' }) }}</p>",
+				"  <p>{{ t('mails.welcome.subject') }}</p>",
+				"  <p>{{ t('auth.sign-in.title') }}</p>",
+				'</template>',
+			].join('\n'),
+		};
+		for (const [path, content] of Object.entries(files)) {
+			mkdirSync(dirname(`${root}/${path}`), { recursive: true });
+			writeFileSync(
+				`${root}/${path}`,
+				typeof content === 'string' ? content : JSON.stringify(content),
+			);
+		}
+		await build(root);
+	}, 60_000);
+
+	test('reads the flat file, a folder file and a nested folder file, catalogues still layered under them', async () => {
+		const en = await Bun.file(`${root}/dist/en/verify-email.html`).text();
+		expect(en).toContain('Confirm your address');
+		expect(en).toContain('Hi Ada,');
+		expect(en).toContain('Welcome to the app');
+		expect(en).toContain('Sign in');
+		const fr = await Bun.file(`${root}/dist/fr/verify-email.html`).text();
+		expect(fr).toContain("Bienvenue dans l'appli");
+		expect(fr).toContain('Connexion');
+	});
+});
+
+describe('messages instead of a folder', () => {
+	const root = `${cases}/messages`;
+	afterAll(() => rmSync(root, { recursive: true, force: true }));
+
+	beforeAll(async () => {
+		rmSync(root, { recursive: true, force: true });
+		const files: Record<string, string> = {
+			'maizzle.config.ts': [
+				"import { defineMailConfig } from '@nxgt/mail-config';",
+				"import { i18n } from '../../../src/index';",
+				'export default defineMailConfig({',
+				"  plugins: [await i18n({ locales: ['en', 'fr'], messages: './i18n/messages.ts' })],",
+				'});',
+			].join('\n'),
+			'i18n/messages.ts': [
+				"const en = { 'verify-email': { subject: 'Confirm', title: 'Confirm your address' } };",
+				"const fr = { 'verify-email': { subject: 'Confirmez', title: 'Confirmez votre adresse' } };",
+				'export default { en, fr };',
+			].join('\n'),
+			'emails/verify-email.vue':
+				"<template><p>{{ t('verify-email.title') }}</p></template>",
+		};
+		for (const [path, content] of Object.entries(files)) {
+			mkdirSync(dirname(`${root}/${path}`), { recursive: true });
+			writeFileSync(`${root}/${path}`, content);
+		}
+		await build(root);
+	}, 60_000);
+
+	test('reads the catalogues from the module, no locales/ folder at all', async () => {
+		const en = await Bun.file(`${root}/dist/en/verify-email.html`).text();
+		expect(en).toContain('Confirm your address');
+		const fr = await Bun.file(`${root}/dist/fr/verify-email.html`).text();
+		expect(fr).toContain('Confirmez votre adresse');
 	});
 });

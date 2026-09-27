@@ -1,9 +1,13 @@
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 import { join, relative, resolve, sep } from 'node:path';
 import { isMainThread } from 'node:worker_threads';
+import {
+	loadMessages,
+	type ReadCatalogues,
+	readCatalogues,
+} from '@nxgt/i18n-vue/node';
 import { defineMailPlugin, type MailPlugin } from '@nxgt/mail-config';
 import {
-	type Catalogue,
 	type Catalogues,
 	checkCatalogues,
 	layerCatalogues,
@@ -38,8 +42,20 @@ export interface I18nOptions {
 	readonly locales: readonly string[];
 	/** The reference every other locale is checked against. Default the first locale. */
 	readonly fallbackLocale?: string;
-	/** The folder of `<locale>.json` catalogues. Default `locales`. */
+	/**
+	 * The folder of `<locale>.json` catalogues, and of `<locale>/**\/*.json` —
+	 * a file's path under it is a key prefix: `en/mails.json` is `mails.*`,
+	 * `en/auth/sign-in.json` is `auth.sign-in.*`. Default `locales`. Not with
+	 * `messages`.
+	 */
 	readonly dir?: string;
+	/**
+	 * A module whose default export is the resources object (`{ en: {...},
+	 * fr: {...} }`) or a function that returns it, instead of `dir`. A path
+	 * from the project's root. `i18n()` answers a `Promise` when this is set —
+	 * `await` it in `maizzle.config.ts`.
+	 */
+	readonly messages?: string;
 	/** The folder of templates. Default `emails`. */
 	readonly emails?: string;
 	/** `nested` writes `dist/en/verify-email.html`; `flat` writes `dist/verify-email.en.html`. Default `nested`. */
@@ -112,6 +128,19 @@ function checkOptions(options: I18nOptions): void {
 		}
 	}
 	if (
+		options.messages !== undefined &&
+		(typeof options.messages !== 'string' || options.messages === '')
+	) {
+		throw new TypeError(
+			"i18n: messages must be a module path, as './i18n/messages.ts'",
+		);
+	}
+	if (options.dir !== undefined && options.messages !== undefined) {
+		throw new TypeError(
+			'i18n: dir and messages cannot both be set — messages replaces the folder',
+		);
+	}
+	if (
 		options.layout !== undefined &&
 		options.layout !== 'nested' &&
 		options.layout !== 'flat'
@@ -143,45 +172,8 @@ function checkOptions(options: I18nOptions): void {
 	checkTemplates(options.templates);
 }
 
-/** Reads `<dir>/<locale>.json` for each locale. A missing or broken file **throws**. */
-function readCatalogues(
-	dir: string,
-	dirName: string,
-	locales: readonly string[],
-): Record<string, Catalogue> {
-	const out: Record<string, Catalogue> = {};
-	for (const locale of locales) {
-		const file = join(dir, `${locale}.json`);
-		const name = `${dirName}/${locale}.json`;
-		if (!existsSync(file)) {
-			throw new Error(
-				`i18n: ${name} is missing — every locale has a catalogue`,
-			);
-		}
-		try {
-			out[locale] = JSON.parse(readFileSync(file, 'utf8'));
-		} catch {
-			throw new Error(`i18n: ${name} is not valid JSON`);
-		}
-	}
-	return out;
-}
-
-/**
- * The i18n plugin, for `defineMailConfig`:
- *
- * ```ts
- * defineMailConfig({ plugins: [i18n({ locales: ['en', 'fr'] })] });
- * ```
- *
- * It checks `locales/<locale>.json`, writes one wrapper per template and
- * locale under `.maizzle/emails/` so one build writes every locale, gives each
- * template `t`, `locale` and `placeholder`, and writes
- * `dist/mail-manifest.json`. A catalogue or a template that cannot be right
- * **fails the build**, naming the locale and the key.
- */
-export function i18n(options: I18nOptions): MailPlugin {
-	checkOptions(options);
+/** Builds the plugin once its catalogues — from `dir` or from `messages` — are read. */
+function buildPlugin(options: I18nOptions, own: ReadCatalogues): MailPlugin {
 	const { locales } = options;
 	const fallbackLocale = options.fallbackLocale ?? (locales[0] as string);
 	const layout = options.layout ?? 'nested';
@@ -192,10 +184,7 @@ export function i18n(options: I18nOptions): MailPlugin {
 	const wrappersDir = resolve(cwd, WRAPPERS_DIR);
 
 	const messages = checkCatalogues(
-		layerCatalogues(
-			options.catalogues ?? [],
-			readCatalogues(resolve(cwd, dirName), dirName, locales),
-		),
+		layerCatalogues(options.catalogues ?? [], own.catalogues),
 		locales,
 		fallbackLocale,
 	);
@@ -224,8 +213,13 @@ export function i18n(options: I18nOptions): MailPlugin {
 	return defineMailPlugin({
 		name: 'i18n',
 		content: [`${wrappersDir}/**/*.vue`],
-		// `maizzle serve` watches locales/ already; another folder is added.
-		...(dirName === 'locales' ? {} : { server: { watch: [`${dirName}/**`] } }),
+		// `maizzle serve` watches `locales/**` already, folder layout included;
+		// with `messages`, there is no folder to watch — see the troubleshooting
+		// entry on editing that module under `maizzle serve`. Another `dir`
+		// gets its own glob, nested files included.
+		...(options.messages !== undefined || dirName === 'locales'
+			? {}
+			: { server: { watch: [`${dirName}/**`] } }),
 		vite: { plugins: [watchTemplates(emailsDir, regenerate)] },
 		beforeRender({ config, template }) {
 			const path = relative(
@@ -277,4 +271,50 @@ export function i18n(options: I18nOptions): MailPlugin {
 			}
 		},
 	});
+}
+
+/**
+ * The i18n plugin, for `defineMailConfig`:
+ *
+ * ```ts
+ * defineMailConfig({ plugins: [i18n({ locales: ['en', 'fr'] })] });
+ * ```
+ *
+ * It checks `locales/<locale>.json` (and `locales/<locale>/**\/*.json`, or
+ * `messages` instead of a folder), writes one wrapper per template and locale
+ * under `.maizzle/emails/` so one build writes every locale, gives each
+ * template `t`, `locale` and `placeholder`, and writes
+ * `dist/mail-manifest.json`. A catalogue or a template that cannot be right
+ * **fails the build**, naming the locale and the key.
+ *
+ * With `messages`, reading it is asynchronous — `i18n()` answers a `Promise`,
+ * which `maizzle.config.ts` must `await` (a plain top-level `await` in the
+ * config module, which Maizzle's loader supports). Without `messages`, it
+ * answers the plugin directly, as before.
+ */
+export function i18n(
+	options: I18nOptions & { readonly messages?: undefined },
+): MailPlugin;
+export function i18n(
+	options: I18nOptions & { readonly messages: string },
+): Promise<MailPlugin>;
+export function i18n(options: I18nOptions): MailPlugin | Promise<MailPlugin> {
+	checkOptions(options);
+	const { locales } = options;
+	const fallbackLocale = options.fallbackLocale ?? (locales[0] as string);
+	const cwd = process.cwd();
+
+	if (options.messages !== undefined) {
+		return loadMessages(cwd, options.messages, locales).then((own) =>
+			buildPlugin(options, own),
+		);
+	}
+	const dirName = options.dir ?? 'locales';
+	const own = readCatalogues(
+		resolve(cwd, dirName),
+		dirName,
+		locales,
+		fallbackLocale,
+	);
+	return buildPlugin(options, own);
 }
