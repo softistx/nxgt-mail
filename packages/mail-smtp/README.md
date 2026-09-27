@@ -99,7 +99,7 @@ await mailer.send({
 | --- | --- | --- |
 | The server cannot be reached, a timeout, a `4xx` (try later), credentials refused (`530`–`539`), the sender refused (`5xx` on `MAIL FROM`) | `MailFailure` — `send: the SMTP server could not take the message` | nodemailer's error, with its `code` and `responseCode` |
 | A permanent `5xx` on every recipient or on the content (`550`, `552` too large, `554`) | `MailRefused` — `send: the SMTP server refused the message` | nodemailer's error |
-| Some recipients refused, the others accepted — **they may have the message** | `MailRefused` — `send: the SMTP server refused <n> of <total> recipients, and may have delivered to the others` — or `MailFailure` — `send: the SMTP server could not take <n> of <total> recipients, …` when a refusal is not permanent | nodemailer's error for the first refused recipient |
+| Some recipients refused, the others accepted — **they may have the message** | `MailRefused` — `send: the SMTP server refused <n> of <total> recipients, and may have delivered to the others` — or `MailFailure` — `send: the SMTP server could not take <n> of <total> recipients, …` when a refusal is not permanent, or nodemailer gives no reason | nodemailer's error for the first refused recipient |
 | No sender, on the message or as a default | `MailRefused` — `send: from is missing — give the message a from, or createSmtpMailer a default one` | — |
 | A bad option | `TypeError` from `createSmtpMailer` | — |
 

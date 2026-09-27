@@ -80,7 +80,7 @@ asked — with a message that counts the refusals:
 | Every refusal a permanent `5xx` (not `530`–`539`) | Throws |
 | --- | --- |
 | yes | `MailRefused` — `send: the SMTP server refused <n> of <total> recipients, and may have delivered to the others` |
-| no | `MailFailure` — `send: the SMTP server could not take <n> of <total> recipients, and may have delivered to the others` |
+| no, or nodemailer gives no reason | `MailFailure` — `send: the SMTP server could not take <n> of <total> recipients, and may have delivered to the others` |
 
 `cause` is nodemailer's error for the first refused recipient
 (`code: 'EENVELOPE'`, its `responseCode`, and `recipient`). Retrying the

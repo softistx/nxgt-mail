@@ -137,7 +137,8 @@ have the message.**
 
 **When:** a message to several recipients: the server accepted some, and
 refused `<n>` with one refusal at least for now (a `4xx`, `450` mailbox
-busy) or for a reason that is not the message (`530`–`539`).
+busy) or for a reason that is not the message (`530`–`539`), or nodemailer
+reported the refusals without a reason.
 
 **Why:** the refused recipients may be reachable later; the accepted ones
 were handed the message.
