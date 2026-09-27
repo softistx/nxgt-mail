@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
 import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { serveMaizzle } from '../test/maizzle-serve';
 
 const fixture = fileURLToPath(new URL('../test/fixture', import.meta.url));
 const cases = fileURLToPath(new URL('../test/.cases', import.meta.url));
@@ -139,19 +140,11 @@ describe('a project built with the i18n plugin', () => {
 	});
 
 	test('maizzle serve lists every template in every locale', async () => {
-		const port = 39_000 + Math.floor(Math.random() * 900);
-		const child = Bun.spawn([maizzle, 'serve', '--port', String(port)], {
-			cwd: fixture,
-			stdout: 'ignore',
-			stderr: 'ignore',
-		});
+		const server = await serveMaizzle(maizzle, fixture);
 		try {
-			let list: { path: string }[] = [];
-			for (let attempt = 0; attempt < 60 && list.length === 0; attempt++) {
-				list = await fetch(`http://localhost:${port}/__maizzle/templates`)
-					.then((response) => (response.ok ? response.json() : []))
-					.catch(() => Bun.sleep(500).then(() => []));
-			}
+			const list: { path: string }[] = await fetch(
+				`${server.origin}/__maizzle/templates`,
+			).then((response) => response.json());
 			expect(list.map((template) => template.path).sort()).toEqual([
 				'.maizzle/emails/en/auth/reset-password.vue',
 				'.maizzle/emails/en/verify-email.vue',
@@ -159,14 +152,13 @@ describe('a project built with the i18n plugin', () => {
 				'.maizzle/emails/fr/verify-email.vue',
 			]);
 			const fr = await fetch(
-				`http://localhost:${port}/__maizzle/render/.maizzle/emails/fr/verify-email`,
+				`${server.origin}/__maizzle/render/.maizzle/emails/fr/verify-email`,
 			).then((response) => response.text());
 			expect(fr).toContain('Bonjour {{ name }},');
 		} finally {
-			child.kill();
-			await child.exited;
+			await server.stop();
 		}
-	}, 60_000);
+	}, 120_000);
 });
 
 const en = {

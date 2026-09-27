@@ -7,6 +7,7 @@ import {
 	MANIFEST_FORMAT as READS,
 } from '@nxgt/mail/renderer';
 import { MANIFEST_FORMAT as WRITES } from '@nxgt/mail-i18n';
+import { serveMaizzle } from '../test/maizzle-serve';
 import { PRESETS } from './presets';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
@@ -191,21 +192,9 @@ describe('the presets, built by a project', () => {
 	});
 
 	test('caniemail reports for Gmail, Outlook and Apple Mail only the known partial support', async () => {
-		const port = 39_000 + Math.floor(Math.random() * 900);
-		const child = Bun.spawn([maizzle, 'serve', '--port', String(port)], {
-			cwd: fixture,
-			stdout: 'ignore',
-			stderr: 'ignore',
-		});
+		const server = await serveMaizzle(maizzle, fixture);
 		try {
-			const base = `http://localhost:${port}/__maizzle/compatibility`;
-			for (let attempt = 0; attempt < 60; attempt++) {
-				const up = await fetch(`http://localhost:${port}/__maizzle/templates`)
-					.then((response) => response.ok)
-					.catch(() => false);
-				if (up) break;
-				await Bun.sleep(500);
-			}
+			const base = `${server.origin}/__maizzle/compatibility`;
 			for (const name of PRESETS) {
 				// The endpoint takes the file's path after its own, so an absolute
 				// one follows a second slash.
@@ -218,10 +207,9 @@ describe('the presets, built by a project', () => {
 				});
 			}
 		} finally {
-			child.kill();
-			await child.exited;
+			await server.stop();
 		}
-	}, 90_000);
+	}, 120_000);
 });
 
 describe('the presets, installed from npm', () => {
