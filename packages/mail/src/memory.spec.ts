@@ -61,6 +61,23 @@ describe('createMemoryMailer', () => {
 		]);
 	});
 
+	it('keeps the tags, and knows the same tags in another order under one key', async () => {
+		const mailer = createMemoryMailer();
+		const first = await mailer.send({
+			...message,
+			idempotencyKey: 'k',
+			tags: { category: 'receipt', plan: 'free' },
+		});
+		const retried = await mailer.send({
+			...message,
+			idempotencyKey: 'k',
+			tags: { plan: 'free', category: 'receipt' },
+		});
+		expect(retried).toEqual(first);
+		expect(mailer.sent).toHaveLength(1);
+		expect(mailer.sent[0]?.tags).toEqual({ category: 'receipt', plan: 'free' });
+	});
+
 	it('keeps the content id of an inline image', async () => {
 		const mailer = createMemoryMailer();
 		await mailer.send({
@@ -185,6 +202,7 @@ describe('createMemoryMailer', () => {
 				attachments: [{ ...pdf, content: new Uint8Array([1, 3]) }],
 			},
 			{ ...message, attachments: [{ ...pdf, contentId: 'receipt' }] },
+			{ ...message, tags: { category: 'receipt' } },
 		]) {
 			const error = await mailer
 				.send({

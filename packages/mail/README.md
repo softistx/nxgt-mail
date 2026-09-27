@@ -239,6 +239,27 @@ twice is delivered twice. A key that is not 1 to 256 visible ASCII characters
 is refused with `MailRefused`. See
 [Sending — idempotency](docs/guide/sending.md#idempotency--sending-once).
 
+### Tags — labels for the provider
+
+`tags` label a send for the provider's dashboard, webhooks and statistics:
+what the e-mail is, which plan the account is on. A record of names to values,
+each 1 to 256 ASCII letters, digits, `_` or `-`:
+
+```ts
+import type { Mailer, Rendered } from '@nxgt/mail';
+
+export async function sendReceipt(mailer: Mailer, to: string, rendered: Rendered, plan: 'free' | 'enterprise'): Promise<void> {
+	await mailer.send({ ...rendered, to, tags: { category: 'receipt', plan } });
+}
+```
+
+A tag is never part of the e-mail: `@nxgt/mail-resend` sends them as Resend's
+`tags`, `@nxgt/mail-smtp` ignores them, as it ignores `idempotencyKey`. They
+land in the provider's logs: an id or a category, never an address or a
+secret. A name or value outside the rule is refused with `MailRefused`,
+naming the tag and never the value. See
+[Sending — tags](docs/guide/sending.md#tags--labels-for-the-provider).
+
 ### One-click unsubscribe — `listUnsubscribe`
 
 Gmail and Yahoo require bulk senders to offer one-click unsubscribe on
@@ -489,7 +510,7 @@ gives a test file `describe` and `it` as bare identifiers, not on `globalThis`.
 
 ## Type safety, counted
 
-**24 plausible mistakes, 24 refused** at compile time, each measured by a
+**25 plausible mistakes, 25 refused** at compile time, each measured by a
 `@ts-expect-error` in
 [`test/types/refusals.ts`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/test/types/refusals.ts)
 that fails the typecheck the moment it stops holding:
@@ -539,6 +560,11 @@ And one-click unsubscribe:
 And an inline image:
 
 24. nodemailer's `cid` instead of `contentId` on an attachment.
+
+And tags:
+
+25. Tags written as Resend's list of `{ name, value }`: the port's are a
+    record, `{ category: 'receipt' }`.
 
 The same file holds the calls that must keep compiling: a refusal that refuses
 the correct call is a bug.

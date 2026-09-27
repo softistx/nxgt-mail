@@ -133,11 +133,11 @@ describeMailer({
 });
 ```
 
-All fifteen cases pass: a send answers `SentMail`, the message arrives byte for
+All sixteen cases pass: a send answers `SentMail`, the message arrives byte for
 byte (accents, an emoji, `&amp;` in a link), every recipient is delivered to,
 a hostile name reaches only its own address, an attachment arrives byte for
 byte with its name and type, an inline image arrives with its content id, a message with an idempotency key is delivered
-without the key written in it, the refusals — a `Bcc` among the custom headers
+without the key written in it, a message with tags is delivered without a tag written in it, the refusals — a `Bcc` among the custom headers
 and an attachment named with a path included — and the three
 failure cases — an outage is a `MailFailure` with its `cause` and one attempt,
 a refusal a `MailRefused`, and the next send goes through.

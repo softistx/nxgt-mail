@@ -112,6 +112,9 @@ Throws `MailRefused`, naming **where** the problem is and never the value:
 | a `contentId` that is not 1 to 127 letters, digits and `.` `_` `~` `+` `-` with at most one `@` — angle brackets, a space, a `%`, not a string | `send: attachments[0].contentId must be 1 to 127 letters, digits and . _ ~ + -, with at most one @, as logo@acme.test` |
 | two attachments under one `contentId` | `send: attachments[1].contentId is already another attachment's — a contentId names one file` |
 | a `cid:` URL the HTML uses — an attribute value, quoted or not, or a CSS `url()` — that no attachment's `contentId` names, percent-decoded | `send: html shows a cid: URL that no attachment's contentId names — attach the image with that contentId` |
+| `tags` that is not an object — an array, `null`, a string | `send: tags must be an object of names to values, as { category: 'receipt' }` |
+| a tag name that is not 1 to 256 ASCII letters, digits, `_` or `-` | `send: a tag name must be 1 to 256 ASCII letters, digits, _ or -` |
+| a tag value that is not 1 to 256 ASCII letters, digits, `_` or `-`, or not a string | `send: tag category must be 1 to 256 ASCII letters, digits, _ or -` |
 | an `idempotencyKey` that is not 1 to 256 visible ASCII characters — empty, a space, a line break, a letter outside ASCII, not a string | `send: idempotencyKey must be 1 to 256 visible ASCII characters, as order-42/receipt` |
 
 An empty `attachments` is accepted, and is the same as none: send no
@@ -259,6 +262,17 @@ test('sends the idempotency key as a header, never in the body', async () => {
 });
 ```
 
+## Tags
+
+`tags` label a send for the provider — its dashboard, its webhooks. A
+provider that takes tags gets them in its own shape (Resend: a list of
+`{ name, value }`); one that has none ignores them, as SMTP does. Never write
+a tag into the e-mail: `send.tags` fails a transport that does. `checkMessage`
+has already held each name and value to 1 to 256 ASCII letters, digits, `_`
+or `-`, which Resend and Amazon SES both take; a provider's own limit on how
+many — Resend's 75 — is the transport's to refuse with `MailRefused`, before
+sending.
+
 ## The conformance suite
 
 ```ts
@@ -310,6 +324,7 @@ and when `skip` names a case that does not exist
 | `send.attachment` | an attachment — `sampleAttachment`, every byte from 0 to 255 named `reçu n° 42.pdf`, `application/pdf` — is delivered byte for byte, with its file name and its type (compared without case), and the parts beside it as sent | no |
 | `send.inlineImage` | an inline image — `sampleInlineImage`, a PNG with `contentId: 'logo-7f3a@example.test'` — is delivered with that content id (no angle brackets), byte for byte, with its type, and the HTML that shows it as `cid:logo-7f3a@example.test` as sent | no |
 | `send.idempotencyKey` | a message with an `idempotencyKey` is delivered — never refused for it — and the key appears in none of its recipients, its subject, its HTML or its text. A fresh key per run, so a harness that remembers keys still delivers | no |
+| `send.tags` | a message with `tags` is delivered — never refused for them — and no tag value appears in its recipients, its subject, its HTML or its text. A fresh value per run | no |
 | `send.refusesNoRecipient` | no recipient throws `MailRefused`, and nothing is delivered | no |
 | `send.refusesLineBreakInSubject` | a line break in the subject throws `MailRefused`, and nothing is delivered | no |
 | `send.refusesAddressHeader` | a `Bcc` among the custom headers throws `MailRefused` without the address in its message, and nothing is delivered: it would add a recipient no check saw | no |
@@ -321,7 +336,7 @@ and when `skip` names a case that does not exist
 
 The message they send is exported as `sampleMessage`, its attachment as
 `sampleAttachment`, its inline image as `sampleInlineImage`, and the cases as
-data: `sendCases` (the twelve `send.*`), `failureCases` (the three `failure.*`) and
+data: `sendCases` (the thirteen `send.*`), `failureCases` (the three `failure.*`) and
 `allMailerCases` (both, in the order above). A transport's own tests can reuse
 them — send the sample through your transport, or run only the cases that
 need no faults:
@@ -460,7 +475,7 @@ export function fakeProvider() {
 ```
 
 With the transport and the fake above, the example at the top of this page
-passes all fifteen cases.
+passes all sixteen cases.
 
 ### Without faults
 

@@ -202,6 +202,15 @@ Content-Type: application/json
 - An attachment's `contentId` is sent as `content_id`, Resend's name for it:
   the attachment is then an inline image the HTML shows as
   `cid:<contentId>`. `content_id` is left out of an attachment without one.
+- `tags` are sent as Resend's `tags`, a list of `{ name, value }` in the
+  record's order, and left out when there are none. `checkMessage` has held
+  each name and value to 1 to 256 ASCII letters, digits, `_` or `-`; more
+  than 75 tags is refused with `MailRefused` —
+  `send: Resend takes at most 75 tags on one e-mail` — and nothing is sent.
+
+  ```json
+  "tags": [{ "name": "category", "value": "passwordReset" }, { "name": "plan", "value": "enterprise" }]
+  ```
   `checkMessage` has refused, first, an id Resend would not take (128
   characters or more, or outside letters, digits, `.` `_` `~` `+` `-` and one
   `@`) and a `cid:` in the HTML that no attachment names — see

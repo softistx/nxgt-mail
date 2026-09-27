@@ -17,6 +17,12 @@ the only number.
   is refused. The memory mailer keeps the id; the conformance suite gains
   `send.inlineImage`, fifteen cases in all. The SMTP transport sends it as
   nodemailer's `cid`, Resend's as `content_id`.
+- **Tags** — `tags` on a `MailMessage`, a record of names to values, label a
+  send for the provider's dashboard and webhooks, never part of the e-mail.
+  `checkMessage` holds each name and value to 1 to 256 ASCII letters, digits,
+  `_` or `-`, the rule Resend and Amazon SES share. Resend sends them as its
+  `tags`; SMTP ignores them. The memory mailer keeps them, and the conformance
+  suite gains `send.tags`, sixteen cases in all.
 
 ## Next
 

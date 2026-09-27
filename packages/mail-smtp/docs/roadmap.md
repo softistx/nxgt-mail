@@ -11,6 +11,8 @@ no dates here, and the version something shipped in is the only number.
   nodemailer's `cid`: a `Content-ID` header, `inline`, in a
   `multipart/related` beside the HTML, so the HTML shows it as `<img
   src="cid:…">`. The `@nxgt/mail` peer moves to `^0.6.0`.
+- **Tags ignored** — a message's `tags` are checked and never sent: SMTP has
+  none.
 
 ## Next
 

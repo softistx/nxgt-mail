@@ -326,6 +326,54 @@ describe('the suite fails a bad transport', () => {
 		).toContain('the idempotency key was written into the e-mail');
 	});
 
+	it('fails a transport that refuses a message with tags', async () => {
+		const refusing: MailerHarness = {
+			async open() {
+				const opened = await referenceMailerHarness().open();
+				return {
+					...opened,
+					mailer: {
+						send: async (message) => {
+							if (message.tags !== undefined) {
+								throw new TypeError('tags are not supported');
+							}
+							return opened.mailer.send(message);
+						},
+					},
+				};
+			},
+		};
+		expect(
+			await failureOf(runMailerCase(byId('send.tags'), refusing)),
+		).toContain('tags are not supported');
+	});
+
+	it('fails a transport that writes a tag into the HTML', async () => {
+		const leaking: MailerHarness = {
+			async open() {
+				const opened = await referenceMailerHarness().open();
+				let tags = '';
+				return {
+					...opened,
+					mailer: {
+						send: async (message) => {
+							tags = Object.values(message.tags ?? {}).join(' ');
+							return opened.mailer.send(message);
+						},
+					},
+					delivered: async () =>
+						(await opened.delivered()).map((mail) => ({
+							...mail,
+							html: `${mail.html}<!-- ${tags} -->`,
+						})),
+				};
+			},
+		};
+		expect(
+			await failureOf(runMailerCase(byId('send.tags'), leaking)),
+		).toContain('a tag was written into the e-mail');
+	});
+
 	it('fails a transport that drops the attachments', async () => {
 		expect(
 			await failureOf(

@@ -208,5 +208,36 @@ export const sendCases: readonly MailerCase[] = [
 			);
 		},
 	},
+	{
+		id: 'send.tags',
+		title:
+			'a message with tags is delivered, and no tag is in its recipients, subject, HTML or text',
+		async run(context) {
+			// Tags label the send at the provider: one that takes them sends them
+			// there, one that does not ignores them. Neither refuses the message,
+			// and neither writes a tag where the reader sees it.
+			const run = `conformance-${crypto.randomUUID()}`;
+			const sent = await context.mailer.send({
+				...sampleMessage,
+				tags: { category: 'conformance', run },
+			});
+			check(
+				typeof sent === 'object' && sent !== null && 'messageId' in sent,
+				'a send with tags did not answer SentMail',
+			);
+			const delivered = await context.delivered();
+			check(
+				delivered.length === 1,
+				`expected 1 delivered message, got ${delivered.length}`,
+			);
+			const [mail] = delivered;
+			check(
+				![mail?.subject, mail?.html, mail?.text, ...(mail?.to ?? [])].some(
+					(part) => part?.includes(run),
+				),
+				'a tag was written into the e-mail',
+			);
+		},
+	},
 	...refusalCases,
 ];

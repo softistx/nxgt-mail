@@ -516,6 +516,61 @@ describe('createResendMailer, the request', () => {
 		}
 	});
 
+	test("sends the tags as Resend's list of { name, value }, and none for an empty record", async () => {
+		const resend = startResend();
+		try {
+			const mailer = createResendMailer({
+				apiKey: API_KEY,
+				baseUrl: resend.baseUrl,
+			});
+			await mailer.send({
+				...sampleMessage,
+				tags: { category: 'receipt', plan: 'enterprise' },
+			});
+			await mailer.send({ ...sampleMessage, tags: {} });
+			expect(resend.received[0]?.body.tags).toEqual([
+				{ name: 'category', value: 'receipt' },
+				{ name: 'plan', value: 'enterprise' },
+			]);
+			expect('tags' in (resend.received[1]?.body ?? {})).toBe(false);
+		} finally {
+			await resend.close();
+		}
+	});
+
+	test('refuses more than 75 tags, as Resend does, before sending', async () => {
+		const resend = startResend();
+		try {
+			const tags = Object.fromEntries(
+				Array.from({ length: 76 }, (_, index) => [`tag${index}`, 'x']),
+			);
+			const error = await createResendMailer({
+				apiKey: API_KEY,
+				baseUrl: resend.baseUrl,
+			})
+				.send({ ...sampleMessage, tags })
+				.then(
+					() => null,
+					(caught: unknown) => caught,
+				);
+			expect(error).toBeInstanceOf(MailRefused);
+			expect((error as Error).message).toBe(
+				'send: Resend takes at most 75 tags on one e-mail',
+			);
+			expect(resend.received).toHaveLength(0);
+			await createResendMailer({
+				apiKey: API_KEY,
+				baseUrl: resend.baseUrl,
+			}).send({
+				...sampleMessage,
+				tags: Object.fromEntries(Object.entries(tags).slice(0, 75)),
+			});
+			expect(resend.received).toHaveLength(1);
+		} finally {
+			await resend.close();
+		}
+	});
+
 	test('sends no attachments or headers field when they are empty', async () => {
 		const resend = startResend();
 		try {
