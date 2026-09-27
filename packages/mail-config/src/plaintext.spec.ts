@@ -1,5 +1,46 @@
 import { describe, expect, test } from 'bun:test';
-import { tidyPlaintext } from './plaintext';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { createPlaintext } from '@maizzle/framework';
+import { breakBlocks, tidyPlaintext, tidyPlaintextFiles } from './plaintext';
+
+const strip = (html: string) =>
+	createPlaintext(html, {
+		cb: breakBlocks,
+		dumpLinkHrefsNearby: { enabled: true, putOnNewLine: true },
+	});
+
+describe('breakBlocks', () => {
+	test('a blank line after a paragraph or a heading', () => {
+		expect(tidyPlaintext(strip('<h1>Title</h1><p>One.</p><p>Two.</p>'))).toBe(
+			'Title\n\nOne.\n\nTwo.\n',
+		);
+	});
+
+	test('a line break after a list item, a row, a div or a <br>', () => {
+		expect(tidyPlaintext(strip('<ul><li>one</li><li>two</li></ul>'))).toBe(
+			'one\ntwo\n',
+		);
+		expect(
+			tidyPlaintext(
+				strip('<table><tr><td>a</td></tr><tr><td>b</td></tr></table>'),
+			),
+		).toBe('a\nb\n');
+		expect(tidyPlaintext(strip('<div>x</div><div>y</div>'))).toBe('x\ny\n');
+		expect(tidyPlaintext(strip('<p>line one<br>line two</p>'))).toBe(
+			'line one\nline two\n',
+		);
+	});
+
+	test("still writes a link's address after it, in a list item too", () => {
+		expect(
+			tidyPlaintext(
+				strip('<ul><li><a href="https://a.test/x">Docs</a></li></ul>'),
+			),
+		).toBe('Docs\n\nhttps://a.test/x\n');
+	});
+});
 
 describe('tidyPlaintext', () => {
 	test('keeps one blank line between paragraphs, and none at either end', () => {
@@ -36,7 +77,47 @@ describe('tidyPlaintext', () => {
 		);
 	});
 
+	test.each([
+		['a number ending like the one before', 'Seats: 12\n\n2'],
+		['a total ending like the one before', 'Total due: 100\n\n0'],
+		['a word ending like the one before', 'Acme\n\nme'],
+		['the end of an address', 'See https://a.test/x\n\nx'],
+		['a line said twice', 'Hello\n\nHello'],
+	])('keeps %s', (_, text) => {
+		expect(tidyPlaintext(text)).toBe(`${text}\n`);
+	});
+
 	test('answers an empty text for an empty part', () => {
 		expect(tidyPlaintext('\n ‍ \n')).toBe('');
+	});
+});
+
+describe('tidyPlaintextFiles', () => {
+	const folder = () => mkdtempSync(join(tmpdir(), 'nxgt-mail-config-'));
+	const messy = 'One.\n\n\n\u200DTwo.';
+
+	test('tidies the text parts, with the extension plaintext sets', () => {
+		const dir = folder();
+		const [txt, text] = [join(dir, 'a.txt'), join(dir, 'a.text')];
+		writeFileSync(txt, messy);
+		writeFileSync(text, messy);
+		tidyPlaintextFiles([txt, text], { extension: 'text' });
+		expect(readFileSync(text, 'utf8')).toBe('One.\n\nTwo.\n');
+		expect(readFileSync(txt, 'utf8')).toBe(messy);
+	});
+
+	test('tidies nothing when plaintext is off', () => {
+		const file = join(folder(), 'a.txt');
+		writeFileSync(file, messy);
+		tidyPlaintextFiles([file], false);
+		expect(readFileSync(file, 'utf8')).toBe(messy);
+	});
+
+	test('never rewrites HTML a template wrote under a text extension', () => {
+		const file = join(folder(), 'a.txt');
+		const html = '<!DOCTYPE html>\n<html>\n\n\n<p>\u200D</p></html>';
+		writeFileSync(file, html);
+		tidyPlaintextFiles([file], true);
+		expect(readFileSync(file, 'utf8')).toBe(html);
 	});
 });

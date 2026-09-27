@@ -138,9 +138,11 @@ the error reaches Maizzle, which fails the build.
 ### The plain-text part
 
 Without asking, each template gets a `.txt` part that reads as one: a blank
-line between paragraphs, a line break for each `<br>`, a button's address on
-its own line, no invisible character from a `<Spacer>`, an `<Hr>` or the
-preheader's padding, and a link whose text is its address written once.
+line between paragraphs, a line break for each `<br>`, row or list item, a
+button's address on its own line, no invisible character from a `<Spacer>`,
+an `<Hr>` or the preheader's padding, and a link whose text is its address
+written once. `maizzle serve`'s plain-text preview does not show it: only
+`maizzle build` writes it.
 
 ```text
 Confirm my address

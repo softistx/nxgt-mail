@@ -306,7 +306,7 @@ The `cb` the base puts in `plaintext.options`, which Maizzle forwards to
 | Tag | Becomes |
 | --- | --- |
 | `p`, `h1`–`h6`, `ul`, `ol`, `table`, `blockquote` | A blank line |
-| `br`, `div`, `tr`, `li`, `hr` | A line break |
+| `br`, `hr`, and the end of a `div`, `tr` or `li` | A line break: two list items in a row are two lines, not two paragraphs |
 | Any other | What `string-strip-html` proposes — a link's address still written after it |
 
 ### `tidyPlaintext` — after the build
@@ -320,9 +320,10 @@ extension (`plaintext.extension`, `txt` by default) and rewrites it with
   space, soft hyphen, word joiner — and the empty lines they leave;
 - trims each line, keeps at most one blank line in a row, no blank line
   first, and ends with one newline;
-- drops a line that is an address — no space in it, or one
-  `{{ placeholder }}` — when the line before already ends with it: a link
-  whose text is its address.
+- drops a line that is an address — a URL with its scheme, or one
+  `{{ placeholder }}` — when the line before is the same address or ends
+  with it after a space: a link whose text is its address. Any other line
+  stays, even one that ends the line before (`Seats: 12`, then `2`).
 
 ```ts
 import { tidyPlaintext } from '@nxgt/mail-config';
@@ -333,10 +334,14 @@ tidyPlaintext('Confirm my address\n\n{{ link }}');
 // 'Confirm my address\n\n{{ link }}\n' — a button's text is not its address, so it stays
 ```
 
-It never rewrites anything when `plaintext` is `false`, nor when the HTML's
-own extension (`output.extension`) is the text part's — an HTML file is never
-tidied as text. A text part a template asks for itself with another extension
-than the config's is not tidied.
+It never rewrites anything when `plaintext` is `false`, nor a file that
+starts with `<!doctype` or `<html>` — HTML a template wrote under the text
+part's extension is never tidied as text. A text part a template asks for
+itself with another extension than the config's is not tidied.
+
+Only `maizzle build` writes this text part. `maizzle serve`'s plain-text
+preview, and its test send, strip the HTML with Maizzle's own defaults and
+run no `afterBuild`: they still show the e-mail on one line.
 
 ### Keep the `cb`, or replace it
 

@@ -1,4 +1,7 @@
 import { describe, expect, test } from 'bun:test';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import type { MaizzleConfig } from '@maizzle/framework';
 import {
 	baseConfig,
@@ -136,6 +139,34 @@ describe('defineMailConfig — the layers', () => {
 });
 
 describe('defineMailConfig — the build events', () => {
+	test("the base tidies the text parts before a plugin's or the project's afterBuild reads them", async () => {
+		const { mkdtempSync, readFileSync, writeFileSync } = await import(
+			'node:fs'
+		);
+		const { tmpdir } = await import('node:os');
+		const { join } = await import('node:path');
+		const file = join(
+			mkdtempSync(join(tmpdir(), 'nxgt-mail-config-')),
+			'a.txt',
+		);
+		writeFileSync(file, 'One.\n\n\n\u200DTwo.');
+		let read = '';
+		const config = defineMailConfig({
+			afterBuild: () => {
+				read = readFileSync(file, 'utf8');
+			},
+		});
+		await fire(config, 'afterBuild', { files: [file], config });
+		expect(read).toBe('One.\n\nTwo.\n');
+	});
+
+	test('the base plaintext options cannot be changed through a config', () => {
+		const config = defineMailConfig();
+		expect(() => {
+			(config.plaintext as { options: Record<string, unknown> }).options.x = 1;
+		}).toThrow(TypeError);
+	});
+
 	test('a single handler is handed to Maizzle as it is', () => {
 		const afterRender = () => undefined;
 		expect(defineMailConfig({ afterRender }).afterRender).toBe(afterRender);

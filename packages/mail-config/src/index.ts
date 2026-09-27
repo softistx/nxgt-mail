@@ -45,15 +45,9 @@ export interface MailConfig extends MaizzleConfig {
  * inlined and purged — is already Maizzle's default.
  */
 export const baseConfig: Readonly<MaizzleConfig> = Object.freeze({
-	plaintext: { options: { cb: breakBlocks } },
+	plaintext: Object.freeze({ options: Object.freeze({ cb: breakBlocks }) }),
 	afterBuild({ files, config }) {
-		const { plaintext } = config;
-		if (!plaintext) return;
-		const extension =
-			typeof plaintext === 'object' ? (plaintext.extension ?? 'txt') : 'txt';
-		// An HTML output named like a text part is never rewritten.
-		if (extension === (config.output?.extension ?? 'html')) return;
-		tidyPlaintextFiles(files, extension);
+		tidyPlaintextFiles(files, config.plaintext);
 	},
 });
 

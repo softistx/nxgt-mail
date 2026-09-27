@@ -17,6 +17,7 @@
  */
 
 import {
+	breakBlocks,
 	defineMailConfig,
 	defineMailPlugin,
 	type MailPlugin,
@@ -24,6 +25,9 @@ import {
 } from '../../src/index';
 
 // Must keep compiling.
+defineMailConfig({
+	plaintext: { extension: 'text', options: { cb: breakBlocks } },
+});
 const brand: MailPlugin = defineMailPlugin({
 	name: 'brand',
 	components: { source: [{ path: '/abs/components', prefix: 'Nx' }] },

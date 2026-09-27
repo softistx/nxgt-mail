@@ -513,6 +513,10 @@ export default defineMailConfig({
 An object without `cb` — `plaintext: { extension: 'text' }` — keeps the
 base's too, since objects merge key by key.
 
+`maizzle serve`'s plain-text preview is always one line: it strips the HTML
+with Maizzle's defaults and runs no `afterBuild`. Look at the `.txt` that
+`maizzle build` writes.
+
 ### A bug in `@nxgt/mail-config` itself
 
 A refusal of a config this page says is valid, or two plugins' hooks that do
