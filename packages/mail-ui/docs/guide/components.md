@@ -35,6 +35,11 @@ The components from `NxTable` to `NxAvatar`
 The components from `NxHero` to `NxSeeAlso`
 ([their template](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-ui/test/fixture/emails/summary.vue)).
 
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-ui@0.2.0/packages/mail-ui/previews/content-components.png" width="420" alt="An e-mail using the layout and content components: an extended label with a count badge, highlighted text, keys, three action cards, a figure with its caption, a button group with icon buttons, an icon button and two link buttons">
+
+The components from `NxSpacer` to `NxButtonGroup`
+([their template](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-ui/test/fixture/emails/content.vue)).
+
 Every component is registered by [`ui()`](plugin.md) and used with no import.
 They keep material-vue's names (with the `Nx` prefix), its props and its
 values, and render with tables and inlined styles, which every mail client
@@ -50,22 +55,26 @@ reads. They need no JavaScript and no web font.
   `NxBanner`, `NxCard`, `NxCode`, `NxSummaryData`, `NxTable`,
   `NxDescription`, `NxAvatarGroup`, `NxProgress`, `NxSteps`, `NxTimeline`,
   `NxHero`, `NxEntityHeader`, the metric cards (`NxStatCard` to
-  `NxBreakdownCard`) and `NxSeeAlso` carry `mb-4`, `NxListTile` `mb-2`. On
-  `NxTypography`, `NxSummaryData`, `NxTable`, `NxDescription`,
-  `NxAvatarGroup`, `NxProgress`, `NxSteps`, `NxTimeline` and `NxSeeAlso`,
-  `class="mb-0"` removes it. `NxAlert`, `NxBanner`, `NxCard`, `NxCode`,
-  `NxListTile`, `NxHero`, `NxEntityHeader` and the metric cards put their
-  `class` on the box inside, and keep their 16px below: to change it, replace
-  the component with your own
+  `NxBreakdownCard`), `NxSeeAlso`, `NxActionCard`, `NxFigure` and
+  `NxButtonGroup` carry `mb-4`, `NxListTile` `mb-2`, `NxExtendedLabel`
+  `mb-1.5`. On `NxTypography`, `NxSummaryData`, `NxTable`, `NxDescription`,
+  `NxAvatarGroup`, `NxProgress`, `NxSteps`, `NxTimeline`, `NxSeeAlso`,
+  `NxFigure` and `NxExtendedLabel`, `class="mb-0"` removes it. `NxAlert`,
+  `NxBanner`, `NxCard`, `NxCode`, `NxListTile`, `NxHero`, `NxEntityHeader`,
+  the metric cards, `NxActionCard` and `NxButtonGroup` put their `class` on
+  the box inside, and keep their 16px below: to change it, replace the
+  component with your own
   (see [Replacing a component](plugin.md#replacing-a-component)).
-- **Vertical space is Maizzle's `<Spacer>`**, which Outlook respects:
+- **Vertical space is `NxSpacer`**, on Maizzle's `<Spacer>`, which Outlook
+  respects:
 
   ```vue
-  <Spacer height="24px" />
+  <NxSpacer size="lg" />
   ```
 
 - **Icons are slots.** An e-mail has no icon font: pass an `<img>` with an
-  absolute URL, or a character, where a component has an `icon` slot.
+  absolute URL, or a character, where a component has an `icon` slot —
+  or to `NxIconButton`'s `icon` prop.
 - **A placeholder passes through.** `:href="placeholder('link')"` or
   `{{ placeholder('code') }}` from `@nxgt/mail-i18n` is written as is; no
   component branches on a value only known at send time.
@@ -112,6 +121,16 @@ reads. They need no JavaScript and no web font.
 | [`NxCompareCard`](#nxcomparecard) | `CompareCard` | `label`, `current`, `previous` (required), `delta` | — |
 | [`NxBreakdownCard`](#nxbreakdowncard) | `BreakdownCard` | `label`, `items` (required) | — |
 | [`NxSeeAlso`](#nxseealso) | `SeeAlso` | `items` (required), `label` (a shared message) | — |
+| [`NxSpacer`](#nxspacer) | — (e-mail's own) | `size` (`'md'`) | — |
+| [`NxExtendedLabel`](#nxextendedlabel) | `ExtendedLabel` | `variant` (`'title-medium'`), `indicatorClass` | default, `trailing` |
+| [`NxHighlightText`](#nxhighlighttext) | `HighlightText` | `text` (required), `query` (`''`) | — |
+| [`NxKbd`](#nxkbd) | `Kbd` | — | default |
+| [`NxCountBadge`](#nxcountbadge) | `CountBadge` | `count` (required), `max` (`99`), `variant` (`'error'`) | default |
+| [`NxActionCard`](#nxactioncard) | `ActionCard` | `title`, `description`, `active` (`false`), `variant` (`'sm'`), `withIndicator` (`true`), `href` | `icon` |
+| [`NxFigure`](#nxfigure) | `Figure` | `src`, `alt`, `caption` | default |
+| [`NxLinkButton`](#nxlinkbutton) | `LinkButton` | `to` (required), `variant` (`'link'`), `color`, `size`, `align` | default |
+| [`NxIconButton`](#nxiconbutton) | `IconButton` | `href` (required), `icon`, `variant` (`'filled'`), `color` (`'primary'`), `tooltip` | default |
+| [`NxButtonGroup`](#nxbuttongroup) | `ButtonGroup` | — | default: buttons |
 
 ## NxLayout
 
@@ -223,7 +242,9 @@ Maizzle's `<Button>`, which pads it for Outlook.
 | `lg` | `px-6 py-3` | `text-sm` |
 
 Every variant but `link` is `rounded-full`, as in material-vue. The Outlook
-padding for each size is set for you.
+padding for each size is set for you. In an
+[`NxButtonGroup`](#nxbuttongroup), a button is `rounded` and, unless it says
+its `variant`, `tonal` — `filled` when marked `data-state="active"`.
 
 ## NxLink
 
@@ -941,6 +962,263 @@ With no `items`, it writes nothing: no line, no label. The `↗` is
 `aria-hidden` and left out of the plain-text version. Its `class` is merged
 on the block, `mt-10 pt-8 mb-4` with a line above.
 
+## NxSpacer
+
+Vertical space in the theme's steps, on Maizzle's `<Spacer>`, which gives it
+a line height as tall as the space so that Outlook keeps it. material-vue has
+no spacer: this is the e-mail's own.
+
+```vue
+<template>
+  <NxTypography>Your code expires in 15 minutes.</NxTypography>
+  <NxSpacer />
+  <NxSpacer size="xl" />
+  <NxSpacer class="h-5" />
+</template>
+```
+
+| Prop | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `size` | `'xs' \| 'sm' \| 'md' \| 'lg' \| 'xl'` | `'md'` | 8, 16, 24, 32 or 48 pixels |
+
+A height class you pass (`h-5`) wins over `size`. Maizzle's
+`<Spacer height="24px" />`, or its horizontal spacer
+(`<Spacer type="horizontal" />`), stays available beside it.
+
+## NxExtendedLabel
+
+material-vue's `ExtendedLabel`: a title in a `NxTypography` variant, a short
+bar in the primary colour under it, and a `trailing` slot on the right, at
+the bottom — a section's heading.
+
+```vue
+<template>
+  <NxExtendedLabel>
+    Your inbox
+    <template #trailing><NxLink href="https://acme.example/inbox">See all</NxLink></template>
+  </NxExtendedLabel>
+</template>
+```
+
+| Prop | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `variant` | a `NxTypography` variant | `'title-medium'` | The title's size, and its tag (`h3` for `title-medium`) |
+| `indicatorClass` | `string` | none | Merged on the bar, `w-14 rounded bg-primary`: `bg-success`, `w-24` |
+
+| Slot | Content |
+| --- | --- |
+| default | The title |
+| `trailing` | Beside it, on the right: a link, a count |
+
+The bar is 56 by 4 pixels, drawn by a table cell as `NxProgress`'s, and left
+out of the plain-text version; material-vue's growing animation is not. Its
+`class` is merged on the block, `mt-2 mb-1.5 w-full`.
+
+## NxHighlightText
+
+material-vue's `HighlightText`: `text` with each match of `query`, whatever
+its case, marked on 20% of the primary colour — a search's results.
+
+```vue
+<template>
+  <NxTypography>
+    <NxHighlightText :text="t('digest.result', { name: placeholder('name') })" query="invoice" />
+  </NxTypography>
+</template>
+```
+
+| Prop | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `text` | `string` | required | The text, written as is |
+| `query` | `string` | `''` | What to mark; empty marks nothing |
+
+The matches are found when the e-mail is built, and marked with `<mark>`. A
+placeholder in `text` (`{{ name }}`) is written whole and never marked, so
+the renderer still fills it. A `query` holding a placeholder fails the build:
+[`NxHighlightText: query must be text known when the e-mail is built`](../troubleshooting.md#nxhighlighttext-query-must-be-text-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent).
+The plain-text version has the text, unmarked.
+
+## NxKbd
+
+material-vue's `Kbd`: a key, in monospace, small, on the muted background
+with a border.
+
+```vue
+<template>
+  <NxTypography>Press <NxKbd>Ctrl</NxKbd> + <NxKbd>K</NxKbd> to search.</NxTypography>
+</template>
+```
+
+No props. The default slot is the key. material-vue's `KbdShortcut` is not
+mirrored: see the [roadmap](../roadmap.md#not-planned).
+
+## NxCountBadge
+
+material-vue's `CountBadge`: what it counts, then a small `NxBadge` with the
+count — `99+` past `max`, nothing at 0.
+
+```vue
+<template>
+  <NxCountBadge :count="3"><NxLink href="https://acme.example/inbox">Unread</NxLink></NxCountBadge>
+  <NxCountBadge :count="120" variant="info">Mentions</NxCountBadge>
+</template>
+```
+
+| Prop | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `count` | `number` | required | The count, rounded; at 0 or less, no badge |
+| `max` | `number` | `99` | Past it, the badge reads `99+` |
+| `variant` | an `NxBadge` variant | `'error'` | The badge's colours |
+
+The badge follows the content on its line, 4 pixels after it: a mail client
+does not place it over a corner as material-vue does. A screen reader hears
+the shared message `common.countBadge.label` (`3 notifications`, `1 notification`; without
+`@nxgt/mail-i18n`, in English), and the plain-text version writes the count
+in brackets: `Unread (3)`.
+
+The count is written at build time: a placeholder
+(`:count="placeholder('unread')"`) fails the build with
+[`NxCountBadge: count must be a number known when the e-mail is built`](../troubleshooting.md#nxcountbadge-count-must-be-a-number-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent).
+A count known only at send time is text: write it with an `NxBadge`.
+
+## NxActionCard
+
+material-vue's `ActionCard`, still: an `icon` in a box, a title, a
+description and a round indicator, ticked and in the primary colour when
+`active` — the option a reader chose, or one to choose.
+
+```vue
+<template>
+  <NxActionCard title="Weekly digest" description="One e-mail each Monday." active href="https://acme.example/digest">
+    <template #icon>&#128240;</template>
+  </NxActionCard>
+  <NxActionCard variant="md" title="Mobile" description="Push to your phone." :with-indicator="false" />
+</template>
+```
+
+| Prop | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `title` | `string` | none | The title, an `NxCardTitle` |
+| `description` | `string` | none | Under it, an `NxCardDescription` |
+| `active` | `boolean` | `false` | A border at 50% of the primary; the icon's box and the indicator in the primary colour, the indicator ticked `✓` |
+| `variant` | `'sm' \| 'md'` | `'sm'` | `sm`: icon, text and indicator on one row. `md`: icon and indicator above the text |
+| `withIndicator` | `boolean` | `true` | Shows the round indicator |
+| `href` | `string` | none | The e-mail's own: makes the title a link |
+
+| Slot | Content |
+| --- | --- |
+| `icon` | A character or an `<img>` by absolute URL, in a bordered box |
+
+An e-mail runs no script: the card is not selected by a click, and its hover
+and focus rings are not drawn. The indicator is `aria-hidden` and left out of
+the plain-text version. Its `class` is merged on the card's box.
+
+## NxFigure
+
+material-vue's `Figure`: an image in a rounded frame with a border, and its
+caption centred under it.
+
+```vue
+<template>
+  <NxFigure src="https://acme.example/chart.png" alt="Messages per day" caption="Your messages this week" />
+</template>
+```
+
+| Prop | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `src` | `string` | none | The image, by absolute URL. A placeholder is fine |
+| `alt` | `string` | `''` | Its text for a reader |
+| `caption` | `string` | none | Under it, `text-sm` muted, centred; also in the plain-text version |
+
+| Slot | Content |
+| --- | --- |
+| default | Any content in the image's place, as in material-vue; without it, the image of `src` |
+
+The image is Maizzle's `<Img>`, which sets its `width` to the width of the
+card for Outlook. The frame's corners and border are the image's own: a mail
+client does not clip an image to a rounded box. Its `class` is merged on the
+block, `mb-4 w-full`.
+
+## NxLinkButton
+
+material-vue's `LinkButton`: an `NxButton` to `to`, drawn as a link unless its
+`variant` says otherwise.
+
+```vue
+<template>
+  <NxLinkButton to="https://acme.example/preferences">Manage your preferences</NxLinkButton>
+  <NxLinkButton to="https://acme.example/unsubscribe" variant="outlined" color="error" size="sm">Unsubscribe</NxLinkButton>
+</template>
+```
+
+| Prop | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `to` | `string` | required | The URL it opens. A placeholder is fine |
+| `variant` | as `NxButton`'s | `'link'` | |
+| `color`, `size`, `align` | as `NxButton`'s | as `NxButton`'s | |
+
+An e-mail has no router: `to` is a URL, and material-vue's `replace` and
+`target` have nothing to do.
+
+## NxIconButton
+
+material-vue's `IconButton`, as a link: one icon in a round `NxButton`, 36
+pixels across.
+
+```vue
+<template>
+  <NxIconButton href="https://acme.example/help" icon="?" tooltip="Help" />
+  <NxIconButton href="https://acme.example/settings" icon="https://acme.example/gear.png" aria-label="Settings" variant="outlined" />
+</template>
+```
+
+| Prop | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `href` | `string` | required | Where it goes. A placeholder is fine |
+| `icon` | `string` | none | An image by absolute `http(s)` URL, drawn at 16 pixels, or a character such as `★` |
+| `variant`, `color` | as `NxButton`'s | `'filled'`, `'primary'` | |
+| `tooltip` | `string` | none | Its `title`, and its name for a reader without an `aria-label` |
+
+| Slot | Content |
+| --- | --- |
+| default | Any content in the icon's place |
+
+An e-mail has no icon font: an icon is never a font's name. Give every icon
+button a name — `aria-label` or `tooltip`: a reader hears it, the image takes
+it as its `alt`, and the plain-text version writes it before the link (the
+character, without one). The `icon` is read when the e-mail is built: one
+starting `http://` or `https://` is an image, anything else is written as
+text. A placeholder in `icon` fails the build with
+[`NxIconButton: icon must be known when the e-mail is built`](../troubleshooting.md#nxiconbutton-icon-must-be-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent):
+for an image known only when the e-mail is sent, put an `<img>` in the
+default slot, `<img :src="placeholder('iconUrl')" width="16" height="16" alt="">`. Outlook on Windows pads it as Maizzle pads any button, so there it may
+be wider than round. material-vue's `IconLinkButton` is this component: it already
+takes a URL.
+
+## NxButtonGroup
+
+material-vue's `ButtonGroup`: its buttons side by side, 4 pixels apart, on
+the background with 8 pixels around.
+
+```vue
+<template>
+  <NxButtonGroup>
+    <NxButton href="https://acme.example/inbox" data-state="active">Inbox</NxButton>
+    <NxButton href="https://acme.example/archive">Archive</NxButton>
+    <NxIconButton href="https://acme.example/starred" icon="&#9733;" tooltip="Starred" />
+  </NxButtonGroup>
+</template>
+```
+
+No props. The default slot holds `NxButton`s, `NxLinkButton`s and
+`NxIconButton`s, a `v-for` included; each is a cell of one row, which every
+client keeps on a line. As in material-vue, the buttons inside are `rounded`
+rather than pills and `tonal`, and the one marked `data-state="active"` is
+`filled`; a button that says its `variant` keeps it. Unlike material-vue's,
+which paints every button of a group in the primary colour, each keeps its
+own `color`. Its `class` is merged
+on the group's box, `bg-background p-2`, and it keeps 16 pixels below.
+
 ## A complete template
 
 With `@nxgt/mail-i18n` and [`uiCatalogues`](messages.md), in two locales:
@@ -966,7 +1244,7 @@ With `@nxgt/mail-i18n` and [`uiCatalogues`](messages.md), in two locales:
     <NxAlert variant="error" :description="t('paymentFailed.body', { plan: 'Pro' })" />
     <NxSummaryData :data="[{ label: 'Invoice', value: placeholder('invoiceNumber') }, { label: 'Amount', value: placeholder('amount') }]" />
     <NxButton :href="placeholder('link')" align="center">{{ t('paymentFailed.action') }}</NxButton>
-    <Spacer height="16px" />
+    <NxSpacer size="sm" />
     <NxTypography variant="caption">{{ t('common.footer.ignore') }}</NxTypography>
   </NxLayout>
 </template>

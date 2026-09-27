@@ -164,3 +164,64 @@ export interface SeeAlsoItem {
 	readonly title: string;
 	readonly href: string;
 }
+
+/** Whether a component is inside an `NxButtonGroup`, which restyles its buttons. */
+export const BUTTON_GROUP = 'nxgt:mail-ui:button-group';
+
+/**
+ * A `{{ name }}` placeholder of `@nxgt/mail-i18n`, as the renderer finds one:
+ * copied from packages/mail/src/renderer.ts (PLACEHOLDER), change them together.
+ */
+const PLACEHOLDER = /\{\{\s*[a-z][a-zA-Z0-9]*\s*\}\}/;
+
+/** Whether `value` holds a placeholder, filled only when the e-mail is sent. */
+export const hasPlaceholder = (value: string): boolean =>
+	PLACEHOLDER.test(value);
+
+/** A part of a text, and whether it matches the query: what `NxHighlightText` marks. */
+export interface MatchPart {
+	readonly text: string;
+	readonly match: boolean;
+}
+
+/**
+ * material-vue's `splitMatch`: `text` cut around each case-insensitive match of
+ * `query`. A placeholder in `text` is never cut: it is written whole, unmarked,
+ * so the renderer still finds it.
+ */
+export function splitMatch(text: string, query: string): MatchPart[] {
+	const needle = query.trim();
+	if (!needle) return [{ text, match: false }];
+	const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	const parts: MatchPart[] = [];
+	const push = (part: MatchPart) => {
+		if (part.text === '') return;
+		const last = parts.at(-1);
+		if (last !== undefined && !last.match && !part.match) {
+			parts[parts.length - 1] = { text: last.text + part.text, match: false };
+		} else parts.push(part);
+	};
+	for (const segment of text.split(
+		new RegExp(`(${PLACEHOLDER.source})`, 'g'),
+	)) {
+		if (PLACEHOLDER.test(segment)) {
+			push({ text: segment, match: false });
+			continue;
+		}
+		let last = 0;
+		for (const hit of segment.matchAll(new RegExp(escaped, 'ig'))) {
+			const index = hit.index ?? 0;
+			push({ text: segment.slice(last, index), match: false });
+			push({ text: hit[0], match: true });
+			last = index + hit[0].length;
+		}
+		push({ text: segment.slice(last), match: false });
+	}
+	return parts.length > 0 ? parts : [{ text, match: false }];
+}
+
+/** material-vue's `formatCount`: a count, rounded, never under 0, and `99+` past `max`. */
+export function formatCount(count: number, max = 99): string {
+	const safe = Math.max(0, Math.round(count));
+	return safe > max ? `${max}+` : String(safe);
+}

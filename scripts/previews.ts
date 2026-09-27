@@ -9,7 +9,7 @@
  * headless Chromium at the width a mail client gives an e-mail, and trimmed to
  * the e-mail plus a margin of its background. The fixture's logo and avatar
  * point at `acme.example`, which does not exist: they are swapped for inline
- * pictures.
+ * pictures, as are the content e-mail's chart and gear.
  *
  * It first builds the packages and rewrites mail-presets' `samples/`, so the
  * pictures are of the current look. A placeholder with no example value, or an
@@ -88,6 +88,21 @@ const AVATAR = `data:image/svg+xml,${encodeURIComponent(
 	'<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48"><rect width="48" height="48" fill="#0f766e"/><text x="24" y="31" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#ffffff">A</text></svg>',
 )}`;
 
+const CHART = `data:image/svg+xml,${encodeURIComponent(
+	'<svg xmlns="http://www.w3.org/2000/svg" width="534" height="200"><rect width="534" height="200" fill="#f6f6fa"/>' +
+		[40, 90, 70, 130, 110, 60, 150]
+			.map(
+				(bar, index) =>
+					`<rect x="${37 + index * 70}" y="${180 - bar}" width="40" height="${bar}" rx="4" fill="#485096"/>`,
+			)
+			.join('') +
+		'</svg>',
+)}`;
+
+const GEAR = `data:image/svg+xml,${encodeURIComponent(
+	'<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="8" cy="8" r="5" fill="none" stroke="#020918" stroke-width="2"/><circle cx="8" cy="8" r="1.5" fill="#020918"/></svg>',
+)}`;
+
 // The renderer's own filling, copied from packages/mail/src/renderer.ts
 // (PLACEHOLDER and its escaping): change them together.
 const PLACEHOLDER = /\{\{\s*([a-z][a-zA-Z0-9]*)\s*\}\}/g;
@@ -126,7 +141,9 @@ function shoot(html: string, locale: string, email: string, out: string): void {
 			return value === undefined ? mark : escapeHtml(value);
 		})
 		.replaceAll('https://acme.example/logo.png', LOGO)
-		.replaceAll('https://acme.example/ada.png', AVATAR);
+		.replaceAll('https://acme.example/ada.png', AVATAR)
+		.replaceAll('https://acme.example/chart.png', CHART)
+		.replaceAll('https://acme.example/gear.png', GEAR);
 	if (missing.size > 0) {
 		throw new Error(
 			`previews: ${locale}/${email} has placeholders with no example value: ${[...missing].join(', ')} — add them to EXAMPLES`,
@@ -208,7 +225,7 @@ try {
 			`${ui}/previews/components-${locale}.png`,
 		);
 	}
-	// The data, sequence and summary components' e-mails are in English only.
+	// The data, sequence, summary and content components' e-mails are in English only.
 	shoot(
 		readFileSync(`${ui}/test/fixture/dist/en/gallery.html`, 'utf8'),
 		'en',
@@ -226,6 +243,12 @@ try {
 		'en',
 		'summary',
 		`${ui}/previews/summary-components.png`,
+	);
+	shoot(
+		readFileSync(`${ui}/test/fixture/dist/en/content.html`, 'utf8'),
+		'en',
+		'content',
+		`${ui}/previews/content-components.png`,
 	);
 } finally {
 	rmSync(scratch, { recursive: true, force: true });

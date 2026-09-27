@@ -1,12 +1,21 @@
 <script setup lang="ts">
 import { twMerge } from '@maizzle/framework';
-import { computed, useAttrs } from 'vue';
-import { type Color, type ColourVariant, colourVariant } from './ui';
+import { computed, inject, useAttrs } from 'vue';
+import {
+	BUTTON_GROUP,
+	type Color,
+	type ColourVariant,
+	colourVariant,
+} from './ui';
 
 /**
  * material-vue's Button as a link: its variants, colours and sizes, on
  * Maizzle's `<Button>`, which pads it for Outlook. Named `nx-button.vue`,
  * not `button.vue`: there, Vue would read `<Button>` as this file itself.
+ *
+ * In an `NxButtonGroup`, as material-vue's group restyles its buttons, it is
+ * `rounded` rather than a pill, and `tonal` unless it says its variant — or
+ * `filled`, for the one marked `data-state="active"`.
  */
 type Size = 'xs' | 'sm' | 'default' | 'lg';
 
@@ -20,7 +29,7 @@ const props = withDefaults(
 		size?: Size;
 		align?: 'left' | 'center' | 'right';
 	}>(),
-	{ variant: 'filled', color: 'primary', size: 'default' },
+	{ color: 'primary', size: 'default' },
 );
 
 /** The chip's colours, plus what a link must reset. */
@@ -64,14 +73,25 @@ const SIZE: Record<
 };
 
 const attrs = useAttrs();
+const inGroup = inject(BUTTON_GROUP, false);
+const resolved = computed<ColourVariant>(
+	() =>
+		props.variant ??
+		(inGroup
+			? attrs['data-state'] === 'active'
+				? 'filled'
+				: 'tonal'
+			: 'filled'),
+);
 const size = computed(() => SIZE[props.size]);
 const classes = computed(() =>
 	twMerge(
-		props.variant === 'link'
+		resolved.value === 'link'
 			? 'font-medium font-sans'
 			: `rounded-full font-medium font-sans ${size.value.class}`,
-		colourVariant(props.variant, props.color),
-		EXTRA[props.variant],
+		inGroup && resolved.value !== 'link' ? 'rounded' : '',
+		colourVariant(resolved.value, props.color),
+		EXTRA[resolved.value],
 		attrs.class as string,
 	),
 );
@@ -81,7 +101,7 @@ const classes = computed(() =>
   <Button
     v-bind="{ ...attrs, class: undefined }"
     :href="href"
-    :variant="variant === 'link' ? 'link' : 'solid'"
+    :variant="resolved === 'link' ? 'link' : 'solid'"
     :align="align ?? null"
     :mso-pt="size.msoPt"
     :mso-pb="size.msoPb"

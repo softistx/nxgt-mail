@@ -2,7 +2,7 @@
 
 E-mail components for a normal [Maizzle](https://maizzle.com) 6 project, in
 the style of `@nxgt/material-vue`: `<NxLayout>`, `<NxButton>`, `<NxCard>`,
-`<NxAlert>`, `<NxTable>`, `<NxTimeline>`, `<NxStatCard>`… with its variants,
+`<NxAlert>`, `<NxTable>`, `<NxTimeline>`, `<NxStatCard>`, `<NxActionCard>`… with its variants,
 colours and tokens, rendered with tables and
 inlined styles. One plugin gives every template the components, your brand
 and the theme; a second export gives `@nxgt/mail-i18n` the messages they share.
@@ -115,7 +115,7 @@ in the starter's `.gitignore`. See
     <NxTypography variant="headline-small">{{ t('verifyEmail.title') }}</NxTypography>
     <NxTypography>{{ t('common.greeting', { name: placeholder('name') }) }}</NxTypography>
     <NxButton :href="placeholder('link')">{{ t('verifyEmail.action') }}</NxButton>
-    <Spacer height="24px" />
+    <NxSpacer />
     <NxAlert variant="warning" title="The link expires in 15 minutes." />
     <NxTypography variant="caption">{{ t('common.footer.ignore') }}</NxTypography>
   </NxLayout>
@@ -128,6 +128,41 @@ links the brand. Every other component goes inside it. `t` and `placeholder`
 come from `@nxgt/mail-i18n`; without it, write the text directly. See
 [Components](docs/guide/components.md) for every component, its props and
 its slots.
+
+### The components
+
+Each one mirrors the `@nxgt/material-vue` component of the same name, without
+the `Nx` — except `NxSpacer` and `NxCode`, the e-mail's own:
+
+- **Page and text** — `NxLayout`, `NxTypography`, `NxLink`, `NxSeparator`,
+  `NxSpacer`, `NxExtendedLabel`, `NxHighlightText`, `NxKbd`, `NxCode`.
+- **Buttons** — `NxButton`, `NxLinkButton`, `NxIconButton`, `NxButtonGroup`.
+- **Boxes and statuses** — `NxCard` and its parts, `NxActionCard`,
+  `NxFigure`, `NxBadge`, `NxCountBadge`, `NxAlert`, `NxBanner`,
+  `NxStatusIndicator`, `NxChip`.
+- **Data** — `NxSummaryData`, `NxTable` and its parts, `NxDescription`,
+  `NxListTile`, `NxAvatar` and `NxAvatarGroup`.
+- **Sequences** — `NxProgress`, `NxSteps` and `NxStepsItem`, `NxTimeline`.
+- **Summaries** — `NxHero`, `NxEntityHeader`, `NxStatCard`, `NxGoalCard`,
+  `NxRatioCard`, `NxCompareCard`, `NxBreakdownCard`, `NxSeeAlso`.
+
+```vue
+<template>
+  <NxExtendedLabel>
+    Your inbox
+    <template #trailing><NxCountBadge :count="3">Unread</NxCountBadge></template>
+  </NxExtendedLabel>
+  <NxActionCard title="Weekly digest" description="One e-mail each Monday." active />
+  <NxButtonGroup>
+    <NxButton href="https://acme.example/inbox" data-state="active">Inbox</NxButton>
+    <NxIconButton href="https://acme.example/starred" icon="&#9733;" tooltip="Starred" />
+  </NxButtonGroup>
+  <NxSpacer size="lg" />
+  <NxLinkButton to="https://acme.example/preferences">Manage your preferences</NxLinkButton>
+</template>
+```
+
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-ui@0.2.0/packages/mail-ui/previews/content-components.png" width="420" alt="An e-mail using the layout and content components: an extended label with a count badge, highlighted text, keys, three action cards, a figure with its caption, a button group with icon buttons, an icon button and two link buttons">
 
 ### The plugin — `ui({ brand, theme })`
 
@@ -179,7 +214,8 @@ i18n({ locales: ['en', 'fr'], catalogues: [uiCatalogues] });
 `common.greeting` (`Hello {name},`), `common.footer.why`,
 `common.footer.ignore`, `common.avatarGroup.more`, `common.timeline.empty`,
 `common.metrics.ofTarget`, `common.metrics.thisPeriod`,
-`common.metrics.lastPeriod` and `common.seeAlso`, in `en` and `fr`. Your `locales/<locale>.json`
+`common.metrics.lastPeriod`, `common.seeAlso` and `common.countBadge.label`,
+in `en` and `fr`. Your `locales/<locale>.json`
 overrides any of them, key by key:
 
 ```json
@@ -246,19 +282,27 @@ unless `catalogues: [uiCatalogues]` is passed, or your catalogues hold the
 key.
 
 **Another locale writes the `common` keys itself.** `uiCatalogues` has `en`
-and `fr` only: a project in `de` adds its nine keys — `common.greeting`,
+and `fr` only: a project in `de` adds its ten keys — `common.greeting`,
 `common.footer.why`, `common.footer.ignore`, `common.avatarGroup.more`,
 `common.timeline.empty`, `common.metrics.ofTarget`,
 `common.metrics.thisPeriod`, `common.metrics.lastPeriod` and
-`common.seeAlso` — to `locales/de.json`.
+`common.seeAlso` and `common.countBadge.label` — to `locales/de.json`.
 
 **Icons are slots.** An e-mail has no icon font: pass an `<img>` with an
-absolute URL, or a character, to `#icon`.
+absolute URL, or a character, to `#icon` — or to `NxIconButton`'s `icon`.
 
 **Light only.** The layout declares `<meta name="color-scheme" content="light">`;
 there is no dark theme.
 
-**Use Maizzle's `<Spacer>` for vertical space**: `<Spacer height="24px" />`.
+**Use `NxSpacer` for vertical space**: `<NxSpacer size="lg" />`, on
+Maizzle's `<Spacer>`, which Outlook keeps.
+
+**A count, a query or an icon is known at build time.** `NxCountBadge`'s
+`count`, `NxHighlightText`'s `query` and `NxIconButton`'s `icon`, like
+`NxProgress`'s `modelValue`, fail the build when given a placeholder. Write
+a count known only at send time in an `NxBadge`, highlight a query known at
+build time, and put an icon known only at send time in `NxIconButton`'s
+default slot, as an `<img :src="placeholder('iconUrl')">`.
 
 **Never branch on a placeholder** in a component or a template:
 `v-if="link.startsWith('https:')"` is decided on the string `{{ link }}`.

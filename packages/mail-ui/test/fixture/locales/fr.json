@@ -11,6 +11,9 @@
 	"sequence": {
 		"subject": "Votre configuration"
 	},
+	"content": {
+		"subject": "Votre boîte"
+	},
 	"summary": {
 		"subject": "Votre mois"
 	}
