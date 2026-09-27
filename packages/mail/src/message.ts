@@ -111,10 +111,11 @@ function checkAttachment(attachment: MailAttachment, where: string): void {
  *   transport writes from the message (`To`, `Cc`, `Bcc`, `From`, `Sender`,
  *   `Reply-To`, `Return-Path`, `Subject`, `MIME-Version`, `Content-*`, in
  *   any case), and no header value holds a line break;
- * - `attachments`, when present, is an array — empty is the same as absent —
- *   and each entry has its bytes as a `Uint8Array`, a `filename` that is not
- *   empty and holds no `/`, `\`, line break or control character, and a
- *   `contentType` that is a bare `type/subtype`.
+ * - `attachments`, when present, is an array without holes — empty is the
+ *   same as absent — and each entry has its bytes as a `Uint8Array`, a
+ *   `filename` that is not empty, `.` or `..` and holds no `/`, `\`, line
+ *   break, control or format character, and a `contentType` that is a bare
+ *   `type/subtype`, never `multipart/*` or `message/*`.
  */
 export function checkMessage(message: MailMessage): void {
 	if (typeof message !== 'object' || message === null) {

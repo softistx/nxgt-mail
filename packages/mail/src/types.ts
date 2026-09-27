@@ -31,8 +31,9 @@ export interface Rendered {
  * link in the template instead — a URL variable.
  *
  * `filename` is what the recipient's mail client shows and saves it as: no
- * path (`/`, `\`), no line break, no control character. `contentType` is a
- * bare `type/subtype`, as `application/pdf`, without parameters.
+ * path (`/`, `\`, `.`, `..`), no line break, no control or format character.
+ * `contentType` is a bare `type/subtype`, as `application/pdf`, without
+ * parameters, and never a MIME container (`multipart/*`, `message/*`).
  */
 export interface MailAttachment {
 	readonly filename: string;

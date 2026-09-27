@@ -139,9 +139,11 @@ export async function sendInvoice(mailer: Mailer, to: string, rendered: Rendered
 
 There is no `path`, no URL and no stream: a transport never reads a file or
 fetches a URL for you, so a value from outside can never make it attach one.
-`checkMessage` refuses content that is not a `Uint8Array`, a file name that is
-empty or holds `/`, `\`, a line break or a control character, and a content
-type that is not a bare `type/subtype`. An empty list is the same as none.
+`checkMessage` refuses a hole in the list, content that is not a `Uint8Array`,
+a file name that is empty, `.` or `..`, or holds `/`, `\`, a line break, a
+control character or a format character (a right-to-left override), and a
+content type that is not a bare `type/subtype` or is a MIME container
+(`multipart/*`, `message/*`). An empty list is the same as none.
 
 **A large or sensitive file is a link, not an attachment.** Put a signed,
 expiring URL in the template as a URL variable —

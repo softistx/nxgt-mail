@@ -53,8 +53,9 @@ A `MailRefused`, code `MAIL_REFUSED`.
 
 **When:** Resend answered `400`, `413` or `422`: a field it does not accept —
 an address in a form it refuses, a header it does not allow, a subject too
-long, an attachment it will not carry — or a request too large: attachments
-over 40 MB once encoded in base64, a third larger than the files.
+long, an attachment it will not carry (a `422` `invalid_attachment`, over
+40 MB once encoded in base64 included, a third larger than the files) — or a
+`413`, a request too large for what sits in front of the API.
 
 **Why:** Resend will refuse the same message again; retrying it unchanged is
 pointless.

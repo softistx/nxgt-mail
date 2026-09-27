@@ -10,8 +10,9 @@ the only number.
   `Uint8Array`, its name and its type. Bytes only — no path, no URL, no
   stream, so a transport never reads a file or fetches a URL for you; a large
   or sensitive file stays a signed link in the template. `checkMessage`
-  refuses a name holding a path, a line break or a control character, and a
-  type that is not `type/subtype`; the memory mailer keeps a copy of the
+  refuses a name holding a path, a line break, a control or a format
+  character, `.` or `..`, and a type that is not `type/subtype` or is a MIME
+  container; the memory mailer keeps a copy of the
   bytes; the conformance suite gains `send.attachment` and
   `send.refusesAttachmentPath`, thirteen cases in all. The SMTP and Resend
   transports send them. Built, not yet published.

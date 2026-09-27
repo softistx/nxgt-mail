@@ -673,7 +673,8 @@ its own, or `null`.
 ### `send: attachments[<n>] must be an object, as { filename, content, contentType }`
 
 **When:** `send`, with an entry of `attachments` that is not an object —
-`undefined` from a lookup that found nothing, or `null`. `<n>` is its index.
+`undefined` from a lookup that found nothing, `null`, or a hole in the list
+(`[, pdf]`, `new Array(2)`). `<n>` is its index.
 **Why:** each entry is one file: its name, its bytes and its type.
 **Fix:** filter the list before sending, or refuse to send when a file you
 meant to attach is missing — an e-mail that says "attached" with nothing
