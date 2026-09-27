@@ -33,6 +33,11 @@ Nothing yet. A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **Messages under `kebab-case` keys, v0.3.0** — each preset's group is named
+  after its file (`verify-email.*`, not `verifyEmail.*`), and the shared ones
+  are `presets.link-expires`, `presets.code-expires`, `presets.link-fallback`
+  and `presets.not-you`; an override under the old key is no longer read. The
+  full list is in the [CHANGELOG](../CHANGELOG.md).
 - **How long a link or a code lives, v0.2.0** — `verify-email`,
   `reset-password`, `magic-link`, `sign-in-code` and `invitation` take a
   required `expiresIn`, a duration your code writes in the recipient's
@@ -74,8 +79,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
 - **A renderer that sends them, v0.1.0** — `createMailRenderer` from
   `@nxgt/mail/renderer` renders the presets' build at send time, each value
   filled and escaped; the build spec renders every preset with it.
-- **A starter that uses one, with v0.1.0** — the official Maizzle starter with
-  `presets({ only: ['sign-in-code'] })` next to its own e-mail, built,
-  rendered in `en` and `fr` and served in CI:
-  [`examples/starter`](https://github.com/softistx/nxgt-mail/tree/develop/examples/starter).
-  In the repository; its README says how to start your own from npm.

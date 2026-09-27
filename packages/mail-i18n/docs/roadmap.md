@@ -38,6 +38,11 @@ Nothing yet. A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **`kebab-case` catalogue keys, v0.4.0** — a key segment may be
+  `kebab-case` (`verify-email.title`) as well as `camelCase`; `kebab-case` is
+  the convention. A template's messages are grouped under its file name as it
+  is (`verify-email`), no longer converted to `camelCase`. Arguments stay
+  `camelCase`, and the manifest's format does not change.
 - **Docs note `@nxgt/mail-ui`'s build check, v0.3.1** — with `ui()` in the
   plugins, a tag that resolves to no component fails the build, naming the
   tag and the file.
@@ -80,6 +85,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   e-mails, built with your project's own; `dir` is absolute, `emails` keeps
   the ones you name, and a template of the same name in your project's
   `emails/` replaces a package's.
-- **`createTranslator` outside templates, v0.1.0** — `createTranslator(catalogues,
-  getLanguage)` and `t(key, args, language?)`, shaped like `@nxgt/i18n`, for a
-  message an application formats itself.
