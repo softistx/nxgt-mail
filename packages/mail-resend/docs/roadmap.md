@@ -13,9 +13,7 @@ Nothing yet.
 
 ## Later
 
-- **Cancelling a scheduled send** — Resend's own
-  `POST /emails/{id}/cancel`; see
-  [`@nxgt/mail`'s roadmap](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/roadmap.md).
+Nothing yet.
 
 ## Not planned
 
@@ -26,13 +24,25 @@ Nothing yet.
   send the same e-mail twice.
 - **A transport's own error class** — it throws `@nxgt/mail`'s `MailFailure`
   and `MailRefused`, so `instanceof` holds whichever transport you wire.
-- **Batch sending** — one message per request; the port has no room for more.
 
 ## Shipped
 
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **Batch sending, cancelling and rescheduling, v0.6.0** — `sendBatch(messages)`
+  calls Resend's `POST /emails/batch`, up to 100 messages per request, split
+  into as many requests as it takes above that; every message is checked
+  with `checkMessage` first, and an attachment or a message's own
+  `idempotencyKey` is refused on its own, the rest of the batch unaffected —
+  Resend's batch takes neither. A request Resend refuses, or cannot be
+  reached for, reports every message in it the same way, since Resend
+  answers the whole request as one. `cancel(messageId)` calls Resend's
+  `POST /emails/{id}/cancel`, and `reschedule(messageId, scheduledAt)` its
+  `PATCH /emails/{id}`, to stop or move a message `send` scheduled ahead;
+  both refuse with `@nxgt/mail`'s `MailScheduleRefused` — `UNKNOWN_ID` or
+  `ALREADY_SENT` — for an id Resend does not hold pending. The `@nxgt/mail`
+  peer moves to `^0.8.0`.
 - **Webhooks — delivery events, v0.6.0** — `createResendWebhook({ secret })`
   from the new `@nxgt/mail-resend/webhooks` subpath verifies Resend's Svix
   signature (`svix-id`, `svix-timestamp`, `svix-signature`, several during
@@ -74,7 +84,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   one `POST /emails` per message, no SDK, no dependency, no Node built-in, so
   it runs on an edge runtime too. Each message is checked as every transport
   checks it, and a name is sent quoted so it names one recipient.
-- **Errors you can act on, v0.1.0** — a `400` or `422` is a `MailRefused`; a bad key,
-  a rate limit, an outage, a network error or a timeout is a `MailFailure`,
-  what Resend answered on `cause`. The classes are `@nxgt/mail`'s, so
-  `instanceof` holds.

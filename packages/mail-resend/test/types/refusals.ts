@@ -10,10 +10,11 @@
  * The calls that **must keep compiling** are here too, unmarked: a refusal
  * that refuses the correct call is a bug.
  *
- * **Ten plausible mistakes, ten refused.**
+ * **Twelve plausible mistakes, twelve refused.**
  */
 
 import type {
+	MailBatchResult,
 	MailEvent,
 	Mailer,
 	MailMessage,
@@ -23,6 +24,7 @@ import type {
 import {
 	createResendMailer,
 	formatAddress,
+	type ResendMailer,
 	type ResendMailerOptions,
 } from '../../src/index';
 import { createResendWebhook, type ResendWebhook } from '../../src/webhooks';
@@ -33,7 +35,9 @@ declare const env: Readonly<Record<string, string | undefined>>;
 // ── Must compile ─────────────────────────────────────────────────────────────
 // A key from the environment, with the absence decided; a fetch of your own,
 // written as a plain function; every option.
-const mailer: Mailer = createResendMailer({ apiKey: env.RESEND_API_KEY ?? '' });
+const mailer: ResendMailer = createResendMailer({
+	apiKey: env.RESEND_API_KEY ?? '',
+});
 const full: Mailer = createResendMailer({
 	apiKey: 're_123',
 	from: { name: 'Acme', address: 'noreply@acme.test' },
@@ -119,5 +123,27 @@ webhook.verify({
 // ── 10. A MailWebhookErrorCode the union does not declare ────────────────────
 // @ts-expect-error — 'BAD_SIGNATURE' is not a MailWebhookErrorCode.
 const badCode: MailWebhookErrorCode = 'BAD_SIGNATURE';
+
+// ── Must compile: sendBatch, cancel and reschedule ───────────────────────────
+const batchResults: Promise<readonly MailBatchResult[]> = mailer.sendBatch([
+	message,
+]);
+const cancelled: Promise<void> = mailer.cancel('re_123');
+const rescheduled: Promise<void> = mailer.reschedule(
+	're_123',
+	new Date(Date.now() + 60_000),
+);
+void [batchResults, cancelled, rescheduled];
+
+// ── 11. sendBatch given one message, not a list ──────────────────────────────
+// sendBatch takes every message at once, as a list — even of one.
+// @ts-expect-error — sendBatch takes readonly MailMessage[], not one message.
+mailer.sendBatch(message);
+
+// ── 12. reschedule's scheduledAt given as an ISO string ──────────────────────
+// As on MailMessage itself: a Date is checked at run time, not text that
+// merely looks like one.
+// @ts-expect-error — scheduledAt is a Date, not an ISO string.
+mailer.reschedule('re_123', '2027-01-01T00:00:00.000Z');
 
 void [snake, retrying, id, badCode];

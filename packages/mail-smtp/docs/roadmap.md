@@ -41,9 +41,12 @@ The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
 - **`@nxgt/mail` 0.8, v0.5.1** — the peer moves to `^0.8.0`, the version with
-  `@nxgt/mail/telemetry` and with delivery events. No change here: SMTP has
-  no webhook of its own, so it maps no delivery events — see
-  [Delivery events — out of scope](../README.md#delivery-events--out-of-scope).
+  `@nxgt/mail/telemetry`, delivery events and `sendBatch`. No change here:
+  SMTP has no webhook of its own, so it maps no delivery events — see
+  [Delivery events — out of scope](../README.md#delivery-events--out-of-scope)
+  — and no batching of its own either: `sendBatch(mailer, messages)` falls
+  back to one `send` per message, in turn, over whatever connection the
+  transporter you configured pools.
 - **Scheduled send refused, v0.5.0** — a message's `scheduledAt` is refused
   with `MailRefused` — `send: scheduledAt is not supported — SMTP has no way
   to schedule a send, and sending it now would be wrong` — rather than sent

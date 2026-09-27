@@ -10,7 +10,7 @@
  * The calls that **must keep compiling** are here too, unmarked: a refusal
  * that refuses the correct call is a bug.
  *
- * **29 plausible mistakes, 29 refused.**
+ * **31 plausible mistakes, 31 refused.**
  */
 
 import type { DeliveredMail, MailerHarness } from '../../src/conformance/index';
@@ -18,6 +18,7 @@ import {
 	createMemoryMailer,
 	listUnsubscribe,
 	type MailAttachment,
+	type MailBatchResult,
 	type MailBouncedEvent,
 	MailError,
 	type MailErrorCode,
@@ -25,6 +26,8 @@ import {
 	type Mailer,
 	MailFailure,
 	type MailMessage,
+	MailRefused,
+	type MailScheduleErrorCode,
 	pickLocale,
 	type Rendered,
 	type SentMail,
@@ -394,3 +397,35 @@ const bounced: MailBouncedEvent = {
 // Must compile: the same event, classified.
 const bouncedOk: MailBouncedEvent = { ...bounced, bounceType: 'hard' };
 void bouncedOk;
+
+// ── Sending many at once ─────────────────────────────────────────────────────
+// Must compile: sendBatch is optional, and a Mailer with one answers
+// MailBatchResult per message — sent, refused or failed.
+const batching: Mailer = {
+	send: async () => ({ messageId: null }),
+	sendBatch: async (messages) =>
+		messages.map(() => ({ status: 'sent', sentMail: { messageId: null } })),
+};
+const oneResult: MailBatchResult = {
+	status: 'refused',
+	error: new MailRefused('send: to must hold at least one address'),
+};
+void [batching, oneResult];
+
+// ── 30. A Mailer's sendBatch answering something other than MailBatchResult[] ─
+// send never answers `false`; sendBatch never answers a bare boolean either —
+// each message's outcome is `sent`, `refused` or `failed`, never a boolean.
+const wrongBatchResult: Mailer = {
+	send: async () => ({ messageId: null }),
+	// @ts-expect-error — sendBatch answers MailBatchResult[], not boolean[].
+	sendBatch: async () => [true, false],
+};
+void wrongBatchResult;
+
+// ── 31. A MailScheduleErrorCode the union does not declare ──────────────────
+// A provider's cancel or reschedule refuses with ALREADY_SENT or UNKNOWN_ID —
+// the same two answers, whichever provider adds the capability — never a
+// third code invented for one provider's own wording.
+// @ts-expect-error — the codes are ALREADY_SENT and UNKNOWN_ID.
+const unknownScheduleCode: MailScheduleErrorCode = 'RATE_LIMITED';
+void unknownScheduleCode;

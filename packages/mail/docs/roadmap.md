@@ -16,10 +16,6 @@ Nothing yet.
 
 - **More transports** — Amazon SES, Postmark and Mailgun, one package each,
   each passing the conformance suite and throwing `@nxgt/mail`'s errors.
-- **Cancelling a scheduled send** — Resend's own
-  `POST /emails/{id}/cancel`. `scheduledAt` ships without it: a package that
-  wraps it needs the id `send` already answers, and a shape for "cancel"
-  that a memory mailer and a future transport could share.
 - **A `describeMailEvent` conformance suite** — `checkMailEvent` grows into a
   full suite, the way `describeMailer` runs the whole `Mailer` port, the day
   a second provider maps its webhook to `MailEvent`.
@@ -68,6 +64,18 @@ Nothing yet.
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **Sending many at once, `sendBatch`, v0.8.0** — sends every message and
+  answers one `MailBatchResult` per message, `sent`, `refused` or `failed`,
+  never a throw for one message's own outcome. Every message is checked with
+  `checkMessage` before any of them is sent. Optional on `Mailer`: a
+  transport implements it to use its provider's own batching
+  (`@nxgt/mail-resend`'s `POST /emails/batch`); `sendBatch(mailer, messages)`
+  falls back to one `send` per message otherwise, so every `Mailer` works
+  with it. `withRetry` passes it through untouched; `withTelemetry` gives it
+  its own span, `mail.sendBatch`. `checkScheduledAt` is now exported, and
+  `MailScheduleRefused` (`ALREADY_SENT`, `UNKNOWN_ID`) is what a
+  provider-specific action against a scheduled send — `@nxgt/mail-resend`'s
+  `cancel` and `reschedule` — refuses with.
 - **Delivery events, v0.8.0** — `MailEvent`, the neutral shape a provider's
   webhook is mapped to: `delivered`, `bounced` (`bounceType`, `hard` or
   `soft`), `complained`, `delayed`, and, optional and marked `tracking: true`,
@@ -137,22 +145,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   one-click unsubscribe. A `url` that is not an ASCII `https://` URL, or that
   would break the header, and a `mailto` that is not a bare address are
   refused with `MailRefused`, never quoting the value. No transport changes.
-- **An idempotency key per send, v0.3.0** — `idempotencyKey` on a `MailMessage`
-  names the send, so sending it again — a retry after a timeout, a job run
-  twice — delivers it once where the transport can deduplicate; a transport
-  that cannot ignores it. `checkMessage` refuses a key that is not 1 to 256
-  visible ASCII characters, never quoting it. The memory mailer honours it as
-  Resend does: the same message under a key it already delivered answers
-  that delivery's `messageId` and delivers nothing more, a different message
-  under it is a `MailRefused`, a failed send leaves its key free, and
-  `clear()` forgets the keys.
-- **Attachments, v0.2.0** — `attachments` on a `MailMessage`: each file's bytes as a
-  `Uint8Array`, its name and its type. Bytes only — no path, no URL, no
-  stream, so a transport never reads a file or fetches a URL for you; a large
-  or sensitive file stays a signed link in the template. `checkMessage`
-  refuses a name holding a path, a line break, a control or a format
-  character, `.` or `..`, and a type that is not `type/subtype` or is a MIME
-  container; the memory mailer keeps a copy of the
-  bytes; the conformance suite gains `send.attachment` and
-  `send.refusesAttachmentPath`, thirteen cases in all. The SMTP and Resend
-  transports send them.

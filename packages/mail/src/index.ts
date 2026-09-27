@@ -14,6 +14,7 @@
  * it.
  */
 
+export { sendBatch } from './batch';
 export {
 	MailError,
 	type MailErrorCode,
@@ -40,15 +41,25 @@ export {
 	type MemoryMail,
 	type MemoryMailer,
 } from './memory';
-export { addressOf, checkMessage, recipientsOf } from './message';
+export {
+	addressOf,
+	checkMessage,
+	checkScheduledAt,
+	recipientsOf,
+} from './message';
 export {
 	type RetryExhausted,
 	type RetryOptions,
 	withRetry,
 } from './retry';
+export {
+	type MailScheduleErrorCode,
+	MailScheduleRefused,
+} from './schedule';
 export type {
 	Address,
 	MailAttachment,
+	MailBatchResult,
 	Mailer,
 	MailMessage,
 	Rendered,

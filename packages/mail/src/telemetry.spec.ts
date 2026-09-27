@@ -205,6 +205,74 @@ describe('withTelemetry(mailer, options) — the span', () => {
 			'mail.transport': 'memory',
 		});
 	});
+
+	it('records a mail.sendBatch span, ok, with sent/refused/failed counts, when the mailer has one', async () => {
+		const fake: Mailer = {
+			send: () => Promise.reject(new Error('not used in this test')),
+			sendBatch: () =>
+				Promise.resolve([
+					{ status: 'sent', sentMail: { messageId: 'a' } },
+					{ status: 'refused', error: new MailRefused('refused') },
+					{ status: 'failed', error: new MailFailure('failed') },
+				]),
+		};
+		const mailer = withTelemetry(fake, { transport: 'stub' });
+
+		const results = await mailer.sendBatch?.([message(), message(), message()]);
+
+		expect(results).toHaveLength(3);
+		const [span] = spanExporter.getFinishedSpans();
+		expect(span?.name).toBe('mail.sendBatch');
+		expect(span?.status.code).toBe(SpanStatusCode.OK);
+		const attributes = span?.attributes ?? {};
+		expect(attributes['mail.transport']).toBe('stub');
+		expect(attributes['mail.batch.count']).toBe(3);
+		expect(attributes['mail.batch.sent_count']).toBe(1);
+		expect(attributes['mail.batch.refused_count']).toBe(1);
+		expect(attributes['mail.batch.failed_count']).toBe(1);
+		expect(attributes['mail.outcome']).toBe('ok');
+		assertsNoPii(attributes);
+	});
+
+	it('marks the sendBatch span error and rethrows when the call itself fails, not one message', async () => {
+		const fake: Mailer = {
+			send: () => Promise.reject(new Error('not used in this test')),
+			sendBatch: () => Promise.reject(new MailFailure('the batch call failed')),
+		};
+		const mailer = withTelemetry(fake, { transport: 'stub' });
+
+		await expect(mailer.sendBatch?.([message()])).rejects.toBeInstanceOf(
+			MailFailure,
+		);
+
+		const [span] = spanExporter.getFinishedSpans();
+		expect(span?.name).toBe('mail.sendBatch');
+		expect(span?.status.code).toBe(SpanStatusCode.ERROR);
+		expect(span?.attributes['mail.outcome']).toBe('failure');
+	});
+
+	it('gives a Mailer with no sendBatch of its own none either', () => {
+		const memory = createMemoryMailer();
+		const mailer = withTelemetry(memory, { transport: 'memory' });
+		expect(mailer.sendBatch).toBeUndefined();
+	});
+
+	it('records mail.send_batch.duration and mail.send_batch.count', async () => {
+		const fake: Mailer = {
+			send: () => Promise.reject(new Error('not used in this test')),
+			sendBatch: () =>
+				Promise.resolve([{ status: 'sent', sentMail: { messageId: 'a' } }]),
+		};
+		const mailer = withTelemetry(fake, { transport: 'stub' });
+		await mailer.sendBatch?.([message()]);
+
+		await meterProvider.forceFlush();
+		const [resourceMetrics] = metricExporter.getMetrics();
+		const scope = resourceMetrics?.scopeMetrics[0];
+		const names = scope?.metrics.map((m) => m.descriptor.name) ?? [];
+		expect(names).toContain('mail.send_batch.duration');
+		expect(names).toContain('mail.send_batch.count');
+	});
 });
 
 describe('withRendererTelemetry(renderer) — the span', () => {

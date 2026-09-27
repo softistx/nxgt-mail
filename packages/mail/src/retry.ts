@@ -1,5 +1,5 @@
 import { MailFailure } from './errors';
-import type { Mailer, MailMessage, SentMail } from './types';
+import type { MailBatchResult, Mailer, MailMessage, SentMail } from './types';
 
 /** Options `withRetry` accepts. Every field is optional; the defaults suit a transactional e-mail. */
 export interface RetryOptions {
@@ -168,6 +168,19 @@ export function createRetryingMailer(
 	const signal = options.signal;
 
 	return {
+		// Passed through unwrapped, and only when `mailer` has one: a batch
+		// call's own outcome is a `MailBatchResult` per message, not a single
+		// throw, so retrying it wholesale is not this decorator's job — retry
+		// the messages that came back `failed`, individually, with `send`,
+		// where `withRetry`'s idempotency key applies.
+		...(typeof mailer.sendBatch === 'function'
+			? {
+					sendBatch: (
+						messages: readonly MailMessage[],
+					): Promise<readonly MailBatchResult[]> =>
+						(mailer.sendBatch as NonNullable<Mailer['sendBatch']>)(messages),
+				}
+			: {}),
 		async send(message: MailMessage): Promise<SentMail> {
 			if (signal?.aborted) throw signal.reason;
 
@@ -229,6 +242,11 @@ export function createRetryingMailer(
  * way to tell it apart from a connection that never reached the server at
  * all. Accept the small chance of a duplicate over SMTP, or pass `attempts: 1`
  * to turn retrying off for a mailer built on it.
+ *
+ * **`sendBatch` is passed through untouched**, when `mailer` has one — no
+ * retry, no idempotency key added to a message that lacks its own. A batch's
+ * own contract already answers a `MailBatchResult` per message instead of
+ * throwing; retry the ones that come back `failed`, one by one, with `send`.
  */
 export function withRetry(mailer: Mailer, options?: RetryOptions): Mailer {
 	// Not `options ?? {}`: an explicit `null` must still reach checkOptions

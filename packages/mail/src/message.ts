@@ -284,18 +284,23 @@ export function checkMessage(message: MailMessage): void {
  * (within {@link SCHEDULE_SKEW_MS} for clock skew), and no more than
  * {@link SCHEDULE_MAX_DAYS} ahead — Resend's own limit, held for every
  * transport so a message built for one works on another.
+ *
+ * `where` names the call this check is made for in the message it throws —
+ * `checkMessage` (from `send`) leaves it at the default; `@nxgt/mail-resend`'s
+ * `reschedule` passes `'reschedule'`, so the same rule reads right in either
+ * message.
  */
-function checkScheduledAt(scheduledAt: Date): void {
+export function checkScheduledAt(scheduledAt: Date, where = 'send'): void {
 	if (!(scheduledAt instanceof Date) || Number.isNaN(scheduledAt.getTime())) {
-		throw new MailRefused('send: scheduledAt must be a valid Date');
+		throw new MailRefused(`${where}: scheduledAt must be a valid Date`);
 	}
 	const delta = scheduledAt.getTime() - Date.now();
 	if (delta < -SCHEDULE_SKEW_MS) {
-		throw new MailRefused('send: scheduledAt is in the past');
+		throw new MailRefused(`${where}: scheduledAt is in the past`);
 	}
 	if (delta > SCHEDULE_MAX_MS) {
 		throw new MailRefused(
-			`send: scheduledAt is more than ${SCHEDULE_MAX_DAYS} days ahead — Resend's own limit`,
+			`${where}: scheduledAt is more than ${SCHEDULE_MAX_DAYS} days ahead — Resend's own limit`,
 		);
 	}
 }

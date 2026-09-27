@@ -1,3 +1,5 @@
+import type { MailFailure, MailRefused } from './errors';
+
 /**
  * An e-mail address: bare (`ada@example.com`), or with the name a mail client
  * shows beside it.
@@ -138,6 +140,24 @@ export interface SentMail {
 }
 
 /**
+ * One message's outcome from a batch send — `sendBatch`'s whole point: unlike
+ * `send`, where a failure throws, a batch holds many messages, and one bad
+ * message must never hide what happened to the others. **Nothing is silently
+ * dropped**: `sendBatch` answers exactly one of these per message given, in
+ * the same order, never fewer.
+ *
+ * A `TypeError` from a wiring mistake (`messages` not an array) still
+ * throws — the batch itself was never attempted — but once it starts, every
+ * message ends up `sent`, `refused` or `failed` here, never as a throw.
+ */
+export type MailBatchResult =
+	| { readonly status: 'sent'; readonly sentMail: SentMail }
+	/** This message was refused, as `send` would refuse it on its own — a bad address, an unsupported combination, or the provider refusing it. The others in the same call are unaffected. */
+	| { readonly status: 'refused'; readonly error: MailRefused }
+	/** The hand-over for this message could not be completed — an outage, a timeout. Nothing is known to have been sent for it. */
+	| { readonly status: 'failed'; readonly error: MailFailure };
+
+/**
  * The port every transport implements.
  *
  * **A failure throws; it never answers.** `send` resolves only once the
@@ -151,4 +171,17 @@ export interface SentMail {
  */
 export interface Mailer {
 	send(message: MailMessage): Promise<SentMail>;
+	/**
+	 * Sends many messages in one call. **Optional**: a transport whose
+	 * provider batches (Resend's `POST /emails/batch`) implements it to use
+	 * that; a transport with none does not need to — the exported
+	 * `sendBatch(mailer, messages)` from `@nxgt/mail` calls this when it is
+	 * there, and otherwise sends each message in turn over `send`, so **every**
+	 * `Mailer`, including one written before this method existed, works with
+	 * it. Every message is checked with `checkMessage` before any of them is
+	 * sent, whichever path runs.
+	 */
+	sendBatch?(
+		messages: readonly MailMessage[],
+	): Promise<readonly MailBatchResult[]>;
 }

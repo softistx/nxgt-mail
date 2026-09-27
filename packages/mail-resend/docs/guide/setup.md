@@ -318,8 +318,241 @@ await mailer.send({
 });
 ```
 
+## sendBatch
+
+`mailer.sendBatch(messages)` sends many messages in one call, over Resend's
+`POST /emails/batch`, and answers one result per message, in the same
+order — never a throw for one message's own outcome:
+
+```ts
+import { createResendMailer } from '@nxgt/mail-resend';
+
+const mailer = createResendMailer({ apiKey: process.env.RESEND_API_KEY ?? '', from: 'noreply@acme.test' });
+
+const results = await mailer.sendBatch([
+	{ to: 'ada@example.com', subject: 'Welcome', html: '<p>…</p>', text: '…' },
+	{ to: 'grace@example.com', subject: 'Welcome', html: '<p>…</p>', text: '…' },
+]);
+// [{ status: 'sent', sentMail: { messageId: 'resend-1' } }, { status: 'sent', sentMail: { messageId: 'resend-2' } }]
+```
+
+### The signature
+
+```ts
+function sendBatch(messages: readonly MailMessage[]): Promise<readonly MailBatchResult[]>;
+
+type MailBatchResult =
+	| { readonly status: 'sent'; readonly sentMail: SentMail }
+	| { readonly status: 'refused'; readonly error: MailRefused }
+	| { readonly status: 'failed'; readonly error: MailFailure };
+```
+
+**Up to 100 messages per request — Resend's own limit ("Trigger up to 100
+batch emails at once.").** Above it, `sendBatch` splits `messages` into as
+many requests as it takes, in order: 101 messages become two requests, of
+100 and 1.
+
+```ts
+const messages = Array.from({ length: 101 }, (_, index) => ({
+	to: 'ada@example.com',
+	subject: `Message ${index}`,
+	html: '<p>…</p>',
+	text: '…',
+}));
+
+const results = await mailer.sendBatch(messages); // two requests to /emails/batch, of 100 and 1
+```
+
+**Every message is checked with `checkMessage` before any of them is
+sent** — a message near the end that is malformed is known *before* the
+ones ahead of it go out, so its result is `refused` from the start, and it
+never reaches Resend:
+
+```ts
+const tooManyTags = Object.fromEntries(Array.from({ length: 76 }, (_, index) => [`tag${index}`, 'x']));
+
+const results = await mailer.sendBatch([
+	{ to: 'ada@example.com', subject: 'Welcome', html: '<p>…</p>', text: '…' },
+	{ to: 'nobody@example.com', subject: 'Rejected', html: '<p>…</p>', text: '…', tags: tooManyTags }, // caught before the first request
+	{ to: 'grace@example.com', subject: 'Welcome', html: '<p>…</p>', text: '…' },
+]);
+// [{ status: 'sent', … }, { status: 'refused', error }, { status: 'sent', … }] — the request carries only the two valid messages
+```
+
+**Two things `send` takes are refused here instead, each on its own
+message, the rest of the batch unaffected:**
+
+| What | Why | Message |
+| --- | --- | --- |
+| an `attachment` | Resend's `/emails/batch` does not support them | `sendBatch: attachments are not supported in a batch send — Resend's /emails/batch refuses them; send this message on its own with send` |
+| the message's own `idempotencyKey` | Resend takes one `Idempotency-Key` per batch *request*, in the header, never one per message — and sends no such header for a batch request at all, so retrying `sendBatch` itself can duplicate every message that went through | `sendBatch: idempotencyKey is not supported in a batch send — Resend takes one Idempotency-Key per batch request, never one per message; send this message on its own with send` |
+
+```ts
+const pdf = new Uint8Array(await (await fetch('https://files.acme.test/invoices/42.pdf')).arrayBuffer());
+
+const results = await mailer.sendBatch([
+	{
+		to: 'ada@example.com',
+		subject: 'Your invoice',
+		html: '<p>…</p>',
+		text: '…',
+		attachments: [{ filename: 'invoice-42.pdf', content: pdf, contentType: 'application/pdf' }],
+	},
+	{ to: 'grace@example.com', subject: 'Welcome', html: '<p>…</p>', text: '…', idempotencyKey: 'welcome-grace' },
+]);
+// both refused, on their own — send either one on its own with send instead
+```
+
+A message with more than 75 `tags`, or without a `from` — its own or a
+default — is refused the same way `send` refuses it:
+`sendBatch: Resend takes at most 75 tags on one e-mail`,
+`sendBatch: from is missing — give the message a from, or createResendMailer
+a default one`.
+
+**A request of up to 100 is answered by Resend as a whole**: if Resend
+refuses it (a malformed message anywhere in it, once past the checks above)
+or cannot be reached, *every* message of that request is reported the same
+way — `refused` or `failed` — because Resend gives back one answer for the
+whole request, never one per message. A request further along that Resend
+does accept still runs, and is reported on its own:
+
+```ts
+// One request of, say, 60 messages: Resend refuses it (a 400, a 422…).
+// results[0] through results[59] are all { status: 'refused', error }, the
+// same MailRefused, even though only one of the 60 messages was at fault.
+```
+
+`messages` that is not an array is a bare `TypeError` —
+`sendBatch: messages must be an array of MailMessage` — before anything is
+attempted.
+
+Wired into a job that sends a digest and requeues only the recipients whose
+request failed:
+
+```ts
+import { createResendMailer } from '@nxgt/mail-resend';
+
+const mailer = createResendMailer({ apiKey: process.env.RESEND_API_KEY ?? '', from: 'noreply@acme.test' });
+
+declare function requeue(to: string): Promise<void>; // yours: try this recipient again later
+
+export async function sendWeeklyDigest(recipients: readonly string[]): Promise<void> {
+	const messages = recipients.map((to) => ({
+		to,
+		subject: 'This week at Acme',
+		html: '<p>…</p>',
+		text: '…',
+	}));
+	const results = await mailer.sendBatch(messages);
+	await Promise.all(
+		results.flatMap((result, index) => {
+			const recipient = recipients[index];
+			return result.status === 'failed' && recipient !== undefined ? [requeue(recipient)] : [];
+		}),
+	);
+}
+```
+
+See [Errors — sendBatch](errors.md#sendbatch) for every message it throws or
+reports, and [`@nxgt/mail`'s guide to `sendBatch`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/guide/sending.md#sending-many-at-once--sendbatch)
+for the port-level function this method backs.
+
+## Cancel and reschedule
+
+`mailer.cancel(messageId)` stops a message `send` scheduled ahead
+(`scheduledAt`), before Resend sends it: Resend's
+[`POST /emails/{id}/cancel`](https://resend.com/docs/api-reference/emails/cancel-email).
+`mailer.reschedule(messageId, scheduledAt)` moves one to a new time instead:
+Resend's [`PATCH /emails/{id}`](https://resend.com/docs/api-reference/emails/update-email),
+sending `{ scheduled_at: scheduledAt.toISOString() }`. Both resolve once
+Resend confirms:
+
+```ts
+import { createResendMailer } from '@nxgt/mail-resend';
+
+const mailer = createResendMailer({ apiKey: process.env.RESEND_API_KEY ?? '', from: 'noreply@acme.test' });
+
+const { messageId } = await mailer.send({
+	to: 'ada@example.com',
+	subject: 'Your trial ends in three days',
+	html: '<p>…</p>',
+	text: '…',
+	scheduledAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+});
+if (messageId === null) throw new Error('Resend answered with no id'); // rare — see "What a message becomes", above
+
+await mailer.reschedule(messageId, new Date(Date.now() + 4 * 24 * 60 * 60 * 1000)); // push it out a day
+```
+
+### The signature
+
+```ts
+function cancel(messageId: string): Promise<void>;
+function reschedule(messageId: string, scheduledAt: Date): Promise<void>;
+```
+
+**`messageId` must be the id `send` answered — `SentMail.messageId` — never
+an id of your own** (an order id, a queue job id): Resend never held any
+other id pending, so it is refused as `UNKNOWN_ID`, below. A `messageId`
+that is not a non-empty string is a bare `TypeError`, before any request:
+`cancel: messageId must be the id send answered` /
+`reschedule: messageId must be the id send answered`.
+
+**`reschedule`'s `scheduledAt` is held to the same rule as `send`'s own** —
+a valid `Date`, no earlier than now (within a small clock-skew tolerance),
+no more than 30 days ahead, Resend's own limit — via `checkScheduledAt` from
+`@nxgt/mail`, before any request:
+
+```ts
+declare const messageId: string; // send answered { messageId }, checked not null
+
+await mailer.reschedule(messageId, new Date(Date.now() - 60_000)); // MailRefused: reschedule: scheduledAt is in the past
+```
+
+| `message` | When |
+| --- | --- |
+| `reschedule: scheduledAt must be a valid Date` | Not a `Date`, or an invalid one |
+| `reschedule: scheduledAt is in the past` | Earlier than now, past the clock-skew tolerance |
+| `reschedule: scheduledAt is more than 30 days ahead — Resend's own limit` | Too far in the future |
+
+**Resend does not document precisely what it answers for an id it already
+sent, or one it never held** — this reads a `404` as `UNKNOWN_ID`, and a
+`400` as `ALREADY_SENT`, the only two answers observed for either endpoint.
+Both are the `@nxgt/mail` peer's `MailScheduleRefused`, never a `MailRefused`
+or a `MailFailure`:
+
+```ts
+import { MailScheduleRefused } from '@nxgt/mail';
+
+declare const messageId: string; // send answered { messageId }, checked not null
+
+try {
+	await mailer.cancel(messageId);
+} catch (error) {
+	if (error instanceof MailScheduleRefused) {
+		if (error.code === 'UNKNOWN_ID') {
+			// already cancelled, or never a valid id — nothing to do
+		} else {
+			// ALREADY_SENT: too late, it already went out
+		}
+		return;
+	}
+	throw error; // MailFailure: Resend could not take the request — retry later
+}
+```
+
+Anything else Resend answers — `401`, `403`, `429`, `5xx`, an outage, a
+timeout — is a `MailFailure`, `cancel: Resend could not take the request` or
+`reschedule: Resend could not take the request`, Resend's answer as the
+`cause`, the same as `send`'s own failures.
+
+See [Errors — cancel and reschedule](errors.md#cancel-and-reschedule) for
+every message, and [`@nxgt/mail`'s guide to scheduling](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/guide/sending.md#scheduling--scheduledat)
+for `scheduledAt` on `send` itself.
+
 ## See also
 
-- [Errors](errors.md) — what `send` throws, and when.
+- [Errors](errors.md) — what `send`, `sendBatch`, `cancel` and `reschedule`
+  throw, and when.
 - [Testing](testing.md) — a local server answering as Resend does, and the
   conformance suite.

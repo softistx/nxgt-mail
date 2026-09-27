@@ -55,7 +55,7 @@ import {
 import { MailFailure, MailRefused } from './errors';
 import { recipientsOf } from './message';
 import type { AnyMailEmails, MailEmailsOf, MailRenderer } from './renderer';
-import type { Mailer, MailMessage, SentMail } from './types';
+import type { MailBatchResult, Mailer, MailMessage, SentMail } from './types';
 
 const INSTRUMENTATION = '@nxgt/mail';
 
@@ -165,6 +165,13 @@ function sendAttributes(
  * const mailer = withTelemetry(resendMailer, { transport: 'resend' });
  * await mailer.send(message); // a span, unchanged behaviour
  * ```
+ *
+ * When `mailer` has a `sendBatch`, it gets its own span, `mail.sendBatch`:
+ * `mail.outcome` there is `'ok'` whenever the call itself resolved — a
+ * `MailBatchResult` per message is the answer, not a throw — with
+ * `mail.batch.sent_count`, `mail.batch.refused_count` and
+ * `mail.batch.failed_count` alongside it. A `Mailer` with no `sendBatch`
+ * still gets one from `withTelemetry` — it simply carries none of its own.
  */
 export function withTelemetry(
 	mailer: Mailer,
@@ -178,7 +185,69 @@ export function withTelemetry(
 	const count = meter.createCounter('mail.send.count', {
 		description: 'Number of Mailer.send calls, by outcome',
 	});
+	const batchDuration = meter.createHistogram('mail.send_batch.duration', {
+		description: 'Duration of a Mailer.sendBatch call',
+		unit: 'ms',
+	});
+	const batchCount = meter.createCounter('mail.send_batch.count', {
+		description: 'Number of Mailer.sendBatch calls, by outcome',
+	});
 	return {
+		// Instrumented, not a bare pass-through, and only when `mailer` has one:
+		// one span for the whole call — its own `mail.outcome` is `'ok'`
+		// whenever the call itself resolved, whatever the messages inside it
+		// answered — plus how many of them came back `sent`, `refused` or
+		// `failed`. Never a value: no address, no subject, the same shape `send`
+		// holds to.
+		...(typeof mailer.sendBatch === 'function'
+			? {
+					sendBatch(
+						messages: readonly MailMessage[],
+					): Promise<readonly MailBatchResult[]> {
+						return tracerOf().startActiveSpan(
+							'mail.sendBatch',
+							{
+								attributes: {
+									'mail.transport': options.transport,
+									'mail.batch.count': messages.length,
+								},
+								kind: SpanKind.CLIENT,
+							},
+							async (span) => {
+								const startedAt = performance.now();
+								let outcome: Outcome = 'ok';
+								try {
+									const results = await (
+										mailer.sendBatch as NonNullable<Mailer['sendBatch']>
+									)(messages);
+									const counts = { sent: 0, refused: 0, failed: 0 };
+									for (const result of results) counts[result.status] += 1;
+									span.setAttribute('mail.batch.sent_count', counts.sent);
+									span.setAttribute('mail.batch.refused_count', counts.refused);
+									span.setAttribute('mail.batch.failed_count', counts.failed);
+									span.setAttribute('mail.outcome', 'ok');
+									span.setStatus({ code: SpanStatusCode.OK });
+									return results;
+								} catch (error) {
+									outcome = outcomeOf(error).outcome;
+									fail(span, error);
+								} finally {
+									const metricAttributes = {
+										'mail.outcome': outcome,
+										'mail.transport': options.transport,
+									};
+									batchDuration.record(
+										performance.now() - startedAt,
+										metricAttributes,
+									);
+									batchCount.add(1, metricAttributes);
+									span.end();
+								}
+							},
+						);
+					},
+				}
+			: {}),
 		send(message: MailMessage): Promise<SentMail> {
 			return tracerOf().startActiveSpan(
 				'mail.send',

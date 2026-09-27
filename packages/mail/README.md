@@ -41,7 +41,7 @@ import without extensions, so `nodenext` is not supported.
 
 | Import | What it holds |
 | --- | --- |
-| `@nxgt/mail` | The port (`Mailer`, `MailMessage`, `Rendered`, `SentMail`, `Address`, `MailAttachment`), the errors (`MailError`, `MailFailure`, `MailRefused`), the neutral delivery events (`MailEvent` and its members, `MailWebhookRefused`), `createMemoryMailer`, `withRetry` with `RetryOptions` and `RetryExhausted`, `pickLocale` and `parseAcceptLanguage`, `listUnsubscribe` with `ListUnsubscribeOptions` and `ListUnsubscribeHeaders`, and what a transport calls first: `checkMessage`, `recipientsOf`, `addressOf`. No Node built-in: it runs anywhere |
+| `@nxgt/mail` | The port (`Mailer`, `MailMessage`, `Rendered`, `SentMail`, `MailBatchResult`, `Address`, `MailAttachment`), the errors (`MailError`, `MailFailure`, `MailRefused`, `MailScheduleRefused`), the neutral delivery events (`MailEvent` and its members, `MailWebhookRefused`), `createMemoryMailer`, `withRetry` with `RetryOptions` and `RetryExhausted`, `sendBatch`, `pickLocale` and `parseAcceptLanguage`, `listUnsubscribe` with `ListUnsubscribeOptions` and `ListUnsubscribeHeaders`, and what a transport calls first: `checkMessage`, `checkScheduledAt`, `recipientsOf`, `addressOf`. No Node built-in: it runs anywhere |
 | `@nxgt/mail/renderer` | The renderer: `createMailRenderer`, `MailRenderer`, `MailRendererOptions`, `RenderOptions`, `MailVariables`, the types that type it with a build's `MailEmails` (`MailEmailsOf`, `AnyMailEmails`, `RenderArguments`), and `MANIFEST_FORMAT`, the newest manifest format it reads. Reads the build with `node:fs` |
 | `@nxgt/mail/conformance` | **For transport authors**: `describeMailer`, its cases as data, `runMailerCase`, the messages they send (`sampleMessage`, `sampleAttachment`, `sampleInlineImage`), and the memory mailer's harness as a worked example |
 | `@nxgt/mail/telemetry` | **Optional**: `withTelemetry` and `withRendererTelemetry`, a span per send and per render on `@opentelemetry/api` — an optional peer, installed only if this subpath is imported |
@@ -285,6 +285,34 @@ the two apart. `withRetry` therefore retries it like any other `MailFailure`;
 pass `attempts: 1` to a mailer built on SMTP if that risk is not acceptable.
 See [Sending — retrying](docs/guide/sending.md#retrying--withretry).
 
+### Sending many at once — `sendBatch`
+
+`sendBatch(mailer, messages)` sends many messages and answers one result per
+message, in the same order — never a throw for one message's own outcome:
+
+```ts
+import { sendBatch } from '@nxgt/mail';
+import type { Mailer, MailMessage } from '@nxgt/mail';
+
+declare const mailer: Mailer;
+declare const messages: readonly MailMessage[];
+
+const results = await sendBatch(mailer, messages);
+results.forEach((result, index) => {
+	if (result.status !== 'sent') console.error(messages[index]?.subject, result.error.message);
+});
+```
+
+Every message is checked with `checkMessage` before any of them is sent, so a
+malformed one is reported `refused` on its own and never reaches the
+transport — the others are unaffected. `@nxgt/mail-resend` implements
+`sendBatch` with Resend's own `POST /emails/batch`, up to 100 messages per
+request; `@nxgt/mail-smtp`, and any `Mailer` with no `sendBatch` of its own,
+falls back to sending each message in turn over `send`. `withRetry` passes a
+`sendBatch` through untouched (retry the ones that come back `failed`, one by
+one, with `send`); `withTelemetry` gives it its own span. See
+[Sending — sendBatch](docs/guide/sending.md#sending-many-at-once--sendbatch).
+
 ### Tags — labels for the provider
 
 `tags` label a send for the provider's dashboard, webhooks and statistics:
@@ -337,8 +365,9 @@ different moment is a different message. See
 | a `Date` more than a minute in the past | `MailRefused`: `send: scheduledAt is in the past` |
 | a `Date` more than 30 days ahead — Resend's own limit | `MailRefused`: `send: scheduledAt is more than 30 days ahead — Resend's own limit` |
 
-Cancelling a send Resend already accepted is its `POST /emails/{id}/cancel`;
-no package wraps it yet.
+Cancel a send Resend already accepted with the mailer's own `cancel(messageId)`,
+or move it to a new time with `reschedule(messageId, scheduledAt)` — see
+[`@nxgt/mail-resend`](https://github.com/softistx/nxgt-mail/tree/develop/packages/mail-resend#cancel-and-reschedule).
 
 ### One-click unsubscribe — `listUnsubscribe`
 
@@ -673,7 +702,7 @@ gives a test file `describe` and `it` as bare identifiers, not on `globalThis`.
 
 ## Type safety, counted
 
-**29 plausible mistakes, 29 refused** at compile time, each measured by a
+**31 plausible mistakes, 31 refused** at compile time, each measured by a
 `@ts-expect-error` in
 [`test/types/refusals.ts`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/test/types/refusals.ts)
 that fails the typecheck the moment it stops holding:
@@ -745,6 +774,15 @@ And delivery events:
     unmapped webhook event is `null`, never a seventh member.
 29. A `MailBouncedEvent` without its `bounceType`: every provider that reports
     a bounce classifies it hard or soft.
+
+And `sendBatch`:
+
+30. A `Mailer`'s `sendBatch` answering booleans: each message's outcome is
+    `sent`, `refused` or `failed`, never a bare `boolean`, as `send` never
+    answers one either.
+31. A `MailScheduleErrorCode` the union does not declare: a provider's
+    `cancel` or `reschedule` refuses with `ALREADY_SENT` or `UNKNOWN_ID`,
+    never a third code of its own.
 
 The same file holds the calls that must keep compiling: a refusal that refuses
 the correct call is a bug.
