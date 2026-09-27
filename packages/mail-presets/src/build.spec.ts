@@ -105,6 +105,7 @@ describe('the presets, built by a project', () => {
 			.filter((name) => emails[name].variables.includes('expiresIn'))
 			.sort();
 		expect(expiring).toEqual([
+			'account-deleted',
 			'invitation',
 			'magic-link',
 			'reset-password',

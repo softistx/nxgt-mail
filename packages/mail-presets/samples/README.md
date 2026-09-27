@@ -12,8 +12,12 @@ Open a file in a browser to see it — GitHub shows its source.
 | `reset-password` | [en](en/reset-password.html) · [fr](fr/reset-password.html) |
 | `password-changed` | [en](en/password-changed.html) · [fr](fr/password-changed.html) |
 | `email-changed` | [en](en/email-changed.html) · [fr](fr/email-changed.html) |
+| `account-deleted` | [en](en/account-deleted.html) · [fr](fr/account-deleted.html) |
 | `sign-in-code` | [en](en/sign-in-code.html) · [fr](fr/sign-in-code.html) |
 | `magic-link` | [en](en/magic-link.html) · [fr](fr/magic-link.html) |
 | `new-sign-in` | [en](en/new-sign-in.html) · [fr](fr/new-sign-in.html) |
+| `two-factor-enabled` | [en](en/two-factor-enabled.html) · [fr](fr/two-factor-enabled.html) |
+| `two-factor-disabled` | [en](en/two-factor-disabled.html) · [fr](fr/two-factor-disabled.html) |
 | `welcome` | [en](en/welcome.html) · [fr](fr/welcome.html) |
 | `invitation` | [en](en/invitation.html) · [fr](fr/invitation.html) |
+| `invitation-accepted` | [en](en/invitation-accepted.html) · [fr](fr/invitation-accepted.html) |

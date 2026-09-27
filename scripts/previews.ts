@@ -57,11 +57,16 @@ const LINKS: Readonly<Record<string, string>> = {
 	'new-sign-in': 'https://acme.example/security',
 	welcome: 'https://acme.example/start',
 	invitation: 'https://acme.example/join?invite=5f2c9e',
+	'account-deleted': 'https://acme.example/restore?token=5f2c9e',
+	'two-factor-enabled': 'https://acme.example/security',
+	'two-factor-disabled': 'https://acme.example/security',
+	'invitation-accepted': 'https://acme.example/team',
 };
 
 /** The `expiresIn` of an e-mail whose token lives longer than `EXAMPLES`' hour, per locale. */
 const EXPIRES_IN: Readonly<Record<string, Readonly<Record<string, string>>>> = {
 	invitation: { en: '7 days', fr: '7 jours' },
+	'account-deleted': { en: '30 days', fr: '30 jours' },
 };
 
 /** What the placeholders hold in the previews, per locale. */
@@ -75,6 +80,7 @@ const EXAMPLES: Readonly<Record<string, Readonly<Record<string, string>>>> = {
 		location: 'Lyon, France',
 		time: 'September 26, 2026, 9:14 PM',
 		inviter: 'Grace Hopper',
+		invitee: 'Marie Curie',
 		organization: 'Acme Labs',
 		newEmail: 'ada@new.example',
 		badgeSize: '84 KB',
@@ -91,6 +97,7 @@ const EXAMPLES: Readonly<Record<string, Readonly<Record<string, string>>>> = {
 		location: 'Lyon, France',
 		time: '26 septembre 2026 à 21:14',
 		inviter: 'Grace Hopper',
+		invitee: 'Marie Curie',
 		organization: 'Acme Labs',
 		newEmail: 'ada@new.example',
 		badgeSize: '84 Ko',

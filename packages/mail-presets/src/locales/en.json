@@ -33,6 +33,14 @@
 		"body": "Your {brand} account now uses {newEmail}. We send this notice to your former address.",
 		"action": "Undo this change"
 	},
+	"account-deleted": {
+		"subject": "Your account was deleted",
+		"preheader": "Your account and its data are being removed.",
+		"title": "Your account was deleted",
+		"body": "Your {brand} account was deleted, along with its data.",
+		"action": "Restore my account",
+		"expires": "This restoration link expires in {expiresIn}."
+	},
 	"sign-in-code": {
 		"subject": "Your sign-in code: {code}",
 		"preheader": "Enter this code to sign in.",
@@ -58,6 +66,20 @@
 		"body": "If this was you, there is nothing to do.",
 		"action": "Secure my account"
 	},
+	"two-factor-enabled": {
+		"subject": "Two-factor authentication was turned on",
+		"preheader": "Your account now asks for a second factor at sign-in.",
+		"title": "Two-factor authentication is now on",
+		"body": "Your {brand} account now asks for a second factor at sign-in.",
+		"action": "Secure my account"
+	},
+	"two-factor-disabled": {
+		"subject": "Two-factor authentication was turned off",
+		"preheader": "Your account no longer asks for a second factor at sign-in.",
+		"title": "Two-factor authentication is now off",
+		"body": "Your {brand} account no longer asks for a second factor at sign-in — anyone with just your password can sign in.",
+		"action": "Secure my account"
+	},
 	"welcome": {
 		"subject": "Welcome, {name}",
 		"preheader": "Your account is ready.",
@@ -72,5 +94,12 @@
 		"body": "{inviter} invited you to join {organization} on {brand}.",
 		"action": "Accept the invitation",
 		"expires": "This invitation expires in {expiresIn}."
+	},
+	"invitation-accepted": {
+		"subject": "{invitee} accepted your invitation to {organization}",
+		"preheader": "{invitee} joined {organization}.",
+		"title": "{invitee} joined {organization}",
+		"body": "{invitee} accepted your invitation and now belongs to {organization} on {brand}.",
+		"action": "View the team"
 	}
 }
