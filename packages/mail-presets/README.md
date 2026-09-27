@@ -111,13 +111,13 @@ manifest:
 | `magic-link` | `expiresIn`, `link` | Your sign-in link |
 | `new-sign-in` | `device`, `link`, `location`, `name`, `time` | New sign-in to your account |
 | `welcome` | `link`, `name` | Welcome, `{{ name }}` |
-| `invitation` | `inviter`, `link`, `organization` | `{{ inviter }}` invited you to join `{{ organization }}` |
+| `invitation` | `expiresIn`, `inviter`, `link`, `organization` | `{{ inviter }}` invited you to join `{{ organization }}` |
 
 `link` is a URL in each of them: the sender fills it with an `http:` or `https:` URL.
 `expiresIn` is how long the link or the code stays valid, already written in
 the recipient's language — `'1 hour'`, `'1 heure'` — shown as
 `This link expires in {{ expiresIn }}.` (`This code expires in …` for
-`sign-in-code`). See [The e-mails](docs/guide/emails.md) for what each one
+`sign-in-code`, `This invitation expires in …` for `invitation`). See [The e-mails](docs/guide/emails.md) for what each one
 says, in both locales, and every message key.
 
 ### Sending one

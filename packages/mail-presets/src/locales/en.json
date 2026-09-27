@@ -70,6 +70,7 @@
 		"preheader": "Join {organization} on {brand}.",
 		"title": "Join {organization}",
 		"body": "{inviter} invited you to join {organization} on {brand}.",
-		"action": "Accept the invitation"
+		"action": "Accept the invitation",
+		"expires": "This invitation expires in {expiresIn}."
 	}
 }
