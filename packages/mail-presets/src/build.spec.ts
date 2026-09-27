@@ -87,6 +87,7 @@ describe('the presets, built by a project', () => {
 		const { emails } = JSON.parse(await read('dist/mail-manifest.json'));
 		expect(Object.keys(emails).sort()).toEqual([...PRESETS].sort());
 		expect(emails.invitation.variables).toEqual([
+			'expiresIn',
 			'inviter',
 			'link',
 			'organization',
@@ -103,6 +104,7 @@ describe('the presets, built by a project', () => {
 			.filter((name) => emails[name].variables.includes('expiresIn'))
 			.sort();
 		expect(expiring).toEqual([
+			'invitation',
 			'magic-link',
 			'reset-password',
 			'sign-in-code',
@@ -146,6 +148,7 @@ describe('the presets, built by a project', () => {
 			inviter: 'Grace <script>',
 			organization: 'Analytical & Co',
 			link: 'https://acme.example/join?token=t0k&x=1',
+			expiresIn: '7 days',
 		};
 		const en = mails.render('invitation', variables);
 		expect(en.subject).toBe(
@@ -160,11 +163,14 @@ describe('the presets, built by a project', () => {
 		expect(en.text).toContain(
 			'Grace <script> invited you to join Analytical & Co',
 		);
+		expect(en.html).toContain('This invitation expires in 7 days.');
+		expect(en.text).toContain('This invitation expires in 7 days.');
 		const fr = mails.render('invitation', variables, { locale: 'fr' });
 		expect(fr.subject).toBe(
 			'Grace <script> vous invite à rejoindre Analytical & Co',
 		);
 		expect(fr.html).toContain('<html lang="fr"');
+		expect(fr.text).toContain('Cette invitation expire dans 7 days.');
 		expect(fr.text).not.toContain('{{');
 		expect(() =>
 			mails.render('magic-link', {

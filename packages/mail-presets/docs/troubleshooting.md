@@ -183,10 +183,11 @@ It wins over the preset, and this error does not apply to it.
 The message names your locale. The key starts `presets.` or with a preset's
 key (`verifyEmail.`, `signInCode.`, …), or `common.` when the `common` keys
 are missing as well (`i18n: de: common.footer.ignore is missing — …`).
-After an upgrade to 0.2, a catalogue written for 0.1 misses the two keys it
-added, `presets.codeExpires` and `presets.linkExpires`
-(`i18n: de: presets.codeExpires is missing — …`): translate them with the
-`{expiresIn}` argument, as `"Dieser Link läuft in {expiresIn} ab."`.
+After an upgrade to 0.2, a catalogue written for 0.1 misses the keys it
+added: `presets.codeExpires` and `presets.linkExpires`
+(`i18n: de: presets.codeExpires is missing — …`), and `invitation.expires`
+when it builds `invitation`. Translate them with the `{expiresIn}` argument,
+as `"Dieser Link läuft in {expiresIn} ab."`.
 
 **When:** loading `maizzle.config.ts`, when the project builds a locale other
 than `en` and `fr`, such as `locales: ['en', 'de']`.
@@ -375,13 +376,14 @@ These come from `@nxgt/mail`'s renderer, `createMailRenderer` from
 
 An `Error`, from `@nxgt/mail`'s renderer: its
 [`render: <email> needs the variable <key>`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/troubleshooting.md#render-email-needs-the-variable-key).
-The e-mail named may be `verify-email`, `reset-password`, `magic-link` or
-`sign-in-code`. Typed with `MailEmails`, the same call does not compile:
+The e-mail named may be `verify-email`, `reset-password`, `magic-link`,
+`sign-in-code` or `invitation`. Typed with `MailEmails`, the same call does not compile:
 `Property 'expiresIn' is missing in type '…' but required in type …`.
 
 **When:** `mails.render(…)`, after an upgrade to 0.2, with the values that
-0.1's e-mails took (`{ name, link }`, `{ code }`).
-**Why:** from 0.2, the four presets whose link or code expires say how long
+0.1's e-mails took (`{ name, link }`, `{ code }`,
+`{ inviter, organization, link }`).
+**Why:** from 0.2, the five presets whose link or code expires say how long
 it lives, `This link expires in {{ expiresIn }}.`, and the server is the one
 that knows.
 **Fix:** pass `expiresIn`, a duration already written in the recipient's

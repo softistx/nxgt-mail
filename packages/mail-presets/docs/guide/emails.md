@@ -39,7 +39,7 @@ export default defineMailConfig({
 | [`magic-link`](#magic-link) | A user signs in with a one-time link | `expiresIn`, `link` | `link` |
 | [`new-sign-in`](#new-sign-in) | An account was signed in from a device not seen before | `device`, `link`, `location`, `name`, `time` | `link` |
 | [`welcome`](#welcome) | An account was just created | `link`, `name` | `link` |
-| [`invitation`](#invitation) | Someone invites the recipient to an organisation | `inviter`, `link`, `organization` | `link` |
+| [`invitation`](#invitation) | Someone invites the recipient to an organisation | `expiresIn`, `inviter`, `link`, `organization` | `link` |
 
 The placeholders are the manifest's `variables`, and the URL ones its
 `urlVariables`: the sender fills a URL one with an `http:` or `https:` URL,
@@ -49,10 +49,11 @@ build time.
 
 ## `expiresIn`: how long the link or the code lives
 
-`verify-email`, `reset-password`, `magic-link` and `sign-in-code` send
-something that stops working after a while, and say so:
-`This link expires in {{ expiresIn }}.` under the button, or
-`This code expires in {{ expiresIn }}.` under the code. `expiresIn` is
+`verify-email`, `reset-password`, `magic-link`, `sign-in-code` and
+`invitation` send something that stops working after a while, and say so:
+`This link expires in {{ expiresIn }}.` under the button,
+`This code expires in {{ expiresIn }}.` under the code, or
+`This invitation expires in {{ expiresIn }}.` under the invitation's button. `expiresIn` is
 required: the server that made the token knows its lifetime, the build does
 not. Pass it as text already written in the recipient's language — the
 renderer writes a value as is and translates nothing:
@@ -74,10 +75,9 @@ To say nothing about expiry, replace the template (see
 argument, because the template still passes it.
 
 The other presets do not take it: `password-changed`, `new-sign-in` and
-`welcome` link to your site, not to a token, and `email-changed` and
-`invitation` say nothing about a lifetime their link may not have. To tell an
-invitation's lifetime, replace `invitation.vue` with your own and pass it as
-a placeholder of yours.
+`welcome` link to your site, not to a token, and `email-changed` says nothing
+about a lifetime its undo link may not have. To tell one, replace
+`email-changed.vue` with your own and pass it as a placeholder of yours.
 
 ## What they share
 
@@ -318,8 +318,8 @@ Placeholders: `name` (in the subject too), `link` (a URL). Samples:
 
 To invite someone — who may have no account yet — to join an organisation.
 A title with the organisation, the body naming who invites, the
-**Accept the invitation** button, and the link as text. No greeting: the
-recipient's name is often unknown.
+**Accept the invitation** button, `invitation.expires`, and the link as
+text. No greeting: the recipient's name is often unknown.
 
 | Key | `en` | `fr` |
 | --- | --- | --- |
@@ -328,9 +328,10 @@ recipient's name is often unknown.
 | `invitation.title` | Join {organization} | Rejoignez {organization} |
 | `invitation.body` | {inviter} invited you to join {organization} on {brand}. | {inviter} vous invite à rejoindre {organization} sur {brand}. |
 | `invitation.action` | Accept the invitation | Accepter l'invitation |
+| `invitation.expires` | This invitation expires in {expiresIn}. | Cette invitation expire dans {expiresIn}. |
 
 Placeholders: `inviter`, `organization` (both in the subject too), `link`
-(a URL). Samples:
+(a URL), `expiresIn` (a duration, as text: `'7 days'`, `'7 jours'`). Samples:
 [en](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/en/invitation.html) ·
 [fr](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/fr/invitation.html).
 

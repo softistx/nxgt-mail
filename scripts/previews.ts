@@ -52,6 +52,11 @@ const LINKS: Readonly<Record<string, string>> = {
 	invitation: 'https://acme.example/join?invite=5f2c9e',
 };
 
+/** The `expiresIn` of an e-mail whose token lives longer than `EXAMPLES`' hour, per locale. */
+const EXPIRES_IN: Readonly<Record<string, Readonly<Record<string, string>>>> = {
+	invitation: { en: '7 days', fr: '7 jours' },
+};
+
 /** What the placeholders hold in the previews, per locale. */
 const EXAMPLES: Readonly<Record<string, Readonly<Record<string, string>>>> = {
 	en: {
@@ -132,6 +137,9 @@ function shoot(html: string, locale: string, email: string, out: string): void {
 	const values: Record<string, string | undefined> = {
 		...EXAMPLES[locale],
 		...(LINKS[email] && { link: LINKS[email] }),
+		...(EXPIRES_IN[email]?.[locale] && {
+			expiresIn: EXPIRES_IN[email][locale],
+		}),
 	};
 	const missing = new Set<string>();
 	const filled = html
