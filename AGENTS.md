@@ -276,6 +276,12 @@ Carry each difference over when janus gets the same thing (`@nxgt/janus-mail`):
 - `css.parser.tailwindDirectives` for `theme.css`, and `generated/` and
   `samples/` left out of `files.includes`.
 
+`scripts/verify-artifacts.ts` differs from the nxgt-janus copy by the
+`nxgt.noNodeBuiltins` step (`builtinImports`, `importTarget`,
+`noNodeBuiltinProblems` and its place in `main`): no janus package says it
+runs on an edge runtime. Carry it over the day one does, and keep it when
+syncing the copies.
+
 **One word per idea.** The words are defined once, in a `docs/vocabulary.md`
 the first package writes: *e-mail* (not "mail" in prose, not "email"),
 *template*, *catalogue*, *message*, *locale*, *plugin*, *placeholder*,

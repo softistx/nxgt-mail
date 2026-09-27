@@ -231,19 +231,31 @@ export function duplicateClasses(
 }
 
 /**
+ * What Bun's `builtinModules` lists that is an npm package, not a Node
+ * built-in: Bun ships its own copy, and a dependency by that name is not a
+ * built-in an edge runtime refuses. Measured on Bun 1.4.2.
+ */
+const NOT_NODE_BUILTINS = new Set(['ws', 'undici']);
+
+/**
  * Every built-in module an entry bundle reaches, as `file: specifier`, from
  * the bundle's path and the texts of every file beside it. Follows each
- * relative import — static, re-export, side effect or dynamic — so a chunk
- * shared with an entry that may use Node counts. A bare package is not
- * followed: what a dependency imports is that dependency's contract. `bun:`
- * counts as a built-in: a Workers runtime has none of it either. Pure, so it
- * has specs.
+ * relative import — static, re-export, side effect, dynamic or `require` —
+ * so a chunk shared with an entry that may use Node counts. A bare package
+ * is not followed: what a dependency imports is that dependency's contract.
+ * `bun` and `bun:*` count as built-ins: a Workers runtime has none of them
+ * either. Pure, so it has specs.
+ *
+ * It reads quoted specifiers only: a template literal in `import()`, and
+ * `process.getBuiltinModule('fs')`, go unseen. A bundle rarely holds either.
  */
 export function builtinImports(
 	entry: string,
 	files: ReadonlyMap<string, string>,
 ): string[] {
-	const builtins = new Set(builtinModules);
+	const builtins = new Set(
+		builtinModules.filter((name) => !NOT_NODE_BUILTINS.has(name)),
+	);
 	const reached: string[] = [];
 	const seen = new Set<string>();
 	const queue = [posix.normalize(entry)];
@@ -253,13 +265,14 @@ export function builtinImports(
 		const text = files.get(file);
 		if (text === undefined) continue;
 		for (const match of text.matchAll(
-			/(?:\bfrom|\bimport)\s*\(?\s*(["'])([^"'\n]+)\1/g,
+			/(?:\bfrom|\bimport|\brequire)\s*\(?\s*(["'])([^"'\n]+)\1/g,
 		)) {
 			const specifier = match[2] as string;
 			if (specifier.startsWith('.')) {
 				queue.push(posix.join(posix.dirname(file), specifier));
 			} else if (
 				/^(node|bun):/.test(specifier) ||
+				specifier === 'bun' ||
 				builtins.has(specifier.split('/')[0] as string)
 			) {
 				reached.push(`${file}: ${specifier}`);
@@ -284,6 +297,48 @@ export function importTarget(target: unknown): string | null {
 	return typeof file === 'string' && file.endsWith('.js')
 		? posix.normalize(file)
 		: null;
+}
+
+/**
+ * What an installed package's `nxgt.noNodeBuiltins` refuses: each subpath it
+ * lists that reaches a built-in, one that names no JavaScript export, and a
+ * field that is not a list of subpaths. An absent field checks nothing.
+ */
+export async function noNodeBuiltinProblems(
+	installed: string,
+): Promise<string[]> {
+	const manifest = await Bun.file(join(installed, 'package.json')).json();
+	const name = manifest.name as string;
+	const portable: unknown = manifest.nxgt?.noNodeBuiltins;
+	if (portable === undefined) return [];
+	if (
+		!Array.isArray(portable) ||
+		!portable.every((subpath) => typeof subpath === 'string')
+	) {
+		return [
+			`${name}: nxgt.noNodeBuiltins must be a list of subpaths, as [".", "./conformance"]`,
+		];
+	}
+	const files = new Map<string, string>();
+	for await (const rel of new Bun.Glob('**/*.{js,mjs,cjs}').scan({
+		cwd: installed,
+		onlyFiles: true,
+	})) {
+		if (rel.startsWith('node_modules/')) continue;
+		files.set(rel, await Bun.file(join(installed, rel)).text());
+	}
+	const problems: string[] = [];
+	for (const subpath of portable as string[]) {
+		const entry = importTarget(manifest.exports?.[subpath]);
+		if (entry === null) {
+			problems.push(`${name} ${subpath}: no such JavaScript export`);
+			continue;
+		}
+		for (const one of builtinImports(entry, files)) {
+			problems.push(`${name} ${subpath}: ${one}`);
+		}
+	}
+	return problems;
 }
 
 /**
@@ -554,43 +609,22 @@ async function main(): Promise<void> {
 		console.log('\nChecking the subpaths that must run anywhere…\n');
 		let builtin = 0;
 		for (const pkg of packages) {
-			const installed = join(workdir, 'node_modules', pkg.name);
-			const manifest = await Bun.file(join(installed, 'package.json')).json();
-			const portable: unknown = manifest.nxgt?.noNodeBuiltins ?? [];
-			if (!Array.isArray(portable) || portable.length === 0) continue;
-			const files = new Map<string, string>();
-			for await (const rel of new Bun.Glob('**/*.js').scan({
-				cwd: installed,
-				onlyFiles: true,
-			})) {
-				files.set(rel, await Bun.file(join(installed, rel)).text());
-			}
-			for (const subpath of portable) {
-				const label = `${pkg.name} ${subpath}`;
-				const entry = importTarget(manifest.exports?.[subpath]);
-				if (entry === null) {
-					builtin++;
-					console.log(`  FAIL    ${label}: no such JavaScript export`);
-					continue;
-				}
-				const reached = builtinImports(entry, files);
-				if (reached.length === 0) {
-					console.log(`  ok      ${label}`);
-					continue;
-				}
-				builtin++;
-				for (const one of reached) console.log(`  FAIL    ${label}: ${one}`);
-			}
+			const problems = await noNodeBuiltinProblems(
+				join(workdir, 'node_modules', pkg.name),
+			);
+			builtin += problems.length;
+			for (const problem of problems) console.log(`  FAIL    ${problem}`);
 		}
 		if (builtin > 0) {
 			console.error(
-				`\n${builtin} subpath(s) listed under \`nxgt.noNodeBuiltins\` reach a ` +
+				`\n${builtin} problem(s) with \`nxgt.noNodeBuiltins\`: a subpath listed there reaches a ` +
 					'built-in module.\nNode and Bun load them, so nothing else ' +
 					'reports it; an edge runtime refuses them.\nMove the import behind ' +
 					'the subpath that may use it (for @nxgt/mail, `./renderer`).',
 			);
 			process.exit(1);
 		}
+		console.log('  ok      every subpath listed under nxgt.noNodeBuiltins');
 
 		const bins = packages.flatMap((p) => p.bins);
 		if (bins.length > 0) {

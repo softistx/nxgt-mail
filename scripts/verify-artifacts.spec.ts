@@ -9,6 +9,7 @@ import {
 	licenseProblems,
 	manifestShapeProblems,
 	NOT_A_BUILD_INPUT,
+	noNodeBuiltinProblems,
 	staleBuilds,
 	subpathsOf,
 } from './verify-artifacts';
@@ -277,6 +278,24 @@ describe('builtinImports — what an edge runtime refuses', () => {
 		]);
 	});
 
+	test('counts a require, and bare bun', () => {
+		expect(
+			builtinImports(
+				'index.cjs',
+				files({ 'index.cjs': 'const fs = require("fs");\nimport "bun";' }),
+			),
+		).toEqual(['index.cjs: fs', 'index.cjs: bun']);
+	});
+
+	test('does not count what Bun lists as built-in but is an npm package', () => {
+		expect(
+			builtinImports(
+				'index.js',
+				files({ 'index.js': 'import "ws";\nimport "undici";' }),
+			),
+		).toEqual([]);
+	});
+
 	test('survives an import cycle', () => {
 		expect(
 			builtinImports(
@@ -300,5 +319,63 @@ describe('importTarget', () => {
 		expect(importTarget('./package.json')).toBeNull();
 		expect(importTarget('./dist/theme.css')).toBeNull();
 		expect(importTarget(undefined)).toBeNull();
+	});
+});
+
+describe('noNodeBuiltinProblems', () => {
+	const installed = async (manifest: Record<string, unknown>) => {
+		const dir = await mkdtemp(join(tmpdir(), 'mail-builtins-'));
+		await mkdir(join(dir, 'dist'), { recursive: true });
+		await writeFile(join(dir, 'package.json'), JSON.stringify(manifest));
+		await writeFile(join(dir, 'dist', 'index.js'), 'export const a = 1;');
+		await writeFile(
+			join(dir, 'dist', 'renderer.js'),
+			'import { readFileSync } from "node:fs";',
+		);
+		return dir;
+	};
+	const exports = {
+		'.': { import: './dist/index.js' },
+		'./renderer': { import: './dist/renderer.js' },
+	};
+
+	test('passes a free subpath, and checks nothing without the field', async () => {
+		expect(
+			await noNodeBuiltinProblems(
+				await installed({
+					name: 'm',
+					exports,
+					nxgt: { noNodeBuiltins: ['.'] },
+				}),
+			),
+		).toEqual([]);
+		expect(
+			await noNodeBuiltinProblems(await installed({ name: 'm', exports })),
+		).toEqual([]);
+	});
+
+	test('names a listed subpath that reaches a built-in, and one that is no export', async () => {
+		expect(
+			await noNodeBuiltinProblems(
+				await installed({
+					name: 'm',
+					exports,
+					nxgt: { noNodeBuiltins: ['./renderer', './typo'] },
+				}),
+			),
+		).toEqual([
+			'm ./renderer: dist/renderer.js: node:fs',
+			'm ./typo: no such JavaScript export',
+		]);
+	});
+
+	test('refuses a field that is not a list of subpaths, rather than skip it', async () => {
+		expect(
+			await noNodeBuiltinProblems(
+				await installed({ name: 'm', exports, nxgt: { noNodeBuiltins: '.' } }),
+			),
+		).toEqual([
+			'm: nxgt.noNodeBuiltins must be a list of subpaths, as [".", "./conformance"]',
+		]);
 	});
 });
