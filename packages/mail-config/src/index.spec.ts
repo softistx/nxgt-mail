@@ -140,11 +140,6 @@ describe('defineMailConfig — the layers', () => {
 
 describe('defineMailConfig — the build events', () => {
 	test("the base tidies the text parts before a plugin's or the project's afterBuild reads them", async () => {
-		const { mkdtempSync, readFileSync, writeFileSync } = await import(
-			'node:fs'
-		);
-		const { tmpdir } = await import('node:os');
-		const { join } = await import('node:path');
 		const file = join(
 			mkdtempSync(join(tmpdir(), 'nxgt-mail-config-')),
 			'a.txt',
