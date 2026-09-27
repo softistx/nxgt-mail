@@ -1,5 +1,21 @@
 # @nxgt/mail-i18n
 
+## 0.3.0
+
+### Minor Changes
+
+- [#40](https://github.com/softistx/nxgt-mail/pull/40) [`4d6e59b`](https://github.com/softistx/nxgt-mail/commit/4d6e59bc9af0ad2aef5ea070e579c8638e0ed8ed) Thanks [@SteveGT96](https://github.com/SteveGT96)! - `mail-manifest.json` now starts with `"formatVersion": 1`, and
+  `MANIFEST_FORMAT` is exported: the format this version writes. It changes
+  only with the manifest's shape, and `@nxgt/mail`'s renderer reads every
+  format up to its own within 0.x. A build tool that ships its output can
+  assert the format it wrote against the renderer versions it supports.
+
+### Patch Changes
+
+- [#38](https://github.com/softistx/nxgt-mail/pull/38) [`8af7126`](https://github.com/softistx/nxgt-mail/commit/8af7126087c1bd9a1f2087e065512dc85547f35a) Thanks [@SteveGT96](https://github.com/SteveGT96)! - The `@nxgt/mail-config` peer moves to `^0.2.0`: upgrade `@nxgt/mail-config` with it.
+- Updated dependencies [[`8af7126`](https://github.com/softistx/nxgt-mail/commit/8af7126087c1bd9a1f2087e065512dc85547f35a)]:
+  - @nxgt/mail-config@0.2.0
+
 ## 0.2.0
 
 ### Minor Changes

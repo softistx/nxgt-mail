@@ -1,5 +1,13 @@
 # @nxgt/mail-ui
 
+## 0.1.1
+
+### Patch Changes
+
+- [#38](https://github.com/softistx/nxgt-mail/pull/38) [`8af7126`](https://github.com/softistx/nxgt-mail/commit/8af7126087c1bd9a1f2087e065512dc85547f35a) Thanks [@SteveGT96](https://github.com/SteveGT96)! - The `@nxgt/mail-config` peer moves to `^0.2.0`: upgrade `@nxgt/mail-config` with it.
+- Updated dependencies [[`8af7126`](https://github.com/softistx/nxgt-mail/commit/8af7126087c1bd9a1f2087e065512dc85547f35a)]:
+  - @nxgt/mail-config@0.2.0
+
 ## 0.1.0
 
 ### Minor Changes
