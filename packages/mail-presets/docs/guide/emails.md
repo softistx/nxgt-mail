@@ -319,8 +319,7 @@ Placeholders: `name` (in the subject too), `link` (a URL). Samples:
 To invite someone — who may have no account yet — to join an organisation.
 A title with the organisation, the body naming who invites, the
 **Accept the invitation** button, `invitation.expires`, and the link as
-text. No greeting: the
-recipient's name is often unknown.
+text. No greeting: the recipient's name is often unknown.
 
 | Key | `en` | `fr` |
 | --- | --- | --- |

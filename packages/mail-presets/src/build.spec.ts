@@ -163,11 +163,14 @@ describe('the presets, built by a project', () => {
 		expect(en.text).toContain(
 			'Grace <script> invited you to join Analytical & Co',
 		);
+		expect(en.html).toContain('This invitation expires in 7 days.');
+		expect(en.text).toContain('This invitation expires in 7 days.');
 		const fr = mails.render('invitation', variables, { locale: 'fr' });
 		expect(fr.subject).toBe(
 			'Grace <script> vous invite à rejoindre Analytical & Co',
 		);
 		expect(fr.html).toContain('<html lang="fr"');
+		expect(fr.text).toContain('Cette invitation expire dans 7 days.');
 		expect(fr.text).not.toContain('{{');
 		expect(() =>
 			mails.render('magic-link', {
