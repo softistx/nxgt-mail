@@ -1,5 +1,16 @@
 # @nxgt/mail-presets
 
+## 0.4.1
+
+### Patch Changes
+
+- [#72](https://github.com/softistx/nxgt-mail/pull/72) [`18cc72e`](https://github.com/softistx/nxgt-mail/commit/18cc72e0a398ae57afaa71531d37077fc5a1e7a6) Thanks [@SteveGT96](https://github.com/SteveGT96)! - The `@nxgt/mail-i18n` peer moves to `^0.6.0`: upgrade `@nxgt/mail-i18n` with it. No change here: `i18n({ catalogues, templates })` is unaffected by folder catalogues or `messages`, which are options this package does not set.
+
+- [#73](https://github.com/softistx/nxgt-mail/pull/73) [`93825ae`](https://github.com/softistx/nxgt-mail/commit/93825ae8b9338d8b0d0b1749eb94275d14ff1ac2) Thanks [@SteveGT96](https://github.com/SteveGT96)! - The `@nxgt/mail-ui` peer moves to `^0.5.0`: upgrade `@nxgt/mail-ui` with it.
+- Updated dependencies [[`18cc72e`](https://github.com/softistx/nxgt-mail/commit/18cc72e0a398ae57afaa71531d37077fc5a1e7a6), [`93825ae`](https://github.com/softistx/nxgt-mail/commit/93825ae8b9338d8b0d0b1749eb94275d14ff1ac2)]:
+  - @nxgt/mail-i18n@0.6.0
+  - @nxgt/mail-ui@0.5.0
+
 ## 0.4.0
 
 ### Minor Changes
