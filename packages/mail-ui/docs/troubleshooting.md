@@ -13,13 +13,15 @@ How the messages are shaped:
   it: `ui: @maizzle/framework is not installed beside @nxgt/mail-ui`.
 - **A build failure is a plain `Error`**, thrown while `maizzle build` renders
   a template, and printed after Vue's own
-  `[Vue warn]: Unhandled error during execution of setup function` (or
-  `of render function`, for a tag that resolves to no component: that one
-  starts `ui:` too, though no option causes it; Vue
-  prints no warning under `NODE_ENV=production`, and the build fails all the
-  same: `ui()` sets `app.config.throwUnhandledErrorInProduction`). It names
-  the component or the template and what to fix. It has no `code`: it is a
+  `[Vue warn]: Unhandled error during execution of setup function`, or
+  `of render function` for a tag that resolves to no component. It names the
+  component or the template and what to fix. It has no `code`: it is a
   mistake in the config, not a condition to catch.
+- **The build fails under `NODE_ENV=production` too.** Vue prints no warning
+  there, but `ui()` sets `app.config.throwUnhandledErrorInProduction`, so the
+  error still stops the build.
+- **A tag that resolves to no component starts `ui:` too**, though no option
+  causes it: it is a build failure, not a wiring one.
 - **A message never holds a value you passed**: it names the option or the
   token, never the URL or the colour.
 
