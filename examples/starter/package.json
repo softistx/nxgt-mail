@@ -7,8 +7,8 @@
 		"dev": "maizzle serve",
 		"build": "maizzle build",
 		"send": "bun send.ts",
-		"typecheck": "maizzle build && vue-tsc --noEmit -p tsconfig.json",
-		"prepare:templates": "maizzle build"
+		"typecheck": "maizzle prepare && maizzle build && vue-tsc --noEmit -p tsconfig.json",
+		"prepare:templates": "maizzle prepare && maizzle build"
 	},
 	"dependencies": {
 		"@maizzle/framework": "6.1.7",

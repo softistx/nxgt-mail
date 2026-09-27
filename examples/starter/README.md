@@ -61,7 +61,7 @@ cd examples/starter
 | `bun run dev` | `maizzle serve`: every e-mail listed once per locale, `en/verify-email`, `fr/verify-email`…, reloaded when a template or a catalogue changes |
 | `bun run build` | `maizzle build`: the files below, and `generated/mail.ts` when the e-mails or their variables changed |
 | `bun run send` | `send.ts`, after a build: renders each e-mail in each locale and prints its subject |
-| `bun run typecheck` | `maizzle build`, which writes `generated/mail.ts`, then `vue-tsc`: the templates against the catalogues' keys, and `send.ts` against `generated/mail.ts` |
+| `bun run typecheck` | `maizzle prepare` (the components' types), `maizzle build` (`generated/mail.ts`), then `vue-tsc`: the templates against the catalogues' keys, and `send.ts` against `generated/mail.ts` |
 
 `maizzle build` writes:
 
@@ -126,7 +126,7 @@ not compile.
 - **No `postinstall`** in this copy's `package.json`, only here: in this
   repository, `bun install` runs before the packages are built, and
   `maizzle prepare` would fail to load their `dist/`. The root's own
-  `postinstall` builds it once they are built. **Keep
+  `postinstall` prepares and builds it once they are built. **Keep
   `"postinstall": "maizzle prepare"` in your project**, where the packages
   come from npm already built.
 - The `@nxgt/*` dependencies are `workspace:*`, so CI builds the starter

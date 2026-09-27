@@ -182,8 +182,9 @@ them as `workspace:*`. CI builds it (its `generated/mail.ts` is written by
 the build and git-ignored), renders it in both locales (`send.ts`) and serves
 it. A README snippet that changes changes the starter with it. It has no
 `postinstall`: in this repository `bun install` runs before the packages are
-built, so the root's `postinstall` runs its `maizzle build` once they are.
-Generated code is never committed.
+built, so the root's `postinstall` runs its `maizzle prepare` and `maizzle
+build` once they are. Generated code under `generated/` or `.maizzle/` is
+never committed.
 
 **A project overrides by name.** Its `components/nx-button.vue` replaces the
 package's `<NxButton>`; its `locales/en.json` overrides a shared message key
