@@ -97,6 +97,7 @@ template `emails/verify-email.vue`, and keys such as `verifyEmail.title`.
 - [`No templates found`, or old templates, when Maizzle is built from a worker thread](#no-templates-found-or-old-templates-when-maizzle-is-built-from-a-worker-thread)
 - [The editor says `Property 't' does not exist` in a template, or completes no key](#the-editor-says-property-t-does-not-exist-in-a-template-or-completes-no-key)
 - [The editor flags a key you just added to a catalogue](#the-editor-flags-a-key-you-just-added-to-a-catalogue)
+- [Biome reports `parse` errors in a template as soon as you edit it](#biome-reports-parse-errors-in-a-template-as-soon-as-you-edit-it)
 - [A bug in `@nxgt/mail-i18n` itself](#a-bug-in-nxgtmail-i18n-itself)
 
 ---
@@ -1018,6 +1019,34 @@ See [Editor and type checking](guide/editor.md).
 config last loaded.
 **Fix:** save the catalogue under `maizzle serve`, which reloads the config,
 or run `bunx maizzle prepare`.
+
+### Biome reports `parse` errors in a template as soon as you edit it
+
+`Expected a property, a shorthand property, a getter, a setter, or a method but
+instead found '{ t('verifyEmail.title')'`, `type assertion are a TypeScript
+only feature`, or `This class property name should be in camelCase` on a
+component's tag — in the editor only; `biome check` reports nothing.
+
+**When:** typing in a template that has no `<script>`, with Biome 2.5 as the
+editor's linter.
+**Why:** Biome's language server reads only the `<script>` of a `.vue` file
+when it opens it, but re-reads a file without one as JavaScript from the first
+change on. The template is fine; the editor's Biome is not reading it as Vue.
+**Fix:** let Biome parse Vue templates, then run **Biome: Restart** in the
+editor:
+
+```json
+// biome.json
+{ "html": { "experimentalFullSupportEnabled": true } }
+```
+
+Biome then lints the templates too. A rule that cannot see a slot's text,
+such as `useAnchorContent` on `<a><slot /></a>`, is silenced on its element:
+
+```vue
+<!-- biome-ignore lint/a11y/useAnchorContent: the link's text is the slot. -->
+<a :href="href"><slot /></a>
+```
 
 ### A bug in `@nxgt/mail-i18n` itself
 
