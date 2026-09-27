@@ -288,6 +288,92 @@ describe('checkMessage', () => {
 		}
 	});
 
+	describe('inline images', () => {
+		const logo = {
+			filename: 'logo.png',
+			content: new Uint8Array([0x89, 0x50, 0x4e, 0x47]),
+			contentType: 'image/png',
+			contentId: 'logo@acme.test',
+		};
+
+		it('accepts a contentId the HTML shows, and one it never names', () => {
+			expect(() =>
+				checkMessage({
+					...message,
+					html: '<img src="cid:logo@acme.test" alt=""><td background=\'CID:bg\'>',
+					attachments: [
+						logo,
+						{ ...logo, filename: 'bg.png', contentId: 'bg' },
+						{ ...logo, filename: 'unused.png', contentId: 'a.b_c~d+e-f' },
+						pdf,
+					],
+				}),
+			).not.toThrow();
+			expect(() =>
+				checkMessage({
+					...message,
+					attachments: [{ ...logo, contentId: 'x'.repeat(127) }],
+				}),
+			).not.toThrow();
+		});
+
+		it.each([
+			['empty', ''],
+			['longer than 127 characters', 'x'.repeat(128)],
+			['in angle brackets', '<logo@acme.test>'],
+			['with two @', 'logo@acme@test'],
+			['starting with @', '@acme.test'],
+			['holding a space', 'logo image'],
+			['holding a line break', 'logo\r\nX-Evil: 1'],
+			['holding a quote', 'logo"'],
+			['holding a percent escape', 'logo%40acme.test'],
+			['outside ASCII', 'logo-été'],
+			['not a string', 42],
+		])('refuses a contentId %s, never quoting it', (_, contentId) => {
+			const error = refusal({
+				...message,
+				attachments: [pdf, { ...logo, contentId }],
+			});
+			expect(error.message).toBe(
+				'send: attachments[1].contentId must be 1 to 127 letters, digits and . _ ~ + -, with at most one @, as logo@acme.test',
+			);
+		});
+
+		it('refuses two attachments under one contentId', () => {
+			expect(
+				refusal({
+					...message,
+					attachments: [logo, pdf, { ...logo, filename: 'other.png' }],
+				}).message,
+			).toBe(
+				"send: attachments[2].contentId is already another attachment's — a contentId names one file",
+			);
+		});
+
+		it.each([
+			['no attachment at all', '<img src="cid:logo@acme.test">', undefined],
+			['no attachment of that id', "<img src='cid:secret-7f3a'>", [logo]],
+			['an id that differs in case', '<img src="cid:LOGO@acme.test">', [logo]],
+			['an attachment without an id', '<img src="cid:logo.png">', [pdf]],
+		])('refuses a cid: URL the HTML shows with %s', (_, html, attachments) => {
+			const error = refusal({ ...message, html, attachments });
+			expect(error.message).toBe(
+				"send: html shows a cid: URL that no attachment's contentId names — attach the image with that contentId",
+			);
+			expect(error.message).not.toContain('secret-7f3a');
+		});
+
+		it('reads a cid: only as a quoted attribute value, never in the text or prose', () => {
+			expect(() =>
+				checkMessage({
+					...message,
+					html: '<p>Write cid:logo in a src.</p>',
+					text: 'src="cid:logo"',
+				}),
+			).not.toThrow();
+		});
+	});
+
 	it('never puts a refused file name in the message', () => {
 		const error = refusal({
 			...message,

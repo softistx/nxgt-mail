@@ -43,7 +43,7 @@ import without extensions, so `nodenext` is not supported.
 | --- | --- |
 | `@nxgt/mail` | The port (`Mailer`, `MailMessage`, `Rendered`, `SentMail`, `Address`, `MailAttachment`), the errors (`MailError`, `MailFailure`, `MailRefused`), `createMemoryMailer`, `pickLocale` and `parseAcceptLanguage`, `listUnsubscribe` with `ListUnsubscribeOptions` and `ListUnsubscribeHeaders`, and what a transport calls first: `checkMessage`, `recipientsOf`, `addressOf`. No Node built-in: it runs anywhere |
 | `@nxgt/mail/renderer` | The renderer: `createMailRenderer`, `MailRenderer`, `MailRendererOptions`, `RenderOptions`, `MailVariables`, the types that type it with a build's `MailEmails` (`MailEmailsOf`, `AnyMailEmails`, `RenderArguments`), and `MANIFEST_FORMAT`, the newest manifest format it reads. Reads the build with `node:fs` |
-| `@nxgt/mail/conformance` | **For transport authors**: `describeMailer`, its cases as data, `runMailerCase`, the messages they send (`sampleMessage`, `sampleAttachment`), and the memory mailer's harness as a worked example |
+| `@nxgt/mail/conformance` | **For transport authors**: `describeMailer`, its cases as data, `runMailerCase`, the messages they send (`sampleMessage`, `sampleAttachment`, `sampleInlineImage`), and the memory mailer's harness as a worked example |
 
 ## Usage
 
@@ -160,9 +160,45 @@ expiring URL in the template as a URL variable —
 `mails.render('invoice-ready', { link: signedUrl })` — and the file never
 sits in an inbox. Providers cap the whole message — about 25 MB sending
 through Gmail, 40 MB at Resend once encoded — and base64 makes a file a third
-larger on the way.
-Inline images (`cid:`) are not supported yet. See
+larger on the way. See
 [Sending — attachments](docs/guide/sending.md#attachments).
+
+### Inline images — `cid:`
+
+An attachment with a `contentId` is an **inline image**: the HTML shows it with
+`<img src="cid:…">`, and it arrives with the e-mail instead of being fetched
+from a server.
+
+```html
+<!-- emails/receipt.vue: the cid: is written in the template -->
+<img src="cid:logo@acme.test" alt="Acme" width="120">
+```
+
+```ts
+import { readFile } from 'node:fs/promises';
+import type { Mailer, Rendered } from '@nxgt/mail';
+
+const logo = await readFile('assets/logo.png'); // once, at start-up
+
+export async function sendReceipt(mailer: Mailer, to: string, rendered: Rendered): Promise<void> {
+	await mailer.send({
+		...rendered,
+		to,
+		attachments: [{ filename: 'logo.png', content: logo, contentType: 'image/png', contentId: 'logo@acme.test' }],
+	});
+}
+```
+
+A `contentId` is the file's `Content-ID` (RFC 2392) without its angle
+brackets: 1 to 127 letters, digits and `.` `_` `~` `+` `-`, with at most one
+`@`, unique in the message. **Every `cid:` the HTML quotes as an attribute
+value must name an attachment's `contentId`**, or `checkMessage` refuses the
+message with `MailRefused` — a broken image is never sent silently. A `cid:`
+is written in the template, never filled at send time: a URL variable holding
+`cid:…` is refused, like any URL that is not `http:`, `https:` or `mailto:`.
+Some webmails show inline images as plain attachments, or not at all: an
+`https:` image, as `@nxgt/mail-ui`'s logo, stays the most portable. See
+[Sending — inline images](docs/guide/sending.md#inline-images--cid).
 
 ### Idempotency — a retry that delivers once
 
@@ -422,6 +458,11 @@ that never comes. `await` it, or hand it to a queue that does.
 a `path` or a URL is a compile error and a `MailRefused`. Past a few
 megabytes, send a signed link instead.
 
+**A `cid:` in the HTML needs its attachment.** `<img src="cid:logo">` with no
+attachment whose `contentId` is `logo` — or one spelled `<logo>`, or in other
+capitals — is a `MailRefused`: attach the image, with the id written as the
+HTML writes it.
+
 **A custom header cannot set an address.** `headers: { Bcc: '…' }` would add
 a recipient no check saw: `checkMessage` refuses `To`, `Cc`, `Bcc`, `From`,
 `Sender`, `Reply-To`, `Return-Path`, `Subject`, `MIME-Version` and
@@ -448,7 +489,7 @@ gives a test file `describe` and `it` as bare identifiers, not on `globalThis`.
 
 ## Type safety, counted
 
-**23 plausible mistakes, 23 refused** at compile time, each measured by a
+**24 plausible mistakes, 24 refused** at compile time, each measured by a
 `@ts-expect-error` in
 [`test/types/refusals.ts`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/test/types/refusals.ts)
 that fails the typecheck the moment it stops holding:
@@ -494,6 +535,10 @@ And one-click unsubscribe:
 
 23. A `URL` object as `listUnsubscribe`'s `url`: the header holds text, so
     pass `url.href`.
+
+And an inline image:
+
+24. nodemailer's `cid` instead of `contentId` on an attachment.
 
 The same file holds the calls that must keep compiling: a refusal that refuses
 the correct call is a bug.

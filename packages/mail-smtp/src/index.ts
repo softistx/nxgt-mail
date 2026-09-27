@@ -62,7 +62,13 @@ export interface SmtpTransporter {
 		 * A `Buffer`, not a `Uint8Array`: nodemailer's own types want one, and
 		 * what `nodemailer.createTransport(…)` answers then fits with no cast.
 		 */
-		attachments?: { filename: string; content: Buffer; contentType: string }[];
+		attachments?: {
+			filename: string;
+			content: Buffer;
+			contentType: string;
+			/** The `Content-ID`, without angle brackets: an inline image. */
+			cid?: string;
+		}[];
 		disableFileAccess: boolean;
 		disableUrlAccess: boolean;
 	}): Promise<SmtpSentInfo>;
@@ -83,12 +89,15 @@ const toNodemailer = (address: Address): NodemailerAddress =>
 /**
  * An attachment as nodemailer takes it: its bytes as a `Buffer` — copied, so
  * a change the caller makes during the send reaches no one — and never a
- * `path` or an `href`, which nodemailer would read or fetch.
+ * `path` or an `href`, which nodemailer would read or fetch. A `contentId` is
+ * nodemailer's `cid`: it writes the `Content-ID` header, marks the file
+ * `inline` and puts it in a `multipart/related` beside the HTML.
  */
 const toNodemailerAttachment = (attachment: MailAttachment) => ({
 	filename: attachment.filename,
 	content: Buffer.from(attachment.content),
 	contentType: attachment.contentType,
+	...(attachment.contentId === undefined ? {} : { cid: attachment.contentId }),
 });
 
 interface SmtpError {

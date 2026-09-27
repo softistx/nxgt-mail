@@ -18,3 +18,16 @@ export const sampleAttachment: MailAttachment = {
 	content: Uint8Array.from({ length: 256 }, (_, byte) => byte),
 	contentType: 'application/pdf',
 };
+
+/**
+ * A small PNG shown inline: the HTML names it by its content id, which has
+ * the `@`, `.` and `-` a header or a parser most often mangles.
+ */
+export const sampleInlineImage: MailAttachment = {
+	filename: 'logo.png',
+	content: Uint8Array.from([
+		0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d,
+	]),
+	contentType: 'image/png',
+	contentId: 'logo-7f3a@example.test',
+};

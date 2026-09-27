@@ -153,6 +153,13 @@ function bodyOf(
 						content: base64Of(attachment.content),
 						// biome-ignore lint/style/useNamingConvention: Resend's wire format names the field, not us.
 						content_type: attachment.contentType,
+						...(attachment.contentId === undefined
+							? {}
+							: {
+									// An inline image: the HTML shows it as cid:<content_id>.
+									// biome-ignore lint/style/useNamingConvention: Resend's wire format names the field, not us.
+									content_id: attachment.contentId,
+								}),
 					})),
 				}),
 	};

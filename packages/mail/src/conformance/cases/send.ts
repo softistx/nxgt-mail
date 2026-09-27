@@ -1,6 +1,6 @@
 import { MailRefused } from '../../errors';
 import { check, nothingDelivered, rejection, same } from '../assert';
-import { sampleAttachment, sampleMessage } from '../sample';
+import { sampleAttachment, sampleInlineImage, sampleMessage } from '../sample';
 import type { MailerCase } from '../types';
 
 /** What every send must do, with no fault injected. */
@@ -126,6 +126,50 @@ export const sendCases: readonly MailerCase[] = [
 			check(
 				mail.text === sampleMessage.text && mail.html === sampleMessage.html,
 				'the parts of a message with an attachment were not delivered as sent',
+			);
+		},
+	},
+	{
+		id: 'send.inlineImage',
+		title:
+			'an inline image is delivered with its content id, byte for byte, beside the HTML that shows it',
+		async run(context) {
+			const html = `<p>Acme</p><img src="cid:${sampleInlineImage.contentId}" alt="Acme">`;
+			await context.mailer.send({
+				...sampleMessage,
+				html,
+				attachments: [sampleInlineImage],
+			});
+			const [mail] = await context.delivered();
+			check(
+				mail !== undefined,
+				'the message with an inline image was not delivered',
+			);
+			check(
+				mail.attachments !== undefined,
+				"the harness's delivered() reads back no attachments — read them from the receiving end, or skip send.inlineImage with the reason",
+			);
+			check(
+				mail.attachments.length === 1,
+				`expected 1 delivered attachment, got ${mail.attachments.length}`,
+			);
+			const [file] = mail.attachments;
+			check(
+				file !== undefined && file.contentId === sampleInlineImage.contentId,
+				'the inline image was not delivered with its content id — the HTML shows a broken image',
+			);
+			check(
+				file.contentType.toLowerCase() === sampleInlineImage.contentType,
+				'the inline image was not delivered with its content type',
+			);
+			check(
+				file.content instanceof Uint8Array &&
+					same([...file.content], [...sampleInlineImage.content]),
+				'the inline image was not delivered byte for byte',
+			);
+			check(
+				mail.html === html,
+				'the html part of a message with an inline image was not delivered as sent',
 			);
 		},
 	},

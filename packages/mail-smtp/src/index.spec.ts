@@ -85,7 +85,9 @@ async function startServer(
 		onData(stream, session, callback) {
 			const refuse = faults[0] === 'refusal';
 			if (refuse) faults.shift();
-			simpleParser(stream).then(
+			// skipImageLinks: mailparser would otherwise rewrite each cid: in the
+			// HTML as a data: URL, and read back HTML that was never sent.
+			simpleParser(stream, { skipImageLinks: true }).then(
 				(parsed) => {
 					if (refuse) {
 						return callback(smtpError('Message rejected as spam', 554));
@@ -104,6 +106,8 @@ async function startServer(
 							filename: file.filename ?? '',
 							content: new Uint8Array(file.content),
 							contentType: file.contentType,
+							// mailparser reads the Content-ID without its angle brackets.
+							...(file.cid === undefined ? {} : { contentId: file.cid }),
 						})),
 					});
 					callback();
@@ -359,6 +363,37 @@ describe('createSmtpMailer, beyond the suite', () => {
 			disableFileAccess: true,
 			disableUrlAccess: true,
 		});
+	});
+
+	test("hands an inline image's content id to nodemailer as its cid", async () => {
+		let options: Record<string, unknown> = {};
+		await createSmtpMailer({
+			transporter: {
+				async sendMail(mail) {
+					options = mail;
+					return {};
+				},
+			},
+		}).send({
+			...sampleMessage,
+			html: '<img src="cid:logo@acme.test">',
+			attachments: [
+				{
+					filename: 'logo.png',
+					content: new Uint8Array([0x89]),
+					contentType: 'image/png',
+					contentId: 'logo@acme.test',
+				},
+				{
+					filename: 'invoice.pdf',
+					content: new Uint8Array([0x25]),
+					contentType: 'application/pdf',
+				},
+			],
+		});
+		const [logo, invoice] = options.attachments as Record<string, unknown>[];
+		expect(logo?.cid).toBe('logo@acme.test');
+		expect(invoice !== undefined && 'cid' in invoice).toBe(false);
 	});
 
 	test('sends no attachments field for an empty list', async () => {

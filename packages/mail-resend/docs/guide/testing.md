@@ -54,7 +54,7 @@ export function startResend() {
 				subject: string;
 				html: string;
 				text: string;
-				attachments?: { filename: string; content: string; content_type: string }[];
+				attachments?: { filename: string; content: string; content_type: string; content_id?: string }[];
 			};
 			delivered.push({
 				to: body.to.map(addressOf),
@@ -66,6 +66,7 @@ export function startResend() {
 					filename: file.filename,
 					content: Uint8Array.from(atob(file.content), (char) => char.charCodeAt(0)),
 					contentType: file.content_type,
+					...(file.content_id === undefined ? {} : { contentId: file.content_id }), // an inline image
 				})),
 			});
 			return Response.json({ id: `resend-${delivered.length}` });
@@ -119,10 +120,10 @@ describeMailer({
 });
 ```
 
-All fourteen cases pass: a send answers `SentMail`, the message arrives byte for
+All fifteen cases pass: a send answers `SentMail`, the message arrives byte for
 byte (accents, an emoji, `&amp;` in a link), every recipient is delivered to,
 a hostile name reaches only its own address, an attachment arrives byte for
-byte with its name and type, a message with an idempotency key is delivered
+byte with its name and type, an inline image arrives with its content id, a message with an idempotency key is delivered
 without the key written in it, the refusals — a `Bcc` among the custom headers
 and an attachment named with a path included — and the three
 failure cases — an outage is a `MailFailure` with its `cause` and one attempt,
@@ -155,7 +156,8 @@ add what the suite does not ask of every transport:
   `reply_to` and `headers`;
 - each attachment as `{ filename, content, content_type }`, the content
   base64 — a file larger than one slice of the encoder included — and no
-  `attachments` for an empty list;
+  `attachments` for an empty list; an inline image's `contentId` as
+  `content_id`, and none on a plain file;
 - a `2xx` with no id, or with a body that is not JSON, answers
   `{ messageId: null }`;
 - every `TypeError` at wiring, a `timeoutMs` above `2147483647` included.

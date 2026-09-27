@@ -127,6 +127,30 @@ server answers `552` and `send` throws `MailRefused`. **A large or sensitive
 file is a signed link in the template**, not an attachment. See
 [Setting up — attachments](docs/guide/setup.md#attachments).
 
+### Inline images — `cid:`
+
+An attachment with a `contentId` is handed to nodemailer as its `cid`: the
+file gets a `Content-ID` header, `Content-Disposition: inline`, and sits in a
+`multipart/related` beside the HTML that shows it:
+
+```ts
+import { readFile } from 'node:fs/promises';
+
+await mailer.send({
+	to: 'ada@example.com',
+	subject: 'Your receipt',
+	html: '<img src="cid:logo@acme.test" alt="Acme"><p>Thank you.</p>',
+	text: 'Thank you.',
+	attachments: [
+		{ filename: 'logo.png', content: await readFile('assets/logo.png'), contentType: 'image/png', contentId: 'logo@acme.test' },
+	],
+});
+```
+
+`checkMessage` refuses a `cid:` the HTML shows with no attachment of that
+`contentId`, with `MailRefused`. Needs `@nxgt/mail` 0.6 or later. See
+[Setting up — inline images](docs/guide/setup.md#inline-images).
+
 ### Errors — a refusal or a failure
 
 | When | Throws | `cause` |

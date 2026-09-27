@@ -65,6 +65,9 @@ How the messages are shaped:
 - [`send: attachments[<n>].content must be a Uint8Array — the file's bytes, never a path or a URL`](#send-attachmentsncontent-must-be-a-uint8array--the-files-bytes-never-a-path-or-a-url)
 - [`send: attachments[<n>].filename must be a file name — not empty, not . or .., without / or \, a line break or a control character`](#send-attachmentsnfilename-must-be-a-file-name--not-empty-not--or--without--or--a-line-break-or-a-control-character)
 - [`send: attachments[<n>].contentType must be a file's type/subtype, as application/pdf — never multipart/* or message/*`](#send-attachmentsncontenttype-must-be-a-files-typesubtype-as-applicationpdf--never-multipart-or-message)
+- [`send: attachments[<n>].contentId must be 1 to 127 letters, digits and . _ ~ + -, with at most one @, as logo@acme.test`](#send-attachmentsncontentid-must-be-1-to-127-letters-digits-and-_-----with-at-most-one--as-logoacmetest)
+- [`send: attachments[<n>].contentId is already another attachment's — a contentId names one file`](#send-attachmentsncontentid-is-already-another-attachments--a-contentid-names-one-file)
+- [`send: html shows a cid: URL that no attachment's contentId names — attach the image with that contentId`](#send-html-shows-a-cid-url-that-no-attachments-contentid-names--attach-the-image-with-that-contentid)
 - [`send: idempotencyKey must be 1 to 256 visible ASCII characters, as order-42/receipt`](#send-idempotencykey-must-be-1-to-256-visible-ascii-characters-as-order-42receipt)
 - [`send: idempotencyKey was already used for a different message — a key names one e-mail`](#send-idempotencykey-was-already-used-for-a-different-message--a-key-names-one-e-mail)
 - [An e-mail is delivered twice although it has an `idempotencyKey`](#an-e-mail-is-delivered-twice-although-it-has-an-idempotencykey)
@@ -119,6 +122,7 @@ How the messages are shaped:
 - [`conformance: a name let a second recipient through`](#conformance-a-name-let-a-second-recipient-through)
 - [`conformance: <what>, yet something was delivered`](#conformance-what-yet-something-was-delivered)
 - [`conformance: the harness's delivered() reads back no attachments — read them from the receiving end, or skip send.attachment with the reason`](#conformance-the-harnesss-delivered-reads-back-no-attachments--read-them-from-the-receiving-end-or-skip-sendattachment-with-the-reason)
+- [`conformance: the inline image was not delivered with its content id — the HTML shows a broken image`](#conformance-the-inline-image-was-not-delivered-with-its-content-id--the-html-shows-a-broken-image)
 - [`conformance: expected 1 delivered attachment, got <n>`](#conformance-expected-1-delivered-attachment-got-n)
 - [`conformance: the attachment was not delivered byte for byte`](#conformance-the-attachment-was-not-delivered-byte-for-byte)
 - [Other `conformance:` messages](#other-conformance-messages)
@@ -774,6 +778,81 @@ const notes: MailAttachment = {
   contentType: 'text/plain',
 };
 ```
+
+### `send: attachments[<n>].contentId must be 1 to 127 letters, digits and . _ ~ + -, with at most one @, as logo@acme.test`
+
+**When:** `send`, with an attachment whose `contentId` is empty, not a
+string, longer than 127 characters, or holds anything but letters, digits,
+`.` `_` `~` `+` `-` and one `@` between two runs of them — typically the id
+written with its angle brackets (`<logo@acme.test>`), a space, a second `@`,
+a `%` escape, or an accent.
+**Why:** the id is written into the attachment's `Content-ID` header and read
+back from the HTML's `cid:` URL. Restricted to what a URL takes as is, the
+`cid:` URL is the id as written — nothing to percent-encode, nothing a header
+must quote — and every provider takes it: Resend wants fewer than 128
+characters. The transport adds the angle brackets.
+**Fix:** write the id bare, and the same in the HTML:
+
+```ts
+import type { MailAttachment } from '@nxgt/mail';
+
+declare const png: Uint8Array;
+
+// <img src="cid:logo@acme.test"> in the template
+const logo: MailAttachment = {
+  filename: 'logo.png',
+  content: png,
+  contentType: 'image/png',
+  contentId: 'logo@acme.test', // not '<logo@acme.test>'
+};
+```
+
+### `send: attachments[<n>].contentId is already another attachment's — a contentId names one file`
+
+**When:** `send`, with two attachments under the same `contentId` — often
+the same image attached twice, by a list built from two sources.
+**Why:** a `cid:` URL names one file; with two, which one a mail client shows
+is up to the client.
+**Fix:** attach each image once, and give distinct images distinct ids:
+
+```ts
+import type { MailAttachment } from '@nxgt/mail';
+
+declare const logo: MailAttachment;
+declare const others: MailAttachment[];
+
+const attachments = [logo, ...others.filter((file) => file.contentId !== logo.contentId)];
+```
+
+### `send: html shows a cid: URL that no attachment's contentId names — attach the image with that contentId`
+
+**When:** `send`, when the HTML holds a `cid:` URL as a quoted attribute
+value — `src="cid:logo"`, `background='cid:bg'` — and no attachment has that
+`contentId`: the image was not attached, was attached without its
+`contentId`, or under an id spelled otherwise (another case, angle
+brackets). The ids are compared as written.
+**Why:** the e-mail would go out with a broken image, and nothing would tell
+anyone. The refusal names no id: find it in the template.
+**Fix:** attach the image on every send of that e-mail, with the id the
+template writes:
+
+```ts
+import { readFile } from 'node:fs/promises';
+import type { Mailer, Rendered } from '@nxgt/mail';
+
+const logo = await readFile('assets/logo.png');
+
+export async function send(mailer: Mailer, to: string, rendered: Rendered): Promise<void> {
+  await mailer.send({
+    ...rendered,
+    to,
+    attachments: [{ filename: 'logo.png', content: logo, contentType: 'image/png', contentId: 'logo' }],
+  });
+}
+```
+
+A `cid:` in the text part or in the HTML's prose is not read. To show an
+image from a server instead, write its `https:` URL in the template.
 
 ### `send: idempotencyKey must be 1 to 256 visible ASCII characters, as order-42/receipt`
 
@@ -1459,8 +1538,8 @@ A `MailRefused`, `code: 'MAIL_REFUSED'`.
 **When:** `render`, for a placeholder that starts an `href`, `src`,
 `background`, `poster` or `action` attribute in the template
 (`href="{{ link }}"`), when its value is not an absolute `http:`, `https:`
-or `mailto:` URL: a relative link (`/verify`, `//host`), a `javascript:` or
-`data:` URL, or a URL holding whitespace, a quote, `<`, `>` or a backtick —
+or `mailto:` URL: a relative link (`/verify`, `//host`), a `javascript:`,
+`data:` or `cid:` URL, or a URL holding whitespace, a quote, `<`, `>` or a backtick —
 typically an unencoded query value, as `?email=ada lovelace`.
 **Why:** that placeholder decides where the link leads, and a mail client
 follows it as written. The build records which placeholders sit there, in
@@ -1475,6 +1554,10 @@ link.searchParams.set('token', token);
 
 mails.render('verify-email', { name: 'Ada', link: link.href });
 ```
+
+An inline image's `cid:` is refused here too: write it in the template, as
+`src="cid:logo"`, not through a placeholder, and attach the image with that
+`contentId` — see [Sending — inline images](guide/sending.md#inline-images--cid).
 
 When the URL comes from outside your code, handle the refusal as any
 [`MAIL_REFUSED`](#mail_refused--mailrefused-the-message-was-refused-as-malformed):
@@ -1799,8 +1882,8 @@ If the provider cannot carry attachments at all, say so:
 
 ### `conformance: expected 1 delivered attachment, got <n>`
 
-**When:** `send.attachment`: the message arrived with no attachment, or
-with more than the one sent.
+**When:** `send.attachment` or `send.inlineImage`: the message arrived with
+no attachment, or with more than the one sent.
 **Why:** the transport left `message.attachments` out of what it handed
 over — the usual cause when a transport builds the provider's request field
 by field — or the harness reads the parts of the body as attachments too.
@@ -1820,6 +1903,31 @@ object keyed by index (`{"0":0,"1":1,…}`), never base64, so the harness's
 **Fix:** encode the bytes, never a string made of them: base64 from the
 `Uint8Array` for a JSON API, a `Buffer` of the same bytes for nodemailer.
 In the harness, decode base64 back to bytes, not to a string.
+
+### `conformance: the inline image was not delivered with its content id — the HTML shows a broken image`
+
+**When:** `send.inlineImage`: the attachment arrived, but without the
+`contentId` it was sent with, or with another one.
+**Why:** the transport left `contentId` out of what it handed over (nodemailer
+calls it `cid`, Resend `content_id`), or the harness does not read it back —
+or reads it with its angle brackets, `<logo-7f3a@example.test>`.
+**Fix:** pass the id through, and read it back bare:
+
+```ts
+import type { MailAttachment } from '@nxgt/mail';
+
+// In the transport, for nodemailer:
+const toNodemailer = (file: MailAttachment) => ({
+  filename: file.filename,
+  content: Buffer.from(file.content),
+  contentType: file.contentType,
+  ...(file.contentId === undefined ? {} : { cid: file.contentId }),
+});
+
+// In an SMTP harness: mailparser's cid has no angle brackets. Parse with
+// simpleParser(stream, { skipImageLinks: true }), or the HTML read back has
+// its cid: URLs rewritten as data: URLs.
+```
 
 ### Other `conformance:` messages
 
@@ -1847,6 +1955,11 @@ test title:
 | `conformance: the attachment was not delivered with its file name` | `send.attachment` | pass the name as is; the name `reçu n° 42.pdf` needs RFC 2231 encoding in a raw header — nodemailer and a JSON API do it for you |
 | `conformance: the attachment was not delivered with its content type` | `send.attachment` | pass `contentType` through; do not guess it from the name |
 | `conformance: the parts of a message with an attachment were not delivered as sent` | `send.attachment` | keep the HTML and the text parts beside the attachment — `multipart/mixed` around `multipart/alternative` |
+| `conformance: the message with an inline image was not delivered` | `send.inlineImage` | a message with an inline image is a message: deliver it |
+| `conformance: the harness's delivered() reads back no attachments — read them from the receiving end, or skip send.inlineImage with the reason` | `send.inlineImage` | read the attachments back, each with its `contentId`, as for `send.attachment` |
+| `conformance: the inline image was not delivered with its content type` | `send.inlineImage` | pass `contentType` through |
+| `conformance: the inline image was not delivered byte for byte` | `send.inlineImage` | encode the bytes, never a string made of them |
+| `conformance: the html part of a message with an inline image was not delivered as sent` | `send.inlineImage` | send the HTML as is — never rewrite its `cid:` URLs; over SMTP, parse with `skipImageLinks: true` in the harness |
 | `conformance: the send after a failure was not delivered` | `failure.recovers` | do not leave the transport broken after a failure: reopen the connection on the next send |
 | `conformance: faults are required` | a `failure.*` case whose `run` you called yourself | pass `faults` in the context, or go through `runMailerCase`, which skips the case instead |
 

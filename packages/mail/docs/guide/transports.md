@@ -169,6 +169,9 @@ export function createHttpMailer(options: HttpMailerOptions): Mailer {
 						filename: file.filename,
 						content: base64Of(file.content),
 						contentType: file.contentType,
+						// An inline image: the HTML shows it as cid:<contentId>. Drop it, and
+						// send.inlineImage fails.
+						...(file.contentId === undefined ? {} : { contentId: file.contentId }),
 					}))
 				: undefined;
 
@@ -300,6 +303,7 @@ and when `skip` names a case that does not exist
 | `send.recipients` | every recipient is delivered to, written as a string or with a name | no |
 | `send.hostileName` | a name holding `<…>`, a comma and quotes — `Ada <mallory@example.test>, "Eve" <eve@example.test>;` — reaches only its own address: quoting the name is the transport's job | no |
 | `send.attachment` | an attachment — `sampleAttachment`, every byte from 0 to 255 named `reçu n° 42.pdf`, `application/pdf` — is delivered byte for byte, with its file name and its type (compared without case), and the parts beside it as sent | no |
+| `send.inlineImage` | an inline image — `sampleInlineImage`, a PNG with `contentId: 'logo-7f3a@example.test'` — is delivered with that content id (no angle brackets), byte for byte, with its type, and the HTML that shows it as `cid:logo-7f3a@example.test` as sent | no |
 | `send.idempotencyKey` | a message with an `idempotencyKey` is delivered — never refused for it — and the key appears in none of its recipients, its subject, its HTML or its text. A fresh key per run, so a harness that remembers keys still delivers | no |
 | `send.refusesNoRecipient` | no recipient throws `MailRefused`, and nothing is delivered | no |
 | `send.refusesLineBreakInSubject` | a line break in the subject throws `MailRefused`, and nothing is delivered | no |
@@ -311,8 +315,8 @@ and when `skip` names a case that does not exist
 | `failure.recovers` | after a failure, the next send goes through | yes |
 
 The message they send is exported as `sampleMessage`, its attachment as
-`sampleAttachment`, and the cases as data:
-`sendCases` (the ten `send.*`), `failureCases` (the three `failure.*`) and
+`sampleAttachment`, its inline image as `sampleInlineImage`, and the cases as
+data: `sendCases` (the twelve `send.*`), `failureCases` (the three `failure.*`) and
 `allMailerCases` (both, in the order above). A transport's own tests can reuse
 them — send the sample through your transport, or run only the cases that
 need no faults:
@@ -361,7 +365,7 @@ interface DeliveredMail {
 	readonly subject: string;
 	readonly html: string;
 	readonly text: string;
-	readonly attachments?: readonly MailAttachment[]; // as they arrived: [] when none did
+	readonly attachments?: readonly MailAttachment[]; // as they arrived: [] when none did, with each contentId
 }
 
 interface MailerFaults {
@@ -378,7 +382,12 @@ interface MailerFaults {
   `mailparser`'s `attachments` over SMTP, the base64 `content` of a JSON body
   otherwise. `attachments` is optional so a harness written before it still
   compiles, but `send.attachment` **fails** on a harness that leaves it out,
-  saying so — read them back, or skip the case with its reason.
+  saying so — read them back, or skip the case with its reason. An inline
+  image carries its `contentId` as the receiving end read it, without angle
+  brackets: `mailparser`'s `cid`, or the id in the JSON body. Over SMTP, parse
+  with `simpleParser(stream, { skipImageLinks: true })`: by default
+  `mailparser` rewrites each `cid:` in the HTML as a `data:` URL, and
+  `send.inlineImage` then reads back HTML that was never sent.
 - `close()`, when present, is called after the case, pass or fail.
 
 ### Faults — failing the way the provider fails
@@ -399,7 +408,7 @@ import type { DeliveredMail, MailerFaults } from '@nxgt/mail/conformance';
 
 /** What the HTTP mailer above posts: a message, its attachments' bytes as base64. */
 type Posted = Omit<MailMessage, 'attachments'> & {
-	readonly attachments?: readonly { filename: string; content: string; contentType: string }[];
+	readonly attachments?: readonly { filename: string; content: string; contentType: string; contentId?: string }[];
 };
 
 export function fakeProvider() {
@@ -437,6 +446,7 @@ export function fakeProvider() {
 					filename: file.filename,
 					content: Uint8Array.from(atob(file.content), (char) => char.charCodeAt(0)),
 					contentType: file.contentType,
+					...(file.contentId === undefined ? {} : { contentId: file.contentId }),
 				})),
 			}));
 		},
@@ -445,7 +455,7 @@ export function fakeProvider() {
 ```
 
 With the transport and the fake above, the example at the top of this page
-passes all fourteen cases.
+passes all fifteen cases.
 
 ### Without faults
 

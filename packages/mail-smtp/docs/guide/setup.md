@@ -49,7 +49,7 @@ interface SmtpTransporter {
 		html: string;
 		text: string;
 		headers?: Record<string, string>;
-		attachments?: { filename: string; content: Buffer; contentType: string }[];
+		attachments?: { filename: string; content: Buffer; contentType: string; cid?: string }[];
 		disableFileAccess: boolean;
 		disableUrlAccess: boolean;
 	}): Promise<SmtpSentInfo>;
@@ -174,6 +174,7 @@ A string is only an address: `'Acme <noreply@acme.test>'` is refused. Write
 | `headers` | `headers`, copied — `List-Unsubscribe` from [`listUnsubscribe`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/guide/sending.md#one-click-unsubscribe) included, which your relay or nodemailer's `dkim` option must DKIM-sign |
 | `idempotencyKey` | nothing: ignored — see [below](#the-idempotency-key) |
 | `attachments`, each `{ filename, content, contentType }` | `attachments`, each `{ filename, content: Buffer, contentType }` — the bytes copied into a `Buffer`, never a `path` or an `href`; the e-mail is then `multipart/mixed`. Left out when the list is empty |
+| an attachment's `contentId` | its `cid`: nodemailer writes the `Content-ID` header, marks the file `inline` and puts it in a `multipart/related` beside the HTML. Left out when the attachment has none |
 | — | `disableFileAccess: true`, `disableUrlAccess: true`: a part or an attachment is never read from a file or fetched from a URL |
 
 Before any of it, `checkMessage` from `@nxgt/mail` refuses what no transport
@@ -273,6 +274,41 @@ their limit in `EHLO` (`SIZE`), often 10 to 50 MB. Over it, the server
 answers `552` once the message is sent, and `send` throws `MailRefused`:
 [Errors](errors.md#which-smtp-answer-is-which). A large or sensitive file is a
 signed, expiring link in the template instead, which never sits in an inbox.
+
+## Inline images
+
+An attachment with a `contentId` is an image the HTML shows as
+`cid:<contentId>`. It is handed to nodemailer as its `cid`, which writes it
+with a `Content-ID` header and `Content-Disposition: inline`, inside a
+`multipart/related` beside the HTML part:
+
+```ts
+import { readFile } from 'node:fs/promises';
+import nodemailer from 'nodemailer';
+import { createSmtpMailer } from '@nxgt/mail-smtp';
+
+const mailer = createSmtpMailer({
+	transporter: nodemailer.createTransport(process.env.SMTP_URL ?? 'smtp://localhost:1025'),
+	from: 'billing@acme.test',
+});
+const logo = await readFile('assets/logo.png'); // once, at start-up
+
+await mailer.send({
+	to: 'ada@example.com',
+	subject: 'Your receipt',
+	html: '<img src="cid:logo@acme.test" alt="Acme" width="120"><p>Thank you.</p>',
+	text: 'Thank you.',
+	attachments: [{ filename: 'logo.png', content: logo, contentType: 'image/png', contentId: 'logo@acme.test' }],
+});
+```
+
+- `checkMessage` checks the id first — 1 to 127 letters, digits and `.` `_`
+  `~` `+` `-` with at most one `@`, unique in the message — and refuses a
+  `cid:` the HTML quotes as an attribute value that no attachment's
+  `contentId` names: see
+  [`@nxgt/mail` — inline images](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/docs/guide/sending.md#inline-images--cid).
+- The id is passed without angle brackets; nodemailer adds them in the header.
+- It is still an attachment: bytes only, counted in the message's size.
 
 ## With the renderer
 

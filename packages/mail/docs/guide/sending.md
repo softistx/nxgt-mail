@@ -446,6 +446,7 @@ An attachment is a file's **bytes**, its name and its type:
 | `filename` | `string` | The name the recipient's mail client shows and saves it as. Not empty, not `.` or `..`; no `/` or `\`, no line break, no control or format character. Accents and spaces are fine: the transport encodes the name |
 | `content` | `Uint8Array` | The bytes, sent as they are. A Node `Buffer` is a `Uint8Array` |
 | `contentType` | `string` | A bare `type/subtype`, as `application/pdf` or `text/calendar` — no parameters, and never `multipart/*` or `message/*`, which are not files. Nothing guesses it from the file name |
+| `contentId` | `string`, optional | Makes it an [inline image](#inline-images--cid) the HTML shows as `cid:<contentId>` |
 
 ```ts
 import { readFile } from 'node:fs/promises';
@@ -496,9 +497,8 @@ export async function sendExport(mailer: Mailer, to: string, key: string): Promi
 }
 ```
 
-Inline images — a `cid:` the HTML points at — are not supported yet: a
-logo belongs on an `https:` URL, which is what the templates of
-`@nxgt/mail-ui` already use.
+An image the HTML shows from the e-mail itself is an attachment with a
+`contentId`: see [Inline images](#inline-images--cid) below.
 
 `checkMessage` refuses, naming where and never the file's name:
 
@@ -515,6 +515,93 @@ A message the provider refuses — too large, or an attachment it will not
 carry — is a `MailRefused` from the transport (an SMTP `552`; a Resend `400`,
 `413` or `422`), and sending it again unchanged fails again: send a link
 instead.
+
+## Inline images — `cid:`
+
+An attachment with a `contentId` is shown **inside** the HTML: `<img
+src="cid:logo@acme.test">` displays the attachment whose `contentId` is
+`logo@acme.test`. The image travels with the e-mail, so it shows without the
+mail client fetching anything — and a client that blocks remote images still
+shows it.
+
+Write the `cid:` in the template, as it is: it is part of the design, not a
+value known at send time.
+
+```html
+<!-- emails/receipt.vue -->
+<img src="cid:logo@acme.test" alt="Acme" width="120" height="40">
+```
+
+Then attach the image under that id on every send of the e-mail:
+
+```ts
+import { readFile } from 'node:fs/promises';
+import type { MailAttachment, Mailer } from '@nxgt/mail';
+import { createMailRenderer } from '@nxgt/mail/renderer';
+
+const mails = createMailRenderer({ dir: 'dist' });
+
+// Read once, at start-up: the same bytes go with every receipt.
+const logo: MailAttachment = {
+	filename: 'logo.png',
+	content: await readFile('assets/logo.png'),
+	contentType: 'image/png',
+	contentId: 'logo@acme.test',
+};
+
+export async function sendReceipt(mailer: Mailer, to: string, name: string, pdf: Uint8Array): Promise<void> {
+	await mailer.send({
+		to,
+		...mails.render('receipt', { name }),
+		attachments: [logo, { filename: 'receipt.pdf', content: pdf, contentType: 'application/pdf' }],
+	});
+}
+```
+
+**The id.** A `contentId` is the attachment's `Content-ID` header (RFC 2392)
+without its angle brackets. It is 1 to 127 characters — letters, digits and
+`.` `_` `~` `+` `-`, with at most one `@` between two runs of them, as
+`logo` or `logo@acme.test` — so the `cid:` URL is the id as written, with
+nothing to percent-encode, and every provider takes it (Resend takes fewer
+than 128). Two attachments of one message never share an id. The id is
+compared as written: `cid:Logo` does not name `logo`.
+
+**Every `cid:` the HTML shows needs its attachment.** `checkMessage` reads
+each `cid:` URL written as a quoted attribute value — `src="cid:…"`,
+`background='cid:…'`, in any case of `cid:` — and refuses the message when
+no attachment's `contentId` names it. Without the check, the e-mail goes out
+with a broken image, and nothing tells anyone. A `cid:` in the text part, or
+in the HTML's prose, is not a reference and is not read. The reverse is
+allowed: an attachment whose id the HTML never names is sent, and a mail
+client usually lists it as a file.
+
+**Not in a URL variable.** A placeholder in `src` or `href` is filled only with
+an `http:`, `https:` or `mailto:` URL; `cid:logo` there is refused by
+`render` like `javascript:`. A URL filled at send time may come from outside,
+and would then choose which attachment the e-mail shows.
+
+**Portability.** Most desktop and mobile clients show inline images; some
+webmails list them as attachments too, or not at all. For a logo on every
+e-mail, an `https:` image — what `@nxgt/mail-ui`'s templates use — remains
+the most portable choice; an inline image suits a picture that must show with
+remote images blocked, or that must not live on a public URL.
+
+What each transport sends:
+
+| Transport | The `contentId` becomes |
+| --- | --- |
+| `@nxgt/mail-smtp` | nodemailer's `cid`: a `Content-ID` header, `Content-Disposition: inline`, the image in a `multipart/related` beside the HTML |
+| `@nxgt/mail-resend` | the attachment's `content_id` |
+| the memory mailer | kept on the attachment in `mailer.sent` |
+
+`checkMessage` refuses, naming where and never the id:
+
+| Written | Answer |
+| --- | --- |
+| `contentId: '<logo@acme.test>'`, `''`, `'logo image'`, `'a@b@c'`, `'logo%40acme'`, or longer than 127 characters | `MailRefused`: `send: attachments[0].contentId must be 1 to 127 letters, digits and . _ ~ + -, with at most one @, as logo@acme.test` |
+| two attachments with `contentId: 'logo'` | `MailRefused`: `send: attachments[1].contentId is already another attachment's — a contentId names one file` |
+| `html: '<img src="cid:logo">'` and no attachment with `contentId: 'logo'` | `MailRefused`: `send: html shows a cid: URL that no attachment's contentId names — attach the image with that contentId` |
+| `cid: 'logo'` on an attachment | a compile error: the field is `contentId` |
 
 ## Idempotency — sending once
 

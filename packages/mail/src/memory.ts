@@ -55,6 +55,9 @@ function copyOf(message: MailMessage): MailMessage {
 			filename: attachment.filename,
 			content: new Uint8Array(attachment.content),
 			contentType: attachment.contentType,
+			...(attachment.contentId === undefined
+				? {}
+				: { contentId: attachment.contentId }),
 		})),
 	};
 }
@@ -89,6 +92,7 @@ function fingerprintOf(message: MailMessage): string {
 		(message.attachments ?? []).map((file) => [
 			file.filename,
 			file.contentType,
+			file.contentId ?? null,
 			hexOf(file.content),
 		]),
 	]);

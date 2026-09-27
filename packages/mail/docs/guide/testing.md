@@ -88,6 +88,29 @@ it('attaches the invoice', async () => {
 });
 ```
 
+An inline image keeps its `contentId`, so a test can check the image the HTML
+shows went with it:
+
+```ts
+import { expect, it } from 'bun:test';
+import { createMemoryMailer } from '@nxgt/mail';
+
+it('sends the logo the receipt shows', async () => {
+	const mailer = createMemoryMailer();
+	await mailer.send({
+		to: 'ada@example.com',
+		subject: 'Your receipt',
+		html: '<img src="cid:logo@acme.test" alt="Acme"><p>Thank you.</p>',
+		text: 'Thank you.',
+		attachments: [{ filename: 'logo.png', content: new Uint8Array([0x89, 0x50]), contentType: 'image/png', contentId: 'logo@acme.test' }],
+	});
+	expect(mailer.sent[0]?.attachments?.[0]?.contentId).toBe('logo@acme.test');
+});
+```
+
+A `cid:` the HTML shows with no attachment of that `contentId` is refused
+with `MailRefused` before anything reaches the outbox, as by every transport.
+
 ## `failNext(error?)` — making a send fail
 
 The next send that reaches the hand-over rejects with `error` — by default a

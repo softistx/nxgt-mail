@@ -61,6 +61,23 @@ describe('createMemoryMailer', () => {
 		]);
 	});
 
+	it('keeps the content id of an inline image', async () => {
+		const mailer = createMemoryMailer();
+		await mailer.send({
+			...message,
+			html: '<img src="cid:logo">',
+			attachments: [
+				{
+					filename: 'logo.png',
+					content: new Uint8Array([1]),
+					contentType: 'image/png',
+					contentId: 'logo',
+				},
+			],
+		});
+		expect(mailer.sent[0]?.attachments?.[0]?.contentId).toBe('logo');
+	});
+
 	it('keeps only the bytes of a Buffer, not the pool it is a view on', async () => {
 		const mailer = createMemoryMailer();
 		const content = Buffer.from('%PDF');
@@ -167,6 +184,7 @@ describe('createMemoryMailer', () => {
 				...message,
 				attachments: [{ ...pdf, content: new Uint8Array([1, 3]) }],
 			},
+			{ ...message, attachments: [{ ...pdf, contentId: 'receipt' }] },
 		]) {
 			const error = await mailer
 				.send({

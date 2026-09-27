@@ -30,6 +30,16 @@ const CONTENT_TYPE =
 // multipart/* and message/* are MIME containers, not files: nodemailer writes
 // them unencoded, and the receiving end reads back no attachment at all.
 const CONTAINER_TYPE = /^(?:multipart|message)\//i;
+// RFC 2392: a `cid:` URL is `cid:` and the Content-ID without its angle
+// brackets, an addr-spec, percent-encoded. Only the characters a URL takes as
+// they are, and at most one `@` between two runs of them: the URL is then the
+// id as written, and the header holds nothing to quote. At most 127
+// characters: Resend takes "less than 128".
+const CONTENT_ID = /^[A-Za-z0-9._~+-]+(?:@[A-Za-z0-9._~+-]+)?$/;
+const CONTENT_ID_MAX = 127;
+// A `cid:` URL as a quoted attribute value, `src="cid:…"` or `='cid:…'` —
+// how a built template writes one. The scheme is case-insensitive.
+const CID_REFERENCE = /=\s*(["'])cid:([^"']*)\1/gi;
 // Written into a header by the transports that use it (Resend's
 // `Idempotency-Key`): visible ASCII only, so no line break, and Resend's length.
 const IDEMPOTENCY_KEY = /^[\x21-\x7E]{1,256}$/;
@@ -97,6 +107,40 @@ function checkAttachment(attachment: MailAttachment, where: string): void {
 			`send: ${where}.contentType must be a file's type/subtype, as application/pdf — never multipart/* or message/*`,
 		);
 	}
+	if (
+		attachment.contentId !== undefined &&
+		(typeof attachment.contentId !== 'string' ||
+			attachment.contentId.length > CONTENT_ID_MAX ||
+			!CONTENT_ID.test(attachment.contentId))
+	) {
+		throw new MailRefused(
+			`send: ${where}.contentId must be 1 to 127 letters, digits and . _ ~ + -, with at most one @, as logo@acme.test`,
+		);
+	}
+}
+
+/**
+ * Refuses two attachments under one `contentId`, and a `cid:` URL the HTML
+ * quotes as an attribute value that no attachment's `contentId` names.
+ */
+function checkInlineImages(message: MailMessage): void {
+	const ids = new Set<string>();
+	(message.attachments ?? []).forEach((attachment, index) => {
+		if (attachment.contentId === undefined) return;
+		if (ids.has(attachment.contentId)) {
+			throw new MailRefused(
+				`send: attachments[${index}].contentId is already another attachment's — a contentId names one file`,
+			);
+		}
+		ids.add(attachment.contentId);
+	});
+	for (const [, , id] of message.html.matchAll(CID_REFERENCE)) {
+		if (!ids.has(id ?? '')) {
+			throw new MailRefused(
+				"send: html shows a cid: URL that no attachment's contentId names — attach the image with that contentId",
+			);
+		}
+	}
 }
 
 /**
@@ -118,7 +162,11 @@ function checkAttachment(attachment: MailAttachment, where: string): void {
  *   same as absent — and each entry has its bytes as a `Uint8Array`, a
  *   `filename` that is not empty, `.` or `..` and holds no `/`, `\`, line
  *   break, control or format character, and a `contentType` that is a bare
- *   `type/subtype`, never `multipart/*` or `message/*`;
+ *   `type/subtype`, never `multipart/*` or `message/*`, and a `contentId`,
+ *   when present, of 1 to 127 letters, digits and `.` `_` `~` `+` `-` with at
+ *   most one `@`, unique among the attachments;
+ * - every `cid:` URL `html` quotes as an attribute value (`src="cid:…"`)
+ *   names an attachment's `contentId`;
  * - `idempotencyKey`, when present, is 1 to 256 visible ASCII characters.
  */
 export function checkMessage(message: MailMessage): void {
@@ -174,6 +222,7 @@ export function checkMessage(message: MailMessage): void {
 			checkAttachment(message.attachments[index], `attachments[${index}]`);
 		}
 	}
+	checkInlineImages(message);
 
 	if (
 		message.idempotencyKey !== undefined &&

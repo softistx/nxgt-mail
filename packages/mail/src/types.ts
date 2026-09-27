@@ -39,6 +39,23 @@ export interface MailAttachment {
 	readonly filename: string;
 	readonly content: Uint8Array;
 	readonly contentType: string;
+	/**
+	 * Makes the file an **inline image**: the HTML shows it with
+	 * `<img src="cid:logo@acme.test">`, where `logo@acme.test` is this id —
+	 * the file's `Content-ID` (RFC 2392), written without its angle brackets.
+	 *
+	 * 1 to 127 characters: letters, digits and `.` `_` `~` `+` `-`, with at
+	 * most one `@` between two such runs, as `logo` or `logo@acme.test` — so
+	 * the `cid:` URL is the id as is, with nothing to percent-encode. Unique
+	 * among the message's attachments, compared as written.
+	 *
+	 * Every `cid:` URL the HTML quotes as an attribute value
+	 * (`src="cid:…"`, `background='cid:…'`) must name an attachment's
+	 * `contentId`, or `checkMessage` refuses the message: a broken image is
+	 * sent, and nobody hears of it. An attachment whose id the HTML never
+	 * names is sent all the same; a mail client usually lists it as a file.
+	 */
+	readonly contentId?: string;
 }
 
 /**
