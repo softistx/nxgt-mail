@@ -1,8 +1,15 @@
 import { afterAll, describe, expect, test } from 'bun:test';
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import {
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from 'node:fs';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { maizzleComponents } from './packaged';
+import { COMPONENTS_DIR } from './plugin';
 
 const api = (tag: string) => ({
 	findComponent: async (name: string) =>
@@ -85,4 +92,22 @@ describe('a component installed from npm', () => {
 		expect(html).toContain('Brand logo');
 		expect(html).toContain('Acme box');
 	}, 60_000);
+});
+
+describe("the package's components", () => {
+	test('none uses its own name as a tag, which Vue would read as the file itself', () => {
+		const offenders = readdirSync(COMPONENTS_DIR)
+			.filter((file) => file.endsWith('.vue'))
+			.filter((file) => {
+				const self = file
+					.slice(0, -'.vue'.length)
+					.replace(/(^|-)(.)/g, (_, _dash: string, c: string) =>
+						c.toUpperCase(),
+					);
+				return new RegExp(`<${self}[\\s/>]`).test(
+					readFileSync(`${COMPONENTS_DIR}/${file}`, 'utf8'),
+				);
+			});
+		expect(offenders).toEqual([]);
+	});
 });

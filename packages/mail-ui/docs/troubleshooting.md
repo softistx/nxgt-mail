@@ -8,9 +8,7 @@ How the messages are shaped:
 
 - **A wiring mistake is a `TypeError` starting `ui:`**, thrown by the `ui()`
   call in `maizzle.config.ts` when the config loads, so `maizzle build` and
-  `maizzle serve` stop before any template is built. Fix the call. One
-  failure while building is a plain `Error` too, since no option causes
-  it: `ui: no component resolver of Maizzle was found — is @maizzle/framework 6 installed?`.
+  `maizzle serve` stop before any template is built. Fix the call.
 - **A build failure is a plain `Error`**, thrown while `maizzle build` renders
   a template, and printed after Vue's own
   `[Vue warn]: Unhandled error during execution of setup function`, or
@@ -41,9 +39,9 @@ The samples below use the locales `en` and `fr`, the template
 - [`ui: theme must be an object of tokens, as { 'color-primary': '#0f766e' }`](#ui-theme-must-be-an-object-of-tokens-as--color-primary-0f766e-)
 - [`ui: theme.--color-primary is not a token of the theme — name one of theme.css without its --, as color-primary`](#ui-theme--color-primary-is-not-a-token-of-the-theme--name-one-of-themecss-without-its----as-color-primary)
 - [`ui: theme.color-primary must be a CSS value, as #0f766e or 8px`](#ui-themecolor-primary-must-be-a-css-value-as-0f766e-or-8px)
-- [`ui: no component resolver of Maizzle was found — is @maizzle/framework 6 installed?`](#ui-no-component-resolver-of-maizzle-was-found--is-maizzleframework-6-installed)
 
 **Build** — while `maizzle build` renders
+- [`ui: no component resolver of Maizzle was found — is @maizzle/framework 6 installed?`](#ui-no-component-resolver-of-maizzle-was-found--is-maizzleframework-6-installed)
 - [`[Vue warn]: Failed to resolve component: NxLayout`](#vue-warn-failed-to-resolve-component-nxlayout)
 - [`NxLayout: ui() is not in the plugins of defineMailConfig`](#nxlayout-ui-is-not-in-the-plugins-of-definemailconfig)
 - [`ui: <NxButon> in emails/welcome.vue is no component — check its name, or add the plugin or the components folder that brings it`](#ui-nxbuton-in-emailswelcomevue-is-no-component--check-its-name-or-add-the-plugin-or-the-components-folder-that-brings-it)
@@ -232,6 +230,13 @@ end it or open another is refused.
 theme: { 'color-primary': '#0f766e', 'radius-lg': '4px' }   // not 4
 ```
 
+---
+
+## Build
+
+These fail while `maizzle build` renders a template: the build stops, and the
+line to read starts `Error:`, after Vue's warning and a stack trace.
+
 ### `ui: no component resolver of Maizzle was found — is @maizzle/framework 6 installed?`
 
 This one is a plain `Error`, not a `TypeError`: the call is right, the
@@ -248,13 +253,6 @@ template would. `@maizzle/framework` 6 is a required peer.
 ```sh
 bun add @nxgt/mail-ui @maizzle/framework@^6
 ```
-
----
-
-## Build
-
-These fail while `maizzle build` renders a template: the build stops, and the
-line to read starts `Error:`, after Vue's warning and a stack trace.
 
 ### `[Vue warn]: Failed to resolve component: NxLayout`
 
