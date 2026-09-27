@@ -57,7 +57,7 @@ so a missing build fails there, not at the first send:
 ```ts
 import { type Mailer, pickLocale } from '@nxgt/mail';
 import { createMailRenderer } from '@nxgt/mail/renderer';
-import type { MailEmails } from './generated/mail'; // written by the build, committed
+import type { MailEmails } from './generated/mail'; // written by each build, git-ignored
 
 export const mails = createMailRenderer<MailEmails>({ dir: 'dist' }); // throws now if dist/ is missing
 
@@ -78,7 +78,8 @@ throws `MailRefused`. A missing or unknown variable, e-mail or locale throws an
 `Error`.
 
 `<MailEmails>` is optional. `@nxgt/mail-i18n` writes it after each build, in
-`generated/mail.ts`, from the manifest; commit it. With it, the compiler
+`generated/mail.ts`, from the manifest; git-ignore it, and build before
+type-checking. With it, the compiler
 refuses what `render` would throw: an e-mail the build does not have, a
 variable missing or unknown, and a number for a URL variable, as
 `Argument of type '"verify-emial"' is not assignable to parameter of type

@@ -79,10 +79,10 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   CI.
 - **The renderer typed by the build, v0.1.0** — after each `maizzle build`, the
   plugin writes `generated/mail.ts`: `MailEmails`, each e-mail with the
-  variables it takes, a URL variable as a `string`. Committed, it lets
-  `createMailRenderer<MailEmails>` from `@nxgt/mail/renderer` refuse an
+  variables it takes, a URL variable as a `string`. With it,
+  `createMailRenderer<MailEmails>` from `@nxgt/mail/renderer` refuses an
   unknown e-mail, a missing or unknown variable, or a number for a URL at
-  compile time, without a build in CI. Rewritten only when it changes;
+  compile time. Rewritten only when it changes;
   `rendererTypes` moves it, or `false` turns it off.
 - **A starter project, with v0.1.0** — the official Maizzle starter with
   `defineMailConfig`, the i18n and the UI plugins wired in as the READMEs

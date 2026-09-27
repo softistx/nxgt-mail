@@ -12,7 +12,7 @@ emails/verify-email.vue    the project's own e-mail: Nx components, t() and plac
 locales/en.json, fr.json   its messages; the shared ones come from @nxgt/mail-ui
 maizzle.config.ts          ui(), i18n(), and one preset of @nxgt/mail-presets: sign-in-code
 send.ts                    renders every e-mail in both locales, sends them to a memory mailer
-generated/mail.ts          written by the build, committed: the e-mails and their variables
+generated/mail.ts          written by each build, git-ignored: the e-mails and their variables
 ```
 
 ## Start your own
@@ -40,7 +40,8 @@ Then:
 2. Copy `maizzle.config.ts`, `locales/` and `send.ts`, and delete
    `tailwind.css` and `public/`, which nothing reads any more.
 3. Add `"send.ts"` (or your sending code) to `tsconfig.json`'s `include`,
-   so it is type-checked against `generated/mail.ts`.
+   so it is type-checked against `generated/mail.ts`, and add `generated` to
+   `.gitignore`: each build writes it.
 4. Add the `send` and `typecheck` scripts of this folder's `package.json`,
    and keep the starter's `"postinstall": "maizzle prepare"` — see
    [Differences](#differences-from-the-official-starter).
@@ -60,7 +61,7 @@ cd examples/starter
 | `bun run dev` | `maizzle serve`: every e-mail listed once per locale, `en/verify-email`, `fr/verify-email`…, reloaded when a template or a catalogue changes |
 | `bun run build` | `maizzle build`: the files below, and `generated/mail.ts` when the e-mails or their variables changed |
 | `bun run send` | `send.ts`, after a build: renders each e-mail in each locale and prints its subject |
-| `bun run typecheck` | `maizzle prepare`, then `vue-tsc`: the templates against the catalogues' keys, and `send.ts` against `generated/mail.ts` |
+| `bun run typecheck` | `maizzle prepare` (the components' types), `maizzle build` (`generated/mail.ts`), then `vue-tsc`: the templates against the catalogues' keys, and `send.ts` against `generated/mail.ts` |
 
 `maizzle build` writes:
 
@@ -103,9 +104,10 @@ await mailer.send({ to, from, ...mails.render('verify-email', { name, link }) })
 In production, `mailer` comes from
 [`@nxgt/mail-smtp`](../../packages/mail-smtp) or
 [`@nxgt/mail-resend`](../../packages/mail-resend), and `dist/` is deployed
-with the server. `generated/mail.ts` is committed: with it,
+with the server. `generated/mail.ts` is written by each build and
+git-ignored, so `typecheck` builds first: with it,
 `mails.render('verify-emial', …)`, a missing `link` or a number for it do
-not compile, without running a build first.
+not compile.
 
 ## Differences from the official starter
 
@@ -115,7 +117,8 @@ not compile, without running a build first.
 - **No `tailwind.css`**: `<NxLayout>` imports Tailwind and the theme of
   `@nxgt/mail-ui` itself. No `public/` either: a mail client loads no relative
   image, so the brand's logo is an absolute URL (`ui({ brand: { logo } })`).
-- **`.gitignore`** also ignores `dist/`, which the build rewrites.
+- **`.gitignore`** also ignores `dist/` and `generated/`, which the build
+  rewrites.
   `.maizzle/`, where the i18n plugin writes its files and the editor's
   types, is ignored too.
 - **`tsconfig.json`** also includes `send.ts`. `.maizzle/*.d.ts` stays in it:
@@ -123,7 +126,7 @@ not compile, without running a build first.
 - **No `postinstall`** in this copy's `package.json`, only here: in this
   repository, `bun install` runs before the packages are built, and
   `maizzle prepare` would fail to load their `dist/`. The root's own
-  `postinstall` prepares it once they are built. **Keep
+  `postinstall` prepares and builds it once they are built. **Keep
   `"postinstall": "maizzle prepare"` in your project**, where the packages
   come from npm already built.
 - The `@nxgt/*` dependencies are `workspace:*`, so CI builds the starter

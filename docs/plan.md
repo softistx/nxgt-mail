@@ -320,8 +320,8 @@ safe ? (templates et data) », and his « OK » to the answer:
 - `i18n()` writes, after each build, `generated/mail.ts`: `MailEmails`, each
   e-mail with the variables the manifest records — a URL variable a `string`,
   any other a `string | number`. `rendererTypes` moves it, or `false` turns it
-  off. The project commits it, so the code that sends type-checks without a
-  build.
+  off. The project git-ignores it and builds before type-checking (first
+  planned as committed; Steve chose to ignore it, PR #33).
 - `createMailRenderer<MailEmails>(…)` types `render`: an unknown e-mail, a
   missing or unknown variable, and a number for a URL are compile errors, for
   a literal name and variables written at the call.
@@ -372,7 +372,7 @@ Progress: `examples/starter` ✅ — the official Maizzle 6 starter (`npx maizzl
 new`, as of 2026-06) with `ui()`, `i18n()` and one preset (`sign-in-code`)
 wired as the READMEs say, a template of its own (`verify-email`) and `en`/`fr`
 catalogues. A workspace, private, on the packages as `workspace:*`. CI builds
-it, checks its committed `generated/mail.ts`, renders every e-mail in both
+it (its `generated/mail.ts` is git-ignored since, written by each build), renders every e-mail in both
 locales through `send.ts` (`createMailRenderer<MailEmails>` and the memory
 mailer), and checks that `maizzle serve` lists them; the root `typecheck`
 checks its templates and `send.ts` with `vue-tsc`.
