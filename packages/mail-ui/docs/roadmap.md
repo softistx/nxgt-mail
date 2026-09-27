@@ -5,7 +5,15 @@ no dates here, and the version something shipped in is the only number.
 
 ## Now
 
-Nothing between releases.
+Built, not yet published:
+
+- **Layout and content components** — `NxSpacer` (vertical space in the
+  theme's steps, on Maizzle's `<Spacer>`), `NxExtendedLabel`,
+  `NxHighlightText`, `NxKbd`, `NxCountBadge`, `NxActionCard`, `NxFigure`,
+  `NxLinkButton`, `NxIconButton` (its icon an image by URL or a character)
+  and `NxButtonGroup`, with material-vue's names and props, and the shared
+  message `common.countBadge.label` in `en` and `fr`. A count or a query
+  given as a placeholder fails the build.
 
 ## Next
 
@@ -13,10 +21,7 @@ Nothing yet.
 
 ## Later
 
-- **`NxSpacer`** — a spacer in the package's own style. Until then, Maizzle's
-  `<Spacer>` does the job.
-
-A request is welcome as an
+Nothing yet. A request is welcome as an
 [issue](https://github.com/softistx/nxgt-mail/issues).
 
 ## Not planned
@@ -36,6 +41,19 @@ A request is welcome as an
 - **Interactive components** — menus, dialogs, tabs, form fields: an e-mail
   runs no script, so only the components that make sense on a page that is
   read, not used, are mirrored.
+- **`NxKbdShortcut`** — material-vue writes `⌘` or `Ctrl` by the reader's
+  platform, which an e-mail cannot know when it is built: write each key with
+  `NxKbd`.
+- **A selectable `NxActionCard`, and hover or focus rings** — an e-mail runs
+  no script and has no focus: an action card shows a choice already made
+  (`active`), or links its title with `href`.
+- **A router's `to`, `replace` and `target`** — an e-mail has no router:
+  `NxLinkButton`'s `to` is a URL, and `NxIconButton`, which takes an `href`,
+  stands for material-vue's `IconLinkButton`. `ResponsiveLinkButton`, which
+  hides its text on a narrow screen, is not mirrored: a mail client's support
+  of the media query it needs is too uneven to hide a button's words on.
+- **A badge over a corner** — a mail client positions nothing: `NxCountBadge`
+  sets its badge after its content, on the same line.
 - **A relative logo or brand link** — refused by `ui()`: a mail client loads
   nothing relative, so `brand.logo.src` and `brand.url` are absolute
   `http(s)` URLs.

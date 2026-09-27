@@ -47,6 +47,7 @@ because you have an account with Acme.`
 | `common.metrics.thisPeriod` | `This period` | `Cette période` | — |
 | `common.metrics.lastPeriod` | `Last period` | `Période précédente` | — |
 | `common.seeAlso` | `See also` | `Voir aussi` | — |
+| `common.countBadge.label` | `{count, plural, one {# notification} other {# notifications}}` | `{count, plural, one {# notification} other {# notifications}}` | `count`, a number |
 
 ```ts
 import type { Catalogues } from '@nxgt/mail-i18n';
@@ -62,7 +63,8 @@ gives its `+N`, for a screen reader; `common.timeline.empty` is what
 `common.metrics.ofTarget` is `<NxGoalCard>`'s `of 24`, with its `target`;
 `common.metrics.thisPeriod` and `common.metrics.lastPeriod` label
 `<NxCompareCard>`'s two boxes, unless given their `label`; `common.seeAlso`
-heads `<NxSeeAlso>`, unless given `label`. The other two, `common.greeting`
+heads `<NxSeeAlso>`, unless given `label`; `common.countBadge.label` is what
+a screen reader hears for `<NxCountBadge>`'s badge. The other two, `common.greeting`
 and `common.footer.ignore`, are for your templates.
 
 ## `<NxLayout>` needs `common.footer.why`
@@ -96,14 +98,14 @@ keys you want to change, and keep the others.
 ```
 
 ```json
-// locales/fr.json — no common: the nine French messages are uiCatalogues'
+// locales/fr.json — no common: the ten French messages are uiCatalogues'
 {
 	"welcome": { "subject": "Bienvenue chez Acme, {name}", "body": "Votre compte est prêt." }
 }
 ```
 
 The English build writes `Hi {{ name }},`, the French one
-`Bonjour {{ name }},`; both keep the eight other `common` messages from the
+`Bonjour {{ name }},`; both keep the nine other `common` messages from the
 package. The merge rules — several sources, a
 message replacing a group — are in `@nxgt/mail-i18n`'s
 [Catalogues](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-i18n/docs/guide/catalogues.md#catalogues-from-a-package).
@@ -115,7 +117,7 @@ the `en` message does not declare.
 ## Another locale
 
 `uiCatalogues` has `en` and `fr`. For any other locale, your catalogue writes
-the nine `common` keys, or the build fails on the first one missing:
+the ten `common` keys, or the build fails on the first one missing:
 
 ```text
 Error: i18n: de: common.footer.ignore is missing — en, the fallback locale, has it
@@ -137,14 +139,16 @@ Error: i18n: de: common.footer.ignore is missing — en, the fallback locale, ha
 			"thisPeriod": "Dieser Zeitraum",
 			"lastPeriod": "Vorheriger Zeitraum"
 		},
-		"seeAlso": "Siehe auch"
+		"seeAlso": "Siehe auch",
+		"countBadge": { "label": "{count, plural, one {# Benachrichtigung} other {# Benachrichtigungen}}" }
 	},
 	"welcome": { "subject": "Willkommen bei Acme, {name}", "body": "Ihr Konto ist bereit." }
 }
 ```
 
 `<NxLayout>` passes `{brand}` to `common.footer.why`, the brand's name, and
-`<NxGoalCard>` `{target}` to `common.metrics.ofTarget`. A translation may
+`<NxGoalCard>` `{target}` to `common.metrics.ofTarget`, and `<NxCountBadge>`
+`{count}` to `common.countBadge.label`. A translation may
 leave one out; it cannot add another argument.
 
 ## See also

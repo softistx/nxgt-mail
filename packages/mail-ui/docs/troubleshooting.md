@@ -42,6 +42,8 @@ The samples below use the locales `en` and `fr`, the template
 - [`NxLayout: ui() is not in the plugins of defineMailConfig`](#nxlayout-ui-is-not-in-the-plugins-of-definemailconfig)
 - [`i18n: en: welcome calls t('common.footer.why'), which is not a key of the catalogues`](#i18n-en-welcome-calls-tcommonfooterwhy-which-is-not-a-key-of-the-catalogues)
 - [`NxProgress: modelValue must be a number known when the e-mail is built — a placeholder is filled only when it is sent`](#nxprogress-modelvalue-must-be-a-number-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent)
+- [`NxCountBadge: count must be a number known when the e-mail is built — a placeholder is filled only when it is sent`](#nxcountbadge-count-must-be-a-number-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent)
+- [`NxHighlightText: query must be text known when the e-mail is built — a placeholder is filled only when it is sent`](#nxhighlighttext-query-must-be-text-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent)
 
 **Traps: a build that succeeds and is wrong**
 - [A tint written with an alpha (`bg-primary/15`) is missing in Outlook](#a-tint-written-with-an-alpha-bg-primary15-is-missing-in-outlook)
@@ -312,7 +314,8 @@ past its `max` (its `+N` calls `t('common.avatarGroup.more')`), an
 (`t('common.timeline.empty')`), an `<NxGoalCard>`
 (`t('common.metrics.ofTarget')`), an `<NxCompareCard>` whose boxes have no
 `label` (`t('common.metrics.thisPeriod')`, `t('common.metrics.lastPeriod')`),
-an `<NxSeeAlso>` with links and no `label` (`t('common.seeAlso')`), or that calls
+an `<NxSeeAlso>` with links and no `label` (`t('common.seeAlso')`), an
+`<NxCountBadge>` above 0 (`t('common.countBadge.label')`), or that calls
 `t('common.greeting')` or another `common.` key, when `@nxgt/mail-i18n` is in the plugins without
 the package's messages.
 **Why:** the `common.*` messages ship in `uiCatalogues`, not in the
@@ -362,6 +365,44 @@ draws no bar:
 <template>
   <NxProgress :model-value="2" :max="3" />
   <NxTypography>{{ t('onboarding.progress', { done: placeholder('done') }) }}</NxTypography>
+</template>
+```
+
+### `NxCountBadge: count must be a number known when the e-mail is built — a placeholder is filled only when it is sent`
+
+The prop named is `count` or `max`.
+
+**When:** `maizzle build`, on a template whose `<NxCountBadge>` is given a
+placeholder or any value that is not a number:
+`<NxCountBadge :count="placeholder('unread')">Inbox</NxCountBadge>`, or
+`<NxCountBadge count="3">` (a string, without the `:`).
+**Why:** whether the badge shows, and whether it reads `99+`, is decided when
+the e-mail is built; a placeholder is only filled when it is sent. Rather than
+draw a badge that says `{{ unread }}`, the build stops.
+**Fix:** pass a number with `v-bind`. For a count that differs per
+recipient, write it in an `<NxBadge>`, whose text a placeholder fills:
+
+```vue
+<template>
+  <NxCountBadge :count="3">Inbox</NxCountBadge>
+  <NxTypography>Inbox <NxBadge variant="error">{{ placeholder('unread') }}</NxBadge></NxTypography>
+</template>
+```
+
+### `NxHighlightText: query must be text known when the e-mail is built — a placeholder is filled only when it is sent`
+
+**When:** `maizzle build`, on a template whose `<NxHighlightText>` has a
+placeholder in its `query`:
+`<NxHighlightText :text="t('search.results')" :query="placeholder('search')" />`.
+**Why:** the matches are marked when the e-mail is built; a placeholder is only
+filled when it is sent, so there is nothing to match yet. A placeholder in
+`text` is fine: it is written whole, and never marked.
+**Fix:** mark a query known at build time, or write the text without
+highlighting:
+
+```vue
+<template>
+  <NxHighlightText :text="t('search.results', { name: placeholder('name') })" query="invoice" />
 </template>
 ```
 

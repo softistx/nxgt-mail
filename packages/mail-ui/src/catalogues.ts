@@ -21,6 +21,9 @@ export const uiCatalogues = {
 				lastPeriod: 'Last period',
 			},
 			seeAlso: 'See also',
+			countBadge: {
+				label: '{count, plural, one {# notification} other {# notifications}}',
+			},
 			footer: {
 				why: 'You received this e-mail because you have an account with {brand}.',
 				ignore: 'If you did not ask for this, you can ignore this e-mail.',
@@ -38,6 +41,9 @@ export const uiCatalogues = {
 				lastPeriod: 'Période précédente',
 			},
 			seeAlso: 'Voir aussi',
+			countBadge: {
+				label: '{count, plural, one {# notification} other {# notifications}}',
+			},
 			footer: {
 				why: 'Vous recevez cet e-mail parce que vous avez un compte chez {brand}.',
 				ignore:

@@ -48,7 +48,13 @@ describe('a project built with the ui plugin', () => {
 	}, 120_000);
 
 	test("renders material-vue's colours as hex, with nothing a client must resolve", async () => {
-		for (const email of ['welcome', 'gallery', 'sequence', 'summary']) {
+		for (const email of [
+			'welcome',
+			'gallery',
+			'sequence',
+			'summary',
+			'content',
+		]) {
 			const html = await read(`dist/en/${email}.html`);
 			expect({ email, oklch: html.includes('oklch(') }).toEqual({
 				email,
@@ -393,11 +399,160 @@ describe('a project built with the ui plugin', () => {
 		);
 	});
 
+	test("spaces by the theme's steps, on Maizzle's Spacer", async () => {
+		const html = await read('dist/en/content.html');
+		expect(html).toContain('<div role="separator" style="line-height: 32px;">');
+		expect(html).toContain('<div role="separator" style="line-height: 24px;">');
+	});
+
+	test('underlines an extended label with a bar, left out of the plain text, and its trailing slot on the right', async () => {
+		const html = await read('dist/en/content.html');
+		expect(html).toMatch(
+			/<h3 style="margin: 0; font-size: 18px;[^>]*font-weight: 600;[^>]*>\s*Your inbox\s*<\/h3>/,
+		);
+		expect(html).toContain(
+			'<td height="4" style="height: 4px; line-height: 4px; font-size: 4px; mso-line-height-rule: exactly; width: 56px; border-radius: 4px; background-color: #485096;',
+		);
+		expect(styleOf(html, 'Unread', 'td')).toContain(
+			'text-align: right; vertical-align: bottom;',
+		);
+	});
+
+	test('counts in a badge after its content, 99+ past max, nothing at 0, named in each locale', async () => {
+		const html = await read('dist/en/content.html');
+		expect(html).toContain(
+			'>Unread</a><span role="img" title="3 notifications" aria-label="3 notifications"',
+		);
+		expect(styleOf(html, '3', 'span')).toContain('background-color: #e40014;');
+		expect(styleOf(html, '99+', 'span')).toContain(
+			'background-color: #54a2ff;',
+		);
+		expect(html).toContain('<span>none </span>');
+		expect(await read('dist/fr/content.html')).toContain(
+			'aria-label="120 notifications"',
+		);
+		const text = await read('dist/en/content.txt');
+		expect(text).toContain('https://acme.example/inbox\n\n(3)\n');
+		expect(text).toContain('Mentions in threads (99+) and none');
+	});
+
+	test('marks each match of a query, whatever its case, and never inside a placeholder', async () => {
+		const html = await read('dist/en/content.html');
+		const mark = (text: string) =>
+			`<mark style="border-radius: 4px; background-color: #dadcea; color: inherit;">${text}</mark>`;
+		expect(html).toContain(
+			`<span>${mark('Acme')} invoices for {{ name }}, and ${mark('acme')} receipts</span>`,
+		);
+		expect(await read('dist/en/content.txt')).toContain(
+			'Results for Acme invoices for {{ name }}, and acme receipts',
+		);
+	});
+
+	test('writes a key in monospace on the muted background', async () => {
+		const html = await read('dist/en/content.html');
+		for (const key of ['Ctrl', 'K']) {
+			expect(styleOf(html, key, 'kbd')).toContain('background-color: #f1f5f9;');
+			expect(styleOf(html, key, 'kbd')).toContain('font-family: ui-monospace,');
+		}
+		expect(await read('dist/en/content.txt')).toContain(
+			'Press Ctrl + K to search.',
+		);
+	});
+
+	test('rings an active action card, ticks its indicator, links its title, and leaves the indicator out of the text', async () => {
+		const html = await read('dist/en/content.html');
+		expect(html).toContain(
+			'<td style="border-radius: 8px; border: 1px solid #a4a7cb;',
+		);
+		expect(html).toContain(
+			'<a href="https://acme.example/digest" style="color: #020618;',
+		);
+		expect(styleOf(html, '✓', 'span')).toContain('background-color: #485096;');
+		// Two indicators: the active card's, and the md card's; none for with-indicator false.
+		expect(
+			html.match(/border-radius: 9999px; border-color: #(485096|62748e);/g),
+		).toHaveLength(2);
+		// The md card's icon above its title.
+		expect(html.indexOf('📱')).toBeLessThan(html.indexOf('>Mobile</h3>'));
+		const text = await read('dist/en/content.txt');
+		expect(text).toContain(
+			'Weekly digest\n\nhttps://acme.example/digest\n\nOne e-mail each Monday.',
+		);
+		expect(text).not.toContain('✓');
+	});
+
+	test("frames a figure's image at the card's width, its caption under it", async () => {
+		const html = await read('dist/en/content.html');
+		expect(html).toMatch(
+			/<img src="https:\/\/acme\.example\/chart\.png" alt="Messages per day" style="display: block;[^"]*border-radius: 14px;[^"]*" height="auto" width="534">/,
+		);
+		expect(styleOf(html, 'Your messages this week', 'td')).toContain(
+			'text-align: center;',
+		);
+		expect(await read('dist/en/content.txt')).toContain(
+			'Your messages this week',
+		);
+	});
+
+	test('sets a group of buttons on one row, rounded and tonal, the active one filled', async () => {
+		const html = await read('dist/en/content.html');
+		const group = html.slice(
+			html.indexOf('>Inbox<') - 2000,
+			html.indexOf('gear.png'),
+		);
+		const row = group.slice(group.lastIndexOf('<tr>'));
+		expect(
+			row.match(/<td style="padding-right: 4px; vertical-align: middle;">/g),
+		).toHaveLength(3);
+		expect(styleOf(html, 'Inbox', 'a ')).toContain(
+			'border-radius: 4px; background-color: #485096;',
+		);
+		expect(styleOf(html, 'Archive', 'a ')).toContain(
+			'border-radius: 4px; background-color: #e4e5ef;',
+		);
+		// A button that says its variant keeps it.
+		expect(html).toContain(
+			'<a aria-label="Settings" style="display: inline-block; border-radius: 4px; border: 1px solid #81848b;',
+		);
+	});
+
+	test('draws an icon button round, its icon an image or a character, named for a reader and in the text', async () => {
+		const html = await read('dist/en/content.html');
+		expect(html).toContain(
+			'<img src="https://acme.example/gear.png" width="16" height="16" alt="Settings" style="display: block;">',
+		);
+		expect(html).toContain(
+			'<a title="Help" aria-label="Help" style="display: inline-block; border-radius: 9999px; background-color: #e4e5ef; padding: 10px;',
+		);
+		expect(styleOf(html, '★', 'span')).toContain('width: 16px;');
+		const text = await read('dist/en/content.txt');
+		for (const name of ['Starred', 'Settings', 'Help']) {
+			expect(text).toContain(`${name}\n\nhttps://acme.example/`);
+		}
+		expect(text).not.toContain('★');
+	});
+
+	test('opens a link button at `to`, drawn as a link unless its variant says otherwise', async () => {
+		const html = await read('dist/en/content.html');
+		expect(styleOf(html, 'Manage your preferences', 'a ')).not.toContain(
+			'padding',
+		);
+		expect(html).toContain(
+			'href="https://acme.example/preferences">Manage your preferences</a>',
+		);
+		expect(styleOf(html, 'Unsubscribe', 'span')).toBe('mso-text-raise: 8px;');
+		expect(html).toMatch(
+			/border: 1px solid #f27f8a;[^>]*href="https:\/\/acme\.example\/unsubscribe"/,
+		);
+	});
+
 	test.each([
 		['welcome.vue', ['html-align', 'html-aria-hidden']],
 		// The caption's caption-side falls back on its align="bottom".
 		['gallery.vue', ['css-caption-side', 'html-align', 'html-align']],
 		['sequence.vue', ['html-align', 'html-aria-hidden']],
+		// An action card's indicator, hidden from a reader; an icon button named by its aria-label.
+		['content.vue', ['html-align', 'html-aria-hidden', 'html-aria-label']],
 		// A delta's arrow in each card, and a see-also's, hidden from a reader.
 		[
 			'summary.vue',
@@ -451,34 +606,50 @@ describe('a project built with the ui plugin', () => {
 	);
 });
 
-describe('an NxProgress given a value the build cannot know', () => {
-	afterAll(() =>
-		rmSync(`${cases}/progress-placeholder`, { recursive: true, force: true }),
-	);
-
-	test('fails the build, naming the component and the prop', async () => {
-		const root = `${cases}/progress-placeholder`;
-		rmSync(root, { recursive: true, force: true });
-		const files: Record<string, string> = {
-			'maizzle.config.ts': [
-				"import { defineMailConfig } from '@nxgt/mail-config';",
-				"import { ui } from '../../../src/index';",
-				"export default defineMailConfig({ plugins: [ui({ brand: { name: 'Acme' } })] });",
-			].join('\n'),
-			'emails/welcome.vue':
-				'<template><NxLayout><NxProgress model-value="{{ share }}" /></NxLayout></template>',
-		};
-		for (const [path, content] of Object.entries(files)) {
-			mkdirSync(dirname(`${root}/${path}`), { recursive: true });
-			writeFileSync(`${root}/${path}`, content);
-		}
-		const { code, output } = await run(root, 'build');
-		expect(code).not.toBe(0);
-		expect(output).toContain(
-			'NxProgress: modelValue must be a number known when the e-mail is built — a placeholder is filled only when it is sent',
+describe.each([
+	[
+		'progress-placeholder',
+		'<NxProgress model-value="{{ share }}" />',
+		'NxProgress: modelValue must be a number known when the e-mail is built — a placeholder is filled only when it is sent',
+	],
+	[
+		'count-badge-placeholder',
+		'<NxCountBadge count="{{ unread }}">Inbox</NxCountBadge>',
+		'NxCountBadge: count must be a number known when the e-mail is built — a placeholder is filled only when it is sent',
+	],
+	[
+		'highlight-text-placeholder',
+		'<NxHighlightText text="Acme invoices" query="{{ search }}" />',
+		'NxHighlightText: query must be text known when the e-mail is built — a placeholder is filled only when it is sent',
+	],
+])(
+	'a component given a value the build cannot know (%s)',
+	(name, tag, message) => {
+		afterAll(() =>
+			rmSync(`${cases}/${name}`, { recursive: true, force: true }),
 		);
-	}, 60_000);
-});
+
+		test('fails the build, naming the component and the prop', async () => {
+			const root = `${cases}/${name}`;
+			rmSync(root, { recursive: true, force: true });
+			const files: Record<string, string> = {
+				'maizzle.config.ts': [
+					"import { defineMailConfig } from '@nxgt/mail-config';",
+					"import { ui } from '../../../src/index';",
+					"export default defineMailConfig({ plugins: [ui({ brand: { name: 'Acme' } })] });",
+				].join('\n'),
+				'emails/welcome.vue': `<template><NxLayout>${tag}</NxLayout></template>`,
+			};
+			for (const [path, content] of Object.entries(files)) {
+				mkdirSync(dirname(`${root}/${path}`), { recursive: true });
+				writeFileSync(`${root}/${path}`, content);
+			}
+			const { code, output } = await run(root, 'build');
+			expect(code).not.toBe(0);
+			expect(output).toContain(message);
+		}, 60_000);
+	},
+);
 
 describe('a component without the ui plugin', () => {
 	afterAll(() => rmSync(cases, { recursive: true, force: true }));

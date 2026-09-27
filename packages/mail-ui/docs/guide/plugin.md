@@ -206,7 +206,8 @@ console.log(COMPONENTS_DIR); // /…/node_modules/@nxgt/mail-ui/components
 ```
 
 Ours are named without the prefix, which `ui()` adds: `badge.vue` is
-`<NxBadge>` (`nx-button.vue` keeps it, being built on Maizzle's `<Button>`).
+`<NxBadge>` (`nx-button.vue` and `nx-spacer.vue` keep it, being built on
+Maizzle's `<Button>` and `<Spacer>`).
 Your `components/` has no prefix, so **rename the copy with the tag's whole
 name**, `nx-badge.vue`: a `components/badge.vue` is `<Badge>`, a component of
 its own, and replaces nothing.
