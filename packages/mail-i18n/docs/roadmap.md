@@ -86,8 +86,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   catalogues a package ships, as `@nxgt/mail-ui`'s shared messages, merged key
   by key under your project's `locales/<locale>.json`, which overrides any of
   them, and checked with it.
-- **Templates from a package, v0.1.0** — `i18n({ templates: [{ dir, emails }] })`:
-  folders of templates a package ships, as `@nxgt/mail-presets`' ready
-  e-mails, built with your project's own; `dir` is absolute, `emails` keeps
-  the ones you name, and a template of the same name in your project's
-  `emails/` replaces a package's.
