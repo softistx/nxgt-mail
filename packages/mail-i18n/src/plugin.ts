@@ -23,6 +23,7 @@ import {
 	TYPES_FILE,
 	templateTypes,
 	writeIfChanged,
+	writeRendererTypes,
 } from './types';
 import {
 	type Layout,
@@ -266,7 +267,11 @@ export function i18n(options: I18nOptions): MailPlugin {
 			);
 			const typesFile = options.rendererTypes ?? RENDERER_TYPES_FILE;
 			if (typesFile !== false) {
-				writeIfChanged(resolve(cwd, typesFile), rendererTypes(manifest));
+				writeRendererTypes(
+					resolve(cwd, typesFile),
+					typesFile,
+					rendererTypes(manifest),
+				);
 			}
 		},
 	});

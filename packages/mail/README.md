@@ -306,6 +306,8 @@ that fails the typecheck the moment it stops holding:
 With the renderer given the build's `MailEmails`
 (`createMailRenderer<MailEmails>(…)`):
 
+The name written as a literal and the variables at the call, as usual:
+
 13. An e-mail the build does not have (`render('verify-emial', …)`).
 14. A variable the e-mail does not take.
 15. A variable the e-mail takes, left out.

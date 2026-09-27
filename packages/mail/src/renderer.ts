@@ -30,7 +30,9 @@ export type AnyMailEmails = Readonly<Record<string, MailVariables>>;
 
 /**
  * `render`'s arguments after the e-mail's name: its variables, which may be
- * left out when it takes none, and the options.
+ * left out when it takes none, and the options. An e-mail without variables
+ * is `Readonly<Record<string, never>>`, as `@nxgt/mail-i18n`'s
+ * `rendererTypes()` writes it: change both together.
  */
 export type RenderArguments<V> =
 	Readonly<Record<string, never>> extends V

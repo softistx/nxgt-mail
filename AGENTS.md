@@ -102,7 +102,8 @@ not text) is a `TypeError`, as at wiring. The one `render` refusal a caller
 handles is a URL value it will not write: `MailRefused`, since the URL may
 come from outside and sending it again unchanged fails again. Given the
 build's `MailEmails`, the same mistakes but the URL's value are compile errors
-first; the run-time checks stay, for a caller that passes no type.
+first, for a literal name and variables written at the call; the run-time
+checks stay, for every other call.
 
 A message reports **a shape, never a value**: never a recipient address, never
 a subject, never a link — a link in a verification e-mail is a credential.

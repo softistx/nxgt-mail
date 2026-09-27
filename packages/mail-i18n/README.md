@@ -290,7 +290,7 @@ image URL starts with, its subject in each locale, and its files:
 `createMailRenderer({ dir: 'dist' }).render('verify-email', { name, link })`
 answers the subject, HTML and text, every value escaped.
 
-Next to it, each build writes `generated/mail.ts` — the manifest's e-mails
+After the manifest, each build writes `generated/mail.ts`, in the project — the manifest's e-mails
 and variables as a type, rewritten only when they change. **Commit it**: the
 code that sends then type-checks without running a build.
 

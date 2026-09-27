@@ -32,7 +32,7 @@ async function build(cwd: string, ...args: string[]): Promise<void> {
 const read = (path: string) => Bun.file(`${fixture}/${path}`).text();
 
 describe('a project built with the i18n plugin', () => {
-	/** Whether generated/mail.ts was there before the default build. */
+	/** Whether generated/mail.ts was there before the default build: the flat one writes none. */
 	let typesBeforeDefault = true;
 
 	beforeAll(async () => {
@@ -67,8 +67,8 @@ describe('a project built with the i18n plugin', () => {
 				'',
 			].join('\n'),
 		);
-		// Where rendererTypes says, and nowhere with false.
-		expect(await read('generated/flat/mail.ts')).toBe(
+		// Where rendererTypes says, a parallel build's too, and nowhere with false.
+		expect(await read('generated/parallel/mail.ts')).toBe(
 			await read('generated/mail.ts'),
 		);
 		expect(typesBeforeDefault).toBe(false);

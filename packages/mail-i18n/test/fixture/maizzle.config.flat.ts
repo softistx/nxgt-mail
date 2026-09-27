@@ -6,7 +6,7 @@ export default defineMailConfig({
 		i18n({
 			locales: ['en', 'fr'],
 			layout: 'flat',
-			rendererTypes: 'generated/flat/mail.ts',
+			rendererTypes: false,
 		}),
 	],
 	output: { path: 'dist-flat' },

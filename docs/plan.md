@@ -323,7 +323,8 @@ safe ? (templates et data) », and his « OK » to the answer:
   off. The project commits it, so the code that sends type-checks without a
   build.
 - `createMailRenderer<MailEmails>(…)` types `render`: an unknown e-mail, a
-  missing or unknown variable, and a number for a URL are compile errors.
+  missing or unknown variable, and a number for a URL are compile errors, for
+  a literal name and variables written at the call.
   Without the type parameter nothing changes; the run-time checks stay either
   way.
 

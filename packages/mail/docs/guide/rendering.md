@@ -211,9 +211,23 @@ message `tsc` prints:
 | `mails.render('sign-in-code')` | `TS2554: Expected 2-3 arguments, but got 1.` |
 | `mails.render('verify-email', { link: 42, name: 'Ada' })` | `TS2322: Type 'number' is not assignable to type 'string'.` |
 
+The compiler checks a name written as a literal, with its variables written as
+an object literal at the call. Two calls still compile, and throw at the send:
+
+- **Variables built beforehand** with a property too many:
+  `const variables = { code: 1, name: 'Ada' }; mails.render('sign-in-code', variables)`
+  — TypeScript flags an unknown property only in an object literal.
+- **A name typed as a union**, as `'sign-in-code' | 'verify-email'`: its
+  variables are checked against one of the e-mails, not all of them.
+
+A hand-written `MailEmails` writes each e-mail's variables as a type literal,
+as the generated file does: an `interface` has no index signature, and
+`createMailRenderer` refuses it.
+
 The run-time checks are unchanged: a renderer typed with a `MailEmails` older
 than the deployed build still throws on a name or a variable the build does
-not have. When the build changes, the next `maizzle build` rewrites
+not have, and `mails.emails` may hold a name `MailEmails` does not. When the
+build changes, the next `maizzle build` rewrites
 `generated/mail.ts`, and the compiler points at every call it breaks.
 
 ### Untyped
