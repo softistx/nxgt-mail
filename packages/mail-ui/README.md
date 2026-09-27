@@ -178,7 +178,8 @@ i18n({ locales: ['en', 'fr'], catalogues: [uiCatalogues] });
 ```
 
 `common.greeting` (`Hello {name},`), `common.footer.why`,
-`common.footer.ignore` and `common.avatarGroup.more`, in `en` and `fr`. Your `locales/<locale>.json`
+`common.footer.ignore`, `common.avatarGroup.more` and
+`common.timeline.empty`, in `en` and `fr`. Your `locales/<locale>.json`
 overrides any of them, key by key:
 
 ```json
@@ -246,7 +247,8 @@ key.
 
 **Another locale writes the `common` keys itself.** `uiCatalogues` has `en`
 and `fr` only: a project in `de` adds `common.greeting`, `common.footer.why`,
-`common.footer.ignore` and `common.avatarGroup.more` to `locales/de.json`.
+`common.footer.ignore`, `common.avatarGroup.more` and `common.timeline.empty`
+to `locales/de.json`.
 
 **Icons are slots.** An e-mail has no icon font: pass an `<img>` with an
 absolute URL, or a character, to `#icon`.

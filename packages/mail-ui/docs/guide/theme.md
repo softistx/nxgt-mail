@@ -58,7 +58,7 @@ Name a token in `theme` without its `--`: `--color-primary` is
 | `color-error-foreground`, … `color-warning-foreground` | near white | Text on a status colour |
 | `color-border` | light grey | Card, separator, table and outlined borders |
 | `color-paper` | 5% primary over background | The page behind the layout's card |
-| `color-<colour>-5`, `-10`, `-15`, `-40`, `-50` | the colour mixed over background | Tints — see below |
+| `color-<colour>-5`, `-10`, `-15`, `-20`, `-25`, `-40`, `-50` | the colour mixed over background | Tints — see below |
 
 The exact values are in the file itself:
 
@@ -99,8 +99,10 @@ as hex in the built HTML.
 | --- | --- |
 | `-5` | `NxAlert`'s background; `NxListTile`'s; `paper` |
 | `-10` | `NxBanner`'s background; a selected `NxListTile size="sm"` |
-| `-15` | `NxButton` and `NxChip variant="tonal"`; a selected `NxListTile` |
-| `-40` | `NxBanner`'s border; `NxSummaryData`'s lines; a selected `NxListTile`'s border |
+| `-15` | `NxButton` and `NxChip variant="tonal"`; a selected `NxListTile`; an `NxTimeline` marker's ground |
+| `-20` | `NxProgress`'s track |
+| `-25` | `NxStepsItem`'s circle |
+| `-40` | `NxBanner`'s border; `NxSummaryData`'s lines; a selected `NxListTile`'s border; an `NxTimeline` marker's border |
 | `-50` | `NxButton` and `NxChip variant="outlined"`'s border |
 
 They exist for `primary`, `secondary`, `info`, `success`, `warning`, `error`

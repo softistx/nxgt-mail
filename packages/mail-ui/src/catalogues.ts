@@ -14,6 +14,7 @@ export const uiCatalogues = {
 		common: {
 			greeting: 'Hello {name},',
 			avatarGroup: { more: '{count, plural, other {# more}}' },
+			timeline: { empty: 'No activity yet' },
 			footer: {
 				why: 'You received this e-mail because you have an account with {brand}.',
 				ignore: 'If you did not ask for this, you can ignore this e-mail.',
@@ -24,6 +25,7 @@ export const uiCatalogues = {
 		common: {
 			greeting: 'Bonjour {name},',
 			avatarGroup: { more: '{count, plural, one {# autre} other {# autres}}' },
+			timeline: { empty: 'Aucune activité pour le moment' },
 			footer: {
 				why: 'Vous recevez cet e-mail parce que vous avez un compte chez {brand}.',
 				ignore:

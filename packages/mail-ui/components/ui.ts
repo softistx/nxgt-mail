@@ -36,6 +36,24 @@ export interface UiContext {
 export const TABLE_PART = 'nxgt:mail-ui:table-part';
 export type TablePart = 'header' | 'body' | 'footer';
 
+export type TimelineTone =
+	| 'default'
+	| 'primary'
+	| 'success'
+	| 'info'
+	| 'warning'
+	| 'error';
+
+/** An event of `NxTimeline`: material-vue's, with a written time only. */
+export interface TimelineItem {
+	readonly id: string;
+	readonly title: string;
+	readonly description?: string;
+	/** The time, as written: a placeholder, or a date you format. */
+	readonly timestampLabel?: string;
+	readonly tone?: TimelineTone;
+}
+
 /** The pixel size of the `NxAvatar`s inside, as `NxAvatar` or `NxAvatarGroup` says. */
 export const AVATAR_SIZE = 'nxgt:mail-ui:avatar-size';
 
@@ -79,7 +97,7 @@ export function colourVariant(variant: ColourVariant, color: Color): string {
 
 /**
  * The components a slot holds, out of any `v-for` fragment, without its text
- * or comments: what `NxAvatarGroup` lays out one by one.
+ * or comments: what `NxAvatarGroup` and `NxSteps` lay out one by one.
  */
 export function slotComponents(nodes: readonly unknown[] | undefined): VNode[] {
 	return (nodes ?? []).flatMap((node) => {
@@ -89,4 +107,19 @@ export function slotComponents(nodes: readonly unknown[] | undefined): VNode[] {
 		}
 		return typeof node.type === 'symbol' ? [] : [node];
 	});
+}
+
+/**
+ * `t(key, args)` when `@nxgt/mail-i18n` is listed, else `fallback`: a shared
+ * message a component writes, in English without the i18n plugin.
+ */
+export function sharedMessage(
+	globals: Record<string, unknown>,
+	key: string,
+	fallback: string,
+	args?: Record<string, unknown>,
+): string {
+	return typeof globals.t === 'function'
+		? (globals.t(key, args) as string)
+		: fallback;
 }

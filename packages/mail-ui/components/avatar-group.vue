@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { twMerge } from '@maizzle/framework';
 import { computed, getCurrentInstance, provide, useAttrs, useSlots } from 'vue';
-import { AVATAR_SIZE, slotComponents } from './ui';
+import { AVATAR_SIZE, sharedMessage, slotComponents } from './ui';
 
 /**
  * material-vue's AvatarGroup: its `NxAvatar`s in a row, each ringed with the
@@ -29,13 +29,12 @@ const shown = computed(() =>
 		: avatars.value.slice(0, props.max),
 );
 const rest = computed(() => avatars.value.length - shown.value.length);
-// Read loosely: `t` exists only when @nxgt/mail-i18n is listed.
 const globals: Record<string, unknown> =
 	getCurrentInstance()?.appContext.config.globalProperties ?? {};
 const moreLabel = computed(() =>
-	typeof globals.t === 'function'
-		? (globals.t('common.avatarGroup.more', { count: rest.value }) as string)
-		: `${rest.value} more`,
+	sharedMessage(globals, 'common.avatarGroup.more', `${rest.value} more`, {
+		count: rest.value,
+	}),
 );
 const classes = computed(() => twMerge('mb-4', attrs.class as string));
 </script>

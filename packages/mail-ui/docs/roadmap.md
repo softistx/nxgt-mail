@@ -23,8 +23,8 @@ no dates here, and the version something shipped in is the only number.
   (`bg-primary-15`) are flattened to plain colours, and follow a colour you
   override. Built, not yet published.
 - **Shared messages** — `uiCatalogues`: `common.greeting`,
-  `common.footer.why`, `common.footer.ignore` and `common.avatarGroup.more`
-  in `en` and `fr`, given to
+  `common.footer.why`, `common.footer.ignore`, `common.avatarGroup.more` and
+  `common.timeline.empty` in `en` and `fr`, given to
   `@nxgt/mail-i18n` as `i18n({ catalogues: [uiCatalogues] })`, and overridden
   key by key by your own `locales/<locale>.json`. Built, not yet published.
 
@@ -41,14 +41,18 @@ no dates here, and the version something shipped in is the only number.
   muted background, a caption, an empty row), `NxDescription`, `NxListTile`,
   `NxChip` (static) and `NxAvatar`/`NxAvatarGroup`, with material-vue's props,
   checked against the same support data. Built, not yet published.
+- **The second set, second part** — `NxProgress`, `NxSteps`/`NxStepsItem`
+  and `NxTimeline`: a bar, numbered steps and toned events joined by a line
+  that runs as far as their text in every client, the time of an event
+  written as you give it. Built, not yet published.
 
 ## Next
 
-- **The rest of the second set** — `NxTimeline`, `NxSteps`/`NxStepsItem`,
-  `NxProgress`, `NxStatCard`, `NxEntityHeader`, `NxSeeAlso`, `NxHero`, and
-  the metrics cards that are bars and numbers (goal, ratio, compare,
-  breakdown), each a table with inlined styles and material-vue's props,
-  checked against mail-client support data and documented with its props.
+- **The rest of the second set** — `NxStatCard`, `NxEntityHeader`,
+  `NxSeeAlso`, `NxHero`, and the metrics cards that are bars and numbers
+  (goal, ratio, compare, breakdown), each a table with inlined styles and
+  material-vue's props, checked against mail-client support data and
+  documented with its props.
 - **A starter project** — the official Maizzle starter with
   `@nxgt/mail-config`, `@nxgt/mail-i18n` and this plugin wired in, built in
   CI, so the README's snippet is known to work.

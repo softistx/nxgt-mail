@@ -25,6 +25,11 @@ The components from `NxLayout` to `NxCode`, in one e-mail
 The components from `NxTable` to `NxAvatar`
 ([their template](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-ui/test/fixture/emails/gallery.vue)).
 
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/develop/packages/mail-ui/previews/sequence-components.png" width="420" alt="An e-mail using the sequence components: three progress bars, three numbered steps joined by a line, a timeline of three toned events, and an empty timeline's text">
+
+`NxProgress`, `NxSteps` and `NxTimeline`
+([their template](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-ui/test/fixture/emails/sequence.vue)).
+
 Every component is registered by [`ui()`](plugin.md) and used with no import.
 They keep material-vue's names (with the `Nx` prefix), its props and its
 values, and render with tables and inlined styles, which every mail client
@@ -38,9 +43,10 @@ reads. They need no JavaScript and no web font.
   attributes (`style`, `id`, `data-*`) go to the same element as `class`.
 - **Block components end with space below.** `NxTypography`, `NxAlert`,
   `NxBanner`, `NxCard`, `NxCode`, `NxSummaryData`, `NxTable`,
-  `NxDescription` and `NxAvatarGroup` carry `mb-4`, `NxListTile` `mb-2`. On
-  `NxTypography`, `NxSummaryData`, `NxTable`, `NxDescription` and
-  `NxAvatarGroup`, `class="mb-0"` removes it. `NxAlert`,
+  `NxDescription`, `NxAvatarGroup`, `NxProgress`, `NxSteps` and `NxTimeline`
+  carry `mb-4`, `NxListTile` `mb-2`. On `NxTypography`, `NxSummaryData`,
+  `NxTable`, `NxDescription`, `NxAvatarGroup`, `NxProgress`, `NxSteps` and
+  `NxTimeline`, `class="mb-0"` removes it. `NxAlert`,
   `NxBanner`, `NxCard`, `NxCode` and `NxListTile` put their `class` on the box inside, and
   keep their 16px below: to change it, replace the component with your own
   (see [Replacing a component](plugin.md#replacing-a-component)).
@@ -86,6 +92,10 @@ reads. They need no JavaScript and no web font.
 | `NxAvatarImage` | `AvatarImage` | `src` (required), `alt` | — |
 | `NxAvatarFallback` | `AvatarFallback` | — | default |
 | `NxAvatarGroup` | `AvatarGroup` | `max`, `size` (`'md'`) | default: `NxAvatar`s |
+| [`NxProgress`](#nxprogress) | `Progress` | `modelValue` (`0`), `max` (`100`), `height` (`8`) | — |
+| [`NxSteps`](#nxsteps-and-nxstepsitem) | `Steps` | — | default: `NxStepsItem`s |
+| `NxStepsItem` | `StepsItem` | `title`, `index` (its place), `last` (set by `NxSteps`) | default, `index` |
+| [`NxTimeline`](#nxtimeline) | `Timeline` | `items` (required), `empty` (a shared message) | — |
 
 ## NxLayout
 
@@ -583,6 +593,97 @@ listed, and in English otherwise; see [Shared messages](messages.md).
 Outlook on Windows ignores the width and height of an inline box: there,
 `NxAvatarFallback`'s initials show on a grey strip rather than in a circle. An
 `NxAvatarImage` keeps its size everywhere, from its `width` and `height`.
+
+## NxProgress
+
+material-vue's `Progress`, still: a bar filled to `modelValue` out of `max`,
+on a rounded track at 20% of the primary colour.
+
+```vue
+<template>
+  <NxTypography>2 of 3 steps done</NxTypography>
+  <NxProgress :model-value="2" :max="3" />
+</template>
+```
+
+| Prop | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `modelValue` | `number` | `0` | How much is done — material-vue's name, passed one way: an e-mail has no `v-model` |
+| `max` | `number` | `100` | What `modelValue` is out of |
+| `height` | `number` | `8` | The bar's height in pixels, above 0; an addition, where material-vue sets a class such as `h-1.5` |
+
+The fill is `modelValue / max`, rounded to a whole percent and kept between 0 and
+100. It is a table cell of that width, which every client draws: material-vue's
+`transform` and pulse are not. The table carries `role="progressbar"` and the
+`aria-value*` attributes.
+
+The share is computed when the e-mail is built, so each prop is a number,
+never a placeholder: one that is not
+[fails the build](../troubleshooting.md#nxprogress-modelvalue-must-be-a-number-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent).
+A share that differs per recipient is written as text. The bar is left out of
+the plain-text version, where it says nothing.
+
+## NxSteps and NxStepsItem
+
+material-vue's `Steps`: numbered circles one under the other, each with a
+title and its text, joined by a line.
+
+```vue
+<template>
+  <NxSteps>
+    <NxStepsItem title="Create your account">Done on 1 September.</NxStepsItem>
+    <NxStepsItem title="Invite your team">Add the people who work with you.</NxStepsItem>
+    <NxStepsItem title="Connect your bank" />
+  </NxSteps>
+</template>
+```
+
+| Part | Props | Slots | Renders |
+| --- | --- | --- | --- |
+| `NxSteps` | — | default: `NxStepsItem`s | A table of its items, `mb-4`; numbers them 1, 2, 3… |
+| `NxStepsItem` | `title?: string`, `index?: number` (its place in `NxSteps`), `last?: boolean` (set by `NxSteps`) | default (the text), `index` (in the circle, in place of the number) | A 32px circle, `border-primary-25`, the number in `text-primary`; the title `text-base` semibold; the text `text-sm` muted; a line down to the next item |
+
+**Only `NxStepsItem`s go directly inside `NxSteps`, and an `NxStepsItem` only
+inside `NxSteps`**, as a `v-for` or one by one: `NxSteps` numbers them and
+tells each whether it is the `last`, which draws no line under it. An item is
+table rows: alone, it is broken HTML with an empty circle.
+An `index` you give wins over the item's place. The item's `class` goes on its
+text's cell.
+
+The line is the border of a cell in the same row as the text, so it runs as far
+down as the text in every client; Outlook on Windows draws the circle square.
+
+## NxTimeline
+
+material-vue's `Timeline`: events one under the other, each a toned marker on
+a line, its title, a time on the right, and a description.
+
+```vue
+<template>
+  <NxTimeline
+    :items="[
+      { id: 'sign-in', title: 'Signed in', description: 'Firefox on Linux', timestampLabel: placeholder('time'), tone: 'success' },
+      { id: 'password', title: 'Password changed', tone: 'warning' },
+      { id: 'created', title: 'Account created' },
+    ]"
+  />
+  <NxTimeline :items="[]" empty="Nothing this week" />
+</template>
+```
+
+| Prop | Type | Default | Effect |
+| --- | --- | --- | --- |
+| `items` | `{ id: string; title: string; description?: string; timestampLabel?: string; tone?: TimelineTone }[]` | required | The events, in order; each `id` unique |
+| `empty` | `string` | the shared message `common.timeline.empty` (`No activity yet`); without `@nxgt/mail-i18n`, `No activity yet` in every language | The text shown, centred and muted, when `items` is empty |
+
+`TimelineTone` is `'default' | 'primary' | 'success' | 'info' | 'warning' | 'error'`:
+the marker's border at 40% of the tone, its ground at 15%, and its dot in the
+tone; `default` is `border`, `muted` and muted text.
+
+An e-mail is built before it is sent, so there is no `timestamp` turned into
+"2 hours ago" as in material-vue: that would be the time of the build. Write
+the time as `timestampLabel`, most often a placeholder filled at send time.
+There is no `loading` either: an e-mail does not load.
 
 ## A complete template
 

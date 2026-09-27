@@ -41,6 +41,7 @@ The samples below use the locales `en` and `fr`, the template
 - [`[Vue warn]: Failed to resolve component: NxLayout`](#vue-warn-failed-to-resolve-component-nxlayout)
 - [`NxLayout: ui() is not in the plugins of defineMailConfig`](#nxlayout-ui-is-not-in-the-plugins-of-definemailconfig)
 - [`i18n: en: welcome calls t('common.footer.why'), which is not a key of the catalogues`](#i18n-en-welcome-calls-tcommonfooterwhy-which-is-not-a-key-of-the-catalogues)
+- [`NxProgress: modelValue must be a number known when the e-mail is built — a placeholder is filled only when it is sent`](#nxprogress-modelvalue-must-be-a-number-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent)
 
 **Traps: a build that succeeds and is wrong**
 - [A tint written with an alpha (`bg-primary/15`) is missing in Outlook](#a-tint-written-with-an-alpha-bg-primary15-is-missing-in-outlook)
@@ -306,7 +307,9 @@ The message names your locale and template; the key starts `common.`.
 
 **When:** `maizzle build`, on the first template that uses `<NxLayout>` (its
 footer calls `t('common.footer.why')`), or an `<NxAvatarGroup>` hiding avatars
-past its `max` (its `+N` calls `t('common.avatarGroup.more')`), or that calls
+past its `max` (its `+N` calls `t('common.avatarGroup.more')`), an
+`<NxTimeline>` with no events and no `empty`
+(`t('common.timeline.empty')`), or that calls
 `t('common.greeting')` or another `common.` key, when `@nxgt/mail-i18n` is in the plugins without
 the package's messages.
 **Why:** the `common.*` messages ship in `uiCatalogues`, not in the
@@ -334,6 +337,26 @@ package's, key by key.
 
 ---
 
+### `NxProgress: modelValue must be a number known when the e-mail is built — a placeholder is filled only when it is sent`
+
+The prop named is `modelValue`, `max` or `height` (which must also be above 0).
+
+**When:** `maizzle build`, on a template whose `<NxProgress>` is given a
+placeholder or any value that is not a number:
+`<NxProgress :model-value="placeholder('share')" />`,
+`<NxProgress model-value="40" />` (a string, without the `:`).
+**Why:** the bar's width is computed when the e-mail is built; a placeholder
+is only filled when it is sent. Rather than draw an empty bar, the build stops.
+**Fix:** pass a number with `v-bind`. For a share that differs per recipient,
+write it as text, which a placeholder fills:
+
+```vue
+<template>
+  <NxProgress :model-value="2" :max="3" />
+  <NxTypography>{{ t('onboarding.progress', { done: placeholder('done') }) }}</NxTypography>
+</template>
+```
+
 ## Traps: a build that succeeds and is wrong
 
 ### A tint written with an alpha (`bg-primary/15`) is missing in Outlook
@@ -353,8 +376,8 @@ background into a plain hex value:
 ```
 
 Each colour of the theme (`primary`, `secondary`, `info`, `success`,
-`warning`, `error`, `foreground`) has the tints `-5`, `-10`, `-15`, `-40` and
-`-50`, for `bg-`, `text-` and `border-`.
+`warning`, `error`, `foreground`) has the tints `-5`, `-10`, `-15`, `-20`,
+`-25`, `-40` and `-50`, for `bg-`, `text-` and `border-`.
 
 ### A side border (`border-b`) is gone, and the style ends with `border: 0`
 
@@ -418,8 +441,9 @@ styles the box; the space below is on the table around it.
 **Fix:** replace the component with your own, copied from the package's, and
 change its outer `mb-4` (`mb-2` on `NxListTile`) — see
 [Replacing a component](guide/plugin.md#replacing-a-component). On
-`NxTypography`, `NxSummaryData`, `NxTable`, `NxDescription` and
-`NxAvatarGroup`, `class="mb-0"` works.
+`NxTypography`, `NxSummaryData`, `NxTable`, `NxDescription`,
+`NxAvatarGroup`, `NxProgress`, `NxSteps` and `NxTimeline`, `class="mb-0"`
+works.
 
 ### The editor says `Property 'brand' does not exist` in a template
 

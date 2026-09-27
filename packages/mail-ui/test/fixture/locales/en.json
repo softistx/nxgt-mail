@@ -10,5 +10,8 @@
 	},
 	"gallery": {
 		"subject": "Your invoice"
+	},
+	"sequence": {
+		"subject": "Your setup"
 	}
 }

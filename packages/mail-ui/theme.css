@@ -59,6 +59,16 @@
 		var(--color-primary) 15%,
 		var(--color-background)
 	);
+	--color-primary-20: color-mix(
+		in srgb,
+		var(--color-primary) 20%,
+		var(--color-background)
+	);
+	--color-primary-25: color-mix(
+		in srgb,
+		var(--color-primary) 25%,
+		var(--color-background)
+	);
 	--color-primary-40: color-mix(
 		in srgb,
 		var(--color-primary) 40%,
@@ -82,6 +92,16 @@
 	--color-secondary-15: color-mix(
 		in srgb,
 		var(--color-secondary) 15%,
+		var(--color-background)
+	);
+	--color-secondary-20: color-mix(
+		in srgb,
+		var(--color-secondary) 20%,
+		var(--color-background)
+	);
+	--color-secondary-25: color-mix(
+		in srgb,
+		var(--color-secondary) 25%,
 		var(--color-background)
 	);
 	--color-secondary-40: color-mix(
@@ -109,6 +129,16 @@
 		var(--color-info) 15%,
 		var(--color-background)
 	);
+	--color-info-20: color-mix(
+		in srgb,
+		var(--color-info) 20%,
+		var(--color-background)
+	);
+	--color-info-25: color-mix(
+		in srgb,
+		var(--color-info) 25%,
+		var(--color-background)
+	);
 	--color-info-40: color-mix(
 		in srgb,
 		var(--color-info) 40%,
@@ -132,6 +162,16 @@
 	--color-success-15: color-mix(
 		in srgb,
 		var(--color-success) 15%,
+		var(--color-background)
+	);
+	--color-success-20: color-mix(
+		in srgb,
+		var(--color-success) 20%,
+		var(--color-background)
+	);
+	--color-success-25: color-mix(
+		in srgb,
+		var(--color-success) 25%,
 		var(--color-background)
 	);
 	--color-success-40: color-mix(
@@ -159,6 +199,16 @@
 		var(--color-warning) 15%,
 		var(--color-background)
 	);
+	--color-warning-20: color-mix(
+		in srgb,
+		var(--color-warning) 20%,
+		var(--color-background)
+	);
+	--color-warning-25: color-mix(
+		in srgb,
+		var(--color-warning) 25%,
+		var(--color-background)
+	);
 	--color-warning-40: color-mix(
 		in srgb,
 		var(--color-warning) 40%,
@@ -184,6 +234,16 @@
 		var(--color-error) 15%,
 		var(--color-background)
 	);
+	--color-error-20: color-mix(
+		in srgb,
+		var(--color-error) 20%,
+		var(--color-background)
+	);
+	--color-error-25: color-mix(
+		in srgb,
+		var(--color-error) 25%,
+		var(--color-background)
+	);
 	--color-error-40: color-mix(
 		in srgb,
 		var(--color-error) 40%,
@@ -207,6 +267,16 @@
 	--color-foreground-15: color-mix(
 		in srgb,
 		var(--color-foreground) 15%,
+		var(--color-background)
+	);
+	--color-foreground-20: color-mix(
+		in srgb,
+		var(--color-foreground) 20%,
+		var(--color-background)
+	);
+	--color-foreground-25: color-mix(
+		in srgb,
+		var(--color-foreground) 25%,
 		var(--color-background)
 	);
 	--color-foreground-40: color-mix(

@@ -228,10 +228,91 @@ describe('a project built with the ui plugin', () => {
 		expect(html).not.toMatch(/margin[a-z-]*: -/);
 	});
 
+	test('fills a progress bar to its share, on a track at 20% of the primary', async () => {
+		const html = await read('dist/en/sequence.html');
+		/** The cells of the bar whose aria-valuenow is `now` (and max, if given). */
+		const bar = (now: string, max = '100') => {
+			const at = html.indexOf(
+				`aria-valuenow="${now}" aria-valuemin="0" aria-valuemax="${max}"`,
+			);
+			expect(at).toBeGreaterThan(-1);
+			const table = html.slice(
+				html.lastIndexOf('<table', at),
+				html.indexOf('</table>', at),
+			);
+			return { table, cells: table.match(/<td[^>]*>/g) ?? [] };
+		};
+		const twoThirds = bar('2', '3');
+		expect(twoThirds.table).toContain('background-color: #dadcea;');
+		expect(twoThirds.cells).toHaveLength(2);
+		expect(twoThirds.cells[0]).toContain('width: 67%;');
+		expect(twoThirds.cells[0]).toContain('background-color: #485096;');
+		expect(twoThirds.cells[0]).toContain(
+			'height: 8px; line-height: 8px; font-size: 8px; mso-line-height-rule: exactly;',
+		);
+		// Empty, full, and kept between 0 and 100: the track's cell or the fill's alone.
+		for (const [now, max, fill] of [
+			['0', '100', false],
+			['-5', '100', false],
+			['5', '0', false],
+			['100', '100', true],
+			['150', '100', true],
+		] as const) {
+			const { cells } = bar(now, max);
+			expect({ now, max, cells: cells.length }).toEqual({ now, max, cells: 1 });
+			expect(cells[0]?.includes('width: 100%;')).toBe(fill);
+		}
+		expect(bar('30').cells[0]).toContain('height: 4px;');
+		// Nothing of a bar is in the plain-text version.
+		expect(await read('dist/en/sequence.txt')).toStartWith(
+			'Your setup, step by step\n\nhttps://acme.example\n\nSetup 1 Create your account Done',
+		);
+	});
+
+	test('numbers the steps in order unless one says its index, and joins all but the last', async () => {
+		const html = await read('dist/en/sequence.html');
+		for (const index of ['1', '2', '7']) {
+			expect(styleOf(html, index, 'span')).toContain(
+				'border: 1px solid #d1d3e5;',
+			);
+		}
+		// The index slot, a star, in place of the fourth number.
+		expect(html).toMatch(/>(&#9733;|★)<\/span>/);
+		expect(html).not.toContain('>4</span>');
+		const steps = html.slice(
+			html.indexOf('>1</span>'),
+			html.indexOf('>Signed in<'),
+		);
+		expect(steps.match(/border-right-width: 1px/g)).toHaveLength(3);
+		// Space under every step's text but the last's.
+		expect(steps.match(/padding-bottom: 32px/g)).toHaveLength(3);
+	});
+
+	test('tones a timeline marker, writes its time as given, and joins all but the last', async () => {
+		const html = await read('dist/en/sequence.html');
+		expect(html).toContain('>{{ time }}</td>');
+		expect(html).toContain(
+			'border: 1px solid #99d5d0; background-color: #d9efed;',
+		);
+		const events = html.slice(html.indexOf('>Signed in<'));
+		expect(events.match(/border-right-width: 1px/g)).toHaveLength(2);
+		expect(html).toContain('>Nothing this week</p>');
+	});
+
+	test("writes a timeline's default empty text, in each locale", async () => {
+		expect(await read('dist/en/sequence.html')).toContain(
+			'>No activity yet</p>',
+		);
+		expect(await read('dist/fr/sequence.html')).toContain(
+			'>Aucune activité pour le moment</p>',
+		);
+	});
+
 	test.each([
 		['welcome.vue', ['html-align', 'html-aria-hidden']],
 		// The caption's caption-side falls back on its align="bottom".
 		['gallery.vue', ['css-caption-side', 'html-align', 'html-align']],
+		['sequence.vue', ['html-align', 'html-aria-hidden']],
 	])(
 		'caniemail reports for Gmail, Outlook and Apple Mail only the known partial support of %s',
 		async (email, known) => {
@@ -273,6 +354,35 @@ describe('a project built with the ui plugin', () => {
 		},
 		60_000,
 	);
+});
+
+describe('an NxProgress given a value the build cannot know', () => {
+	afterAll(() =>
+		rmSync(`${cases}/progress-placeholder`, { recursive: true, force: true }),
+	);
+
+	test('fails the build, naming the component and the prop', async () => {
+		const root = `${cases}/progress-placeholder`;
+		rmSync(root, { recursive: true, force: true });
+		const files: Record<string, string> = {
+			'maizzle.config.ts': [
+				"import { defineMailConfig } from '@nxgt/mail-config';",
+				"import { ui } from '../../../src/index';",
+				"export default defineMailConfig({ plugins: [ui({ brand: { name: 'Acme' } })] });",
+			].join('\n'),
+			'emails/welcome.vue':
+				'<template><NxLayout><NxProgress model-value="{{ share }}" /></NxLayout></template>',
+		};
+		for (const [path, content] of Object.entries(files)) {
+			mkdirSync(dirname(`${root}/${path}`), { recursive: true });
+			writeFileSync(`${root}/${path}`, content);
+		}
+		const { code, output } = await run(root, 'build');
+		expect(code).not.toBe(0);
+		expect(output).toContain(
+			'NxProgress: modelValue must be a number known when the e-mail is built — a placeholder is filled only when it is sent',
+		);
+	}, 60_000);
 });
 
 describe('a component without the ui plugin', () => {

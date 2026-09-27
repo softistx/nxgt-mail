@@ -249,9 +249,10 @@ Step 5, and is documented with its props.
 
 Progress: `NxTable` and its parts, `NxDescription`, `NxListTile`, `NxChip`,
 `NxAvatar`/`NxAvatarGroup` ✅ (fixture `gallery.vue`: caniemail reports only
-`css-caption-side`, with its `align` fallback, and `html-align`). Next:
-`NxProgress`, `NxSteps`, `NxTimeline`; then `NxHero`, `NxEntityHeader`,
-`NxSeeAlso`, `NxStatCard` and the metrics cards.
+`css-caption-side`, with its `align` fallback, and `html-align`) ✅;
+`NxProgress`, `NxSteps`/`NxStepsItem`, `NxTimeline` ✅ (fixture
+`sequence.vue`: `html-align` and `html-aria-hidden`). Next: `NxHero`,
+`NxEntityHeader`, `NxSeeAlso`, `NxStatCard` and the metrics cards.
 
 ## Step 5c — `@nxgt/mail-presets` ✅
 
