@@ -1,6 +1,6 @@
 {
 	"name": "@nxgt/mail-presets",
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "Ready transactional e-mails for a Maizzle project built with @nxgt/mail-ui and @nxgt/mail-i18n — verify-email, reset-password, sign-in-code, magic-link, new-sign-in, welcome, invitation… in en and fr — with their built HTML as samples.",
 	"license": "MIT",
 	"type": "module",
