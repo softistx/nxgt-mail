@@ -1,5 +1,22 @@
 # @nxgt/mail-config
 
+## 0.2.0
+
+### Minor Changes
+
+- [#38](https://github.com/softistx/nxgt-mail/pull/38) [`8af7126`](https://github.com/softistx/nxgt-mail/commit/8af7126087c1bd9a1f2087e065512dc85547f35a) Thanks [@SteveGT96](https://github.com/SteveGT96)! - The plain-text part reads as one. `baseConfig` now hands Maizzle a
+  `string-strip-html` callback, `breakBlocks`: a paragraph, a heading, a list or
+  a table ends with a blank line, and a `<br>`, a `<div>`, a row or a list item
+  with a line break. Its `afterBuild` tidies each `.txt` part Maizzle wrote,
+  with `tidyPlaintext`: the invisible characters of a `<Spacer>`, an `<Hr>` or a
+  preheader are dropped, blank lines never run to more than one, and a link
+  whose text is its own address is written once. `maizzle serve`'s plain-text
+  preview is unchanged: only `maizzle build` writes this. Before, the whole e-mail ran
+  onto one line. Both functions are exported.
+  
+  A project that sets `plaintext: true` replaces the base's options, and gets
+  the old single line back: leave `plaintext` out, or set an object.
+
 ## 0.1.0
 
 ### Minor Changes
