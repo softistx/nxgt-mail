@@ -19,6 +19,12 @@ Built, not yet published:
   template, fails `maizzle build`, naming the tag and the file, where Vue
   rendered it as an unknown element or as nothing and the build passed. An
   error while rendering fails the build under `NODE_ENV=production` too.
+- **Details components** — `NxEventChip` for an invitation's date and time,
+  `NxAttributes`, `NxPostalAddress` (its country named in each locale),
+  `NxOpeningHours`, `NxContacts` (linked with `mailto:` and `tel:`),
+  `NxFileList` for attachments or downloads, with the size written by locale,
+  and `NxRating`, read only or as a row of review links: material-vue's names
+  and props, with their words in the shared messages in `en` and `fr`.
 
 ## Next
 
@@ -59,6 +65,12 @@ Nothing yet. A request is welcome as an
   of the media query it needs is too uneven to hide a button's words on.
 - **A badge over a corner** — a mail client positions nothing: `NxCountBadge`
   sets its badge after its content, on the same line.
+- **`NxActivity`** — material-vue's `Activity` is not a feed: it keeps a part
+  of a page mounted while hidden, to show it again without losing its state.
+  An e-mail has no state to keep, and what is hidden is left out of it with
+  `v-if`. An activity feed is `NxTimeline`.
+- **A rating a reader sets in the e-mail** — `NxRating` is read only, or a row
+  of links: a form field runs script, which an e-mail does not.
 - **A relative logo or brand link** — refused by `ui()`: a mail client loads
   nothing relative, so `brand.logo.src` and `brand.url` are absolute
   `http(s)` URLs.

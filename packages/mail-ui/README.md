@@ -145,6 +145,10 @@ the `Nx` — except `NxSpacer` and `NxCode`, the e-mail's own:
 - **Sequences** — `NxProgress`, `NxSteps` and `NxStepsItem`, `NxTimeline`.
 - **Summaries** — `NxHero`, `NxEntityHeader`, `NxStatCard`, `NxGoalCard`,
   `NxRatioCard`, `NxCompareCard`, `NxBreakdownCard`, `NxSeeAlso`.
+- **Details** — `NxEventChip` (an invitation's date and time),
+  `NxAttributes`, `NxPostalAddress`, `NxOpeningHours`, `NxContacts`,
+  `NxFileList` (attachments or downloads), `NxRating` (read only, or a row of
+  review links).
 
 ```vue
 <template>
@@ -163,6 +167,16 @@ the `Nx` — except `NxSpacer` and `NxCode`, the e-mail's own:
 ```
 
 <img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-ui@0.2.0/packages/mail-ui/previews/content-components.png" width="420" alt="An e-mail using the layout and content components: an extended label with a count badge, highlighted text, keys, three action cards, a figure with its caption, a button group with icon buttons, an icon button and two link buttons">
+
+```vue
+<template>
+  <NxEventChip title="Onboarding call" :time="placeholder('time')" />
+  <NxFileList :items="[{ id: 'agenda', name: 'agenda.pdf', size: 1572864, href: placeholder('agendaLink') }]" />
+  <NxRating label="How was it?" :href="(star) => `https://acme.example/review?rating=${star}`" />
+</template>
+```
+
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-ui@0.2.0/packages/mail-ui/previews/details-components.png" width="420" alt="An e-mail using the details components: event chips, a list of attributes, postal addresses, opening hours, contacts, a file list with a download link and empty ones, a rating of four stars and a row of five review stars">
 
 ### The plugin — `ui({ brand, theme })`
 
@@ -214,8 +228,11 @@ i18n({ locales: ['en', 'fr'], catalogues: [uiCatalogues] });
 `common.greeting` (`Hello {name},`), `common.footer.why`,
 `common.footer.ignore`, `common.avatarGroup.more`, `common.timeline.empty`,
 `common.metrics.ofTarget`, `common.metrics.thisPeriod`,
-`common.metrics.lastPeriod`, `common.seeAlso` and `common.countBadge.label`,
-in `en` and `fr`. Your `locales/<locale>.json`
+`common.metrics.lastPeriod`, `common.seeAlso`, `common.countBadge.label`,
+and the words of the details components (`common.attributes`,
+`common.postalAddress`, `common.openingHours.*`, `common.contacts.*`,
+`common.fileList.*`, `common.rating.star`), in `en` and `fr`. Your
+`locales/<locale>.json`
 overrides any of them, key by key:
 
 ```json
@@ -309,6 +326,8 @@ Maizzle's `<Spacer>`, which Outlook keeps.
 a count known only at send time in an `NxBadge`, highlight a query known at
 build time, and put an icon known only at send time in `NxIconButton`'s
 default slot, as an `<img :src="placeholder('iconUrl')">`.
+So are `NxRating`'s `modelValue` and `NxEventChip`'s `color` (a colour of
+the theme or a hex one): write a rating known only at send time as text.
 
 **Never branch on a placeholder** in a component or a template:
 `v-if="link.startsWith('https:')"` is decided on the string `{{ link }}`.

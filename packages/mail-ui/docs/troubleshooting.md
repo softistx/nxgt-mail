@@ -52,6 +52,10 @@ The samples below use the locales `en` and `fr`, the template
 - [`NxCountBadge: count must be a number known when the e-mail is built — a placeholder is filled only when it is sent`](#nxcountbadge-count-must-be-a-number-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent)
 - [`NxIconButton: icon must be known when the e-mail is built — a placeholder is filled only when it is sent`](#nxiconbutton-icon-must-be-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent)
 - [`NxHighlightText: query must be text known when the e-mail is built — a placeholder is filled only when it is sent`](#nxhighlighttext-query-must-be-text-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent)
+- [`NxRating: modelValue must be a number known when the e-mail is built — a placeholder is filled only when it is sent`](#nxrating-modelvalue-must-be-a-number-known-when-the-e-mail-is-built--a-placeholder-is-filled-only-when-it-is-sent)
+- [`NxEventChip: color must be a colour of the theme, as success, or a hex colour, as #0f766e — the build mixes its tint`](#nxeventchip-color-must-be-a-colour-of-the-theme-as-success-or-a-hex-colour-as-0f766e--the-build-mixes-its-tint)
+- [`NxOpeningHours: dayOfWeek must be a whole number from 0 (Sunday) to 6 (Saturday)`](#nxopeninghours-dayofweek-must-be-a-whole-number-from-0-sunday-to-6-saturday)
+- [`NxContacts: type must be EMAIL, FAX, MOBILE, PHONE or WEBSITE`](#nxcontacts-type-must-be-email-fax-mobile-phone-or-website)
 
 **Traps: a build that succeeds and is wrong**
 - [A tint written with an alpha (`bg-primary/15`) is missing in Outlook](#a-tint-written-with-an-alpha-bg-primary15-is-missing-in-outlook)
@@ -465,6 +469,79 @@ slot, where the renderer checks its URL when it fills it:
   <NxIconButton :href="placeholder('link')" aria-label="Open">
     <img :src="placeholder('iconUrl')" width="16" height="16" alt="">
   </NxIconButton>
+</template>
+```
+
+### `NxRating: modelValue must be a number known when the e-mail is built — a placeholder is filled only when it is sent`
+
+The prop named is `modelValue` or `max`.
+
+**When:** `maizzle build`, on a template whose `<NxRating>` is given a
+placeholder or any value that is not a number:
+`<NxRating :model-value="placeholder('stars')" />`,
+`<NxRating model-value="4" />` (a string, without the `:`).
+**Why:** the stars are drawn, filled or muted, when the e-mail is built; a
+placeholder is only filled when it is sent. Rather than draw five empty
+stars, the build stops.
+**Fix:** pass a number with `v-bind`. For a rating that differs per
+recipient, write it as text, which a placeholder fills:
+
+```vue
+<template>
+  <NxRating :model-value="4" />
+  <NxTypography>{{ t('review.rated', { stars: placeholder('stars') }) }}</NxTypography>
+</template>
+```
+
+### `NxEventChip: color must be a colour of the theme, as success, or a hex colour, as #0f766e — the build mixes its tint`
+
+**When:** `maizzle build`, on a template whose `<NxEventChip>` is given a
+`color` that is neither a colour of the theme nor a hex colour:
+`color="teal"`, `color="var(--color-primary)"`, `color="rgb(15 118 110)"`,
+`:color="placeholder('calendarColor')"`.
+**Why:** material-vue mixes the colour at 18% over nothing, which a mail
+client would not draw. The chip's ground is mixed when the e-mail is built,
+into a plain colour: the build can mix a colour of the theme (its 20% tint)
+or a hex one, not a name, a variable or a value only known at send time.
+**Fix:** name a colour of the theme, or write the hex value — `#rgb` or
+`#rrggbb`:
+
+```vue
+<template>
+  <NxEventChip title="Review" color="success" />
+  <NxEventChip title="Offsite" color="#0f766e" />
+</template>
+```
+
+### `NxOpeningHours: dayOfWeek must be a whole number from 0 (Sunday) to 6 (Saturday)`
+
+**When:** `maizzle build`, on a template whose `<NxOpeningHours>` holds a
+day whose `dayOfWeek` is not `0` to `6`: `{ dayOfWeek: 7 }` for Sunday,
+`{ dayOfWeek: '1' }` (a string), `{ dayOfWeek: 1.5 }`.
+**Why:** as in material-vue, `0` is Sunday and `6` Saturday; another value
+names no day, and the tile would have no title.
+**Fix:** number the days from `0`, Sunday:
+
+```vue
+<template>
+  <NxOpeningHours :data="[{ dayOfWeek: 0, isClosed: true }, { dayOfWeek: 1, openTime: '09:00', closeTime: '18:00' }]" />
+</template>
+```
+
+### `NxContacts: type must be EMAIL, FAX, MOBILE, PHONE or WEBSITE`
+
+**When:** `maizzle build`, on a template whose `<NxContacts>` holds a
+contact of another `type`: `{ type: 'email', value: 'hello@acme.example' }`
+(lower case), `{ type: 'LINKEDIN', … }`.
+**Why:** the type chooses the tile's title and its link (`mailto:`, `tel:`,
+the website itself); material-vue's `ContactType` has these five values, in
+capitals.
+**Fix:** write one of the five, in capitals; for anything else, give the
+contact a `label` and the closest type — `WEBSITE` for a profile page:
+
+```vue
+<template>
+  <NxContacts :data="[{ type: 'WEBSITE', value: 'https://www.linkedin.com/company/acme', label: 'LinkedIn' }]" />
 </template>
 ```
 

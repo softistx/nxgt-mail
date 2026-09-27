@@ -16,5 +16,8 @@
 	},
 	"summary": {
 		"subject": "Votre mois"
+	},
+	"details": {
+		"subject": "Votre réservation"
 	}
 }

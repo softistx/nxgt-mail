@@ -70,6 +70,10 @@ const EXAMPLES: Readonly<Record<string, Readonly<Record<string, string>>>> = {
 		inviter: 'Grace Hopper',
 		organization: 'Acme Labs',
 		newEmail: 'ada@new.example',
+		badgeSize: '84 KB',
+		email: 'support@acme.example',
+		mobile: '+33 6 12 34 56 78',
+		site: 'https://portal.acme.example',
 	},
 	fr: {
 		name: 'Ada',
@@ -82,6 +86,10 @@ const EXAMPLES: Readonly<Record<string, Readonly<Record<string, string>>>> = {
 		inviter: 'Grace Hopper',
 		organization: 'Acme Labs',
 		newEmail: 'ada@new.example',
+		badgeSize: '84 Ko',
+		email: 'support@acme.example',
+		mobile: '+33 6 12 34 56 78',
+		site: 'https://portal.acme.example',
 	},
 };
 
@@ -233,7 +241,7 @@ try {
 			`${ui}/previews/components-${locale}.png`,
 		);
 	}
-	// The data, sequence, summary and content components' e-mails are in English only.
+	// The data, sequence, summary, content and details components' e-mails are in English only.
 	shoot(
 		readFileSync(`${ui}/test/fixture/dist/en/gallery.html`, 'utf8'),
 		'en',
@@ -257,6 +265,12 @@ try {
 		'en',
 		'content',
 		`${ui}/previews/content-components.png`,
+	);
+	shoot(
+		readFileSync(`${ui}/test/fixture/dist/en/details.html`, 'utf8'),
+		'en',
+		'details',
+		`${ui}/previews/details-components.png`,
 	);
 } finally {
 	rmSync(scratch, { recursive: true, force: true });
