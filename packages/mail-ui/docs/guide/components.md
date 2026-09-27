@@ -15,27 +15,27 @@ props, defaults and slots, and the `@nxgt/material-vue` component it mirrors.
 </template>
 ```
 
-<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-ui@0.1.0/packages/mail-ui/previews/components-en.png" width="420" alt="An e-mail using the first Nx components: layout, typography, code, buttons, separator, card with badge, summary data and status, alert, banner, link">
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-ui/previews/components-en.png" width="420" alt="An e-mail using the first Nx components: layout, typography, code, buttons, separator, card with badge, summary data and status, alert, banner, link">
 
 The components from `NxLayout` to `NxCode`, in one e-mail
 ([its template](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-ui/test/fixture/emails/welcome.vue)).
 
-<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-ui@0.1.0/packages/mail-ui/previews/data-components.png" width="420" alt="An e-mail using the data components: a table with a footer and caption, an empty table, descriptions, list tiles with an avatar and a chip, chips, an avatar group and an avatar">
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-ui/previews/data-components.png" width="420" alt="An e-mail using the data components: a table with a footer and caption, an empty table, descriptions, list tiles with an avatar and a chip, chips, an avatar group and an avatar">
 
 The components from `NxTable` to `NxAvatar`
 ([their template](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-ui/test/fixture/emails/gallery.vue)).
 
-<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-ui@0.1.0/packages/mail-ui/previews/sequence-components.png" width="420" alt="An e-mail using the sequence components: three progress bars, three numbered steps joined by a line, a timeline of three toned events, and an empty timeline's text">
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-ui/previews/sequence-components.png" width="420" alt="An e-mail using the sequence components: three progress bars, three numbered steps joined by a line, a timeline of three toned events, and an empty timeline's text">
 
 `NxProgress`, `NxSteps` and `NxTimeline`
 ([their template](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-ui/test/fixture/emails/sequence.vue)).
 
-<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-ui@0.1.0/packages/mail-ui/previews/summary-components.png" width="420" alt="An e-mail using the summary components: a hero with an eyebrow and a button, an entity header with an icon, a status badge and a link, three stat cards with toned deltas, a goal card, a ratio card, a compare card, a breakdown card with three bars, and a see-also list of two links">
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-ui/previews/summary-components.png" width="420" alt="An e-mail using the summary components: a hero with an eyebrow and a button, an entity header with an icon, a status badge and a link, three stat cards with toned deltas, a goal card, a ratio card, a compare card, a breakdown card with three bars, and a see-also list of two links">
 
 The components from `NxHero` to `NxSeeAlso`
 ([their template](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-ui/test/fixture/emails/summary.vue)).
 
-<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-ui@0.2.0/packages/mail-ui/previews/content-components.png" width="420" alt="An e-mail using the layout and content components: an extended label with a count badge, highlighted text, keys, three action cards, a figure with its caption, a button group with icon buttons, an icon button and two link buttons">
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-ui/previews/content-components.png" width="420" alt="An e-mail using the layout and content components: an extended label with a count badge, highlighted text, keys, three action cards, a figure with its caption, a button group with icon buttons, an icon button and two link buttons">
 
 The components from `NxSpacer` to `NxButtonGroup`
 ([their template](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-ui/test/fixture/emails/content.vue)).

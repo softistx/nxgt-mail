@@ -109,9 +109,9 @@ client shows after the subject in the inbox.
 
 ## `verify-email`
 
-<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-presets@0.1.0/packages/mail-presets/previews/en/verify-email.png" width="420" alt="The verify-email e-mail, in English">
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/en/verify-email.png" width="420" alt="The verify-email e-mail, in English">
 
-[In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-presets@0.1.0/packages/mail-presets/previews/fr/verify-email.png)
+[In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/fr/verify-email.png)
 
 To confirm that an address belongs to the user, after they sign up or add
 it. A title, the greeting, the body, the **Confirm my address** button,
@@ -132,9 +132,9 @@ Samples:
 
 ## `reset-password`
 
-<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-presets@0.1.0/packages/mail-presets/previews/en/reset-password.png" width="420" alt="The reset-password e-mail, in English">
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/en/reset-password.png" width="420" alt="The reset-password e-mail, in English">
 
-[In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-presets@0.1.0/packages/mail-presets/previews/fr/reset-password.png)
+[In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/fr/reset-password.png)
 
 To let a user choose a new password. A title, the greeting, the body, the
 **Choose a new password** button, `presets.linkExpires`, the link as text,
@@ -155,9 +155,9 @@ Samples:
 
 ## `password-changed`
 
-<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-presets@0.1.0/packages/mail-presets/previews/en/password-changed.png" width="420" alt="The password-changed e-mail, in English">
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/en/password-changed.png" width="420" alt="The password-changed e-mail, in English">
 
-[In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-presets@0.1.0/packages/mail-presets/previews/fr/password-changed.png)
+[In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/fr/password-changed.png)
 
 A notice, after the password of an account changed. A title, the greeting,
 the body, a warning alert with `presets.notYou`, the **Secure my account**
@@ -178,9 +178,9 @@ Placeholders: `name`, `link` (a URL). Samples:
 
 ## `email-changed`
 
-<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-presets@0.1.0/packages/mail-presets/previews/en/email-changed.png" width="420" alt="The email-changed e-mail, in English">
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/en/email-changed.png" width="420" alt="The email-changed e-mail, in English">
 
-[In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-presets@0.1.0/packages/mail-presets/previews/fr/email-changed.png)
+[In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/fr/email-changed.png)
 
 A notice sent to the **former** address, after an account's address changed,
 so its owner can undo a change they did not make. A title, the greeting, the
@@ -202,9 +202,9 @@ Samples:
 
 ## `sign-in-code`
 
-<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-presets@0.1.0/packages/mail-presets/previews/en/sign-in-code.png" width="420" alt="The sign-in-code e-mail, in English">
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/en/sign-in-code.png" width="420" alt="The sign-in-code e-mail, in English">
 
-[In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-presets@0.1.0/packages/mail-presets/previews/fr/sign-in-code.png)
+[In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/fr/sign-in-code.png)
 
 A one-time code to type in, for a sign-in without a password or a second
 factor. A title, the body, the code in a large block (`<NxCode>`),
@@ -239,9 +239,9 @@ Samples:
 
 ## `magic-link`
 
-<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-presets@0.1.0/packages/mail-presets/previews/en/magic-link.png" width="420" alt="The magic-link e-mail, in English">
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/en/magic-link.png" width="420" alt="The magic-link e-mail, in English">
 
-[In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-presets@0.1.0/packages/mail-presets/previews/fr/magic-link.png)
+[In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/fr/magic-link.png)
 
 A one-time link that signs the user in. A title with the brand, the body,
 the **Sign in** button, `presets.linkExpires`, the link as text, and
@@ -261,9 +261,9 @@ Placeholders: `link` (a URL), `expiresIn` (a duration, as text). Samples:
 
 ## `new-sign-in`
 
-<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-presets@0.1.0/packages/mail-presets/previews/en/new-sign-in.png" width="420" alt="The new-sign-in e-mail, in English">
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/en/new-sign-in.png" width="420" alt="The new-sign-in e-mail, in English">
 
-[In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-presets@0.1.0/packages/mail-presets/previews/fr/new-sign-in.png)
+[In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/fr/new-sign-in.png)
 
 An alert, after an account was signed in from a device not seen before. A
 title, the greeting, a warning banner, a summary of the device, the location
@@ -291,9 +291,9 @@ and time zone before sending (`2 janvier 2026, 14:05 (Paris)`). Samples:
 
 ## `welcome`
 
-<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-presets@0.1.0/packages/mail-presets/previews/en/welcome.png" width="420" alt="The welcome e-mail, in English">
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/en/welcome.png" width="420" alt="The welcome e-mail, in English">
 
-[In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-presets@0.1.0/packages/mail-presets/previews/fr/welcome.png)
+[In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/fr/welcome.png)
 
 After an account was created. A title with the brand, the greeting, the body,
 the **Get started** button, and the link as text.
@@ -312,9 +312,9 @@ Placeholders: `name` (in the subject too), `link` (a URL). Samples:
 
 ## `invitation`
 
-<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-presets@0.1.0/packages/mail-presets/previews/en/invitation.png" width="420" alt="The invitation e-mail, in English">
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/en/invitation.png" width="420" alt="The invitation e-mail, in English">
 
-[In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/tags/@nxgt/mail-presets@0.1.0/packages/mail-presets/previews/fr/invitation.png)
+[In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/fr/invitation.png)
 
 To invite someone — who may have no account yet — to join an organisation.
 A title with the organisation, the body naming who invites, the

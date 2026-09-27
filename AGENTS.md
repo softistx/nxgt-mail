@@ -282,6 +282,9 @@ Carry each difference over when janus gets the same thing (`@nxgt/janus-mail`):
 runs on an edge runtime. Carry it over the day one does, and keep it when
 syncing the copies.
 
+`scripts/publish.ts` differs by `pinDocs` and `pinPackageDocs`, which pin the
+docs' picture URLs to the release tag: janus's READMEs show no picture.
+
 **One word per idea.** The words are defined once, in a `docs/vocabulary.md`
 the first package writes: *e-mail* (not "mail" in prose, not "email"),
 *template*, *catalogue*, *message*, *locale*, *plugin*, *placeholder*,
@@ -311,6 +314,15 @@ rewrites the PNGs the READMEs show (`mail-presets/previews/`,
 changing how an e-mail looks, and commit the images; CI never compares them,
 since fonts differ between machines. They are not in any package's `files`:
 the READMEs load them from GitHub.
+
+**A picture's URL points at `develop`, never at a tag written by hand**:
+`https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/…`,
+in a README and in `docs/`. GitHub then shows the latest pictures, and
+`scripts/publish.ts` pins every such URL to the release tag
+(`@nxgt/mail-ui@0.2.0`, which it creates on the commit it publishes) in the
+package's README and `docs/` just before `bun publish`, then puts the files
+back: the npm page shows the pictures of the version it describes. A spec in
+`scripts/publish.spec.ts` fails on a tag pinned by hand.
 
 `mail-ui`'s and `mail-presets`' `tsconfig.json` also include their fixture's
 `test/fixture/.maizzle/*.d.ts`, for the editor only, so their own templates and
