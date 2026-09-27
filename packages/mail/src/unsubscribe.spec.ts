@@ -63,11 +63,23 @@ describe('listUnsubscribe', () => {
 		['an angle bracket', 'https://example.test/u>, <https://evil.test'],
 		['a raw comma', 'https://example.test/u?list=a,b'],
 		['a tab', 'https://example.test/u\t'],
+		['a URL outside ASCII', 'https://exämple.test/ü?t=é'],
+		['an invisible format character', 'https://example.test/u\u202E'],
+		['backslashes for slashes', 'https:\\\\example.test\\u'],
+		['no //', 'https:example.test/u'],
+		['a quote', 'https://example.test/u?t="a"'],
+		['a brace', 'https://example.test/u?t={a}'],
+		['a user and a password', 'https://user:pass@example.test/u'],
+		['a user alone', 'https://user@example.test/u'],
+		[
+			'HTTPS in capitals, which no mail client lowers',
+			'HTTPS://example.test/u',
+		],
 	])('refuses %s with MailRefused, never quoting it', (_, bad) => {
 		const error = thrown(() => listUnsubscribe({ url: bad }));
 		expect(error).toBeInstanceOf(MailRefused);
 		expect(error.message).toBe(
-			'listUnsubscribe: url must be an https: URL without whitespace, <, > or a raw comma',
+			'listUnsubscribe: url must be an https:// URL in printable ASCII, without credentials, <, >, quotes or a raw comma',
 		);
 	});
 
@@ -83,6 +95,16 @@ describe('listUnsubscribe', () => {
 		['two addresses', 'u@example.test, v@example.test'],
 		['no @', 'unsubscribe'],
 		['a mailto: prefix', 'mailto:u@example.test'],
+		['header fields', 'u@example.test?subject=x&body=y'],
+		[
+			'a second recipient, percent-encoded',
+			'u@example.test?cc=eve%40evil.test',
+		],
+		['a fragment', 'u@example.test#x'],
+		['a quoted local part', '"u"@example.test'],
+		['an address outside ASCII', 'ü@exämple.test'],
+		['a NUL', 'u\u0000@example.test'],
+		['no dot in the domain', 'u@localhost'],
 	])('refuses a mailto with %s', (_, mailto) => {
 		const error = thrown(() => listUnsubscribe({ url, mailto }));
 		expect(error).toBeInstanceOf(MailRefused);

@@ -493,6 +493,8 @@ the correct call is a bug.
   planned.
 - [Vocabulary](https://github.com/softistx/nxgt-mail/blob/develop/docs/vocabulary.md)
   — the words these pages use, defined once.
+- [The starter](https://github.com/softistx/nxgt-mail/tree/develop/examples/starter)
+  — a Maizzle project that builds, renders and sends one e-mail, to copy.
 
 ## Licence
 

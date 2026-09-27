@@ -71,7 +71,7 @@ await mailer.send({
 	to: [{ name: 'Doe, John', address: 'john@example.com' }],
 	from: 'billing@acme.test', // required here: this mailer has no default
 	replyTo: 'support@acme.test', // sent as reply_to
-	headers: { 'List-Unsubscribe': '<https://acme.test/unsubscribe>' },
+	headers: { 'X-Entity-Ref-ID': 'invoice-42' },
 	subject: 'Your invoice',
 	html: '<p>…</p>',
 	text: '…',

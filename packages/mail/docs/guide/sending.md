@@ -251,10 +251,11 @@ interface ListUnsubscribeOptions {
 	readonly mailto?: string;
 }
 
-interface ListUnsubscribeHeaders {
+// A type, not an interface, so it goes into `headers` as it is.
+type ListUnsubscribeHeaders = {
 	readonly 'List-Unsubscribe': string;
 	readonly 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click';
-}
+};
 
 function listUnsubscribe(options: ListUnsubscribeOptions): ListUnsubscribeHeaders;
 ```
@@ -300,7 +301,7 @@ writes the headers, and whatever signs the message must include them.
 
 | Transport | Who signs |
 | --- | --- |
-| `@nxgt/mail-resend` | Resend, with the DKIM key of your verified domain — the custom headers included |
+| `@nxgt/mail-resend` | Resend, with the DKIM key of your verified domain. Check that its `h=` names both headers in a received message's `DKIM-Signature` |
 | `@nxgt/mail-smtp` | Your relay, or nodemailer's own `dkim` option on the transporter you create. A relay that does not DKIM-sign leaves the headers unsigned, and the message fails the requirement |
 
 ### Which e-mails carry it
@@ -388,9 +389,9 @@ anything is sent. A `MailRefused` names the rule, never the value:
 | Written | Answer |
 | --- | --- |
 | `url: 'https://example.com/u?token=…'`, `'https://example.com:8443/u?list=a%2Cb'` | accepted |
-| `url: 'http://example.com/u'`, `'mailto:u@example.com'`, `'/unsubscribe'`, `''` | `MailRefused`: `listUnsubscribe: url must be an https: URL without whitespace, <, > or a raw comma` |
-| a `url` holding a space, a tab, a line break, `<`, `>` or a raw `,` | `MailRefused`: the same message |
-| `mailto: 'Unsub <u@example.com>'`, `'u@example.com, v@example.com'`, `'unsubscribe'`, `'mailto:u@example.com'` | `MailRefused`: `listUnsubscribe: mailto must be a bare e-mail address, as unsubscribe@example.com` |
+| `url: 'http://example.com/u'`, `'mailto:u@example.com'`, `'/unsubscribe'`, `''`, `'https://user:pass@example.com/u'`, `'https://exämple.com/u'` | `MailRefused`: `listUnsubscribe: url must be an https:// URL in printable ASCII, without credentials, <, >, quotes or a raw comma` |
+| a `url` holding a space, a tab, a line break, a character outside ASCII, `<`, `>`, a quote, a backslash, a brace or a raw `,` | `MailRefused`: the same message |
+| `mailto: 'Unsub <u@example.com>'`, `'u@example.com, v@example.com'`, `'unsubscribe'`, `'mailto:u@example.com'`, `'u@example.com?subject=x'`, `'ü@example.com'` | `MailRefused`: `listUnsubscribe: mailto must be a bare e-mail address, as unsubscribe@example.com` |
 | `listUnsubscribe(null)` | `TypeError`: `listUnsubscribe: options must be an object, as { url }` |
 | `url: new URL(…)` | a compile error; at run time `TypeError`: `listUnsubscribe: url must be a string` |
 | `mailto: 42` | a compile error; at run time `TypeError`: `listUnsubscribe: mailto must be a string` |

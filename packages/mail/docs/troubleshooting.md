@@ -71,7 +71,7 @@ How the messages are shaped:
 - [`send: the memory mailer was told to fail this send`](#send-the-memory-mailer-was-told-to-fail-this-send)
 
 **Unsubscribe**
-- [`listUnsubscribe: url must be an https: URL without whitespace, <, > or a raw comma`](#listunsubscribe-url-must-be-an-https-url-without-whitespace---or-a-raw-comma)
+- [`listUnsubscribe: url must be an https:// URL in printable ASCII, without credentials, <, >, quotes or a raw comma`](#listunsubscribe-url-must-be-an-https-url-in-printable-ascii-without-credentials---quotes-or-a-raw-comma)
 - [`listUnsubscribe: mailto must be a bare e-mail address, as unsubscribe@example.com`](#listunsubscribe-mailto-must-be-a-bare-e-mail-address-as-unsubscribeexamplecom)
 - [`listUnsubscribe: options must be an object, as { url }`](#listunsubscribe-options-must-be-an-object-as--url-)
 - [`listUnsubscribe: url must be a string`](#listunsubscribe-url-must-be-a-string)
@@ -886,20 +886,23 @@ beforeEach(() => mailer.clear());
 URL usually carries a per-recipient token, and a token is a credential. A
 value that is not text at all is a `TypeError`, a mistake in the code.
 
-### `listUnsubscribe: url must be an https: URL without whitespace, <, > or a raw comma`
+### `listUnsubscribe: url must be an https:// URL in printable ASCII, without credentials, <, >, quotes or a raw comma`
 
 A `MailRefused`, `code: 'MAIL_REFUSED'`.
 
-**When:** `listUnsubscribe({ url })`, with a `url` that is `http:`, `mailto:`,
-relative (`/unsubscribe?token=…`) or empty, or that holds a space, a tab, a
-line break, `<`, `>` or a `,` as it is: typically a token or a list name
-pasted into a template string without being encoded, or an `http:` URL from
-a development configuration.
-**Why:** RFC 8058 accepts only an `https:` URL for one-click unsubscribe. The
-URL is written between `<` and `>` in the `List-Unsubscribe` header, so a
-line break would start a new header and a `>` would end the URL; a raw comma
-is RFC 2369's separator between two URLs, so a mail client would read the
-rest as a second one.
+**When:** `listUnsubscribe({ url })`, with a `url` that does not start with
+`https://` (`http:`, `mailto:`, relative, empty, `HTTPS://` in capitals), that
+carries a user or a password (`https://user:pass@…`), or that holds a space,
+a line break, a character outside ASCII, `<`, `>`, a quote, a backslash, a
+brace, `|`, `^` or a `,` as it is: typically a token or a list name pasted
+into a template string without being encoded, or an `http:` URL from a
+development configuration.
+**Why:** RFC 8058 accepts only an `https:` URL for one-click unsubscribe, and
+RFC 2369 an RFC 3986 URI — printable ASCII — between `<` and `>`. A
+transport encodes a header holding anything else, and no client finds the URL
+in it; a `>` would end the URL, and a raw comma is RFC 2369's separator
+between two URLs, so a mail client would read the rest as a second one. A
+user and a password would be read by every relay and recipient.
 **Fix:** build the URL with `new URL()` and set each value with
 `searchParams.set`, which percent-encodes it (`,` becomes `%2C`, a space
 `+`), then pass `.href`:
@@ -924,10 +927,12 @@ A `MailRefused`, `code: 'MAIL_REFUSED'`.
 
 **When:** `listUnsubscribe({ url, mailto })`, with a `mailto` that has a
 display name (`Unsubscribe <unsubscribe@example.com>`), a `mailto:` prefix,
-two addresses, or no `@`.
+two addresses, no `@`, a domain without a dot, a character outside ASCII,
+or `?`, `&`, `=`, `#`, `%` or a quote (`u@example.com?subject=stop`).
 **Why:** `mailto` is one mailbox, and `listUnsubscribe` writes the
 `<mailto:…>` around it itself; a name, a prefix or a second address would
-break the header or be read as something else.
+break the header or be read as something else — in a `mailto:`, `?` starts
+header fields, and `?cc=` would add a recipient.
 **Fix:** pass the address alone:
 
 ```ts
@@ -990,9 +995,9 @@ whether to show it. The usual causes:
   the button to senders it recognises as sending bulk mail with a good
   reputation; a new domain, or a handful of test messages, may never get it.
 - **The message is not DKIM-signed by the sending domain**, or the signature
-  does not cover the two headers. RFC 8058 requires a DKIM signature, aligned
-  with the `From` domain, whose `h=` includes `List-Unsubscribe` and
-  `List-Unsubscribe-Post`. Check the received message's original: the
+  does not cover the two headers. RFC 8058 requires a valid DKIM signature
+  whose `h=` includes `List-Unsubscribe` and `List-Unsubscribe-Post`, and
+  Gmail and Yahoo also want it aligned with the `From` domain. Check the received message's original: the
   `DKIM-Signature` must have `d=` your domain and name both headers.
 - **The endpoint does not unsubscribe on the POST alone.** The client POSTs
   `List-Unsubscribe=One-Click` to the URL, with no cookie and no session. An
@@ -1011,17 +1016,23 @@ declare function unsubscribeByToken(token: string): Promise<void>; // yours
 
 // POST https://example.com/unsubscribe?token=…, body List-Unsubscribe=One-Click
 async function unsubscribe(request: Request): Promise<Response> {
-  const token = new URL(request.url).searchParams.get('token');
-  if (request.method !== 'POST' || token === null) {
-    return new Response(null, { status: 400 });
+  const token = new URL(request.url).searchParams.get('token') ?? '';
+  if (request.method === 'POST') {
+    const form = await request.formData();
+    if (form.get('List-Unsubscribe') !== 'One-Click') return new Response(null, { status: 400 });
+    await unsubscribeByToken(token); // no login, no confirmation
+    return new Response(null, { status: 200 }); // never a redirect
   }
-  await unsubscribeByToken(token); // no login, no confirmation
-  return new Response(null, { status: 200 }); // never a redirect
+  // GET: a person followed the link. Show a page that posts the same form.
+  return new Response(
+    '<form method="post"><input type="hidden" name="List-Unsubscribe" value="One-Click"><button>Unsubscribe</button></form>',
+    { headers: { 'content-type': 'text/html; charset=utf-8' } },
+  );
 }
 ```
 
-A `GET` on the same URL (a person following the link) may show a page that
-asks to confirm; the `POST` must not.
+The full handler, with what the `GET` page may show, is in
+[the sending guide](guide/sending.md#one-click-unsubscribe).
 
 ---
 

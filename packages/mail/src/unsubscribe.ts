@@ -1,5 +1,4 @@
 import { MailRefused } from './errors';
-import { ADDRESS } from './message';
 
 /** Where a recipient unsubscribes: the one-click URL, and an address as well. */
 export interface ListUnsubscribeOptions {
@@ -24,10 +23,16 @@ export type ListUnsubscribeHeaders = {
 	readonly 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click';
 };
 
-// Inside `<…>` in a header: no whitespace or control character (a line break
-// would end the header), no `<` or `>` (they end the URL), and no `,`, which
-// RFC 2369 reads as the next URL — percent-encode it.
-const URL_REFUSED = /[\s\p{Cc}<>,]/u;
+// RFC 2369 wants an RFC 3986 URI inside `<…>`: printable ASCII only — a
+// transport would encode a header holding anything else, and no client
+// would find the URL in it — and none of what ends the URL (`<`, `>`), what
+// RFC 2369 reads as the next one (`,`), or what no URI holds as is (quotes,
+// a backslash, braces, `|`, `^`). Percent-encode it.
+const URL_ALLOWED = /^https:\/\/[\x21-\x7E]+$/;
+const URL_REFUSED = /[<>,"'`\\{}|^]/;
+// RFC 6068 reads `?`, `&`, `=`, `#` and `%` inside a mailto: as structure — a
+// subject, a second recipient — so the address is plain ASCII without them.
+const MAILTO = /^[A-Za-z0-9._~!$'*+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+$/;
 
 /**
  * The headers that give an e-mail Gmail's and Yahoo's one-click unsubscribe
@@ -43,8 +48,9 @@ const URL_REFUSED = /[\s\p{Cc}<>,]/u;
  * ```
  *
  * Refuses, with a {@link MailRefused} that never quotes the value, a `url`
- * that is not `https:` — RFC 8058 requires it — or holds whitespace, `<`,
- * `>` or `,`, and a `mailto` that is not a bare e-mail address. The URL is
+ * that is not `https://` — RFC 8058 requires it — or is not printable ASCII,
+ * carries a user or a password, or holds `<`, `>`, a quote or a raw `,`; and
+ * a `mailto` that is not a bare ASCII address. The URL is
  * often built from a token, and a token is a credential: the message names
  * the rule, not the link.
  */
@@ -63,15 +69,18 @@ export function listUnsubscribe(
 		throw new TypeError('listUnsubscribe: mailto must be a string');
 	}
 	if (
+		!URL_ALLOWED.test(options.url) ||
 		URL_REFUSED.test(options.url) ||
 		!URL.canParse(options.url) ||
-		new URL(options.url).protocol !== 'https:'
+		// A user and a password in a header every relay and recipient reads.
+		new URL(options.url).username !== '' ||
+		new URL(options.url).password !== ''
 	) {
 		throw new MailRefused(
-			'listUnsubscribe: url must be an https: URL without whitespace, <, > or a raw comma',
+			'listUnsubscribe: url must be an https:// URL in printable ASCII, without credentials, <, >, quotes or a raw comma',
 		);
 	}
-	if (options.mailto !== undefined && !ADDRESS.test(options.mailto)) {
+	if (options.mailto !== undefined && !MAILTO.test(options.mailto)) {
 		throw new MailRefused(
 			'listUnsubscribe: mailto must be a bare e-mail address, as unsubscribe@example.com',
 		);
