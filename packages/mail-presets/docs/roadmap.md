@@ -5,19 +5,7 @@ are no dates here, and the version something shipped in is the only number.
 
 ## Now
 
-- **How long a link or a code lives** — `verify-email`, `reset-password`,
-  `magic-link`, `sign-in-code` and `invitation` take a required `expiresIn`,
-  a duration your code writes in the recipient's language (`'1 hour'`,
-  `'1 heure'`), and say `This link expires in {{ expiresIn }}.`,
-  `This code expires in {{ expiresIn }}.` or
-  `This invitation expires in {{ expiresIn }}.`, in the HTML and the text
-  part.
-  Breaking: a send without it no longer compiles against `MailEmails`, and
-  throws [`render: <email> needs the variable expiresIn`](troubleshooting.md#render-reset-password-needs-the-variable-expiresin).
-  Built, not yet published.
-- **`@nxgt/mail-ui` 0.2** — the peer moves to `^0.2.0`, where a tag that
-  resolves to no component fails the build, and the layout, content and
-  details components come. Built, not yet published.
+Nothing between releases.
 
 ## Next
 
@@ -45,6 +33,19 @@ Nothing yet. A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **How long a link or a code lives, v0.2.0** — `verify-email`,
+  `reset-password`, `magic-link`, `sign-in-code` and `invitation` take a
+  required `expiresIn`, a duration your code writes in the recipient's
+  language (`'1 hour'`, `'1 heure'`), and say
+  `This link expires in {{ expiresIn }}.`,
+  `This code expires in {{ expiresIn }}.` or
+  `This invitation expires in {{ expiresIn }}.`, in the HTML and the text
+  part.
+  Breaking: a send without it no longer compiles against `MailEmails`, and
+  throws [`render: <email> needs the variable expiresIn`](troubleshooting.md#render-reset-password-needs-the-variable-expiresin).
+- **`@nxgt/mail-ui` 0.2, v0.2.0** — the peer moves to `^0.2.0`, where a tag
+  that resolves to no component fails the build, and the layout, content and
+  details components come.
 - **`@nxgt/mail-i18n` 0.3, v0.1.2** — the peer moves to `^0.3.0`, the version
   that writes the manifest's `formatVersion`. The e-mails do not change.
 - **`@nxgt/mail-i18n` 0.2, v0.1.1** — the peer moves to `^0.2.0`, the version

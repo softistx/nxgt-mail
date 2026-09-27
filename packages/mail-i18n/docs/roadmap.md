@@ -38,6 +38,9 @@ Nothing yet. A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **Docs note `@nxgt/mail-ui`'s build check, v0.3.1** — with `ui()` in the
+  plugins, a tag that resolves to no component fails the build, naming the
+  tag and the file.
 - **The manifest's format, versioned, v0.3.0** — `mail-manifest.json` starts
   with `formatVersion`, `MANIFEST_FORMAT` is exported, and the format changes
   only with the manifest's shape: any later `@nxgt/mail` 0.x reads the build.
@@ -80,9 +83,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
 - **`createTranslator` outside templates, v0.1.0** — `createTranslator(catalogues,
   getLanguage)` and `t(key, args, language?)`, shaped like `@nxgt/i18n`, for a
   message an application formats itself.
-- **Typed templates and `t` in the editor, v0.1.0** — `t`, `locale` and
-  `placeholder` are known to Vue's template checker, so a template that calls
-  them type-checks. The plugin writes `.maizzle/nxgt-mail-i18n.d.ts` from the
-  catalogues each time the config loads, so an editor completes `t('…')` and
-  flags an unknown key or a wrong argument, and `vue-tsc` checks templates in
-  CI.
