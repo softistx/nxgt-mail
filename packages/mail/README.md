@@ -44,6 +44,7 @@ import without extensions, so `nodenext` is not supported.
 | `@nxgt/mail` | The port (`Mailer`, `MailMessage`, `Rendered`, `SentMail`, `Address`, `MailAttachment`), the errors (`MailError`, `MailFailure`, `MailRefused`), `createMemoryMailer`, `pickLocale` and `parseAcceptLanguage`, `listUnsubscribe` with `ListUnsubscribeOptions` and `ListUnsubscribeHeaders`, and what a transport calls first: `checkMessage`, `recipientsOf`, `addressOf`. No Node built-in: it runs anywhere |
 | `@nxgt/mail/renderer` | The renderer: `createMailRenderer`, `MailRenderer`, `MailRendererOptions`, `RenderOptions`, `MailVariables`, the types that type it with a build's `MailEmails` (`MailEmailsOf`, `AnyMailEmails`, `RenderArguments`), and `MANIFEST_FORMAT`, the newest manifest format it reads. Reads the build with `node:fs` |
 | `@nxgt/mail/conformance` | **For transport authors**: `describeMailer`, its cases as data, `runMailerCase`, the messages they send (`sampleMessage`, `sampleAttachment`, `sampleInlineImage`), and the memory mailer's harness as a worked example |
+| `@nxgt/mail/telemetry` | **Optional**: `withTelemetry` and `withRendererTelemetry`, a span per send and per render on `@opentelemetry/api` — an optional peer, installed only if this subpath is imported |
 
 ## Usage
 
@@ -473,6 +474,53 @@ describeMailer({
 
 See [Writing a transport](docs/guide/transports.md) for the harness, faults and
 skips.
+
+### Observability — `withTelemetry` and `withRendererTelemetry`
+
+`@nxgt/mail/telemetry` wraps a `Mailer` or a `MailRenderer` with a span, on
+`@opentelemetry/api` — an **optional peer**: with none installed, every call
+still runs, and produces nothing.
+
+```ts
+import { withTelemetry, withRendererTelemetry } from '@nxgt/mail/telemetry';
+import { createMailRenderer } from '@nxgt/mail/renderer';
+
+const mails = withRendererTelemetry(createMailRenderer({ dir: 'dist' })); // span mail.render, per call
+const mailer = withTelemetry(resendMailer, { transport: 'resend' }); // span mail.send, per call
+
+await mailer.send({ to, ...mails.render('verify-email', { name, link }) });
+```
+
+`mail.send` (kind `CLIENT`) carries the transport's name, the recipient
+**count**, the tags' **names** (never their values), whether an idempotency
+key or a schedule was set, the e-mail's name when `emailName` is given (there
+being nothing on `MailMessage` that carries it), and the outcome. `mail.render`
+carries the e-mail's name — always known there — and the outcome; `render`
+stays synchronous, the span opening and closing within the one call. Both
+record a duration histogram and a counter, by outcome.
+
+**Never an address, a subject, a body, an attachment or a placeholder's
+value** — only a shape, the same invariant `MailError`'s own messages hold.
+`telemetry.spec.ts` asserts it: the address, the subject and the body used in
+its fixtures never occur in any attribute or event either function writes.
+
+**A refusal is an answer.** `MailRefused` ends the span `ok`, with
+`mail.outcome: 'refused'` and `error.type` set to its code; `MailFailure` (or
+anything else) ends it `error`, with `mail.outcome: 'failure'` and the
+exception recorded — as a name and the `MailErrorCode`, **never the thrown
+error's own `message` or `stack`**, which a hand-rolled `Mailer` may have
+built from the message. Either way the error is rethrown unchanged:
+telemetry only observes.
+
+**With a retry decorator, `withTelemetry` goes on the outside**:
+`withTelemetry(withRetry(mailer), { transport })`. One call from your code is
+one span, its duration and outcome the whole retried attempt — the shape a
+caller reads a trace for. Put it inside instead
+(`withRetry(withTelemetry(mailer, { transport }))`) only to see each attempt
+of its own, at the cost of several `mail.send` spans for one `send()` call.
+
+See [Observability](docs/guide/observability.md) for every attribute, and the
+metric names.
 
 ## Traps
 
