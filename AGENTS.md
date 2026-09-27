@@ -176,6 +176,14 @@ they are built.
 `@nxgt/janus-mail` lives in `nxgt-janus`: a Maizzle project built with these
 packages.
 
+**`examples/starter`** is the official Maizzle starter with the packages wired
+as their READMEs say — a workspace, private, never published, depending on
+them as `workspace:*`. CI builds it, checks its committed `generated/mail.ts`,
+renders it in both locales (`send.ts`) and serves it. A README snippet that
+changes changes the starter with it. It has no `postinstall`: in this
+repository `bun install` runs before the packages are built, so the root's
+`postinstall` runs its `maizzle prepare` once they are.
+
 **A project overrides by name.** Its `components/nx-button.vue` replaces the
 package's `<NxButton>`; its `locales/en.json` overrides a shared message key
 by key; a later plugin overrides an earlier one's config key. The packages'
@@ -240,13 +248,15 @@ the first package writes: *e-mail* (not "mail" in prose, not "email"),
 
 ```sh
 bun install          # postinstall: bun run editor — the build, then maizzle prepare in
-                     # the fixtures of mail-i18n, mail-ui and mail-presets, so an editor
+                     # the fixtures of mail-i18n, mail-ui and mail-presets and in
+                     # examples/starter, so an editor
                      # knows t and brand in templates; a package that does not build
                      # only warns, and CI skips it (scripts/postinstall.ts)
 bun run check        # biome, and the naming conventions that hold the casing rules
 bun run build        # before typecheck: a package reaches its siblings, and its
                      # templates reach the package itself, through dist/
-bun run typecheck    # includes test/types/ and the fixtures' templates, the type-safety measurement
+bun run typecheck    # includes test/types/, the fixtures' templates and the starter,
+                     # the type-safety measurement
 bun run test
 bun run verify:artifacts   # on the tarball actually packed
 ```

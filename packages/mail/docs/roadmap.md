@@ -47,6 +47,12 @@ the only number.
   does. Built, not yet published — see
   [its roadmap](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-resend/docs/roadmap.md).
 
+- **A starter that sends** — `examples/starter`'s `send.ts` renders its
+  e-mails in `en` and `fr` through `createMailRenderer<MailEmails>` and
+  hands them to `createMemoryMailer()`, run in CI:
+  [`examples/starter`](https://github.com/softistx/nxgt-mail/tree/develop/examples/starter).
+  In the repository; the packages it installs are not yet published.
+
 ## Next
 
 - **A base Maizzle config** — `@nxgt/mail-config`: `defineMailConfig({ plugins,

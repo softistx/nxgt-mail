@@ -23,6 +23,11 @@ no dates here, and the version something shipped in is the only number.
   `maizzle.config.production.ts`: your project config, the HTML minified,
   then your overrides, built with `maizzle build -c
   maizzle.config.production.ts`. Built, not yet published.
+- **A starter project** — the official Maizzle starter with
+  `defineMailConfig`, the i18n and the UI plugins wired in as the READMEs
+  say, built, rendered in `en` and `fr` and served in CI, so the snippets are
+  known to work: [`examples/starter`](https://github.com/softistx/nxgt-mail/tree/develop/examples/starter).
+  In the repository; the packages it installs are not yet published.
 
 ## Next
 
@@ -33,9 +38,6 @@ no dates here, and the version something shipped in is the only number.
   listed in `plugins`: e-mail components in the style of `@nxgt/material-vue`,
   each replaceable by name in your project; built, not yet published — see
   [its roadmap](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-ui/docs/roadmap.md).
-- **A starter project** — the official Maizzle starter with
-  `defineMailConfig`, the i18n and the UI plugins wired in, built in CI, so the
-  README's snippet is known to work.
 - **The first release, 0.1.0** — `@nxgt/mail-config` on npm, installable into
   an empty Maizzle project that serves and builds with the README's own
   snippet.

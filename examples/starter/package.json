@@ -1,0 +1,26 @@
+{
+	"name": "nxgt-mail-starter",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"dev": "maizzle serve",
+		"build": "maizzle build",
+		"send": "bun send.ts",
+		"typecheck": "maizzle prepare && vue-tsc --noEmit -p tsconfig.json",
+		"prepare:templates": "maizzle prepare"
+	},
+	"dependencies": {
+		"@maizzle/framework": "6.1.7",
+		"@maizzle/tailwindcss": "1.5.6",
+		"@nxgt/mail": "workspace:*",
+		"@nxgt/mail-config": "workspace:*",
+		"@nxgt/mail-i18n": "workspace:*",
+		"@nxgt/mail-presets": "workspace:*",
+		"@nxgt/mail-ui": "workspace:*",
+		"vue": "3.5.43"
+	},
+	"devDependencies": {
+		"vue-tsc": "^3.3.11"
+	}
+}
