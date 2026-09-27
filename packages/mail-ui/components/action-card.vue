@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { twMerge } from '@maizzle/framework';
-import { computed, useAttrs, useSlots } from 'vue';
+import { computed, getCurrentInstance, useAttrs, useSlots } from 'vue';
+import { dirOf } from './ui';
 
 /**
  * material-vue's ActionCard, still: a card with an `icon` in a box, a title,
@@ -25,6 +26,9 @@ const props = withDefaults(
 	{ active: false, variant: 'sm', withIndicator: true },
 );
 
+const globals: Record<string, unknown> =
+	getCurrentInstance()?.appContext.config.globalProperties ?? {};
+const dir = computed(() => dirOf(globals));
 const attrs = useAttrs();
 const slots = useSlots();
 const classes = computed(() =>
@@ -49,9 +53,9 @@ const indicator = computed(() =>
 <template>
   <NxCard v-bind="{ ...attrs, class: undefined }" :class="classes">
     <NxCardContent class="px-4">
-      <table v-if="variant === 'sm' || slots.icon || withIndicator" class="w-full" role="presentation" cellpadding="0" cellspacing="0">
+      <table v-if="variant === 'sm' || slots.icon || withIndicator" class="w-full" role="presentation" cellpadding="0" cellspacing="0" :dir="dir">
         <tr>
-          <td v-if="slots.icon" :class="variant === 'sm' ? 'w-1 pr-4 align-middle' : 'align-top'">
+          <td v-if="slots.icon" :class="variant === 'sm' ? `w-1 align-middle ${dir === 'rtl' ? 'pl-4' : 'pr-4'}` : 'align-top'">
             <table role="presentation" cellpadding="0" cellspacing="0"><tr><td :class="iconBox"><slot name="icon" /></td></tr></table>
           </td>
           <td v-if="variant === 'sm'" class="align-middle">
@@ -59,7 +63,7 @@ const indicator = computed(() =>
             <NxCardDescription v-if="description">{{ description }}</NxCardDescription>
           </td>
           <td v-else-if="!slots.icon">&zwj;</td>
-          <td v-if="withIndicator" :class="variant === 'sm' ? 'w-1 pl-4 text-right align-middle' : 'w-1 text-right align-top'"><span aria-hidden="true"><span data-maizzle-html-only><span :class="indicator">{{ active ? '\u2713' : '\u200B' }}</span></span></span></td>
+          <td v-if="withIndicator" :class="variant === 'sm' ? `w-1 align-middle ${dir === 'rtl' ? 'pr-4 text-left' : 'pl-4 text-right'}` : `w-1 align-top ${dir === 'rtl' ? 'text-left' : 'text-right'}`"><span aria-hidden="true"><span data-maizzle-html-only><span :class="indicator">{{ active ? '\u2713' : '\u200B' }}</span></span></span></td>
         </tr>
       </table>
       <table v-if="variant === 'md'" :class="slots.icon || withIndicator ? 'mt-4 w-full' : 'w-full'" role="presentation" cellpadding="0" cellspacing="0">

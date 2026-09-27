@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { twMerge } from '@maizzle/framework';
-import { computed, useAttrs, useSlots } from 'vue';
-import type { Tone } from './ui';
+import { computed, getCurrentInstance, useAttrs, useSlots } from 'vue';
+import { dirOf, type Tone } from './ui';
 
 /**
  * material-vue's Banner: a status in a tinted, bordered box, with an
@@ -25,6 +25,9 @@ const TONE: Record<Tone, string> = {
 	error: 'border-error-40 bg-error-10',
 };
 
+const globals: Record<string, unknown> =
+	getCurrentInstance()?.appContext.config.globalProperties ?? {};
+const dir = computed(() => dirOf(globals));
 const attrs = useAttrs();
 const slots = useSlots();
 const classes = computed(() =>
@@ -40,9 +43,9 @@ const classes = computed(() =>
   <table class="mb-4 w-full" role="presentation" cellpadding="0" cellspacing="0">
     <tr>
       <td v-bind="{ ...attrs, class: undefined }" :class="classes">
-        <table class="w-full" role="presentation" cellpadding="0" cellspacing="0">
+        <table class="w-full" role="presentation" cellpadding="0" cellspacing="0" :dir="dir">
           <tr>
-            <td v-if="slots.icon" :class="`w-4 pr-3 align-top text-${tone}`"><slot name="icon" /></td>
+            <td v-if="slots.icon" :class="`w-4 align-top text-${tone} ${dir === 'rtl' ? 'pl-3' : 'pr-3'}`"><slot name="icon" /></td>
             <!-- Every tone's ground is a light tint that keeps the same value in
                  dark mode (see theme.css): its text stays un-flipped too. -->
             <td class="align-top text-foreground">
@@ -50,7 +53,7 @@ const classes = computed(() =>
               <p v-if="description" class="m-0 text-sm text-muted-foreground">{{ description }}</p>
               <slot />
             </td>
-            <td v-if="slots.action" class="pl-3 text-right align-middle"><slot name="action" /></td>
+            <td v-if="slots.action" :class="`align-middle ${dir === 'rtl' ? 'pr-3 text-left' : 'pl-3 text-right'}`"><slot name="action" /></td>
           </tr>
         </table>
       </td>

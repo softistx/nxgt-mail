@@ -23,7 +23,8 @@ lays itself out for the direction that locale reads in.
 
 `@nxgt/mail-i18n` derives each locale's direction and gives it to the
 template as `dir`, beside `locale` — see its
-[README](../../mail-i18n/README.md#usage). `@nxgt/mail-ui`'s own `dirOf`
+[README](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-i18n/README.md#usage).
+`@nxgt/mail-ui`'s own `dirOf`
 (`components/ui.ts`) reads that global when `@nxgt/mail-i18n` is listed, and
 otherwise falls back to the same small list of right-to-left scripts, keyed
 by locale, so a component built without the i18n plugin (a bare `ui()`
@@ -72,6 +73,17 @@ What mirrors:
 | `NxStatCard` | The icon's gap and alignment, the delta's gap |
 | `NxTimeline` | The connecting line's side, the gap after the marker, the timestamp's gap and alignment |
 | `NxSeeAlso` | The external-link arrow, mirrored (`↗` becomes `↖`), and its alignment |
+| `NxListTile` | The trailing slot's gap and alignment |
+| `NxEntityHeader` | The actions slot's gap and alignment |
+| `NxBreakdownCard` | The gap between its boxes and their alignment |
+| `NxExtendedLabel` | The icon's gap |
+| `NxRatioCard` | The gap between its boxes and their alignment |
+| `NxActionCard` | The icon's gap, the arrow's alignment |
+| `NxCardHeader` | The actions slot's gap and alignment |
+| `NxBanner` | The icon's gap, the action slot's gap and alignment |
+| `NxSteps` / `NxStepsItem` | The connecting line's side, the marker's gap |
+| `NxSummaryData` | The label/value alignment |
+| `NxTableHead` | The default column alignment |
 
 A component with no asymmetric padding, border or alignment (`NxCard`,
 `NxBadge`, most of the data components) needs nothing: centred or
@@ -107,8 +119,8 @@ affected fixture template.
 
 ## See also
 
-- [`@nxgt/mail-i18n`](../../mail-i18n/README.md) — `locales`, `dir`,
-  `localeDirection`.
+- [`@nxgt/mail-i18n`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-i18n/README.md) —
+  `locales`, `dir`, `localeDirection`.
 - [Components](components.md) — every `Nx*` component.
 - [Dark mode](dark-mode.md) — the other build-time/runtime split a mail
   client forces on this package, and how it stays independent of direction

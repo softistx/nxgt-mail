@@ -1,16 +1,22 @@
 <script setup lang="ts">
 import { twMerge } from '@maizzle/framework';
-import { computed, inject, useAttrs } from 'vue';
-import { TABLE_PART, type TablePart } from './ui';
+import { computed, getCurrentInstance, inject, useAttrs } from 'vue';
+import { dirOf, TABLE_PART, type TablePart } from './ui';
 
-/** material-vue's TableHead: a column's name, left-aligned, in medium weight. */
+/**
+ * material-vue's TableHead: a column's name, aligned to the start of the
+ * direction it builds in (left in `ltr`, right in `rtl`), in medium weight.
+ */
 defineOptions({ inheritAttrs: false });
 
 const part = inject<TablePart>(TABLE_PART, 'body');
+const globals: Record<string, unknown> =
+	getCurrentInstance()?.appContext.config.globalProperties ?? {};
+const dir = computed(() => dirOf(globals));
 const attrs = useAttrs();
 const classes = computed(() =>
 	twMerge(
-		'h-10 whitespace-nowrap px-2 text-left align-middle font-medium',
+		`h-10 whitespace-nowrap px-2 align-middle font-medium ${dir.value === 'rtl' ? 'text-right' : 'text-left'}`,
 		// One side's style only: `border-0 border-solid` would end as `border: 0`.
 		// The footer's `bg-muted` keeps the same value in dark mode (see
 		// theme.css): its text stays `text-foreground`, un-flipped, too.

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { twMerge } from '@maizzle/framework';
-import { cloneVNode, computed, useAttrs, useSlots } from 'vue';
-import { slotComponents } from './ui';
+import { cloneVNode, computed, getCurrentInstance, useAttrs, useSlots } from 'vue';
+import { dirOf, slotComponents } from './ui';
 
 /**
  * material-vue's Steps: its `NxStepsItem`s one under the other, numbered in
@@ -22,10 +22,13 @@ const items = computed(() => {
 	);
 });
 const classes = computed(() => twMerge('mb-4 w-full', attrs.class as string));
+const globals: Record<string, unknown> =
+	getCurrentInstance()?.appContext.config.globalProperties ?? {};
+const dir = computed(() => dirOf(globals));
 </script>
 
 <template>
-  <table v-bind="{ ...attrs, class: undefined }" :class="classes" role="presentation" cellpadding="0" cellspacing="0">
+  <table v-bind="{ ...attrs, class: undefined }" :class="classes" role="presentation" cellpadding="0" cellspacing="0" :dir="dir">
     <component :is="item" v-for="(item, position) in items" :key="position" />
   </table>
 </template>

@@ -1134,6 +1134,10 @@ describe('a right-to-left locale', () => {
 				'    <NxStatCard label="Users" value="42" :delta="5"><template #icon>i</template></NxStatCard>',
 				"    <NxTimeline :items=\"[{ id: '1', title: 'Signed in', timestampLabel: 'Today' }, { id: '2', title: 'Second' }]\" />",
 				"    <NxSeeAlso label=\"Links\" :items=\"[{ id: 'a', title: 'Docs', href: 'https://acme.example/docs' }]\" />",
+				'    <NxListTile title="Item"><template #trailing>X</template></NxListTile>',
+				'    <NxEntityHeader title="Header"><template #actions>A</template></NxEntityHeader>',
+				"    <NxSummaryData :data=\"[{ label: 'L', value: 'V' }]\" />",
+				'    <NxSteps><NxStepsItem title="Step 1" /><NxStepsItem title="Step 2" /></NxSteps>',
 				'  </NxLayout>',
 				'</template>',
 			].join('\n'),
@@ -1193,6 +1197,17 @@ describe('a right-to-left locale', () => {
 		const en = await Bun.file(`${root}/dist/en/welcome.html`).text();
 		expect(ar).toContain('<span aria-hidden="true">↖</span>');
 		expect(en).toContain('<span aria-hidden="true">↗</span>');
+	});
+
+	test("mirrors a list tile's trailing gap, an entity header's actions, a summary row and steps' line", async () => {
+		const ar = await Bun.file(`${root}/dist/ar/welcome.html`).text();
+		const en = await Bun.file(`${root}/dist/en/welcome.html`).text();
+		expect(ar).toContain('padding-right: 16px; text-align: left');
+		expect(en).toContain('padding-left: 16px; text-align: right');
+		expect(ar).toContain('padding-bottom: 8px; text-align: left');
+		expect(en).toContain('padding-bottom: 8px; text-align: right');
+		expect(ar).toContain('border-left-width: 1px; border-left-style: solid');
+		expect(en).toContain('border-right-width: 1px; border-right-style: solid');
 	});
 
 	test('keeps the plain-text part readable, without the mirrored glyph', async () => {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { twMerge } from '@maizzle/framework';
-import { computed, useAttrs, useSlots } from 'vue';
+import { computed, getCurrentInstance, useAttrs, useSlots } from 'vue';
+import { dirOf } from './ui';
 
 /**
  * material-vue's ListTile: a title, a subtitle under it, and `leading` and
@@ -36,6 +37,9 @@ const SIZE: Record<Size, { idle: string; selected: string; title: string }> = {
 	},
 };
 
+const globals: Record<string, unknown> =
+	getCurrentInstance()?.appContext.config.globalProperties ?? {};
+const dir = computed(() => dirOf(globals));
 const attrs = useAttrs();
 const slots = useSlots();
 const size = computed(() => SIZE[props.size]);
@@ -54,18 +58,19 @@ const titleClass = computed(() =>
 		props.disabled ? 'text-muted-foreground' : 'text-foreground',
 	),
 );
-const gap = computed(() =>
-	props.size === 'md'
-		? { leading: 'pr-4', trailing: 'pl-4' }
-		: { leading: 'pr-2', trailing: 'pl-2' },
-);
+const gap = computed(() => {
+	const px = props.size === 'md' ? '4' : '2';
+	return dir.value === 'rtl'
+		? { leading: `pl-${px}`, trailing: `pr-${px}` }
+		: { leading: `pr-${px}`, trailing: `pl-${px}` };
+});
 </script>
 
 <template>
   <table class="mb-2 w-full" role="presentation" cellpadding="0" cellspacing="0">
     <tr>
       <td v-bind="{ ...attrs, class: undefined }" :class="classes">
-        <table class="w-full" role="presentation" cellpadding="0" cellspacing="0">
+        <table class="w-full" role="presentation" cellpadding="0" cellspacing="0" :dir="dir">
           <tr>
             <td v-if="slots.leading" :class="`w-1 whitespace-nowrap align-middle ${gap.leading}`"><slot name="leading" /></td>
             <td class="align-middle">
@@ -73,7 +78,7 @@ const gap = computed(() =>
               <span v-else :class="titleClass">{{ title }}</span>
               <p v-if="subtitle" class="m-0 text-sm text-muted-foreground">{{ subtitle }}</p>
             </td>
-            <td v-if="slots.trailing" :class="`w-1 whitespace-nowrap text-right align-middle ${gap.trailing}`"><slot name="trailing" /></td>
+            <td v-if="slots.trailing" :class="`w-1 whitespace-nowrap align-middle ${dir === 'rtl' ? 'text-left' : 'text-right'} ${gap.trailing}`"><slot name="trailing" /></td>
           </tr>
         </table>
       </td>

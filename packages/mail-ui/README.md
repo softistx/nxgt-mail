@@ -266,9 +266,11 @@ The light version is [above](#nxgtmail-ui); [`components-en.png`](https://raw.gi
 
 `NxLayout` writes `dir` on `<html>`, the body and the wrapper table, from
 `@nxgt/mail-i18n`'s `dir` global (or, without it, a small built-in list of
-right-to-left scripts by locale). Every other component mirrors its physical
-CSS — an alert's accent bar, a delta's and a see-also's arrow, a timeline's
-side — for the direction it builds in:
+right-to-left scripts by locale). Seventeen other components mirror their
+physical CSS for the direction they build in — an alert's accent bar, a
+delta's and a see-also's arrow, a timeline's side, a list tile's trailing
+slot, an entity header's actions, a summary row's alignment, and more (see
+[Right-to-left languages](docs/guide/right-to-left.md) for the full list):
 
 ```ts
 i18n({ locales: ['en', 'ar'] }); // dir is 'rtl' for ar, 'ltr' for en
@@ -281,7 +283,7 @@ i18n({ locales: ['en', 'ar'] }); // dir is 'rtl' for ar, 'ltr' for en
 
 `@nxgt/mail-ui`'s own shared messages ship `en`/`fr` only; add a right-to-left
 locale's translation of the `common.*` keys you use, the same way you add its
-templates. See [Right-to-left languages](docs/guide/right-to-left.md).
+templates.
 
 ### The shared messages — `uiCatalogues`
 

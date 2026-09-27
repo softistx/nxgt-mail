@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { twMerge } from '@maizzle/framework';
-import { computed, useAttrs, useSlots } from 'vue';
+import { computed, getCurrentInstance, useAttrs, useSlots } from 'vue';
+import { dirOf } from './ui';
 
 /**
  * material-vue's StepsItem: a numbered circle, a title and the text under it,
@@ -18,11 +19,14 @@ const props = withDefaults(
 	{ last: true },
 );
 
+const globals: Record<string, unknown> =
+	getCurrentInstance()?.appContext.config.globalProperties ?? {};
+const dir = computed(() => dirOf(globals));
 const attrs = useAttrs();
 const slots = useSlots();
 const classes = computed(() =>
 	twMerge(
-		'pl-3 align-top',
+		dir.value === 'rtl' ? 'pr-3 align-top' : 'pl-3 align-top',
 		props.last ? 'pb-0' : 'pb-8',
 		attrs.class as string,
 	),
@@ -34,12 +38,12 @@ const classes = computed(() =>
     <td colspan="2" class="w-8 align-top">
       <span class="block h-8 w-8 rounded-full border border-solid border-primary-25 bg-background nx-dark-bg-background text-center text-xs font-semibold leading-[30px] text-primary"><slot name="index">{{ index }}</slot></span>
     </td>
-    <td class="pl-3 align-top">
+    <td :class="dir === 'rtl' ? 'pr-3 align-top' : 'pl-3 align-top'">
       <p v-if="title" class="m-0 pt-1 text-base font-semibold tracking-tight text-foreground nx-dark-text-foreground">{{ title }}</p>
     </td>
   </tr>
   <tr>
-    <td :class="['w-4 text-[1px] leading-px', !last && 'border-r [border-right-style:solid] border-border nx-dark-border-border']"><span data-maizzle-html-only>&zwj;</span></td>
+    <td :class="['w-4 text-[1px] leading-px', !last && (dir === 'rtl' ? 'border-l [border-left-style:solid] border-border nx-dark-border-border' : 'border-r [border-right-style:solid] border-border nx-dark-border-border')]"><span data-maizzle-html-only>&zwj;</span></td>
     <td class="w-4 text-[1px] leading-px"><span data-maizzle-html-only>&zwj;</span></td>
     <td v-bind="{ ...attrs, class: undefined }" :class="classes">
       <div v-if="slots.default" class="mt-2 text-sm leading-6 text-muted-foreground"><slot /></div>
