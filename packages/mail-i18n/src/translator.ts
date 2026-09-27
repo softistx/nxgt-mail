@@ -1,11 +1,29 @@
-import { IntlMessageFormat } from 'intl-messageformat';
+import type { LanguageProvider, MessageArgs } from '@nxgt/i18n-vue/core';
+import { createFormatter } from '@nxgt/i18n-vue/core';
 import type { Catalogue, Catalogues } from './catalogues';
 
-/** The values a message's arguments take: `{ name: 'Ada', count: 3 }`. */
-export type MessageArgs = Readonly<Record<string, string | number | Date>>;
-
-/** A locale, or a function that answers it at each call — as in `@nxgt/i18n`. */
-export type LanguageProvider = string | (() => string);
+// `createFormatter` and the two types below are `@nxgt/i18n`'s conventions
+// verbatim — `@nxgt/i18n-vue/core` publishes the same function, so this
+// package uses it instead of its own copy.
+//
+// `createTranslator` stays this package's own function, and `Translate`
+// stays a plain, non-generic type, for two reasons `@nxgt/i18n-vue/core`'s
+// own versions do not hold:
+//
+// - Its `Translate<K = MessageKey>` defaults its key type from
+//   `@nxgt/i18n-vue`'s own augmentable `I18nMessages` — a *different*,
+//   global interface than this package's `TemplateMessages` (see `vue.ts`).
+//   Re-exporting that generic type unparametrised would have this package's
+//   `t()` silently pick up whatever keys an unrelated app registered with
+//   `@nxgt/i18n-vue` in the same TypeScript program.
+// - Its `lookup` matches a key across both conventions at the call site
+//   (`t('linkExpires')` would now find a catalogue's `link-expires`) — the
+//   same leniency this package deliberately does not want in
+//   `checkCatalogues`, for the same reason: it would revive an old-key
+//   override outside a template's build-time check, which stays exact
+//   (`template.ts`'s own `Map.get`), quietly, at send time.
+export type { LanguageProvider, MessageArgs };
+export { createFormatter };
 
 /** `t(key, args?, language?)`: the message `key`, formatted in the language. */
 export type Translate = (
@@ -25,32 +43,6 @@ function lookup(catalogue: Catalogue, key: string): string | null {
 
 const resolveLanguage = (language: LanguageProvider): unknown =>
 	typeof language === 'function' ? language() : language;
-
-/**
- * Formats with a cache of compiled messages, one per locale and key. A
- * message that does not format **throws**, the formatter's error as the
- * cause.
- */
-export function createFormatter(prefix: string) {
-	const compiled = new Map<string, IntlMessageFormat>();
-	return (locale: string, key: string, text: string, args?: MessageArgs) => {
-		const id = `${locale}\u0000${key}`;
-		try {
-			let format = compiled.get(id);
-			if (format === undefined) {
-				format = new IntlMessageFormat(text, locale, undefined, {
-					ignoreTag: true,
-				});
-				compiled.set(id, format);
-			}
-			return String(format.format(args));
-		} catch (cause) {
-			throw new Error(`${prefix}: ${locale}: ${key} could not be formatted`, {
-				cause,
-			});
-		}
-	};
-}
 
 /**
  * The translator of `@nxgt/i18n`, for mail: `createTranslator(catalogues,

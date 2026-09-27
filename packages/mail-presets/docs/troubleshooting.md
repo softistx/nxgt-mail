@@ -422,8 +422,17 @@ namespace (`verifyEmail` becoming `verify-email`, `resetPassword` becoming
 `linkExpires`, `linkFallback`, `notYou` becoming `code-expires`,
 `link-expires`, `link-fallback`, `not-you`). An override under the old key
 is not an error by itself — it becomes a key of its own that no preset
-reads, so the build succeeds with your override silently ignored — until a
-template's own call to the new key finds nothing under the old one.
+reads. **This is silent only in the fallback locale**: an override under
+the old key in the fallback locale's own file (`locales/en.json`) builds
+without complaint, until a template's own call to the new key finds nothing
+under the old one. The same override in another locale's file is not
+silent — the fallback locale's catalogue never gained the old key, so the
+build fails immediately, naming the locale and the key:
+
+```
+i18n: fr: presets.linkExpires is not a key of en, the fallback locale
+```
+
 **Fix:** rename the key in your override and in any template you replaced a
 preset with — see the package's changeset for the full old → new list:
 

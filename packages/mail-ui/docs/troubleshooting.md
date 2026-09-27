@@ -556,9 +556,18 @@ this is not a format refusal — but the specific key moved, `avatarGroup`
 becoming `avatar-group` (and the same for `ofTarget`, `thisPeriod`,
 `lastPeriod`, `seeAlso`, `countBadge`, `fileList`, `postalAddress`,
 `openingHours`). An override under the old key is not an error by itself —
-it becomes a key of its own that no component reads, so the build succeeds
-with your override silently ignored — until a component's own call to the
-new key finds nothing under the old one.
+it becomes a key of its own that no component reads. **This is silent only
+in the fallback locale**: an override under the old key in the fallback
+locale's own file (`locales/en.json`) builds without complaint, until a
+component's own call to the new key finds nothing under the old one. The
+same override in another locale's file is not silent — the fallback
+locale's catalogue never gained the old key, so the build fails
+immediately, naming the locale and the key:
+
+```
+i18n: fr: common.avatarGroup.more is not a key of en, the fallback locale
+```
+
 **Fix:** rename the key in your override, from `common.avatarGroup.more` to
 `common.avatar-group.more` and so on for the others — see the package's
 changeset for the full old → new list:
