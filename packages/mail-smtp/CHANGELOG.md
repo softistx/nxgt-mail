@@ -1,5 +1,15 @@
 # @nxgt/mail-smtp
 
+## 0.5.1
+
+### Patch Changes
+
+- [#69](https://github.com/softistx/nxgt-mail/pull/69) [`7e15c67`](https://github.com/softistx/nxgt-mail/commit/7e15c67cef150e86129b9d5be08d0e72d5f49140) Thanks [@SteveGT96](https://github.com/SteveGT96)! - The `@nxgt/mail` peer moves to `^0.8.0`: upgrade `@nxgt/mail` with it. No change here: SMTP has no webhook of its own, so it maps no delivery events — what happened after the hand-over is in the receiving MTA's own logs, or comes back as a DSN (delivery status notification) e-mail to the envelope sender, out of scope. The docs say so.
+
+- [#68](https://github.com/softistx/nxgt-mail/pull/68) [`d6d47f2`](https://github.com/softistx/nxgt-mail/commit/d6d47f2839f800ea48761d49809ad7db50395401) Thanks [@SteveGT96](https://github.com/SteveGT96)! - The `@nxgt/mail` peer moves to `^0.8.0`: upgrade `@nxgt/mail` with it.
+- Updated dependencies [[`7e15c67`](https://github.com/softistx/nxgt-mail/commit/7e15c67cef150e86129b9d5be08d0e72d5f49140), [`ce0ddf7`](https://github.com/softistx/nxgt-mail/commit/ce0ddf71b05c14a8ea7ede7e1a37c4039cbbcd1e), [`d6d47f2`](https://github.com/softistx/nxgt-mail/commit/d6d47f2839f800ea48761d49809ad7db50395401), [`8bac69f`](https://github.com/softistx/nxgt-mail/commit/8bac69f02b5223fbf4e55c1799e93d3cee74bec0)]:
+  - @nxgt/mail@0.8.0
+
 ## 0.5.0
 
 ### Minor Changes

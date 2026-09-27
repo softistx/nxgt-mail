@@ -1,5 +1,40 @@
 # @nxgt/mail-resend
 
+## 0.6.0
+
+### Minor Changes
+
+- [#69](https://github.com/softistx/nxgt-mail/pull/69) [`7e15c67`](https://github.com/softistx/nxgt-mail/commit/7e15c67cef150e86129b9d5be08d0e72d5f49140) Thanks [@SteveGT96](https://github.com/SteveGT96)! - Webhooks: a new `@nxgt/mail-resend/webhooks` subpath. `createResendWebhook({ secret })` verifies Resend's Svix signature — the headers `svix-id`, `svix-timestamp` and `svix-signature`, HMAC-SHA256 over `${svix-id}.${svix-timestamp}.${body}` against the `whsec_…` secret, several space-separated signatures accepted during secret rotation, a 5-minute timestamp tolerance — with Web Crypto only, so it runs on Node, Bun, Deno and an edge or workers runtime alike. `verify(request)` maps `email.delivered`, `email.bounced`, `email.complained`, `email.delivery_delayed`, `email.opened` and `email.clicked` to `@nxgt/mail`'s neutral `MailEvent`; any other Resend event type answers `null`. A bad or old signature throws `MailWebhookRefused` from the `@nxgt/mail` peer, so a handler answers `401`. The `@nxgt/mail` peer moves to `^0.8.0`: upgrade `@nxgt/mail` with it.
+
+- [#71](https://github.com/softistx/nxgt-mail/pull/71) [`ce0ddf7`](https://github.com/softistx/nxgt-mail/commit/ce0ddf71b05c14a8ea7ede7e1a37c4039cbbcd1e) Thanks [@SteveGT96](https://github.com/SteveGT96)! - `createResendMailer(...)` now answers a `sendBatch`, a `cancel` and a
+  `reschedule`, beside `send`.
+  
+  `sendBatch(messages)` calls Resend's `POST /emails/batch` — up to 100
+  messages per request (Resend's own limit); above it, split into as many
+  requests as it takes. Every message is checked with `checkMessage` first, and
+  two things `send` takes are refused in a batch instead, each on its own
+  message, the rest unaffected: an attachment (Resend's batch does not support
+  them yet) and a message's own `idempotencyKey` (Resend takes one
+  `Idempotency-Key` per batch request, in the header, never one per message —
+  none is sent for a batch request at all). A request of up to 100 that Resend
+  refuses, or cannot be reached for, reports every message in it the same way —
+  `refused` or `failed` — since Resend answers the whole request as one; a
+  later request still runs, and is reported on its own.
+  
+  `cancel(messageId)` calls Resend's `POST /emails/{id}/cancel`, to stop a
+  message `send` scheduled ahead before it goes out. `reschedule(messageId,
+  scheduledAt)` calls its `PATCH /emails/{id}`, to move a scheduled message to a
+  new time, held to the same 30-day and clock-skew rule as `send`. Both refuse
+  with `@nxgt/mail`'s `MailScheduleRefused` — code `UNKNOWN_ID` for an id
+  Resend does not hold pending, `ALREADY_SENT` for one it already sent — and
+  throw `MailFailure` for anything else, Resend's answer as the `cause`.
+
+### Patch Changes
+
+- [#68](https://github.com/softistx/nxgt-mail/pull/68) [`d6d47f2`](https://github.com/softistx/nxgt-mail/commit/d6d47f2839f800ea48761d49809ad7db50395401) Thanks [@SteveGT96](https://github.com/SteveGT96)! - The `@nxgt/mail` peer moves to `^0.8.0`: upgrade `@nxgt/mail` with it.
+- Updated dependencies [[`7e15c67`](https://github.com/softistx/nxgt-mail/commit/7e15c67cef150e86129b9d5be08d0e72d5f49140), [`ce0ddf7`](https://github.com/softistx/nxgt-mail/commit/ce0ddf71b05c14a8ea7ede7e1a37c4039cbbcd1e), [`d6d47f2`](https://github.com/softistx/nxgt-mail/commit/d6d47f2839f800ea48761d49809ad7db50395401), [`8bac69f`](https://github.com/softistx/nxgt-mail/commit/8bac69f02b5223fbf4e55c1799e93d3cee74bec0)]:
+  - @nxgt/mail@0.8.0
+
 ## 0.5.0
 
 ### Minor Changes

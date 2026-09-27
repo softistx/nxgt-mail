@@ -1,5 +1,58 @@
 # @nxgt/mail
 
+## 0.8.0
+
+### Minor Changes
+
+- [#69](https://github.com/softistx/nxgt-mail/pull/69) [`7e15c67`](https://github.com/softistx/nxgt-mail/commit/7e15c67cef150e86129b9d5be08d0e72d5f49140) Thanks [@SteveGT96](https://github.com/SteveGT96)! - Delivery events: `MailEvent`, the neutral shape a provider's webhook is mapped to — `delivered`, `bounced` (`bounceType`, `'hard'` or `'soft'`), `complained`, `delayed`, and, optional and marked `tracking: true`, `opened` and `clicked`. Every event carries `messageId` (the id `send` answered), `recipient`, `timestamp`, `tags` and `raw`, the provider's own payload untouched — no PII beyond what the provider already sends. `MailWebhookRefused` (codes `INVALID_SIGNATURE`, `EXPIRED_TIMESTAMP`) is what a provider's webhook subpath throws when the request itself cannot be trusted; an event type it does not map is `null`, never a throw. `@nxgt/mail/conformance` gains `sampleMailEvent` and `checkMailEvent`, for a second provider's mapping to check the same invariants `@nxgt/mail-resend/webhooks` does.
+
+- [#71](https://github.com/softistx/nxgt-mail/pull/71) [`ce0ddf7`](https://github.com/softistx/nxgt-mail/commit/ce0ddf71b05c14a8ea7ede7e1a37c4039cbbcd1e) Thanks [@SteveGT96](https://github.com/SteveGT96)! - `sendBatch(mailer, messages)`: sends many messages and answers one
+  `MailBatchResult` per message, in the same order — `{ status: 'sent',
+  sentMail }`, `{ status: 'refused', error }` or `{ status: 'failed', error }`.
+  Unlike `send`, a batch never throws for one message's own outcome: nothing is
+  silently dropped, and one bad message never hides what happened to the
+  others. Every message is checked with `checkMessage` before any of them is
+  sent. `Mailer` gains an optional `sendBatch` a transport implements to use
+  its provider's own batching (Resend's `POST /emails/batch`); `sendBatch(mailer,
+  messages)` calls it when present, and otherwise sends each message in turn
+  over `send` — every `Mailer`, including a third-party one written before this
+  existed, works with it. `withRetry` passes a `sendBatch` through untouched
+  (no retry, no idempotency key added); `withTelemetry` gives it its own span,
+  `mail.sendBatch`, with a count of `sent`, `refused` and `failed` messages.
+  
+  `checkScheduledAt(scheduledAt, where?)` is now exported, so a provider's own
+  `reschedule` can hold a new `scheduledAt` to the same rule `send` does.
+  `MailScheduleRefused` (codes `ALREADY_SENT`, `UNKNOWN_ID`) is what a
+  provider-specific action against a message scheduled ahead — Resend's
+  `cancel` and `reschedule`, from `@nxgt/mail-resend` — refuses with: defined
+  here, not in the transport, for the same reason `MailWebhookRefused` is.
+
+- [#68](https://github.com/softistx/nxgt-mail/pull/68) [`d6d47f2`](https://github.com/softistx/nxgt-mail/commit/d6d47f2839f800ea48761d49809ad7db50395401) Thanks [@SteveGT96](https://github.com/SteveGT96)! - `@nxgt/mail/telemetry` — its own entry, so the root stays dependency-free:
+  `withTelemetry(mailer, { transport })` wraps a `Mailer` with a span
+  `mail.send` per send (kind `CLIENT`), and `withRendererTelemetry(renderer)`
+  wraps a `MailRenderer` with a span `mail.render` per render, the e-mail's
+  name always known there. Both record a duration histogram and a counter by
+  outcome (`ok`, `refused`, `failure`), `error.type` on the codes `@nxgt/mail`
+  throws, and never an address, a subject, a body, an attachment or a
+  placeholder's value — only a shape: a transport's name, a recipient count, a
+  tag's name, whether an idempotency key or a schedule was set.
+  
+  `@opentelemetry/api` is an optional peer: with none installed, every call
+  still runs and produces nothing. See `docs/guide/observability.md` for the
+  attributes, the outcome rule (a refusal is an answer, a failure is not), and
+  the recommended order with a retry decorator.
+
+- [#67](https://github.com/softistx/nxgt-mail/pull/67) [`8bac69f`](https://github.com/softistx/nxgt-mail/commit/8bac69f02b5223fbf4e55c1799e93d3cee74bec0) Thanks [@SteveGT96](https://github.com/SteveGT96)! - `withRetry(mailer, options)` wraps a `Mailer` so a `MailFailure` (a transient
+  outage) is retried — exponential backoff with full jitter, `attempts`,
+  `baseDelayMs` and `maxDelayMs` configurable, an optional `AbortSignal` — while
+  a `MailRefused` never is: sending it again fails again. A message with no
+  `idempotencyKey` gets one, generated once for the logical send and reused on
+  every retry, so a transport that dedupes (Resend) delivers it once; a caller's
+  own key is kept as is. Once every attempt has failed, the error thrown is the
+  last `MailFailure`, with `attempts` added. A future transport can set
+  `retryAfterMs` on the `MailFailure` it throws, honoured instead of the
+  computed delay — no transport does yet.
+
 ## 0.7.0
 
 ### Minor Changes
