@@ -1,5 +1,41 @@
 # @nxgt/mail-ui
 
+## 0.6.0
+
+### Minor Changes
+
+- [#74](https://github.com/softistx/nxgt-mail/pull/74) [`025e4ea`](https://github.com/softistx/nxgt-mail/commit/025e4eabc8d4d288101882934497ee7246e970ac) Thanks [@SteveGT96](https://github.com/SteveGT96)! - Optional dark tokens for the muted colour: `color-muted-dark` and
+  `color-muted-foreground-dark`, the same pattern as `color-primary-dark` — both
+  default to their light value, so a project that never sets them is unaffected
+  and the previews are pixel-identical. Set them for a dark card that needs its
+  own muted step (`NxCode`'s and `NxAvatarFallback`'s ground, `NxKbd`,
+  `NxTimeline`'s default marker, a table's footer/`NxAlert`'s `foreground`
+  variant ground, and every place muted text is used) to read against, e.g.
+  `color-muted-dark: '#1e293b'` with `color-muted-foreground-dark: '#e2e8f0'`
+  against a `#0f172b` card (11.9:1 for the text, a visible step above the card).
+  `NxCode`, `NxAvatarFallback` and a table's footer keep their own text pinned to
+  `color-foreground`, unflipped: pick a `color-muted-dark` light enough to keep
+  it legible, or leave it unset.
+
+### Patch Changes
+
+- [#74](https://github.com/softistx/nxgt-mail/pull/74) [`025e4ea`](https://github.com/softistx/nxgt-mail/commit/025e4eabc8d4d288101882934497ee7246e970ac) Thanks [@SteveGT96](https://github.com/SteveGT96)! - Fixed two bugs in the optional `color-primary-dark`/`color-primary-foreground-dark`
+  pair (0.5.0): the primary tints (`-15`/`-20`/`-40`/`-50`, a tonal chip's ground,
+  an outlined chip's border, `NxProgress`'s track, `NxTimeline`'s marker) kept
+  aliasing their light twin even once `color-primary-dark` was set, instead of
+  being mixed from it over the dark background — a tonal chip could end up with
+  near-white text on a near-white ground (1.28:1); and `color-paper-dark` mixed
+  `color-primary-dark` instead of the light `color-primary`, so a near-white
+  `color-primary-dark` washed the page ground towards white too (1.02:1 against
+  the dark card, down from 1.09:1).
+  
+  Both are fixed: the four tints are now recomputed against the dark background,
+  at the same percentages the light tints use, once `color-primary-dark` is set
+  (12.7–13.2:1 for the tonal text, 3.2–4.6:1 for the outlined border, in the
+  reported case); `color-paper-dark` keeps mixing the light `color-primary`
+  regardless. A project that never sets `color-primary-dark` sees no change —
+  the previews are pixel-identical.
+
 ## 0.5.0
 
 ### Minor Changes
