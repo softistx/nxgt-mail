@@ -179,11 +179,11 @@ HTML committed under `samples/`. 5 `@ts-expect-error` refusals measured.
 
 **Change before freezing:** nothing deprecated, no `TODO`. **Found while
 reading:** the package's own module doc-comment
-(`packages/mail-presets/src/index.ts`, top of file) still lists only nine
-preset names — stale since the package grew to thirteen. The README and
-`docs/roadmap.md` already say "thirteen" correctly. Cosmetic, not urgent, but
-worth a one-line fix before or at the 1.0 cut so the in-source doc matches
-the shipped count.
+(`packages/mail-presets/src/index.ts`, top of file) still listed only nine
+preset names — stale since the package grew to thirteen. Fixed in this same
+PR, alongside the root README and `AGENTS.md`, which had the same stale
+count; `packages/mail-presets/README.md` and its `docs/roadmap.md` already
+said "thirteen" correctly.
 
 **Peers today:** `@maizzle/framework: ^6.1.7`, `@nxgt/mail-i18n:
 workspace:^`, `@nxgt/mail-ui: workspace:^`, `typescript: ^6.0.3`,
@@ -306,12 +306,7 @@ Each with a recommended answer (the one already assumed above).
    README's peers table (not `engines`, since `@nxgt/mail`'s own contract is
    "runs anywhere") — consumers read a README before an `engines` field, and
    `@nxgt/mail-smtp` in particular is only ever run under Node or Bun.
-5. **The `mail-presets` module doc-comment undercount (nine vs. the actual
-   thirteen)** — fix now, in a small unrelated PR, or leave it for the 1.0
-   freeze commit? **Recommended:** fix now, separately from this plan — it
-   is a one-line documentation drift with no version or behaviour
-   implication, cheaper to fix immediately than to remember at freeze time.
-6. **Four weeks of `@nxgt/janus-mail` production is Steve's number to set** —
+5. **Four weeks of `@nxgt/janus-mail` production is Steve's number to set** —
    is four weeks the right bar, or does Steve want a different measure (a
    count of e-mails sent, rather than time elapsed)? **Recommended:** keep
    time-based (four weeks) — a send count is easy to game with a burst of
