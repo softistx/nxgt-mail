@@ -1,8 +1,10 @@
 /**
  * `@nxgt/mail-presets` — ready transactional e-mails for a Maizzle project
  * built with `@nxgt/mail-ui` and `@nxgt/mail-i18n`: verify-email,
- * reset-password, password-changed, email-changed, sign-in-code, magic-link,
- * new-sign-in, welcome and invitation, in `en` and `fr`.
+ * reset-password, password-changed, email-changed, account-deleted,
+ * sign-in-code, magic-link, new-sign-in, two-factor-enabled,
+ * two-factor-disabled, welcome, invitation and invitation-accepted, in `en`
+ * and `fr`.
  *
  * ```ts
  * // maizzle.config.ts
