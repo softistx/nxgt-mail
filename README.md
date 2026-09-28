@@ -49,7 +49,7 @@ mailer. CI builds, renders and serves it on every change.
 
 **Released, 0.1.0** — every package below is on npm, each still `0.x`: a
 minor version may change its surface, and its changelog says how. Work
-follows [docs/plan.md](./docs/plan.md). What a `1.0` freezes is proposed in
+follows [docs/plan.md](./docs/plan.md). What a `1.0` freezes, and when, is decided in
 [docs/plan-1.0.md](./docs/plan-1.0.md).
 
 ```sh

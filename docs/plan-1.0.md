@@ -1,9 +1,9 @@
 # Plan — 1.0
 
-**Status: Proposed.** Not decided — every recommendation below is Steve's to
-accept, adjust or reject. Nothing here changes behaviour; it is a proposal
-for what `1.0.0` freezes, across all seven published packages, and the rules
-this repository would hold to afterwards.
+**Status: Accepted.** Steve accepted every recommendation below, as written
+(the open questions at the end record his answers). Nothing here changes
+behaviour yet: it is what `1.0.0` freezes, across all seven published
+packages, and the rules this repository holds to afterwards.
 
 Read [`AGENTS.md`](../AGENTS.md) and [`docs/plan.md`](./plan.md) first: this
 document assumes the invariant (*an absence is `null`, a failure throws*),
@@ -279,9 +279,9 @@ Proposed, all of them, before cutting `1.0.0`:
 
 ---
 
-## Open questions for Steve
+## Decisions (were: open questions for Steve)
 
-Each with a recommended answer (the one already assumed above).
+Each with a recommended answer. **Steve accepted all five recommendations.**
 
 1. **Is the breaking-change table above right?** In particular: is a
    *cosmetic* rendered-HTML change (spacing, colour) really always a minor,
