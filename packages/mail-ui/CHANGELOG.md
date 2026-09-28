@@ -1,5 +1,43 @@
 # @nxgt/mail-ui
 
+## 1.0.0
+
+### Major Changes
+
+- [#88](https://github.com/softistx/nxgt-mail/pull/88) [`cdf3e69`](https://github.com/softistx/nxgt-mail/commit/cdf3e6966a51a1154a35034c6db488ec6a3b97cc) Thanks [@SteveGT96](https://github.com/SteveGT96)! - 1.0.0: the surface is stable. From here, a breaking change waits for the next major; the policies are in `docs/plan-1.0.md`.
+  
+  Every internal peer moves to `^1.0.0` in this release, so upgrade the `@nxgt/mail*` packages together.
+  
+  The one breaking change: `@nxgt/mail` drops the three aliases deprecated in 0.9, as their doc comments announced. Rename them when you upgrade:
+  
+  - `withTelemetry` → `withMailTelemetry`
+  - `withRendererTelemetry` → `withMailRendererTelemetry`
+  - `RetryOptions` → `MailRetryOptions`
+  
+  The other six packages change no API. A prebuilt format-1 build still reads with any `@nxgt/mail` (`MANIFEST_FORMAT` stays 1), so a package that ships one can peer `@nxgt/mail` `>=0.1.0 <2`.
+
+### Minor Changes
+
+- [#85](https://github.com/softistx/nxgt-mail/pull/85) [`d7b1ea6`](https://github.com/softistx/nxgt-mail/commit/d7b1ea689609960a61c46c16560f94a303ac5c1e) Thanks [@SteveGT96](https://github.com/SteveGT96)! - Optional `color-info-dark`/`color-info-foreground-dark` tokens, defaulting to
+  their light value like `color-primary-dark` and `color-muted-dark`: a project
+  that never sets them sees no change. `NxLink` and `NxStatusIndicator`'s `info`
+  tone — both painted directly on the card or the page background, which always
+  flips in dark mode — now carry `nx-dark-text-info`. `NxAlert`'s `info` variant
+  and `NxTimeline`'s `info` marker keep the light colour: their own ground
+  (`bg-info-5`, `bg-info-15`) has no dark twin.
+  
+  Reported by a downstream consumer measuring `NxLink`'s default contrast:
+  2.63:1 against the light card, 6.78:1 against the dark one — no single
+  `color-info` clears WCAG AA's 4.5:1 body-text minimum on both. Setting
+  `color-info-dark` gives dark mode its own value instead of reusing the light
+  one; `'color-info-dark': '#93c5fd'` measures 9.89:1 against the default
+  `color-card-dark`.
+
+### Patch Changes
+
+- Updated dependencies [[`cdf3e69`](https://github.com/softistx/nxgt-mail/commit/cdf3e6966a51a1154a35034c6db488ec6a3b97cc)]:
+  - @nxgt/mail-config@1.0.0
+
 ## 0.7.1
 
 ### Patch Changes

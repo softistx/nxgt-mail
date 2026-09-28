@@ -1,5 +1,31 @@
 # @nxgt/mail-presets
 
+## 1.0.0
+
+### Major Changes
+
+- [#88](https://github.com/softistx/nxgt-mail/pull/88) [`cdf3e69`](https://github.com/softistx/nxgt-mail/commit/cdf3e6966a51a1154a35034c6db488ec6a3b97cc) Thanks [@SteveGT96](https://github.com/SteveGT96)! - 1.0.0: the surface is stable. From here, a breaking change waits for the next major; the policies are in `docs/plan-1.0.md`.
+  
+  Every internal peer moves to `^1.0.0` in this release, so upgrade the `@nxgt/mail*` packages together.
+  
+  The one breaking change: `@nxgt/mail` drops the three aliases deprecated in 0.9, as their doc comments announced. Rename them when you upgrade:
+  
+  - `withTelemetry` → `withMailTelemetry`
+  - `withRendererTelemetry` → `withMailRendererTelemetry`
+  - `RetryOptions` → `MailRetryOptions`
+  
+  The other six packages change no API. A prebuilt format-1 build still reads with any `@nxgt/mail` (`MANIFEST_FORMAT` stays 1), so a package that ships one can peer `@nxgt/mail` `>=0.1.0 <2`.
+
+### Minor Changes
+
+- [#86](https://github.com/softistx/nxgt-mail/pull/86) [`662cf54`](https://github.com/softistx/nxgt-mail/commit/662cf54a47aaf6498e4aa4fd85ddf672979ce654) Thanks [@SteveGT96](https://github.com/SteveGT96)! - A fourteenth preset, `recovery-code-used`: a security notice for a spent second-factor recovery code, written with `@nxgt/mail-ui` components in `en` and `fr`. It takes `name`, `when` (the time the code was used, text the sender writes, as `new-sign-in.time`), `recoveryCodesLeft` (also text the sender writes — the build cannot pick an ICU plural branch for a count it only learns at send time, so `recovery-code-used.codes-left` carries the plural for your code to format with `createTranslator` and the real count) and `link` (a URL, to regenerate codes or secure the account). `PRESETS` now lists fourteen names; `only` accepts any of them.
+
+### Patch Changes
+
+- Updated dependencies [[`d7b1ea6`](https://github.com/softistx/nxgt-mail/commit/d7b1ea689609960a61c46c16560f94a303ac5c1e), [`cdf3e69`](https://github.com/softistx/nxgt-mail/commit/cdf3e6966a51a1154a35034c6db488ec6a3b97cc)]:
+  - @nxgt/mail-ui@1.0.0
+  - @nxgt/mail-i18n@1.0.0
+
 ## 0.4.4
 
 ### Patch Changes
