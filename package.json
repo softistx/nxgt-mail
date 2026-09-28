@@ -21,6 +21,7 @@
 		"changeset:publish": "bun run build && bun run verify:artifacts && bun run scripts/publish.ts",
 		"verify:artifacts": "bun run scripts/verify-artifacts.ts",
 		"previews": "bun run scripts/previews.ts",
+		"send-samples": "bun run scripts/send-samples.ts",
 		"changeset:private": "bun run scripts/check-changesets.ts",
 		"changeset:status": "changeset status --since=origin/develop"
 	},
@@ -29,7 +30,12 @@
 		"@changesets/changelog-github": "^1.0.1",
 		"@changesets/cli": "^3.0.1",
 		"@changesets/parse": "^1.0.0",
+		"@nxgt/mail": "workspace:*",
+		"@nxgt/mail-resend": "workspace:*",
+		"@nxgt/mail-smtp": "workspace:*",
 		"@types/bun": "^1.4.2",
+		"@types/nodemailer": "^8.0.2",
+		"nodemailer": "^10.0.10",
 		"typescript": "~6.0.3"
 	},
 	"overrides": {

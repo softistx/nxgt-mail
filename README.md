@@ -72,6 +72,18 @@ README lists its peers.
 
 Read [AGENTS.md](./AGENTS.md) — it applies to people as much as to agents.
 
+### Checking the real rendering
+
+`bun run send-samples --to you@example.com --transport smtp` sends every
+`@nxgt/mail-presets` e-mail and the `@nxgt/mail-ui` showcase fixtures, in a
+fresh build, to one address, so a real Gmail, Outlook or Apple Mail can be
+checked — nothing an automated test can do. It is a private script: no
+package here is published by it. `--only` and `--locale` narrow which
+e-mails and locales are sent; `--dry-run` writes each `.html`/`.eml` to a
+temp dir instead of sending. See `scripts/send-samples.ts`'s own header for
+the full usage. Transports come from the environment only (`SMTP_URL`, or
+`RESEND_API_KEY` + `MAIL_FROM`); a secret is never read back or printed.
+
 ## License
 
 MIT
