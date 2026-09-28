@@ -87,9 +87,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   key or a wrong, missing or unused argument; `placeholder('name')` writes
   `{{ name }}` for a value only known at send time, and can be passed as an
   ICU argument.
-- **The manifest, v0.1.0** — `dist/mail-manifest.json`: per e-mail, its variables and
-  the ones a URL attribute starts with (so they decide the scheme), its subject per locale (the
-  required `<email>.subject` message) and its files per locale — what
-  `createMailRenderer` from `@nxgt/mail/renderer` reads to send the built
-  `html` and `text` of a locale, every placeholder filled and escaped at send
-  time.

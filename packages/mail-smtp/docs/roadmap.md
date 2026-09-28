@@ -80,9 +80,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   transporter. Each message is checked as every transport checks it, a name is
   quoted by nodemailer so it names one recipient, and nothing is read from a
   file or a URL.
-- **Errors you can act on, v0.1.0** — a permanent `5xx` on the recipients or the
-  content (`552` for a message too large) is a `MailRefused`; an
-  unreachable server, a timeout, a `4xx`, refused credentials or a refused
-  sender is a `MailFailure`, nodemailer's error on `cause`. Some recipients
-  refused while others were accepted throws too, and says the others may
-  have the message. The classes are `@nxgt/mail`'s, so `instanceof` holds.

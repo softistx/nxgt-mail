@@ -60,6 +60,7 @@ const PRESETS: readonly [
 	'new-sign-in',
 	'two-factor-enabled',
 	'two-factor-disabled',
+	'recovery-code-used',
 	'welcome',
 	'invitation',
 	'invitation-accepted',
@@ -338,7 +339,7 @@ Run it after `maizzle build`. Each preset's placeholders are in
 | --- | --- |
 | `presets: options must be an object, as { only: ['verify-email'] }` | `presets(null)`, `presets(['welcome'])` — a list rather than `{ only: [...] }` — or anything that is not an object |
 | `presets: only must list at least one preset, as ['verify-email']` | `only: []`, or `only: 'welcome'` |
-| `presets: only holds something that is not a preset — name one of verify-email, reset-password, password-changed, email-changed, account-deleted, sign-in-code, magic-link, new-sign-in, two-factor-enabled, two-factor-disabled, welcome, invitation, invitation-accepted` | `only: ['sign-in']` |
+| `presets: only holds something that is not a preset — name one of verify-email, reset-password, password-changed, email-changed, account-deleted, sign-in-code, magic-link, new-sign-in, two-factor-enabled, two-factor-disabled, recovery-code-used, welcome, invitation, invitation-accepted` | `only: ['sign-in']` |
 | `presets: only holds the same preset twice` | `only: ['welcome', 'welcome']` |
 
 ```ts

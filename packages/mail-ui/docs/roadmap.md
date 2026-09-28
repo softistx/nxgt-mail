@@ -151,16 +151,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   and `NxButtonGroup`, with material-vue's names and props, and the shared
   message `common.countBadge.label` in `en` and `fr`. A count, a query or
   an icon given as a placeholder fails the build.
-- **A tag that resolves to no component fails the build, v0.2.0** —
-  `<NxButon>` for `<NxButton>`, nested anywhere in a template, a component or
-  an installed template, fails `maizzle build`, naming the tag and the file,
-  where Vue rendered it as an unknown element or as nothing and the build
-  passed. An error while rendering fails the build under
-  `NODE_ENV=production` too.
-- **Details components, v0.2.0** — `NxEventChip` for an invitation's date and
-  time, `NxAttributes`, `NxPostalAddress` (its country named in each
-  locale), `NxOpeningHours`, `NxContacts` (linked with `mailto:` and
-  `tel:`), `NxFileList` for attachments or downloads, with the size written
-  by locale, and `NxRating`, read only or as a row of review links:
-  material-vue's names and props, with their words in the shared messages
-  in `en` and `fr`.

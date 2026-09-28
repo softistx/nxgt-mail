@@ -83,7 +83,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   edge runtime. Resend's `path` (a URL it would fetch) is never used. A
   request too large (`413`) is a `MailRefused`, as a `400` or `422` is. Needs
   `@nxgt/mail` 0.2.
-- **A Resend transport over `fetch`, v0.1.0** — `createResendMailer({ apiKey, from })`:
-  one `POST /emails` per message, no SDK, no dependency, no Node built-in, so
-  it runs on an edge runtime too. Each message is checked as every transport
-  checks it, and a name is sent quoted so it names one recipient.

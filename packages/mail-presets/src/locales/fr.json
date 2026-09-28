@@ -80,6 +80,15 @@
 		"body": "Votre compte {brand} ne demande plus de second facteur à la connexion : toute personne connaissant votre mot de passe peut désormais se connecter.",
 		"action": "Sécuriser mon compte"
 	},
+	"recovery-code-used": {
+		"subject": "Un code de récupération a été utilisé sur votre compte",
+		"preheader": "Un code de récupération de votre compte vient d'être utilisé.",
+		"title": "Un code de récupération a été utilisé sur votre compte",
+		"banner": "Un code de récupération a été utilisé sur votre compte le {when}.",
+		"codes-left": "{recoveryCodesLeft, plural, =0 {Il ne vous reste aucun code de récupération.} one {Il vous reste # code de récupération.} other {Il vous reste # codes de récupération.}}",
+		"body": "Si c'était vous, générez de nouveaux codes depuis votre compte {brand} lorsque vous êtes à court.",
+		"action": "Sécuriser mon compte"
+	},
 	"welcome": {
 		"subject": "Bienvenue, {name}",
 		"preheader": "Votre compte est prêt.",

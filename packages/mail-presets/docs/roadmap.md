@@ -36,7 +36,14 @@ before is in the [CHANGELOG](../CHANGELOG.md).
 - **A stable surface, v1.0.0** — semantic versioning from here: a new
   required variable or a renamed catalogue key waits for the next major. The
   `@nxgt/mail-i18n` and `@nxgt/mail-ui` peers move to `^1.0.0`, so upgrade
-  the `@nxgt/mail*` packages together. No preset changes.
+  the `@nxgt/mail*` packages together. Nothing is
+  removed or renamed.
+- **`recovery-code-used`, v1.0.0** — a security notice for a spent
+  second-factor recovery code: `name`, `when` and `recoveryCodesLeft` (text
+  the sender writes, formatted in the recipient's language and plural rules —
+  `recovery-code-used.codes-left` carries the ICU plural for it), and `link`
+  to regenerate codes or secure the account. `PRESETS` now lists fourteen
+  names.
 - **Four more presets, v0.4.0** — `account-deleted` (accounts, with a
   required `expiresIn` for its restoration link), `two-factor-enabled` and
   `two-factor-disabled` (security), and `invitation-accepted` (lifecycle,
@@ -74,12 +81,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   and `invitation` for the lifecycle. Each is a template of `@nxgt/mail-ui`
   components with its messages in `en` and `fr`, and leaves the values only
   known at send time (`{{ name }}`, `{{ link }}`, …) as placeholders.
-- **Presets for the i18n plugin, v0.1.0** — `presets({ only })` answers
-  `{ templates, catalogues }` for `i18n({ templates, catalogues })`, so the
-  presets are built by your own Maizzle project, with your
-  `ui({ brand, theme })`, in every locale you list. `only` keeps the presets
-  you name and their messages; a preset that does not exist, or one named
-  twice, is refused.
-- **Overriding a preset, v0.1.0** — a template of the same name in your project's
-  `emails/` replaces a preset, and your `locales/<locale>.json` overrides any
-  of its messages key by key.
