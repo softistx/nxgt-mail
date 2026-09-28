@@ -1370,6 +1370,8 @@ describe('dark mode: a text colour flips only if its own ground does', () => {
 				"        'color-primary-foreground-dark': '#18181b',",
 				"        'color-muted-dark': '#1e293b',",
 				"        'color-muted-foreground-dark': '#e2e8f0',",
+				"        'color-info-dark': '#93c5fd',",
+				"        'color-info-foreground-dark': '#0c1e3d',",
 				'      },',
 				'    }),',
 				'  ],',
@@ -1386,6 +1388,7 @@ describe('dark mode: a text colour flips only if its own ground does', () => {
 				'    </NxTable>',
 				'    <NxAlert variant="primary" title="Primary title" description="Primary description"><template #icon>!</template></NxAlert>',
 				'    <NxAlert variant="foreground" title="Foreground title" description="Foreground description"><template #icon>!</template></NxAlert>',
+				'    <NxAlert variant="info" title="Info title" description="Info description"><template #icon>ℹ</template></NxAlert>',
 				'    <NxBanner tone="warning" title="Banner title" description="Banner description" />',
 				'    <NxEventChip title="Compact chip" time="09:00" compact />',
 				'    <NxEventChip title="Team sync" time="10:00" />',
@@ -1395,6 +1398,9 @@ describe('dark mode: a text colour flips only if its own ground does', () => {
 				'    <NxRatioCard label="Storage" :left="{ label: \'Used\', value: \'12 GB\' }" :right="{ label: \'Total\', value: \'50 GB\' }" :percent="40" />',
 				"    <NxFileList :items=\"[{ id: '1', name: 'report.pdf', href: 'https://acme.example/report.pdf' }]\" />",
 				'    <NxStatusIndicator tone="primary">Active</NxStatusIndicator>',
+				'    <NxStatusIndicator tone="info">Pending</NxStatusIndicator>',
+				'    <NxLink href="https://acme.example/info">Info link</NxLink>',
+				"    <NxTimeline :items=\"[{ id: 'i1', title: 'Info event', tone: 'info' }]\" />",
 				'    <NxSteps><NxStepsItem title="Step A" /></NxSteps>',
 				"    <NxSummaryData :data=\"[{ label: 'Plan', value: 'Pro' }]\" />",
 				'  </NxLayout>',
@@ -1530,5 +1536,54 @@ describe('dark mode: a text colour flips only if its own ground does', () => {
 	test("flips NxSummaryData's row divider with color-primary-dark", () => {
 		expect(classOf('Plan', 'td')).toContain('nx-dark-border-primary-40');
 		expect(classOf('Pro', 'td')).toContain('nx-dark-border-primary-40');
+	});
+
+	test("flips NxLink's text with color-info-dark: its ground (the card) always flips", () => {
+		expect(classOf('Info link', 'a')).toContain('nx-dark-text-info');
+	});
+
+	test("flips NxStatusIndicator's info tone dot with color-info-dark, like its primary tone", () => {
+		expect(
+			/<span aria-hidden="true" class="([^"]*)"[^>]*>●<\/span>Pending/.exec(
+				html,
+			)?.[1],
+		).toContain('nx-dark-text-info');
+	});
+
+	test("never flips NxAlert's info icon or NxTimeline's info marker: their own ground (bg-info-5, bg-info-15) has no dark twin", () => {
+		// `text-info` alone matches no dark rule, so Maizzle's purge drops the
+		// class entirely — there is no `nx-dark-text-info` to find here,
+		// unlike NxLink's and the status indicator's above.
+		const iconAt = html.indexOf('>ℹ<');
+		const iconOpen = html.lastIndexOf('<td', iconAt);
+		expect(html.slice(iconOpen, iconAt)).not.toContain('nx-dark-text-info');
+
+		const eventAt = html.indexOf('>Info event<');
+		const markerOpen = html.lastIndexOf('<span aria-hidden="true"', eventAt);
+		const markerClose = html.indexOf('</span>', markerOpen) + '</span>'.length;
+		expect(html.slice(markerOpen, markerClose)).not.toContain(
+			'nx-dark-text-info',
+		);
+	});
+
+	test('the info pair reaches WCAG AA against every ground it is actually shown on', () => {
+		const cardDark =
+			/\.nx-dark-bg-card \{\n {2}background-color: (#[0-9a-f]{6})/.exec(
+				html,
+			)?.[1] as string;
+		const backgroundDark =
+			/\.nx-dark-bg-background \{\n {2}background-color: (#[0-9a-f]{6})/.exec(
+				html,
+			)?.[1] as string;
+		expect(cardDark).toBeTruthy();
+		expect(backgroundDark).toBeTruthy();
+		// `color-info-dark: #93c5fd` — NxLink's card ground and
+		// NxStatusIndicator's page ground both flip, so both must clear
+		// WCAG AA's 4.5:1, unlike the unset default (`#54a2ff`, 2.63:1 on the
+		// light card): see dark-mode.md.
+		expect(contrastRatio('#93c5fd', cardDark)).toBeGreaterThanOrEqual(4.5);
+		expect(contrastRatio('#93c5fd', backgroundDark)).toBeGreaterThanOrEqual(
+			4.5,
+		);
 	});
 });

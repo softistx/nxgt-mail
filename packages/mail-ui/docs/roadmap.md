@@ -61,8 +61,18 @@ before is in the [CHANGELOG](../CHANGELOG.md).
 - **A stable surface, v1.0.0** — semantic versioning from here: a breaking
   change waits for the next major; a new default for a theme token is a
   minor, a token renamed or removed a major. The `@nxgt/mail-config` peer
-  moves to `^1.0.0`, so upgrade the `@nxgt/mail*` packages together. No
-  component, prop or token changes.
+  moves to `^1.0.0`, so upgrade the `@nxgt/mail*` packages together. Nothing is
+  removed or renamed.
+- **Optional dark info, v1.0.0** — `color-info-dark` and
+  `color-info-foreground-dark`, the same pattern as `color-primary-dark` and
+  `color-muted-dark`: defaulting to their light value, so a project that never
+  sets them is unaffected. `NxLink` and `NxStatusIndicator`'s `info` tone —
+  both on a ground that always flips — carry it; `NxAlert`'s `info` variant
+  and `NxTimeline`'s `info` marker keep the light colour, since their own
+  ground has no dark twin. Reported by a consumer measuring `NxLink`'s
+  default contrast: 2.63:1 on the light card, 6.78:1 on the dark one — no
+  single `color-info` clears WCAG AA's 4.5:1 on both. See
+  [Dark mode](guide/dark-mode.md#which-tokens-have-a-dark-value).
 - **The optional dark tokens reach every remaining component, v0.7.0** —
   `color-primary-dark`/`color-primary-foreground-dark` now also carries
   `NxActionCard`'s active ring, icon box and indicator, `NxExtendedLabel`'s

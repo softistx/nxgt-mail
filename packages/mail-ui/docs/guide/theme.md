@@ -62,6 +62,7 @@ Name a token in `theme` without its `--`: `--color-primary` is
 | `color-background-dark`, `color-foreground-dark`, `color-card-dark`, `color-card-foreground-dark`, `color-accent-dark`, `color-accent-foreground-dark`, `color-border-dark`, `color-paper-dark` | `@nxgt/material-vue`'s dark values | Shown under dark mode — see [Dark mode](dark-mode.md) |
 | `color-primary-dark`, `color-primary-foreground-dark` | their light value | **Optional.** Shown under dark mode once set, its tints too — see [Dark mode](dark-mode.md#which-tokens-have-a-dark-value) |
 | `color-muted-dark`, `color-muted-foreground-dark` | their light value | **Optional.** Shown under dark mode once set — see [Dark mode](dark-mode.md#which-tokens-have-a-dark-value) |
+| `color-info-dark`, `color-info-foreground-dark` | their light value | **Optional.** Shown under dark mode once set — `NxLink` and `NxStatusIndicator`'s `info` tone — see [Dark mode](dark-mode.md#which-tokens-have-a-dark-value) |
 
 The exact values are in the file itself:
 
