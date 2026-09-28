@@ -132,8 +132,8 @@ MANIFEST_FORMAT; // 1 — what this version writes as formatVersion
 - **It changes only when the manifest's shape does.** A new
   `@nxgt/mail-i18n` that writes the same fields writes the same format.
 - **`@nxgt/mail`'s renderer reads every format up to its own**, its
-  `MANIFEST_FORMAT` from `@nxgt/mail/renderer`, within 0.x. A build from any
-  earlier `@nxgt/mail-i18n` 0.x keeps working with a newer `@nxgt/mail`; a
+  `MANIFEST_FORMAT` from `@nxgt/mail/renderer`. A build from any earlier
+  `@nxgt/mail-i18n` keeps working with a newer `@nxgt/mail`; a
   newer format fails at start-up with `… is manifest format 2, newer than this
   @nxgt/mail reads (1) — upgrade @nxgt/mail`.
 - **A manifest without it is format 1**, as `@nxgt/mail-i18n` 0.1 and 0.2
@@ -395,11 +395,11 @@ renderers read its format, and checks it when it builds:
 		"build": "maizzle build && bun run scripts/check-manifest-format.ts"
 	},
 	"peerDependencies": {
-		"@nxgt/mail": ">=0.1.0 <1"
+		"@nxgt/mail": ">=0.1.0 <2"
 	},
 	"devDependencies": {
 		"@nxgt/mail": "0.5.1",
-		"@nxgt/mail-i18n": "^0.3.0"
+		"@nxgt/mail-i18n": "^1.0.0"
 	}
 }
 ```
@@ -431,7 +431,7 @@ if (manifest.formatVersion > READABLE) {
   `@nxgt/mail/renderer` is what the oldest renderer an application may install
   reads. `@nxgt/mail` 0.5.0 and earlier do not export it; they read format 1,
   as 0.5.1 does, so a format-1 build pins 0.5.1 and still peers
-  `>=0.1.0 <1`.
+  `>=0.1.0 <2`.
 - **When `@nxgt/mail-i18n` writes a new format**, the second check fails the
   build: raise the peer's lower bound, and the devDependency with it, to the
   first `@nxgt/mail` that reads it.

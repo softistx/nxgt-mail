@@ -64,6 +64,12 @@ Nothing yet.
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **A stable surface, v1.0.0** — semantic versioning from here: a breaking
+  change waits for the next major. The three aliases deprecated in 0.9 are
+  gone — `withTelemetry`, `withRendererTelemetry` and `RetryOptions`; import
+  `withMailTelemetry`, `withMailRendererTelemetry` and `MailRetryOptions`.
+  Nothing else changes, and a prebuilt format-1 build still reads, so a
+  package that ships one can peer `@nxgt/mail` `>=0.1.0 <2`.
 - **`RetryOptions` renamed, v0.9.0** — `withRetry`'s options type is renamed
   `MailRetryOptions`: `@nxgt/httpyz` exports its own `RetryOptions`,
   colliding for a project importing both. The old name is kept as a
@@ -137,9 +143,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   digits, `_` or `-`, the rule Resend and Amazon SES share. Resend sends them
   as its `tags`; SMTP ignores them. The memory mailer keeps them, and the
   conformance suite gains `send.tags`, sixteen cases in all.
-- **A build read by any later renderer, v0.5.1** — within 0.x,
-  `createMailRenderer` reads every manifest format up to its own
-  (`MANIFEST_FORMAT`, exported from `@nxgt/mail/renderer`), checked before any
-  other field: a newer format is refused at start-up, naming both numbers. A
-  manifest without `formatVersion` is format 1, so a package that ships a
-  prebuilt format-1 build can peer `@nxgt/mail` `>=0.1.0 <1`.

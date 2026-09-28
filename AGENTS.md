@@ -130,8 +130,8 @@ a subject, never a link — a link in a verification e-mail is a credential.
 ## The manifest is a contract across versions
 
 A build is often made by one version and read by another: a package ships a
-prebuilt `mails/` folder, and its consumer installs whatever `@nxgt/mail` 0.x
-it has. So, within 0.x:
+prebuilt `mails/` folder, and its consumer installs whatever `@nxgt/mail` it
+has. So, in every version:
 
 - `mail-manifest.json` carries `formatVersion`, `MANIFEST_FORMAT` in both
   `@nxgt/mail-i18n` (what it writes) and `@nxgt/mail/renderer` (the newest it
@@ -148,6 +148,22 @@ it has. So, within 0.x:
   of at least the first renderer that reads it — never a silent misread.
 - `packages/mail/test/built` is format 1 as written; a spec reads it without
   the field too. A new format adds its own fixture, and the old ones stay.
+- A new format is a **minor** of both `@nxgt/mail` and `@nxgt/mail-i18n`:
+  nothing existing breaks.
+
+## Versioning, since 1.0
+
+Every package is `1.x`, and follows the policies of
+[`docs/plan-1.0.md`](./docs/plan-1.0.md):
+
+- **A breaking change is a major**, as its table defines one per package. A
+  cosmetic change to rendered HTML (spacing, colour) is a minor.
+- **A renamed export keeps its old name as a `@deprecated` alias until the
+  next major**, and its doc comment says so.
+- **Internal peers are `workspace:^`**, published as `^1.0.0`, and move to
+  the next major together, in one release.
+- **Node `>=20` is named in each README**, next to its peers; there is no
+  `engines` field.
 
 ## No `snake_case`, anywhere
 

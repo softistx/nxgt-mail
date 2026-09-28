@@ -38,6 +38,11 @@ Nothing yet. A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **A stable surface, v1.0.0** — semantic versioning from here: a breaking
+  change waits for the next major. The `@nxgt/mail-config` peer moves to
+  `^1.0.0`, so upgrade the `@nxgt/mail*` packages together. No API change,
+  and the manifest stays format 1: a build made by any earlier version still
+  reads with `@nxgt/mail` 1.x.
 - **Catalogues split into folders, and `messages` from a module, v0.6.0** —
   `<dir>/<locale>/**/*.json` is read beside `<dir>/<locale>.json`, a file's
   path a key prefix (`en/mails.json` is `mails.*`); `messages` names a module
@@ -82,9 +87,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   key or a wrong, missing or unused argument; `placeholder('name')` writes
   `{{ name }}` for a value only known at send time, and can be passed as an
   ICU argument.
-- **The manifest, v0.1.0** — `dist/mail-manifest.json`: per e-mail, its variables and
-  the ones a URL attribute starts with (so they decide the scheme), its subject per locale (the
-  required `<email>.subject` message) and its files per locale — what
-  `createMailRenderer` from `@nxgt/mail/renderer` reads to send the built
-  `html` and `text` of a locale, every placeholder filled and escaped at send
-  time.

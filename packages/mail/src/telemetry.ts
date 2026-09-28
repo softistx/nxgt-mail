@@ -333,14 +333,3 @@ export function withMailRendererTelemetry<
 		);
 	return { emails: renderer.emails, locales: renderer.locales, render };
 }
-
-/**
- * @deprecated Use {@link withMailTelemetry} instead. `withTelemetry` collides
- * with `@nxgt/telemetry`'s own export of the same name — removed in 1.0.
- */
-export const withTelemetry = withMailTelemetry;
-
-/**
- * @deprecated Use {@link withMailRendererTelemetry} instead — removed in 1.0.
- */
-export const withRendererTelemetry = withMailRendererTelemetry;

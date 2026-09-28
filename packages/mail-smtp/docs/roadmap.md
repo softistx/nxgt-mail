@@ -40,6 +40,9 @@ Nothing planned yet. Say what you need in an issue.
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **A stable surface, v1.0.0** — semantic versioning from here: a breaking
+  change waits for the next major. The `@nxgt/mail` peer moves to `^1.0.0`,
+  so upgrade the two together. No API change here.
 - **`@nxgt/mail` 0.8, v0.5.1** — the peer moves to `^0.8.0`, the version with
   `@nxgt/mail/telemetry`, delivery events and `sendBatch`. No change here:
   SMTP has no webhook of its own, so it maps no delivery events — see
@@ -77,9 +80,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   transporter. Each message is checked as every transport checks it, a name is
   quoted by nodemailer so it names one recipient, and nothing is read from a
   file or a URL.
-- **Errors you can act on, v0.1.0** — a permanent `5xx` on the recipients or the
-  content (`552` for a message too large) is a `MailRefused`; an
-  unreachable server, a timeout, a `4xx`, refused credentials or a refused
-  sender is a `MailFailure`, nodemailer's error on `cause`. Some recipients
-  refused while others were accepted throws too, and says the others may
-  have the message. The classes are `@nxgt/mail`'s, so `instanceof` holds.

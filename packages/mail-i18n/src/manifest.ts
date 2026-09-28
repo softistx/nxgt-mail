@@ -24,8 +24,8 @@ export interface ManifestEmail {
 
 /**
  * The manifest's format. It changes only with the manifest's shape, and
- * `@nxgt/mail`'s renderer reads every format up to its own within 0.x: a
- * build from an older `@nxgt/mail-i18n` keeps working with a newer renderer.
+ * `@nxgt/mail`'s renderer reads every format up to its own: a build from
+ * an older `@nxgt/mail-i18n` keeps working with a newer renderer.
  * Copied in packages/mail/src/renderer.ts: change both.
  */
 export const MANIFEST_FORMAT = 1;

@@ -15,8 +15,7 @@ const MANIFEST_FILE = 'mail-manifest.json';
 
 /**
  * The newest manifest format this renderer reads. It reads every format up
- * to this one, within 0.x: a build from any earlier `@nxgt/mail-i18n` 0.x
- * keeps working. A manifest without `formatVersion` is format 1, as
+ * to this one: a build from any earlier `@nxgt/mail-i18n` keeps working. A manifest without `formatVersion` is format 1, as
  * `@nxgt/mail-i18n` 0.1 and 0.2 wrote it. Copied in
  * packages/mail-i18n/src/manifest.ts: change both.
  */

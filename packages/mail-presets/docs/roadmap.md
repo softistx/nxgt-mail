@@ -33,7 +33,12 @@ Nothing yet. A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
-- **`recovery-code-used`, v0.5.0** — a security notice for a spent
+- **A stable surface, v1.0.0** — semantic versioning from here: a new
+  required variable or a renamed catalogue key waits for the next major. The
+  `@nxgt/mail-i18n` and `@nxgt/mail-ui` peers move to `^1.0.0`, so upgrade
+  the `@nxgt/mail*` packages together. Nothing is
+  removed or renamed.
+- **`recovery-code-used`, v1.0.0** — a security notice for a spent
   second-factor recovery code: `name`, `when` and `recoveryCodesLeft` (text
   the sender writes, formatted in the recipient's language and plural rules —
   `recovery-code-used.codes-left` carries the ICU plural for it), and `link`
@@ -76,9 +81,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   and `invitation` for the lifecycle. Each is a template of `@nxgt/mail-ui`
   components with its messages in `en` and `fr`, and leaves the values only
   known at send time (`{{ name }}`, `{{ link }}`, …) as placeholders.
-- **Presets for the i18n plugin, v0.1.0** — `presets({ only })` answers
-  `{ templates, catalogues }` for `i18n({ templates, catalogues })`, so the
-  presets are built by your own Maizzle project, with your
-  `ui({ brand, theme })`, in every locale you list. `only` keeps the presets
-  you name and their messages; a preset that does not exist, or one named
-  twice, is refused.

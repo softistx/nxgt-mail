@@ -47,10 +47,10 @@ mailer. CI builds, renders and serves it on every change.
 
 ## Status
 
-**Released, 0.1.0** — every package below is on npm, each still `0.x`: a
-minor version may change its surface, and its changelog says how. Work
-follows [docs/plan.md](./docs/plan.md). What a `1.0` freezes, and when, is decided in
-[docs/plan-1.0.md](./docs/plan-1.0.md).
+**Released, 1.0.0** — every package below is on npm at `1.x`, and follows
+semantic versioning: a breaking change waits for the next major. What `1.0`
+froze, and the rules since, are in [docs/plan-1.0.md](./docs/plan-1.0.md);
+the 0.x work is in [docs/plan.md](./docs/plan.md).
 
 ```sh
 bun add @nxgt/mail @nxgt/mail-config @nxgt/mail-i18n @nxgt/mail-ui @nxgt/mail-presets @maizzle/framework @maizzle/tailwindcss vue

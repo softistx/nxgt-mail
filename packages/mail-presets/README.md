@@ -47,7 +47,8 @@ values in its placeholders. Click one for full size; `fr` is the French build.
 <tr><td valign="top"><a href="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/en/invitation.png"><img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/en/invitation.png" width="260" alt="The invitation e-mail, in English"></a><br><code>invitation</code> · <a href="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/fr/invitation.png">fr</a></td><td valign="top"><a href="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/en/invitation-accepted.png"><img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/en/invitation-accepted.png" width="260" alt="The invitation-accepted e-mail, in English"></a><br><code>invitation-accepted</code> · <a href="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/fr/invitation-accepted.png">fr</a></td></tr>
 </table>
 
-> **0.x.** A minor version may still change the surface; the changelog says how.
+> **1.x.** Semantic versioning: a breaking change waits for the next major,
+> and the changelog says what each release changes.
 
 ## Install
 

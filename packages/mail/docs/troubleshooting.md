@@ -1627,8 +1627,8 @@ file for one of the build's locales.
 locale, and `@nxgt/mail-i18n` writes them all. An entry without one was
 changed after `maizzle build` wrote it: a hand edit, a merge conflict resolved
 in a committed build, a script that rewrote the file, a copy cut short. It is
-not a version mismatch: within 0.x, a renderer reads every format up to its
-own, so a build from an earlier `@nxgt/mail-i18n` 0.x keeps working.
+not a version mismatch: a renderer reads every format up to its own, so a
+build from an earlier `@nxgt/mail-i18n` keeps working.
 **Fix:** run `maizzle build` again, and deploy its output without editing
 `mail-manifest.json`. If the build is fresh and untouched, it is a
 [bug in this package](#a-bug-in-nxgtmail-itself).

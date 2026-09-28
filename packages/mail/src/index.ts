@@ -50,7 +50,6 @@ export {
 export {
 	type MailRetryOptions,
 	type RetryExhausted,
-	type RetryOptions,
 	withRetry,
 } from './retry';
 export {

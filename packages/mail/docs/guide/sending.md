@@ -731,9 +731,8 @@ interface MailRetryOptions {
 function withRetry(mailer: Mailer, options?: MailRetryOptions): Mailer;
 ```
 
-> `MailRetryOptions` was named `RetryOptions` — kept as a `@deprecated` type
-> alias of the same shape, for a project already importing `@nxgt/httpyz`,
-> whose own `RetryOptions` the old name collided with. Removed in 1.0.
+> Before 0.9 `MailRetryOptions` was named `RetryOptions`; the old name was
+> removed in 1.0. It collided with `@nxgt/httpyz`'s own `RetryOptions`.
 
 | Option | Type | Default | Effect |
 | --- | --- | --- | --- |
