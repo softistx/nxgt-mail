@@ -123,5 +123,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   component installed from npm resolves its tags with Maizzle's own
   resolver, so the project's `components/` subfolders (`<BrandLogo>`) and
   every `components.source` folder count there too.
-- **`@nxgt/mail-config` 0.2, v0.1.1** — the peer moves to `^0.2.0`, whose text
-  part is laid out in paragraphs. The components do not change.
