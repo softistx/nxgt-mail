@@ -162,8 +162,11 @@ Every package is `1.x`, and follows the policies of
   next major**, and its doc comment says so.
 - **Internal peers are `workspace:^`**, published as `^1.0.0`, and move to
   the next major together, in one release.
-- **Node `>=20` is named in each README**, next to its peers; there is no
-  `engines` field.
+- **Each README names its Node floor**, next to its peers; there is no
+  `engines` field. `@nxgt/mail`, `-smtp` and `-resend` run on Node `>=20`;
+  the four build-time packages run wherever `maizzle build` does — Node
+  `^22.22.3`, `^24.15.0` or `>=26`, the range Maizzle 6's own dependencies
+  (`postcss-merge-longhand`) require. CI checks both floors.
 
 ## No `snake_case`, anywhere
 
@@ -305,7 +308,11 @@ Carry each difference over when janus gets the same thing (`@nxgt/janus-mail`):
 `nxgt.noNodeBuiltins` step (`builtinImports`, `importTarget`,
 `noNodeBuiltinProblems` and its place in `main`): no janus package says it
 runs on an edge runtime. Carry it over the day one does, and keep it when
-syncing the copies.
+syncing the copies. It also runs the import probe a second time under Node
+(`probe-node.mjs`, the JavaScript subpaths only; a `.css` one is read by
+Tailwind, not imported), which CI pins to Node 20 with `setup-node`, the
+run-time packages' floor. Without a `node` on PATH that step is
+skipped locally and fails in CI.
 
 `scripts/check-nxgt-versions.ts` (and its `nxgt-versions` workflow, weekly)
 differs by reading `dependencies` as well as `devDependencies`: here the one

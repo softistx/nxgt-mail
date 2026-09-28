@@ -39,7 +39,9 @@ Peers, all required:
 - `typescript` (6). Bundler resolution (`"moduleResolution": "bundler"`) is
   what is supported and tested; `nodenext` is out of contract.
 
-Runs on Node `>=20` or Bun; CI tests on Bun only.
+Runs wherever `maizzle build` does: Node `^22.22.3`, `^24.15.0` or `>=26` — the
+range Maizzle 6's own dependencies require — or Bun. CI runs the tests on
+Bun, and builds the starter under Node 22.22.3.
 
 ## Setup
 

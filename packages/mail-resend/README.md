@@ -40,7 +40,8 @@ Peers, all required:
   what is supported and tested; `nodenext` is out of contract.
 
 It runs wherever `fetch` does — Node `>=20`, Bun, Deno, an edge
-runtime — and imports no Node built-in. CI tests on Bun only.
+runtime — and imports no Node built-in. CI runs the tests on Bun, and imports
+the packed package under Node 20.
 
 ## Exports
 
