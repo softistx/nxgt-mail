@@ -131,6 +131,120 @@ describe('ui — the plugin', () => {
 		);
 	});
 
+	test('recomputes the primary tints over the dark background once a dark primary is set', () => {
+		const provided = new Map<unknown, unknown>();
+		const plugins = ui({ brand, theme: { 'color-primary-dark': '#fafafa' } })
+			.vue?.plugins as { install(app: unknown): void }[];
+		for (const plugin of plugins) {
+			plugin.install({
+				config: {},
+				provide: (key: unknown, value: unknown) => provided.set(key, value),
+			});
+		}
+		const { css } = provided.get('nxgt:mail-ui') as { css: string };
+		expect(css).toContain(
+			'--color-primary-15-dark: color-mix(in srgb, var(--color-primary-dark) 15%, var(--color-background-dark));',
+		);
+		expect(css).toContain(
+			'--color-primary-20-dark: color-mix(in srgb, var(--color-primary-dark) 20%, var(--color-background-dark));',
+		);
+		expect(css).toContain(
+			'--color-primary-40-dark: color-mix(in srgb, var(--color-primary-dark) 40%, var(--color-background-dark));',
+		);
+		expect(css).toContain(
+			'--color-primary-50-dark: color-mix(in srgb, var(--color-primary-dark) 50%, var(--color-background-dark));',
+		);
+	});
+
+	test("keeps a project's own tint override, instead of shadowing it with the computed one", () => {
+		const provided = new Map<unknown, unknown>();
+		const plugins = ui({
+			brand,
+			theme: {
+				'color-primary-dark': '#fafafa',
+				'color-primary-40-dark': '#334155',
+			},
+		}).vue?.plugins as { install(app: unknown): void }[];
+		for (const plugin of plugins) {
+			plugin.install({
+				config: {},
+				provide: (key: unknown, value: unknown) => provided.set(key, value),
+			});
+		}
+		const { css } = provided.get('nxgt:mail-ui') as { css: string };
+		// The project's own value for -40, unshadowed…
+		expect(css).toContain('--color-primary-40-dark: #334155;');
+		expect(css).not.toContain('--color-primary-40-dark: color-mix(');
+		// …the other three still computed, since only -40 was overridden.
+		expect(css).toContain(
+			'--color-primary-15-dark: color-mix(in srgb, var(--color-primary-dark) 15%, var(--color-background-dark));',
+		);
+		expect(css).toContain(
+			'--color-primary-20-dark: color-mix(in srgb, var(--color-primary-dark) 20%, var(--color-background-dark));',
+		);
+		expect(css).toContain(
+			'--color-primary-50-dark: color-mix(in srgb, var(--color-primary-dark) 50%, var(--color-background-dark));',
+		);
+	});
+
+	test('leaves the tints aliased to their light twin when no dark primary is set', () => {
+		const provided = new Map<unknown, unknown>();
+		const plugins = ui({ brand }).vue?.plugins as {
+			install(app: unknown): void;
+		}[];
+		for (const plugin of plugins) {
+			plugin.install({
+				config: {},
+				provide: (key: unknown, value: unknown) => provided.set(key, value),
+			});
+		}
+		const { css } = provided.get('nxgt:mail-ui') as { css: string };
+		expect(css).not.toContain('--color-primary-15-dark: color-mix(');
+		expect(css).toContain('--color-primary-15-dark: var(--color-primary-15);');
+		expect(css).toContain('--color-primary-50-dark: var(--color-primary-50);');
+	});
+
+	test('defaults muted-dark to muted, and its foreground to muted-foreground', () => {
+		const provided = new Map<unknown, unknown>();
+		const plugins = ui({ brand }).vue?.plugins as {
+			install(app: unknown): void;
+		}[];
+		for (const plugin of plugins) {
+			plugin.install({
+				config: {},
+				provide: (key: unknown, value: unknown) => provided.set(key, value),
+			});
+		}
+		const { css } = provided.get('nxgt:mail-ui') as { css: string };
+		expect(css).toContain('--color-muted-dark: var(--color-muted);');
+		expect(css).toContain(
+			'--color-muted-foreground-dark: var(--color-muted-foreground);',
+		);
+	});
+
+	test('shows a project-set dark muted pair, the same as color-primary-dark', () => {
+		const provided = new Map<unknown, unknown>();
+		const plugins = ui({
+			brand,
+			theme: {
+				'color-muted-dark': '#1e293b',
+				'color-muted-foreground-dark': '#e2e8f0',
+			},
+		}).vue?.plugins as { install(app: unknown): void }[];
+		for (const plugin of plugins) {
+			plugin.install({
+				config: {},
+				provide: (key: unknown, value: unknown) => provided.set(key, value),
+			});
+		}
+		const { css } = provided.get('nxgt:mail-ui') as { css: string };
+		expect(
+			css.endsWith(
+				'@theme {\n\t--color-muted-dark: #1e293b;\n\t--color-muted-foreground-dark: #e2e8f0;\n}\n',
+			),
+		).toBe(true);
+	});
+
 	test('makes an error while rendering fail the build under NODE_ENV=production too', () => {
 		const config: Record<string, unknown> = {};
 		const plugins = ui({ brand }).vue?.plugins as {

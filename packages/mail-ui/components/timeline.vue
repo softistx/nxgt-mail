@@ -21,7 +21,7 @@ defineOptions({ inheritAttrs: false });
 const props = defineProps<{ items: readonly TimelineItem[]; empty?: string }>();
 
 const MARKER: Record<TimelineTone, string> = {
-	default: 'border-border nx-dark-border-border bg-muted text-muted-foreground',
+	default: 'border-border nx-dark-border-border bg-muted nx-dark-bg-muted text-muted-foreground nx-dark-text-muted-foreground',
 	primary:
 		'border-primary-40 nx-dark-border-primary-40 bg-primary-15 nx-dark-bg-primary-15 text-primary nx-dark-text-primary',
 	success: 'border-success-40 bg-success-15 text-success',
@@ -42,7 +42,7 @@ const attrs = useAttrs();
 const classes = computed(() => twMerge('mb-4 w-full', attrs.class as string));
 const emptyClasses = computed(() =>
 	twMerge(
-		'mb-4 py-6 text-center text-sm text-muted-foreground',
+		'mb-4 py-6 text-center text-sm text-muted-foreground nx-dark-text-muted-foreground',
 		attrs.class as string,
 	),
 );
@@ -59,7 +59,7 @@ const emptyClasses = computed(() =>
           <table class="w-full" role="presentation" cellpadding="0" cellspacing="0" :dir="dir">
             <tr>
               <td class="pt-1 align-top text-sm font-medium leading-6 text-foreground nx-dark-text-foreground">{{ item.title }}</td>
-              <td v-if="item.timestampLabel" :class="`whitespace-nowrap pt-1 align-top text-xs leading-6 text-muted-foreground ${dir === 'rtl' ? 'pr-3 text-left' : 'pl-3 text-right'}`">{{ item.timestampLabel }}</td>
+              <td v-if="item.timestampLabel" :class="`whitespace-nowrap pt-1 align-top text-xs leading-6 text-muted-foreground nx-dark-text-muted-foreground ${dir === 'rtl' ? 'pr-3 text-left' : 'pl-3 text-right'}`">{{ item.timestampLabel }}</td>
             </tr>
           </table>
         </td>
@@ -68,7 +68,7 @@ const emptyClasses = computed(() =>
         <td :class="['w-4 text-[1px] leading-px', position < props.items.length - 1 && (dir === 'rtl' ? 'border-l [border-left-style:solid] border-border nx-dark-border-border' : 'border-r [border-right-style:solid] border-border nx-dark-border-border')]"><span data-maizzle-html-only>&zwj;</span></td>
         <td class="w-4 text-[1px] leading-px"><span data-maizzle-html-only>&zwj;</span></td>
         <td :class="[dir === 'rtl' ? 'pr-3 align-top' : 'pl-3 align-top', position < props.items.length - 1 && 'pb-6']">
-          <p v-if="item.description" class="m-0 text-sm text-muted-foreground">{{ item.description }}</p>
+          <p v-if="item.description" class="m-0 text-sm text-muted-foreground nx-dark-text-muted-foreground">{{ item.description }}</p>
         </td>
       </tr>
     </template>

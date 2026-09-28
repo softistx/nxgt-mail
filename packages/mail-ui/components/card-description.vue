@@ -7,7 +7,7 @@ defineOptions({ inheritAttrs: false });
 
 const attrs = useAttrs();
 const classes = computed(() =>
-	twMerge('m-0 mt-1.5 text-sm text-muted-foreground', attrs.class as string),
+	twMerge('m-0 mt-1.5 text-sm text-muted-foreground nx-dark-text-muted-foreground', attrs.class as string),
 );
 </script>
 

@@ -299,13 +299,18 @@
 	 * `'color-background-dark': '#0b1220'` — so a project can replace the
 	 * shipped dark palette without a different option shape.
 	 *
-	 * `primary` is the one exception: it keeps material-vue's behaviour (the
-	 * same value in both modes) **by default** — `color-primary-dark` and
-	 * `color-primary-foreground-dark` default to their light value below, so
-	 * a project that never sets them sees no change — but, unlike the rest of
-	 * this group, a project may give it a dark value of its own. A brand
+	 * `primary` and `muted` are the two exceptions: each keeps material-vue's
+	 * behaviour (the same value in both modes) **by default** — its `-dark`
+	 * and `-foreground-dark` twins default to their light value below, so a
+	 * project that never sets them sees no change — but, unlike the rest of
+	 * this group, a project may give either a dark value of its own. A brand
 	 * whose primary is near-black (`#27272a`) would otherwise melt into the
-	 * dark card (`color-card-dark`, `oklch(0.208 0.042 265.755)`).
+	 * dark card (`color-card-dark`, `oklch(0.208 0.042 265.755)`); a project
+	 * that darkens its own `color-card-dark` may want a `color-muted-dark`
+	 * that still reads as a step above it, the way `#1e293b` does against a
+	 * `#0f172b` card (1.22:1 — a visible step, not a contrast pair) with
+	 * `color-muted-foreground-dark: #e2e8f0` at 11.87:1 over it: see
+	 * docs/guide/dark-mode.md.
 	 */
 	--color-background-dark: oklch(0.14 0.036 258.53);
 	--color-foreground-dark: oklch(0.984 0.003 247.858);
@@ -315,15 +320,27 @@
 	--color-accent-foreground-dark: oklch(0.985 0.001 106.423);
 	--color-primary-dark: var(--color-primary);
 	--color-primary-foreground-dark: var(--color-primary-foreground);
+	--color-muted-dark: var(--color-muted);
+	--color-muted-foreground-dark: var(--color-muted-foreground);
 	/* material-vue's dark border is white at 10% alpha: mixed solid, as light's tints are. */
 	--color-border-dark: color-mix(
 		in srgb,
 		white 10%,
 		var(--color-background-dark)
 	);
+	/*
+	 * Always the *light* primary — never `--color-primary-dark` — so a
+	 * project that sets a dark primary (for a readable button or tint) never
+	 * moves the page ground under it: `paper` stays the brand hue at 5% over
+	 * the dark background, exactly as it was before `color-primary-dark`
+	 * existed. Mixing the dark one instead let a near-white
+	 * `color-primary-dark` (chosen for a readable button) wash `paper`
+	 * towards white too, down to ~1.02:1 against `color-card-dark` — worse
+	 * than the ~1.09:1 here — and unrelated to the brand: docs/guide/dark-mode.md.
+	 */
 	--color-paper-dark: color-mix(
 		in srgb,
-		var(--color-primary-dark) 5%,
+		var(--color-primary) 5%,
 		var(--color-background-dark)
 	);
 	/* The one foreground tint a component uses (rating.vue's empty star). */
@@ -338,10 +355,19 @@
 	 * `color-primary-dark` over `color-background-dark` — because that light
 	 * tint is already mixed over the *light* background: recomputing it
 	 * against the dark one would change it even while `color-primary-dark` is
-	 * still unset, which the plain full-strength tokens above never do. A
-	 * project that sets `color-primary-dark` and wants the tint to follow
-	 * overrides the tint token too — docs/guide/theme.md already lets any
-	 * tint be overridden alone, the same way here.
+	 * still unset, which the plain full-strength tokens above never do.
+	 *
+	 * A project that *does* set `color-primary-dark` gets these four
+	 * recomputed against the dark background instead — `theme.ts`'s
+	 * `themeCss` adds the four lines below as further overrides, since only
+	 * it knows the option was set; plain CSS has no such condition. Left at
+	 * the tokens' plain default (aliasing the light tint) as this file
+	 * declares them, `color-primary-15-dark` stayed a near-white `bg-primary`
+	 * lightened further, under `color-primary-dark` text that is *also*
+	 * near-white: 1.28:1, unreadable. The same percentages as the light
+	 * tints hold at 4.5:1 and above for the tonal chip's text and 3:1 and
+	 * above for the outlined border, over a near-white `color-primary-dark`:
+	 * docs/guide/dark-mode.md.
 	 */
 	--color-primary-15-dark: var(--color-primary-15);
 	--color-primary-20-dark: var(--color-primary-20);
@@ -405,6 +431,22 @@ html {
 	.nx-dark-border-border {
 		/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
 		border-color: var(--color-border-dark) !important;
+	}
+	.nx-dark-bg-muted {
+		/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
+		background-color: var(--color-muted-dark) !important;
+	}
+	.nx-dark-text-muted-foreground {
+		/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
+		color: var(--color-muted-foreground-dark) !important;
+	}
+	.nx-dark-border-muted-foreground {
+		/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
+		border-color: var(--color-muted-foreground-dark) !important;
+	}
+	.nx-dark-border-muted {
+		/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
+		border-color: var(--color-muted-dark) !important;
 	}
 	.nx-dark-bg-primary {
 		/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
@@ -483,6 +525,26 @@ html {
 [data-ogsb] .nx-dark-border-border {
 	/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
 	border-color: var(--color-border-dark) !important;
+}
+[data-ogsc] .nx-dark-bg-muted,
+[data-ogsb] .nx-dark-bg-muted {
+	/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
+	background-color: var(--color-muted-dark) !important;
+}
+[data-ogsc] .nx-dark-text-muted-foreground,
+[data-ogsb] .nx-dark-text-muted-foreground {
+	/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
+	color: var(--color-muted-foreground-dark) !important;
+}
+[data-ogsc] .nx-dark-border-muted-foreground,
+[data-ogsb] .nx-dark-border-muted-foreground {
+	/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
+	border-color: var(--color-muted-foreground-dark) !important;
+}
+[data-ogsc] .nx-dark-border-muted,
+[data-ogsb] .nx-dark-border-muted {
+	/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
+	border-color: var(--color-muted-dark) !important;
 }
 [data-ogsc] .nx-dark-bg-primary,
 [data-ogsb] .nx-dark-bg-primary {

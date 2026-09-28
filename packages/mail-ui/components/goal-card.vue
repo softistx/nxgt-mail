@@ -26,7 +26,7 @@ const ofTarget = computed(() =>
   <NxCard class="py-4">
     <NxCardContent class="px-4">
       <NxCardDescription class="mt-0">{{ label }}</NxCardDescription>
-      <p class="m-0 mt-3"><span class="text-2xl font-semibold tracking-tight text-foreground nx-dark-text-foreground">{{ value }}{{ unit }}</span> <span class="text-sm text-muted-foreground">{{ ofTarget }}</span></p>
+      <p class="m-0 mt-3"><span class="text-2xl font-semibold tracking-tight text-foreground nx-dark-text-foreground">{{ value }}{{ unit }}</span> <span class="text-sm text-muted-foreground nx-dark-text-muted-foreground">{{ ofTarget }}</span></p>
       <NxProgress class="mb-0 mt-3" :model-value="value" :max="target" :height="6" />
     </NxCardContent>
   </NxCard>

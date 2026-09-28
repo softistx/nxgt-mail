@@ -15,6 +15,16 @@ const TOKEN = /^[a-z][a-z0-9-]*$/;
  */
 const VALUE = /^(?!.*(?:\/\*|\*\/))[^;{}<>"'\\\r\n]+$/;
 
+/**
+ * The primary tints that carry a chip's or a button's text, or its border, at
+ * partial strength: `theme.css` aliases each `-dark` twin to its own light
+ * tint by default. A project that sets `color-primary-dark` wants these to
+ * follow it instead — the same percentages, now mixed over the dark
+ * background rather than the light one — so a tonal chip's near-white text
+ * is not painted over a tint still mixed from the *light* primary.
+ */
+const PRIMARY_TINTS = [15, 20, 40, 50] as const;
+
 /** The tokens `css` declares, without their `--`: `color-primary`, … */
 export function declaredTokens(css: string): ReadonlySet<string> {
 	return new Set(
@@ -46,6 +56,22 @@ export function themeCss(theme: Readonly<Record<string, string>>): string {
 			);
 		}
 		overrides.push(`\t--${token}: ${value.trim()};`);
+	}
+	// Only here do we know `color-primary-dark` was set, not merely defaulted
+	// to `color-primary` by theme.css: recompute its tints against the dark
+	// background instead of leaving them aliased to the light ones. Skip a
+	// percentage the project already overrode itself, above — its own value
+	// is already in `overrides` and must win, not be shadowed by this one
+	// appended after it (CSS resolves a duplicate custom property by source
+	// order, so whichever is pushed last would otherwise take over).
+	if (Object.hasOwn(theme, 'color-primary-dark')) {
+		for (const pct of PRIMARY_TINTS) {
+			const token = `color-primary-${pct}-dark`;
+			if (Object.hasOwn(theme, token)) continue;
+			overrides.push(
+				`\t--${token}: color-mix(in srgb, var(--color-primary-dark) ${pct}%, var(--color-background-dark));`,
+			);
+		}
 	}
 	return overrides.length === 0
 		? css

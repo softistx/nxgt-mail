@@ -60,7 +60,8 @@ Name a token in `theme` without its `--`: `--color-primary` is
 | `color-paper` | 5% primary over background | The page behind the layout's card |
 | `color-<colour>-5`, `-10`, `-15`, `-20`, `-25`, `-40`, `-50` | the colour mixed over background | Tints — see below |
 | `color-background-dark`, `color-foreground-dark`, `color-card-dark`, `color-card-foreground-dark`, `color-accent-dark`, `color-accent-foreground-dark`, `color-border-dark`, `color-paper-dark` | `@nxgt/material-vue`'s dark values | Shown under dark mode — see [Dark mode](dark-mode.md) |
-| `color-primary-dark`, `color-primary-foreground-dark` | their light value | **Optional.** Shown under dark mode once set — see [Dark mode](dark-mode.md#which-tokens-have-a-dark-value) |
+| `color-primary-dark`, `color-primary-foreground-dark` | their light value | **Optional.** Shown under dark mode once set, its tints too — see [Dark mode](dark-mode.md#which-tokens-have-a-dark-value) |
+| `color-muted-dark`, `color-muted-foreground-dark` | their light value | **Optional.** Shown under dark mode once set — see [Dark mode](dark-mode.md#which-tokens-have-a-dark-value) |
 
 The exact values are in the file itself:
 

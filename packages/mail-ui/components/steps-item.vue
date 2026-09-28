@@ -46,7 +46,7 @@ const classes = computed(() =>
     <td :class="['w-4 text-[1px] leading-px', !last && (dir === 'rtl' ? 'border-l [border-left-style:solid] border-border nx-dark-border-border' : 'border-r [border-right-style:solid] border-border nx-dark-border-border')]"><span data-maizzle-html-only>&zwj;</span></td>
     <td class="w-4 text-[1px] leading-px"><span data-maizzle-html-only>&zwj;</span></td>
     <td v-bind="{ ...attrs, class: undefined }" :class="classes">
-      <div v-if="slots.default" class="mt-2 text-sm leading-6 text-muted-foreground"><slot /></div>
+      <div v-if="slots.default" class="mt-2 text-sm leading-6 text-muted-foreground nx-dark-text-muted-foreground"><slot /></div>
     </td>
   </tr>
 </template>

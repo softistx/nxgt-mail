@@ -42,7 +42,7 @@ const classes = computed(() => twMerge('mb-4 w-full', attrs.class as string));
       </td>
     </tr>
     <tr v-if="caption">
-      <td class="px-1 pt-3 text-center text-sm text-muted-foreground">{{ caption }}</td>
+      <td class="px-1 pt-3 text-center text-sm text-muted-foreground nx-dark-text-muted-foreground">{{ caption }}</td>
     </tr>
   </table>
 </template>

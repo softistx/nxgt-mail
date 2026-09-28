@@ -67,27 +67,50 @@ foreground, card, card-foreground, accent, accent-foreground and border** —
 both modes there**. `@nxgt/mail-ui` mirrors exactly that split: that first
 group has a `-dark` token (`color-background-dark`, …), the second has none.
 
-**`primary` keeps its value too, unless you set one for dark mode.**
-`color-primary-dark` and `color-primary-foreground-dark` default to their
-light value — a project that never sets them reaches dark mode with
-`color-primary` unchanged, for free, exactly as before this pair of tokens
+**`primary` and `muted` keep their value too, unless you set one for dark
+mode.** `color-primary-dark`/`color-primary-foreground-dark` and
+`color-muted-dark`/`color-muted-foreground-dark` default to their light
+value — a project that never sets them reaches dark mode with `color-primary`
+and `color-muted` unchanged, for free, exactly as before these pairs of tokens
 existed. Set them when the default does not work: a brand whose primary is
 near-black, `#27272a`, is a crisp button on a white card, but melts into
 `color-card-dark` (`oklch(0.208 0.042 265.755)`, close to it in luminance) on
 a dark one — that project gives primary a lighter dark twin, and a dark
-foreground to keep its text readable on it.
+foreground to keep its text readable on it. A project that darkens its own
+`color-card-dark` may similarly want `color-muted-dark` to still read as a
+step above it — `color-muted-dark: '#1e293b'` against a `#0f172b` card, with
+`color-muted-foreground-dark: '#e2e8f0'` at 11.87:1 over it.
 
 Every place primary paints carries the matching `nx-dark-*` class, at
 whatever strength it is used: `NxButton`, `NxLinkButton`, `NxIconButton` and
 `NxChip` (`filled`, `tonal` and `outlined`, and the `link` variant),
 `NxBadge`'s default variant, `NxProgress`'s track and fill, and `NxTimeline`'s
-`primary` marker. A tint used only as a decorative ground — `NxHero`'s,
-`NxListTile`'s, `NxEventChip`'s — keeps material-vue's original behaviour, the
-same value in both modes, unconditionally: it says so where it is used.
+`primary` marker. Once `color-primary-dark` is set, the primary tints
+(`-15`/`-20`/`-40`/`-50` — a tonal chip's ground, an outlined chip's border,
+`NxProgress`'s track, `NxTimeline`'s marker) are mixed from it over the dark
+background too, at the same percentages the light tints use over the light
+one: for a near-white `color-primary-dark`, that keeps a tonal chip's text
+(the dark primary itself) at 12.7–13.2:1 over its ground, and an outlined
+chip's border at 3.2–4.6:1 against the dark card, in the reported case. Left
+unset, the tints keep aliasing their light twin exactly as before.
+
+Every place muted paints carries the matching `nx-dark-*` class too:
+`NxCode`'s and `NxAvatarFallback`'s ground, `NxKbd`, `NxTimeline`'s default
+marker, a table's footer stripe and `NxAlert`'s `foreground` variant ground,
+and every place muted text is used. `NxCode`, `NxAvatarFallback` and a
+table's footer keep their own text pinned to `color-foreground`, unflipped,
+by design — the same "always legible, self-contained" ground `NxHero`'s,
+`NxListTile`'s and `NxEventChip`'s decorative tints keep unconditionally: pick
+a `color-muted-dark` light enough to keep that fixed text legible, or leave
+it unset.
 
 `color-paper` (the page behind the layout's card, mail-ui's own token, not
-material-vue's) gets a `color-paper-dark` computed the same way: primary — its
-dark value, if you set one — mixed 5% over the dark background.
+material-vue's) gets a `color-paper-dark` computed the same way: the **light**
+`color-primary` — never `color-primary-dark` — mixed 5% over the dark
+background, so setting a dark primary never moves the page ground. Mixing the
+dark one instead let a near-white `color-primary-dark` wash `paper-dark`
+towards white too (down to 1.02:1 against the dark card, from the usual
+~1.09:1) — unrelated to the brand, and worse to read.
 
 ## Overriding a dark token
 
@@ -98,8 +121,10 @@ ui({
 	brand: { name: 'Acme' },
 	theme: {
 		'color-primary': '#27272a', // both modes, unless you also set the dark twin below
-		'color-primary-dark': '#a1a1aa', // dark mode only — keeps it off the dark card
+		'color-primary-dark': '#a1a1aa', // dark mode only — keeps it off the dark card, and its tints follow it
 		'color-primary-foreground-dark': '#18181b', // text on the button above, in dark mode
+		'color-muted-dark': '#1e293b', // dark mode only — a step above the dark card
+		'color-muted-foreground-dark': '#e2e8f0', // text on the ground above, in dark mode
 		'color-background-dark': '#0b1220', // dark mode only
 	},
 });

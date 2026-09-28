@@ -12,6 +12,8 @@ export default defineMailConfig({
 				'color-primary': '#0f766e',
 				'color-primary-dark': '#f4f4f5',
 				'color-primary-foreground-dark': '#18181b',
+				'color-muted-dark': '#1e293b',
+				'color-muted-foreground-dark': '#e2e8f0',
 			},
 		}),
 		i18n({ locales: ['en', 'fr'], catalogues: [uiCatalogues] }),

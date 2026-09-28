@@ -31,7 +31,7 @@ const dir = computed(() => dirOf(globals));
           </td>
           <td :class="`align-top ${dir === 'rtl' ? 'pr-3 text-left' : 'pl-3 text-right'}`">
             <p :class="EYEBROW">{{ right.label }}</p>
-            <p class="m-0 mt-0.5 text-lg font-semibold tracking-tight text-muted-foreground">{{ right.value }}</p>
+            <p class="m-0 mt-0.5 text-lg font-semibold tracking-tight text-muted-foreground nx-dark-text-muted-foreground">{{ right.value }}</p>
           </td>
         </tr>
       </table>

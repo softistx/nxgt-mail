@@ -29,7 +29,7 @@ const classes = computed(() =>
         <!-- `bg-primary-5` keeps the same value in dark mode (see theme.css): its
              text stays `text-foreground`, un-flipped, too. -->
         <h1 :class="['m-0 text-3xl font-semibold tracking-tight text-foreground', eyebrow && 'mt-3']">{{ title }}</h1>
-        <p v-if="description" class="m-0 mt-4 text-base text-muted-foreground">{{ description }}</p>
+        <p v-if="description" class="m-0 mt-4 text-base text-muted-foreground nx-dark-text-muted-foreground">{{ description }}</p>
         <div v-if="slots.actions" class="mt-6"><slot name="actions" /></div>
         <div v-if="slots.default" class="mt-8"><slot /></div>
       </td>
