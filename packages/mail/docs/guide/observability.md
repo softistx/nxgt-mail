@@ -7,13 +7,19 @@ imports `./telemetry` never needs `@opentelemetry/api` installed.
 
 ```ts
 import { createMailRenderer } from '@nxgt/mail/renderer';
-import { withRendererTelemetry, withTelemetry } from '@nxgt/mail/telemetry';
+import { withMailRendererTelemetry, withMailTelemetry } from '@nxgt/mail/telemetry';
 
-const mails = withRendererTelemetry(createMailRenderer({ dir: 'dist' }));
-const mailer = withTelemetry(resendMailer, { transport: 'resend' });
+const mails = withMailRendererTelemetry(createMailRenderer({ dir: 'dist' }));
+const mailer = withMailTelemetry(resendMailer, { transport: 'resend' });
 
 await mailer.send({ to, ...mails.render('verify-email', { name, link }) });
 ```
+
+`withTelemetry` and `withRendererTelemetry` — the pre-0.9 names — are kept as
+`@deprecated` aliases of the same two functions, so existing code keeps
+working; they are removed in 1.0. They were renamed because a project
+importing both `@nxgt/mail/telemetry` and `@nxgt/telemetry` had two different
+`withTelemetry` functions to disambiguate — `@nxgt/telemetry` also exports one.
 
 `@opentelemetry/api` is an **optional peer**. With no SDK installed and
 registered, `trace.getTracer()` and `metrics.getMeter()` answer no-op
@@ -49,7 +55,7 @@ the `MailErrorCode`, **never the thrown error's own `message` or `stack`**
 — which a hand-rolled `Mailer`, or a third-party transport, may have built
 from the address or the subject.
 
-## `withTelemetry(mailer, options)`
+## `withMailTelemetry(mailer, options)`
 
 Wraps a `Mailer`. Every `send` opens a span **`mail.send`**, kind `CLIENT`.
 
@@ -91,7 +97,7 @@ export interface MailTelemetryOptions {
   `mail.transport` and `mail.outcome`.
 - `mail.send.count` — a counter, attributed the same way.
 
-## `withRendererTelemetry(renderer)`
+## `withMailRendererTelemetry(renderer)`
 
 Wraps a `MailRenderer`. Every `render` opens a span **`mail.render`**, kind
 `INTERNAL`, with `mail.email` — the e-mail's name, `render`'s first argument,
@@ -128,23 +134,23 @@ are told apart:
   a name and the `MailErrorCode`, never the thrown error's own `message` or
   `stack`.
 
-Either way, **the error is rethrown unchanged**: `withTelemetry` and
-`withRendererTelemetry` only observe. A `catch` written against `MailError`
+Either way, **the error is rethrown unchanged**: `withMailTelemetry` and
+`withMailRendererTelemetry` only observe. A `catch` written against `MailError`
 or a build with `MailEmails` behaves exactly as it would unwrapped.
 
 ## Composing with a retry decorator
 
-A retry decorator (`withRetry`) and `withTelemetry` compose in either order;
+A retry decorator (`withRetry`) and `withMailTelemetry` compose in either order;
 which one goes outside changes what a span *is*:
 
-**`withTelemetry(withRetry(mailer), { transport })` — recommended.**
-`withTelemetry` is the outside layer, so one call to the wrapped `send()` is
+**`withMailTelemetry(withRetry(mailer), { transport })` — recommended.**
+`withMailTelemetry` is the outside layer, so one call to the wrapped `send()` is
 one span: its duration covers every attempt the retry made, and its outcome
 is the final one — the shape a caller reads a trace for, one span per
 business-level send.
 
-**`withRetry(withTelemetry(mailer, { transport }))` — per attempt.** Here
-`withTelemetry` wraps the *inner* mailer the retry calls, so each attempt gets
+**`withRetry(withMailTelemetry(mailer, { transport }))` — per attempt.** Here
+`withMailTelemetry` wraps the *inner* mailer the retry calls, so each attempt gets
 its own `mail.send` span: useful when an individual attempt's failure is worth
 seeing on its own and the retry decorator does not trace itself. The cost:
 a single `send()` from your code produces several `mail.send` spans, with no

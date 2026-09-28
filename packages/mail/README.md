@@ -44,7 +44,7 @@ import without extensions, so `nodenext` is not supported.
 | `@nxgt/mail` | The port (`Mailer`, `MailMessage`, `Rendered`, `SentMail`, `MailBatchResult`, `Address`, `MailAttachment`), the errors (`MailError`, `MailFailure`, `MailRefused`, `MailScheduleRefused`), the neutral delivery events (`MailEvent` and its members, `MailWebhookRefused`), `createMemoryMailer`, `withRetry` with `RetryOptions` and `RetryExhausted`, `sendBatch`, `pickLocale` and `parseAcceptLanguage`, `listUnsubscribe` with `ListUnsubscribeOptions` and `ListUnsubscribeHeaders`, and what a transport calls first: `checkMessage`, `checkScheduledAt`, `recipientsOf`, `addressOf`. No Node built-in: it runs anywhere |
 | `@nxgt/mail/renderer` | The renderer: `createMailRenderer`, `MailRenderer`, `MailRendererOptions`, `RenderOptions`, `MailVariables`, the types that type it with a build's `MailEmails` (`MailEmailsOf`, `AnyMailEmails`, `RenderArguments`), and `MANIFEST_FORMAT`, the newest manifest format it reads. Reads the build with `node:fs` |
 | `@nxgt/mail/conformance` | **For transport authors**: `describeMailer`, its cases as data, `runMailerCase`, the messages they send (`sampleMessage`, `sampleAttachment`, `sampleInlineImage`), and the memory mailer's harness as a worked example |
-| `@nxgt/mail/telemetry` | **Optional**: `withTelemetry` and `withRendererTelemetry`, a span per send and per render on `@opentelemetry/api` — an optional peer, installed only if this subpath is imported |
+| `@nxgt/mail/telemetry` | **Optional**: `withMailTelemetry` and `withMailRendererTelemetry`, a span per send and per render on `@opentelemetry/api` — an optional peer, installed only if this subpath is imported |
 
 ## Usage
 
@@ -310,7 +310,7 @@ transport — the others are unaffected. `@nxgt/mail-resend` implements
 request; `@nxgt/mail-smtp`, and any `Mailer` with no `sendBatch` of its own,
 falls back to sending each message in turn over `send`. `withRetry` passes a
 `sendBatch` through untouched (retry the ones that come back `failed`, one by
-one, with `send`); `withTelemetry` gives it its own span. See
+one, with `send`); `withMailTelemetry` gives it its own span. See
 [Sending — sendBatch](docs/guide/sending.md#sending-many-at-once--sendbatch).
 
 ### Tags — labels for the provider
@@ -579,21 +579,26 @@ describeMailer({
 See [Writing a transport](docs/guide/transports.md) for the harness, faults and
 skips.
 
-### Observability — `withTelemetry` and `withRendererTelemetry`
+### Observability — `withMailTelemetry` and `withMailRendererTelemetry`
 
 `@nxgt/mail/telemetry` wraps a `Mailer` or a `MailRenderer` with a span, on
 `@opentelemetry/api` — an **optional peer**: with none installed, every call
 still runs, and produces nothing.
 
 ```ts
-import { withTelemetry, withRendererTelemetry } from '@nxgt/mail/telemetry';
+import { withMailTelemetry, withMailRendererTelemetry } from '@nxgt/mail/telemetry';
 import { createMailRenderer } from '@nxgt/mail/renderer';
 
-const mails = withRendererTelemetry(createMailRenderer({ dir: 'dist' })); // span mail.render, per call
-const mailer = withTelemetry(resendMailer, { transport: 'resend' }); // span mail.send, per call
+const mails = withMailRendererTelemetry(createMailRenderer({ dir: 'dist' })); // span mail.render, per call
+const mailer = withMailTelemetry(resendMailer, { transport: 'resend' }); // span mail.send, per call
 
 await mailer.send({ to, ...mails.render('verify-email', { name, link }) });
 ```
+
+> `withTelemetry` and `withRendererTelemetry` are kept as `@deprecated`
+> aliases of `withMailTelemetry` and `withMailRendererTelemetry` — the same
+> functions — for a project already importing `@nxgt/telemetry`, whose own
+> `withTelemetry` the old names collided with. Removed in 1.0.
 
 `mail.send` (kind `CLIENT`) carries the transport's name, the recipient
 **count**, the tags' **names** (never their values), whether an idempotency
@@ -616,11 +621,11 @@ error's own `message` or `stack`**, which a hand-rolled `Mailer` may have
 built from the message. Either way the error is rethrown unchanged:
 telemetry only observes.
 
-**With a retry decorator, `withTelemetry` goes on the outside**:
-`withTelemetry(withRetry(mailer), { transport })`. One call from your code is
+**With a retry decorator, `withMailTelemetry` goes on the outside**:
+`withMailTelemetry(withRetry(mailer), { transport })`. One call from your code is
 one span, its duration and outcome the whole retried attempt — the shape a
 caller reads a trace for. Put it inside instead
-(`withRetry(withTelemetry(mailer, { transport }))`) only to see each attempt
+(`withRetry(withMailTelemetry(mailer, { transport }))`) only to see each attempt
 of its own, at the cost of several `mail.send` spans for one `send()` call.
 
 See [Observability](docs/guide/observability.md) for every attribute, and the

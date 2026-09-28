@@ -1854,8 +1854,8 @@ renderer.
 
 ## Observability
 
-`@nxgt/mail/telemetry` throws nothing of its own: `withTelemetry` and
-`withRendererTelemetry` only observe, and rethrow whatever the wrapped
+`@nxgt/mail/telemetry` throws nothing of its own: `withMailTelemetry` and
+`withMailRendererTelemetry` only observe, and rethrow whatever the wrapped
 `Mailer` or `MailRenderer` throws, unchanged. The two entries below are not a
 message this package prints — they are what happens around it.
 
@@ -1865,14 +1865,14 @@ message this package prints — they are what happens around it.
 installed `@opentelemetry/api`.
 **Why:** it is an **optional peer** of `@nxgt/mail` — not installed unless
 something imports this subpath, so a project that never uses
-`withTelemetry` or `withRendererTelemetry` never needs it.
+`withMailTelemetry` or `withMailRendererTelemetry` never needs it.
 **Fix:** `bun add @opentelemetry/api` (or `npm install`, `pnpm add`). No
 SDK is required to run: with none registered, every span and every metric
 here is a no-op, and `mailer.send` or `render` behaves exactly as unwrapped.
 
 ### A `mail.send` or `mail.render` span never appears, with `@opentelemetry/api` installed
 
-**When:** `withTelemetry` or `withRendererTelemetry` wraps a `Mailer` or a
+**When:** `withMailTelemetry` or `withMailRendererTelemetry` wraps a `Mailer` or a
 `MailRenderer`, sends and renders happen, and nothing shows up in your
 backend.
 **Why:** `@opentelemetry/api`'s own tracer and meter answer no-ops until a
@@ -1884,7 +1884,7 @@ exporter and `trace.setGlobalTracerProvider(provider)`,
 `@opentelemetry/sdk-metrics`' `MeterProvider` with a reader and
 `metrics.setGlobalMeterProvider(provider)` — the same two calls
 `telemetry.spec.ts` makes with the in-memory exporters, before any
-`withTelemetry`-wrapped mailer is created.
+`withMailTelemetry`-wrapped mailer is created.
 
 ---
 

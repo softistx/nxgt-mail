@@ -33,10 +33,10 @@
  *
  * ## Composing with a retry
  *
- * **`withTelemetry` goes outside a retry decorator**: `withTelemetry(withRetry(mailer), …)`.
+ * **`withMailTelemetry` goes outside a retry decorator**: `withMailTelemetry(withRetry(mailer), …)`.
  * One call from your code is one send from its caller's point of view, so it
  * gets one span — its duration the whole retried attempt, its outcome the
- * final one. Putting `withTelemetry` inside (`withRetry(withTelemetry(mailer, …))`)
+ * final one. Putting `withMailTelemetry` inside (`withRetry(withMailTelemetry(mailer, …))`)
  * gives one span per attempt instead: useful if the retry itself is not
  * traced and each attempt's own failure is worth seeing on its own, but then
  * a caller's single `send()` produces several `mail.send` spans with no span
@@ -116,7 +116,7 @@ function fail(
 	throw error;
 }
 
-/** What `withTelemetry` needs beyond the message, to attribute the span. */
+/** What `withMailTelemetry` needs beyond the message, to attribute the span. */
 export interface MailTelemetryOptions {
 	/**
 	 * The transport's name, as `'resend'` or `'smtp'`: `mail.transport` on
@@ -160,9 +160,9 @@ function sendAttributes(
  * observed.
  *
  * ```ts
- * import { withTelemetry } from '@nxgt/mail/telemetry';
+ * import { withMailTelemetry } from '@nxgt/mail/telemetry';
  *
- * const mailer = withTelemetry(resendMailer, { transport: 'resend' });
+ * const mailer = withMailTelemetry(resendMailer, { transport: 'resend' });
  * await mailer.send(message); // a span, unchanged behaviour
  * ```
  *
@@ -171,9 +171,9 @@ function sendAttributes(
  * `MailBatchResult` per message is the answer, not a throw — with
  * `mail.batch.sent_count`, `mail.batch.refused_count` and
  * `mail.batch.failed_count` alongside it. A `Mailer` with no `sendBatch`
- * still gets one from `withTelemetry` — it simply carries none of its own.
+ * still gets one from `withMailTelemetry` — it simply carries none of its own.
  */
-export function withTelemetry(
+export function withMailTelemetry(
 	mailer: Mailer,
 	options: MailTelemetryOptions,
 ): Mailer {
@@ -278,7 +278,7 @@ export function withTelemetry(
 	};
 }
 
-/** What `withRendererTelemetry` needs — nothing yet, kept for a future option. */
+/** What `withMailRendererTelemetry` needs — nothing yet, kept for a future option. */
 export type MailRendererTelemetryOptions = Record<string, never>;
 
 /**
@@ -288,13 +288,13 @@ export type MailRendererTelemetryOptions = Record<string, never>;
  * the same call, never turning it into an `async` method.
  *
  * ```ts
- * import { withRendererTelemetry } from '@nxgt/mail/telemetry';
+ * import { withMailRendererTelemetry } from '@nxgt/mail/telemetry';
  *
- * const mails = withRendererTelemetry(createMailRenderer({ dir: 'dist' }));
+ * const mails = withMailRendererTelemetry(createMailRenderer({ dir: 'dist' }));
  * mails.render('verify-email', { name, link }); // a span, unchanged behaviour
  * ```
  */
-export function withRendererTelemetry<
+export function withMailRendererTelemetry<
 	E extends MailEmailsOf<E> = AnyMailEmails,
 >(
 	renderer: MailRenderer<E>,
@@ -333,3 +333,14 @@ export function withRendererTelemetry<
 		);
 	return { emails: renderer.emails, locales: renderer.locales, render };
 }
+
+/**
+ * @deprecated Use {@link withMailTelemetry} instead. `withTelemetry` collides
+ * with `@nxgt/telemetry`'s own export of the same name — removed in 1.0.
+ */
+export const withTelemetry = withMailTelemetry;
+
+/**
+ * @deprecated Use {@link withMailRendererTelemetry} instead — removed in 1.0.
+ */
+export const withRendererTelemetry = withMailRendererTelemetry;
