@@ -250,7 +250,8 @@ through untouched, and never branches or computes on it
   throws the peer's, so `instanceof` holds. The one-class-per-entry-point scan
   in `scripts/verify-artifacts.ts` guards it, from the first commit.
 - The repository skeleton (`build.ts`, `scripts/verify-artifacts.ts`,
-  `scripts/publish.ts`, `scripts/check-changesets.ts`, the workflows, `bunfig.toml`, the tsconfigs,
+  `scripts/publish.ts`, `scripts/check-changesets.ts`,
+  `scripts/check-nxgt-versions.ts`, the workflows, `bunfig.toml`, the tsconfigs,
   `biome.json`) is **copied from nxgt-janus, never shared** — the fifth copy.
   Change the copies together when the reason holds for all of them.
 - **Generated code lives in a `generated/` folder**, never beside the sources
@@ -305,6 +306,12 @@ Carry each difference over when janus gets the same thing (`@nxgt/janus-mail`):
 `noNodeBuiltinProblems` and its place in `main`): no janus package says it
 runs on an edge runtime. Carry it over the day one does, and keep it when
 syncing the copies.
+
+`scripts/check-nxgt-versions.ts` (and its `nxgt-versions` workflow, weekly)
+differs by reading `dependencies` as well as `devDependencies`: here the one
+`@nxgt/*` package from outside, `@nxgt/i18n-vue`, is a runtime dependency of
+`@nxgt/mail-i18n`, which every consumer installs by range. Bumping it is a
+patch of `@nxgt/mail-i18n`, with `bun.lock`.
 
 `scripts/publish.ts` differs by `pinDocs` and `pinPackageDocs`, which pin the
 docs' picture URLs to the release tag: janus's READMEs show no picture.
