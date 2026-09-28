@@ -399,8 +399,7 @@ built with these packages. Then archive `nxgt-maizzle` — Steve decides when.
 ## Step 10 — 1.0
 
 What a `1.0` freezes across all seven packages, the semver and deprecation
-policy proposed for after it, the entry criteria, and the open questions for
-Steve: [`docs/plan-1.0.md`](./plan-1.0.md), status **Accepted** (Steve took every recommendation).
+policy for after it, the entry criteria, and Steve's decisions: [`docs/plan-1.0.md`](./plan-1.0.md), status **Accepted** (Steve took every recommendation).
 
 ---
 
