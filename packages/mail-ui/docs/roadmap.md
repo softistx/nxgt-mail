@@ -59,14 +59,15 @@ The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
 - **The optional dark tokens reach every remaining component, v0.7.0** —
-  `color-primary-dark`/`color-primary-foreground-dark` and
-  `color-muted-dark`/`color-muted-foreground-dark` now also carry
-  `NxActionCard`'s active and idle states, `NxExtendedLabel`'s bar,
-  `NxEventChip`'s bar and `selected` border, `NxFileList`'s badge, download
-  link and empty state, `NxHighlightText`'s mark, `NxRatioCard`'s right
-  figure, `NxStatusIndicator`'s `primary` and `neutral` tones,
-  `NxStepsItem`'s numbered circle and body, and `NxSummaryData`'s row
-  divider — nothing changes with no dark token set. Also fixed:
+  `color-primary-dark`/`color-primary-foreground-dark` now also carries
+  `NxActionCard`'s active ring, icon box and indicator, `NxExtendedLabel`'s
+  bar, `NxEventChip`'s bar and `selected` border, `NxFileList`'s extension
+  badge and download link, `NxHighlightText`'s mark, `NxStatusIndicator`'s
+  `primary` tone, `NxStepsItem`'s numbered circle and `NxSummaryData`'s row
+  divider (`NxFileList`'s empty state, `NxRatioCard`'s right figure,
+  `NxStatusIndicator`'s `neutral` tone and `NxStepsItem`'s body already
+  carried `color-muted-dark` since 0.6.0) — nothing changes with no dark
+  token set. Also fixed:
   `NxTypography`'s `caption` variant showed `color-foreground-dark`, not
   `color-muted-foreground-dark`, in dark mode (a stale class `twMerge`
   cannot drop on its own), and `NxProgress`'s track kept its default 20%
