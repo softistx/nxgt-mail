@@ -18,6 +18,7 @@ Open a file in a browser to see it — GitHub shows its source.
 | `new-sign-in` | [en](en/new-sign-in.html) · [fr](fr/new-sign-in.html) |
 | `two-factor-enabled` | [en](en/two-factor-enabled.html) · [fr](fr/two-factor-enabled.html) |
 | `two-factor-disabled` | [en](en/two-factor-disabled.html) · [fr](fr/two-factor-disabled.html) |
+| `recovery-code-used` | [en](en/recovery-code-used.html) · [fr](fr/recovery-code-used.html) |
 | `welcome` | [en](en/welcome.html) · [fr](fr/welcome.html) |
 | `invitation` | [en](en/invitation.html) · [fr](fr/invitation.html) |
 | `invitation-accepted` | [en](en/invitation-accepted.html) · [fr](fr/invitation-accepted.html) |

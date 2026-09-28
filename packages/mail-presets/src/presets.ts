@@ -20,6 +20,7 @@ export const PRESETS = [
 	'new-sign-in',
 	'two-factor-enabled',
 	'two-factor-disabled',
+	'recovery-code-used',
 	'welcome',
 	'invitation',
 	'invitation-accepted',

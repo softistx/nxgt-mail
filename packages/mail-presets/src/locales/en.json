@@ -80,6 +80,15 @@
 		"body": "Your {brand} account no longer asks for a second factor at sign-in — anyone with just your password can sign in.",
 		"action": "Secure my account"
 	},
+	"recovery-code-used": {
+		"subject": "A recovery code was used on your account",
+		"preheader": "A recovery code from your account was just used.",
+		"title": "A recovery code was used on your account",
+		"banner": "A recovery code was used on your account at {when}.",
+		"codes-left": "{recoveryCodesLeft, plural, =0 {You have no recovery codes left.} one {You have # recovery code left.} other {You have # recovery codes left.}}",
+		"body": "If this was you, generate new codes from your {brand} account when you are running low.",
+		"action": "Secure my account"
+	},
 	"welcome": {
 		"subject": "Welcome, {name}",
 		"preheader": "Your account is ready.",
