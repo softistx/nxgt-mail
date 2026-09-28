@@ -34,18 +34,18 @@ const slots = useSlots();
 const classes = computed(() =>
 	twMerge(
 		'rounded-md py-4',
-		props.active && 'border-primary-50',
+		props.active && 'border-primary-50 nx-dark-border-primary-50',
 		attrs.class as string,
 	),
 );
 const iconBox = computed(() =>
 	props.active
-		? 'rounded-md border border-solid border-primary bg-primary px-4 py-1.5 text-center text-primary-foreground'
+		? 'rounded-md border border-solid border-primary nx-dark-border-primary bg-primary nx-dark-bg-primary px-4 py-1.5 text-center text-primary-foreground nx-dark-text-primary-foreground'
 		: 'rounded-md border border-solid border-muted nx-dark-border-muted px-4 py-1.5 text-center text-muted-foreground nx-dark-text-muted-foreground',
 );
 const indicator = computed(() =>
 	props.active
-		? 'inline-block h-4 w-4 rounded-full border border-solid border-primary bg-primary text-center text-[10px] font-semibold leading-4 text-primary-foreground'
+		? 'inline-block h-4 w-4 rounded-full border border-solid border-primary nx-dark-border-primary bg-primary nx-dark-bg-primary text-center text-[10px] font-semibold leading-4 text-primary-foreground nx-dark-text-primary-foreground'
 		: 'inline-block h-4 w-4 rounded-full border border-solid border-muted-foreground nx-dark-border-muted-foreground text-center text-[10px] leading-4',
 );
 </script>

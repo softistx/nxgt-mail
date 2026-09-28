@@ -46,11 +46,13 @@ const classes = computed(() =>
         <table class="w-full" role="presentation" cellpadding="0" cellspacing="0" :dir="dir">
           <tr>
             <td v-if="slots.icon" :class="`w-4 align-top text-${tone} ${dir === 'rtl' ? 'pl-3' : 'pr-3'}`"><slot name="icon" /></td>
-            <!-- Every tone's ground is a light tint that keeps the same value in
-                 dark mode (see theme.css): its text stays un-flipped too. -->
+            <!-- Every tone's ground is a light tint with no dark twin at all
+                 (see theme.css): its text — including the description's, a
+                 text colour flips only if its own ground does — stays
+                 un-flipped too. -->
             <td class="align-top text-foreground">
               <p v-if="title" class="m-0 text-sm font-semibold">{{ title }}</p>
-              <p v-if="description" class="m-0 text-sm text-muted-foreground nx-dark-text-muted-foreground">{{ description }}</p>
+              <p v-if="description" class="m-0 text-sm text-muted-foreground">{{ description }}</p>
               <slot />
             </td>
             <td v-if="slots.action" :class="`align-middle ${dir === 'rtl' ? 'pr-3 text-left' : 'pl-3 text-right'}`"><slot name="action" /></td>

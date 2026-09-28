@@ -36,7 +36,11 @@ const classes = computed(() =>
 <template>
   <tr>
     <td colspan="2" class="w-8 align-top">
-      <span class="block h-8 w-8 rounded-full border border-solid border-primary-25 bg-background nx-dark-bg-background text-center text-xs font-semibold leading-[30px] text-primary"><slot name="index">{{ index }}</slot></span>
+      <!-- `border-primary-25` is not one of the tints `color-primary-dark`
+           recomputes (dark-mode.md), so it keeps the same value either way;
+           `text-primary` must still flip with it, since its ground
+           (`bg-background`) does. -->
+      <span class="block h-8 w-8 rounded-full border border-solid border-primary-25 bg-background nx-dark-bg-background text-center text-xs font-semibold leading-[30px] text-primary nx-dark-text-primary"><slot name="index">{{ index }}</slot></span>
     </td>
     <td :class="dir === 'rtl' ? 'pr-3 align-top' : 'pl-3 align-top'">
       <p v-if="title" class="m-0 pt-1 text-base font-semibold tracking-tight text-foreground nx-dark-text-foreground">{{ title }}</p>

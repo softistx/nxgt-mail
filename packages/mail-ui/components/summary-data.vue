@@ -42,8 +42,8 @@ const classes = computed(() => twMerge('mb-4 w-full', attrs.class as string));
   </p>
   <table v-else v-bind="{ ...attrs, class: undefined }" :class="classes" role="presentation" cellpadding="0" cellspacing="0" :dir="dir">
     <tr v-for="(row, index) in rows" :key="index">
-      <td :class="`border-b [border-bottom-style:solid] border-primary-40 py-2 text-sm text-muted-foreground nx-dark-text-muted-foreground ${dir === 'rtl' ? 'pl-2' : 'pr-2'}`">{{ row.label }}</td>
-      <td :class="`border-b [border-bottom-style:solid] border-primary-40 py-2 text-sm text-foreground nx-dark-text-foreground ${dir === 'rtl' ? 'text-left' : 'text-right'}`">{{ row.value }}</td>
+      <td :class="`border-b [border-bottom-style:solid] border-primary-40 nx-dark-border-primary-40 py-2 text-sm text-muted-foreground nx-dark-text-muted-foreground ${dir === 'rtl' ? 'pl-2' : 'pr-2'}`">{{ row.label }}</td>
+      <td :class="`border-b [border-bottom-style:solid] border-primary-40 nx-dark-border-primary-40 py-2 text-sm text-foreground nx-dark-text-foreground ${dir === 'rtl' ? 'text-left' : 'text-right'}`">{{ row.value }}</td>
     </tr>
   </table>
 </template>

@@ -42,12 +42,21 @@ const ICON: Record<Variant, string> = {
 	success: 'text-success',
 	info: 'text-info',
 	warning: 'text-warning',
-	// Every variant's ground is a light tint that keeps the same value in dark
-	// mode (see theme.css) unless a project sets its dark twin (`primary` and,
-	// for `foreground` below, `muted`); its text stays `text-foreground` too,
-	// un-flipped — pick a dark twin light enough to keep it legible, or leave
-	// it unset: docs/guide/dark-mode.md.
-	foreground: 'text-foreground',
+	// Every other variant's ground is a light tint with no dark twin at all
+	// (see theme.css): its text stays un-flipped too, since there is nothing
+	// for it to follow. `foreground`'s ground is `bg-muted` instead, which
+	// does have one (`color-muted-dark`) — a text colour flips only if its own
+	// ground does, so this is the one variant whose icon, title and
+	// description (below) flip with it, to `color-muted-foreground-dark`,
+	// rather than staying pinned to the unflipped `color-foreground`:
+	// docs/guide/dark-mode.md.
+	foreground: 'text-foreground nx-dark-text-muted-foreground',
+};
+
+/** Only `foreground`'s ground flips (`bg-muted`, above): its title and
+ * description are the one case where muted text may follow it too. */
+const BODY_DARK: Partial<Record<Variant, string>> = {
+	foreground: 'nx-dark-text-muted-foreground',
 };
 
 const globals: Record<string, unknown> =
@@ -72,8 +81,8 @@ const classes = computed(() =>
           <tr>
             <td v-if="slots.icon" :class="`w-6 align-top ${dir === 'rtl' ? 'pl-2' : 'pr-2'} ${ICON[props.variant]}`"><slot name="icon" /></td>
             <td class="align-top">
-              <p v-if="title || slots.title" class="m-0 mb-1 text-base font-bold text-foreground"><slot name="title">{{ title }}</slot></p>
-              <p v-if="description || slots.description" class="m-0 text-sm text-muted-foreground nx-dark-text-muted-foreground"><slot name="description">{{ description }}</slot></p>
+              <p v-if="title || slots.title" :class="`m-0 mb-1 text-base font-bold text-foreground ${BODY_DARK[variant] ?? ''}`"><slot name="title">{{ title }}</slot></p>
+              <p v-if="description || slots.description" :class="`m-0 text-sm text-muted-foreground ${variant === 'foreground' ? 'nx-dark-text-muted-foreground' : ''}`"><slot name="description">{{ description }}</slot></p>
               <slot />
             </td>
           </tr>

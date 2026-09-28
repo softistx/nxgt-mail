@@ -28,5 +28,10 @@ const classes = computed(() => twMerge('', attrs.class as string));
 </script>
 
 <template>
-  <span v-bind="{ ...attrs, class: undefined }" :class="classes || undefined"><template v-for="(part, index) in parts" :key="index"><mark v-if="part.match" class="rounded bg-primary-20 text-inherit">{{ part.text }}</mark><template v-else>{{ part.text }}</template></template></span>
+  <!-- `text-inherit`: whatever colour surrounds it, flipped or not by its own
+       rule. `bg-primary-20` is mixed toward the mode's own background (see
+       theme.css), so it stays close in luminance to it either way — a text
+       colour already readable against that background reads the same over
+       this tint too. -->
+  <span v-bind="{ ...attrs, class: undefined }" :class="classes || undefined"><template v-for="(part, index) in parts" :key="index"><mark v-if="part.match" class="rounded bg-primary-20 nx-dark-bg-primary-20 text-inherit">{{ part.text }}</mark><template v-else>{{ part.text }}</template></template></span>
 </template>
