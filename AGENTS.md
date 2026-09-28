@@ -323,6 +323,13 @@ changing how an e-mail looks, and commit the images; CI never compares them,
 since fonts differ between machines. They are not in any package's `files`:
 the READMEs load them from GitHub.
 
+`bun run send-samples` is a private, unpublished root script: it sends every
+preset and mail-ui showcase fixture, in a fresh build, to one address, for a
+real Gmail, Outlook or Apple Mail check — nothing a screenshot or a test can
+stand in for. **Checking those real clients is Steve's own job**; this script
+is how he does it. An agent runs it only with `--dry-run`, never against a
+real transport.
+
 **A picture's URL points at `develop`, never at a tag written by hand**:
 `https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/…`,
 in a README and in `docs/`. GitHub then shows the latest pictures, and
