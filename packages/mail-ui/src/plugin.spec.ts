@@ -156,6 +156,37 @@ describe('ui — the plugin', () => {
 		);
 	});
 
+	test("keeps a project's own tint override, instead of shadowing it with the computed one", () => {
+		const provided = new Map<unknown, unknown>();
+		const plugins = ui({
+			brand,
+			theme: {
+				'color-primary-dark': '#fafafa',
+				'color-primary-40-dark': '#334155',
+			},
+		}).vue?.plugins as { install(app: unknown): void }[];
+		for (const plugin of plugins) {
+			plugin.install({
+				config: {},
+				provide: (key: unknown, value: unknown) => provided.set(key, value),
+			});
+		}
+		const { css } = provided.get('nxgt:mail-ui') as { css: string };
+		// The project's own value for -40, unshadowed…
+		expect(css).toContain('--color-primary-40-dark: #334155;');
+		expect(css).not.toContain('--color-primary-40-dark: color-mix(');
+		// …the other three still computed, since only -40 was overridden.
+		expect(css).toContain(
+			'--color-primary-15-dark: color-mix(in srgb, var(--color-primary-dark) 15%, var(--color-background-dark));',
+		);
+		expect(css).toContain(
+			'--color-primary-20-dark: color-mix(in srgb, var(--color-primary-dark) 20%, var(--color-background-dark));',
+		);
+		expect(css).toContain(
+			'--color-primary-50-dark: color-mix(in srgb, var(--color-primary-dark) 50%, var(--color-background-dark));',
+		);
+	});
+
 	test('leaves the tints aliased to their light twin when no dark primary is set', () => {
 		const provided = new Map<unknown, unknown>();
 		const plugins = ui({ brand }).vue?.plugins as {

@@ -59,11 +59,17 @@ export function themeCss(theme: Readonly<Record<string, string>>): string {
 	}
 	// Only here do we know `color-primary-dark` was set, not merely defaulted
 	// to `color-primary` by theme.css: recompute its tints against the dark
-	// background instead of leaving them aliased to the light ones.
+	// background instead of leaving them aliased to the light ones. Skip a
+	// percentage the project already overrode itself, above — its own value
+	// is already in `overrides` and must win, not be shadowed by this one
+	// appended after it (CSS resolves a duplicate custom property by source
+	// order, so whichever is pushed last would otherwise take over).
 	if (Object.hasOwn(theme, 'color-primary-dark')) {
 		for (const pct of PRIMARY_TINTS) {
+			const token = `color-primary-${pct}-dark`;
+			if (Object.hasOwn(theme, token)) continue;
 			overrides.push(
-				`\t--color-primary-${pct}-dark: color-mix(in srgb, var(--color-primary-dark) ${pct}%, var(--color-background-dark));`,
+				`\t--${token}: color-mix(in srgb, var(--color-primary-dark) ${pct}%, var(--color-background-dark));`,
 			);
 		}
 	}
