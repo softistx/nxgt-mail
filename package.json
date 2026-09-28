@@ -23,6 +23,7 @@
 		"previews": "bun run scripts/previews.ts",
 		"send-samples": "bun run scripts/send-samples.ts",
 		"changeset:private": "bun run scripts/check-changesets.ts",
+		"nxgt:outdated": "bun run scripts/check-nxgt-versions.ts",
 		"changeset:status": "changeset status --since=origin/develop"
 	},
 	"devDependencies": {
