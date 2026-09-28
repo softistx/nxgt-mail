@@ -396,6 +396,12 @@ Not in this repository: `@nxgt/janus-mail` in `nxgt-janus`, holding the janus
 e-mails (verification, password reset, one-time codes) as a Maizzle project
 built with these packages. Then archive `nxgt-maizzle` — Steve decides when.
 
+## Step 10 — 1.0
+
+What a `1.0` freezes across all seven packages, the semver and deprecation
+policy proposed for after it, the entry criteria, and the open questions for
+Steve: [`docs/plan-1.0.md`](./plan-1.0.md), status **Proposed**.
+
 ---
 
 ## Open questions — Steve's to answer

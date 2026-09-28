@@ -41,7 +41,7 @@ import without extensions, so `nodenext` is not supported.
 
 | Import | What it holds |
 | --- | --- |
-| `@nxgt/mail` | The port (`Mailer`, `MailMessage`, `Rendered`, `SentMail`, `MailBatchResult`, `Address`, `MailAttachment`), the errors (`MailError`, `MailFailure`, `MailRefused`, `MailScheduleRefused`), the neutral delivery events (`MailEvent` and its members, `MailWebhookRefused`), `createMemoryMailer`, `withRetry` with `RetryOptions` and `RetryExhausted`, `sendBatch`, `pickLocale` and `parseAcceptLanguage`, `listUnsubscribe` with `ListUnsubscribeOptions` and `ListUnsubscribeHeaders`, and what a transport calls first: `checkMessage`, `checkScheduledAt`, `recipientsOf`, `addressOf`. No Node built-in: it runs anywhere |
+| `@nxgt/mail` | The port (`Mailer`, `MailMessage`, `Rendered`, `SentMail`, `MailBatchResult`, `Address`, `MailAttachment`), the errors (`MailError`, `MailFailure`, `MailRefused`, `MailScheduleRefused`), the neutral delivery events (`MailEvent` and its members, `MailWebhookRefused`), `createMemoryMailer`, `withRetry` with `MailRetryOptions` and `RetryExhausted`, `sendBatch`, `pickLocale` and `parseAcceptLanguage`, `listUnsubscribe` with `ListUnsubscribeOptions` and `ListUnsubscribeHeaders`, and what a transport calls first: `checkMessage`, `checkScheduledAt`, `recipientsOf`, `addressOf`. No Node built-in: it runs anywhere |
 | `@nxgt/mail/renderer` | The renderer: `createMailRenderer`, `MailRenderer`, `MailRendererOptions`, `RenderOptions`, `MailVariables`, the types that type it with a build's `MailEmails` (`MailEmailsOf`, `AnyMailEmails`, `RenderArguments`), and `MANIFEST_FORMAT`, the newest manifest format it reads. Reads the build with `node:fs` |
 | `@nxgt/mail/conformance` | **For transport authors**: `describeMailer`, its cases as data, `runMailerCase`, the messages they send (`sampleMessage`, `sampleAttachment`, `sampleInlineImage`), and the memory mailer's harness as a worked example |
 | `@nxgt/mail/telemetry` | **Optional**: `withMailTelemetry` and `withMailRendererTelemetry`, a span per send and per render on `@opentelemetry/api` — an optional peer, installed only if this subpath is imported |
@@ -284,6 +284,11 @@ throws `MailFailure` for it, as for every other outage, since nothing tells
 the two apart. `withRetry` therefore retries it like any other `MailFailure`;
 pass `attempts: 1` to a mailer built on SMTP if that risk is not acceptable.
 See [Sending — retrying](docs/guide/sending.md#retrying--withretry).
+
+> `withRetry`'s options type is `MailRetryOptions`. The old name,
+> `RetryOptions`, is kept as a `@deprecated` type alias of the same shape —
+> for a project already importing `@nxgt/httpyz`, whose own `RetryOptions`
+> the old name collided with. Removed in 1.0.
 
 ### Sending many at once — `sendBatch`
 

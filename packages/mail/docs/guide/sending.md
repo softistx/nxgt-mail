@@ -721,15 +721,19 @@ await mailer.send(receipt); // retries a MailFailure up to 5 times, by default
 ```
 
 ```ts
-interface RetryOptions {
+interface MailRetryOptions {
 	readonly attempts?: number; // default 5, the first try included
 	readonly baseDelayMs?: number; // default 200
 	readonly maxDelayMs?: number; // default 30000 (30 s)
 	readonly signal?: AbortSignal;
 }
 
-function withRetry(mailer: Mailer, options?: RetryOptions): Mailer;
+function withRetry(mailer: Mailer, options?: MailRetryOptions): Mailer;
 ```
+
+> `MailRetryOptions` was named `RetryOptions` — kept as a `@deprecated` type
+> alias of the same shape, for a project already importing `@nxgt/httpyz`,
+> whose own `RetryOptions` the old name collided with. Removed in 1.0.
 
 | Option | Type | Default | Effect |
 | --- | --- | --- | --- |
