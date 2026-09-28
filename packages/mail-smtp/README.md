@@ -45,6 +45,8 @@ Peers, all required:
 - `typescript` (6). Bundler resolution (`"moduleResolution": "bundler"`) is
   what is supported and tested; `nodenext` is out of contract.
 
+Runs on Node `>=20` or Bun; CI tests on Bun only.
+
 ## Exports
 
 | Export | What it is |

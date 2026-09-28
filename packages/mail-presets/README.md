@@ -68,6 +68,8 @@ Peers, all required:
 - `typescript` (6). Bundler resolution (`"moduleResolution": "bundler"`) is
   what is supported and tested; `nodenext` is out of contract.
 
+Runs on Node `>=20` or Bun; CI tests on Bun only.
+
 Your project still has a `locales/<locale>.json` per locale, `{}` if it
 overrides nothing: `@nxgt/mail-i18n` requires it.
 

@@ -39,8 +39,8 @@ Peers, all required:
 - `typescript` (6). Bundler resolution (`"moduleResolution": "bundler"`) is
   what is supported and tested; `nodenext` is out of contract.
 
-It runs wherever `fetch` does — Node, Bun, Deno, an edge runtime — and imports
-no Node built-in.
+It runs wherever `fetch` does — Node `>=20`, Bun, Deno, an edge
+runtime — and imports no Node built-in. CI tests on Bun only.
 
 ## Exports
 
