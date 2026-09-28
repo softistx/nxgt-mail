@@ -67,19 +67,33 @@ foreground, card, card-foreground, accent, accent-foreground and border** —
 both modes there**. `@nxgt/mail-ui` mirrors exactly that split: that first
 group has a `-dark` token (`color-background-dark`, …), the second has none.
 
-**`primary` and `muted` keep their value too, unless you set one for dark
-mode.** `color-primary-dark`/`color-primary-foreground-dark` and
-`color-muted-dark`/`color-muted-foreground-dark` default to their light
-value — a project that never sets them reaches dark mode with `color-primary`
-and `color-muted` unchanged, for free, exactly as before these pairs of tokens
-existed. Set them when the default does not work: a brand whose primary is
-near-black, `#27272a`, is a crisp button on a white card, but melts into
-`color-card-dark` (`oklch(0.208 0.042 265.755)`, close to it in luminance) on
-a dark one — that project gives primary a lighter dark twin, and a dark
-foreground to keep its text readable on it. A project that darkens its own
-`color-card-dark` may similarly want `color-muted-dark` to still read as a
+**`primary`, `muted` and `info` keep their value too, unless you set one for
+dark mode.** `color-primary-dark`/`color-primary-foreground-dark`,
+`color-muted-dark`/`color-muted-foreground-dark` and
+`color-info-dark`/`color-info-foreground-dark` default to their light
+value — a project that never sets them reaches dark mode with `color-primary`,
+`color-muted` and `color-info` unchanged, for free, exactly as before these
+pairs of tokens existed. Set them when the default does not work: a brand
+whose primary is near-black, `#27272a`, is a crisp button on a white card, but
+melts into `color-card-dark` (`oklch(0.208 0.042 265.755)`, close to it in
+luminance) on a dark one — that project gives primary a lighter dark twin, and
+a dark foreground to keep its text readable on it. A project that darkens its
+own `color-card-dark` may similarly want `color-muted-dark` to still read as a
 step above it — `color-muted-dark: '#1e293b'` against a `#0f172b` card, with
 `color-muted-foreground-dark: '#e2e8f0'` at 11.87:1 over it.
+
+`info` is the third: it has no single value that clears WCAG AA's 4.5:1 in
+both modes at once. `NxLink`'s default `text-info` (`#54a2ff`, material-vue's
+link colour) measures 2.63:1 against the light card (white) — already short of
+AA — but 6.78:1 against the default dark card (`#0f172b`), so the *unset*
+default happens to read fine once dark mode is reached, even though it never
+passed in light mode. A project that raises `color-info` to fix the light
+side would in turn fail the dark one (a darker blue reads worse, not better,
+against a dark card), so there is no single value for both: set
+`color-info-dark` (and, for text painted on an info-coloured ground,
+`color-info-foreground-dark`) to give dark mode its own value instead —
+`color-info-dark: '#93c5fd'` measures 9.89:1 against the default
+`color-card-dark` and 11.04:1 against the default `color-background-dark`.
 
 Every place primary paints carries the matching `nx-dark-*` class, at
 whatever strength it is used: `NxButton`, `NxLinkButton`, `NxIconButton` and
@@ -116,6 +130,15 @@ optional, so it always has one to follow, at a contrast at least as good as
 the documented pair's (background and card are darker than a
 `color-muted-dark` meant to read as "a step above" them).
 
+`info` text follows the same rule. `NxLink` and `NxStatusIndicator`'s `info`
+tone paint no ground of their own — they sit directly on whatever the card or
+the page background is — so both carry `nx-dark-text-info`, flipping to
+`color-info-dark` alongside it. `NxAlert`'s `info` variant (its icon) and
+`NxTimeline`'s `info` marker do the opposite: their ground is a fixed light
+tint (`bg-info-5`, `bg-info-15`) with no dark twin, so their `text-info`
+stays un-flipped, for the same reason as the six other `NxAlert` variants
+below.
+
 Everywhere muted (or a variant's own colour) tints a ground that has **no**
 dark twin, the text on it stays un-flipped too, since there is nothing for it
 to follow: `NxAlert`'s six other variants (each a light tint with no dark
@@ -126,7 +149,10 @@ where the percentage would otherwise follow `color-primary-dark`),
 `NxListTile`'s idle and selected title and subtitle over its fixed
 `bg-primary-5/10/15`. Flipping one side without the other is exactly the bug
 this rule prevents: a light `color-muted-foreground-dark` over one of these
-never-flipping light grounds reads at little better than 1:1.
+never-flipping light grounds reads at little better than 1:1. `NxBadge`'s
+`info` variant is the same case again: its ground is `bg-info` itself, its
+own colour, which has no `nx-dark-bg-info` class either — so its
+`text-info-foreground` stays un-flipped too.
 
 A component that lets a caller override its own colour classes through
 `class` (`NxProgress`'s track, which `NxRatioCard` retints to `bg-primary-15`)
@@ -157,6 +183,8 @@ ui({
 		'color-primary-foreground-dark': '#18181b', // text on the button above, in dark mode
 		'color-muted-dark': '#1e293b', // dark mode only — a step above the dark card
 		'color-muted-foreground-dark': '#e2e8f0', // text on the ground above, in dark mode
+		'color-info-dark': '#93c5fd', // NxLink and NxStatusIndicator's info tone, in dark mode
+		'color-info-foreground-dark': '#0c1e3d', // text on an info-coloured ground, in dark mode
 		'color-background-dark': '#0b1220', // dark mode only
 	},
 });
