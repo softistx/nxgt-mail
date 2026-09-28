@@ -1,5 +1,13 @@
 # @nxgt/mail
 
+## 0.9.0
+
+### Minor Changes
+
+- [#80](https://github.com/softistx/nxgt-mail/pull/80) [`83ea390`](https://github.com/softistx/nxgt-mail/commit/83ea390aa2ff0aa92cc8bac0779295704c25988c) Thanks [@SteveGT96](https://github.com/SteveGT96)! - `withRetry`'s options type, `RetryOptions`, is renamed to `MailRetryOptions` — `@nxgt/httpyz` exports its own `RetryOptions`, colliding for a project importing both. The old name is kept as a `@deprecated` type alias of the same shape (no behaviour change), removed in 1.0.
+
+- [#77](https://github.com/softistx/nxgt-mail/pull/77) [`699bd48`](https://github.com/softistx/nxgt-mail/commit/699bd48c32fd3721eb065a48164fcac73f93e613) Thanks [@SteveGT96](https://github.com/SteveGT96)! - `@nxgt/mail/telemetry`'s `withTelemetry` and `withRendererTelemetry` are renamed to `withMailTelemetry` and `withMailRendererTelemetry` — `@nxgt/telemetry` exports its own `withTelemetry`, colliding for a project importing both. The old names are kept as `@deprecated` aliases of the same functions (no behaviour change, no runtime warning), removed in 1.0.
+
 ## 0.8.0
 
 ### Minor Changes

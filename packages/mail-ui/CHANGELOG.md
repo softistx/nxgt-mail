@@ -1,5 +1,50 @@
 # @nxgt/mail-ui
 
+## 0.7.0
+
+### Minor Changes
+
+- [#81](https://github.com/softistx/nxgt-mail/pull/81) [`7aadece`](https://github.com/softistx/nxgt-mail/commit/7aadecef28e3bfed0324eb9000e0f4d88c23d14b) Thanks [@SteveGT96](https://github.com/SteveGT96)! - The optional `color-primary-dark`/`color-primary-foreground-dark` pair now
+  also reaches `NxActionCard`'s active ring, icon box and indicator,
+  `NxExtendedLabel`'s bar, `NxEventChip`'s bar and `selected` border,
+  `NxFileList`'s extension badge and download link, `NxHighlightText`'s mark,
+  `NxStatusIndicator`'s `primary` tone, `NxStepsItem`'s numbered circle and
+  `NxSummaryData`'s row divider (`NxFileList`'s empty state, `NxRatioCard`'s
+  right figure, `NxStatusIndicator`'s `neutral` tone and `NxStepsItem`'s body
+  already carried `color-muted-dark` since 0.6.0). A project that never sets
+  the tokens sees no change — the previews are pixel-identical.
+  
+  `NxHero`'s eyebrow and title, `NxListTile`'s idle and selected title/subtitle,
+  and `NxEventChip`'s own ground stay un-wired to `color-primary-dark` on
+  purpose: self-contained decorative grounds whose own text does not flip
+  either.
+
+### Patch Changes
+
+- [#81](https://github.com/softistx/nxgt-mail/pull/81) [`7aadece`](https://github.com/softistx/nxgt-mail/commit/7aadecef28e3bfed0324eb9000e0f4d88c23d14b) Thanks [@SteveGT96](https://github.com/SteveGT96)! - Fixed two dark-mode bugs found by a downstream project measuring actual
+  contrast: `NxCode`, `NxAvatarFallback` and a table's footer flipped their
+  ground with a project-set `color-muted-dark`, but pinned their own text to
+  the unflipped `color-foreground` instead of following
+  `color-muted-foreground-dark` alongside it — a near-black light-mode
+  foreground over the new dark ground measured 1.36:1, now 11.87:1 for the
+  documented pair. And `NxAlert`'s six colour variants, `NxBanner`'s four
+  tones, `NxEventChip`'s compact title, `NxListTile`'s subtitle/disabled title
+  and `NxHero`'s description flipped their text to `color-muted-foreground-dark`
+  over a ground that has no dark twin at all and never flips (1.16:1 for a
+  reported warning alert) — a text colour now flips only if its own ground
+  does, so these stay un-flipped, back to their original light-mode contrast
+  (4.46:1 for that alert) in both modes.
+  
+  Also fixed: `NxTypography`'s `caption` variant showed `color-foreground-dark`,
+  not `color-muted-foreground-dark`, in dark mode (a stale class `twMerge`
+  cannot drop on its own), and `NxProgress`'s track kept its default 20% dark
+  tint even when a caller (`NxRatioCard`) retinted it to `-15`; both now read
+  the light tint back to pick the matching dark one.
+  
+  A spec now builds every one of these text/ground pairs with the dark tokens
+  set and checks each reaches at least 4.5:1. A project that never sets
+  `color-primary-dark`/`color-muted-dark` sees no change either way.
+
 ## 0.6.0
 
 ### Minor Changes

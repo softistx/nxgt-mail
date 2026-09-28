@@ -1,6 +1,6 @@
 {
 	"name": "@nxgt/mail",
-	"version": "0.8.0",
+	"version": "0.9.0",
 	"description": "The run-time side of transactional e-mail: the renderer that fills a Maizzle build made with @nxgt/mail-i18n, the Mailer a transport implements, its errors, a memory transport and locale selection. No dependency.",
 	"license": "MIT",
 	"type": "module",
