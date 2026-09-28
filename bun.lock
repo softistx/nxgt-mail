@@ -37,7 +37,7 @@
     },
     "packages/mail": {
       "name": "@nxgt/mail",
-      "version": "0.8.0",
+      "version": "0.9.0",
       "devDependencies": {
         "@opentelemetry/api": "1.9.1",
         "@opentelemetry/sdk-metrics": "^2.4.0",
@@ -96,7 +96,7 @@
     },
     "packages/mail-presets": {
       "name": "@nxgt/mail-presets",
-      "version": "0.4.2",
+      "version": "0.4.3",
       "devDependencies": {
         "@maizzle/framework": "6.1.7",
         "@maizzle/tailwindcss": "1.5.6",
@@ -118,7 +118,7 @@
     },
     "packages/mail-resend": {
       "name": "@nxgt/mail-resend",
-      "version": "0.6.0",
+      "version": "0.6.1",
       "devDependencies": {
         "@nxgt/mail": "workspace:*",
         "@types/bun": "^1.4.2",
@@ -130,7 +130,7 @@
     },
     "packages/mail-smtp": {
       "name": "@nxgt/mail-smtp",
-      "version": "0.5.1",
+      "version": "0.5.2",
       "devDependencies": {
         "@nxgt/mail": "workspace:*",
         "@types/bun": "^1.4.2",
@@ -149,7 +149,7 @@
     },
     "packages/mail-ui": {
       "name": "@nxgt/mail-ui",
-      "version": "0.6.0",
+      "version": "0.7.0",
       "dependencies": {
         "unplugin-vue-components": "^32.1.0",
       },

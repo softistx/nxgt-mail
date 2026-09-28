@@ -1,5 +1,15 @@
 # @nxgt/mail-smtp
 
+## 0.5.2
+
+### Patch Changes
+
+- [#80](https://github.com/softistx/nxgt-mail/pull/80) [`83ea390`](https://github.com/softistx/nxgt-mail/commit/83ea390aa2ff0aa92cc8bac0779295704c25988c) Thanks [@SteveGT96](https://github.com/SteveGT96)! - The `@nxgt/mail` peer moves to `^0.9.0`: upgrade `@nxgt/mail` with it. No behaviour change here — `@nxgt/mail`'s `RetryOptions` rename to `MailRetryOptions` (the old name kept as a `@deprecated` alias) does not touch a transport.
+
+- [#77](https://github.com/softistx/nxgt-mail/pull/77) [`699bd48`](https://github.com/softistx/nxgt-mail/commit/699bd48c32fd3721eb065a48164fcac73f93e613) Thanks [@SteveGT96](https://github.com/SteveGT96)! - The `@nxgt/mail` peer moves to `^0.9.0`: upgrade `@nxgt/mail` with it. No behaviour change here — `@nxgt/mail`'s `withTelemetry`/`withRendererTelemetry` rename to `withMailTelemetry`/`withMailRendererTelemetry` does not touch a transport.
+- Updated dependencies [[`83ea390`](https://github.com/softistx/nxgt-mail/commit/83ea390aa2ff0aa92cc8bac0779295704c25988c), [`699bd48`](https://github.com/softistx/nxgt-mail/commit/699bd48c32fd3721eb065a48164fcac73f93e613)]:
+  - @nxgt/mail@0.9.0
+
 ## 0.5.1
 
 ### Patch Changes
