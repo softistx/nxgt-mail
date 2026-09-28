@@ -70,6 +70,7 @@ The samples below use the locales `en` and `fr`, the template
 - [`class="mb-0"` leaves the space under a boxed component (`NxAlert`, `NxCard`, `NxHero`, the metric cards…)](#classmb-0-leaves-the-space-under-a-boxed-component-nxalert-nxcard-nxhero-the-metric-cards)
 - [The editor says `Property 'brand' does not exist` in a template](#the-editor-says-property-brand-does-not-exist-in-a-template)
 - [Biome reports `parse` errors in a template as soon as you edit it](#biome-reports-parse-errors-in-a-template-as-soon-as-you-edit-it)
+- [`NxLink` is unreadable in light mode, or in dark mode](#nxlink-is-unreadable-in-light-mode-or-in-dark-mode)
 - [A bug in `@nxgt/mail-ui` itself](#a-bug-in-nxgtmail-ui-itself)
 
 ---
@@ -843,6 +844,14 @@ measured 1.36:1.
 ground (11.87:1 for the documented pair, `#e2e8f0` over `#1e293b`). A project
 that never sets `color-muted-dark` is unaffected either way.
 
+**Set `color-muted-dark` and `color-muted-foreground-dark` together.** Setting
+only `color-muted-dark`, and leaving `color-muted-foreground-dark` at its
+light default, does not fix this: `NxCode`'s text stays the light
+`color-muted-foreground` (`#62748e`), which measures 1.86:1 against a
+`#1e293b` box — barely more readable than before. `#1e293b` with
+`color-muted-foreground-dark: '#cbd5e1'` (9.85:1) is a good pair, as is the
+documented `#e2e8f0` (11.87:1) above.
+
 ### An alert's or a banner's description is unreadable in dark mode
 
 (**Fixed** in the same version as the entry above. The rest of this entry is
@@ -863,6 +872,34 @@ disabled title, and `NxHero`'s description — the same bug, each over its own
 never-flipping ground) — back to the light-mode contrast (4.46:1 for the
 reported warning alert), in both modes, exactly as before `color-muted-dark`
 existed.
+
+### `NxLink` is unreadable in light mode, or in dark mode
+
+**When:** `<NxLink>` (or `<NxStatusIndicator tone="info">`) is hard to read
+against the card, in light mode, in dark mode, or a `color-info` you raised to
+fix one made the other worse.
+**Why:** the default `color-info` (`#54a2ff`, material-vue's link colour)
+measures 2.63:1 against the light card (white) — short of WCAG AA's 4.5:1
+body-text minimum — but 6.78:1 against the default dark card. Raising
+`color-info` to pass the light side pushes the dark side's contrast down, not
+up, since a darker blue reads worse against a dark card: no single value
+clears 4.5:1 on both.
+**Fix:** give dark mode its own value with `color-info-dark` (and, for text on
+an info-coloured ground, `color-info-foreground-dark`), rather than reusing
+`color-info`:
+
+```ts
+ui({
+  brand: { name: 'Acme' },
+  theme: { 'color-info-dark': '#93c5fd' }, // 9.89:1 on the default color-card-dark
+});
+```
+
+This flips `NxLink` and `NxStatusIndicator`'s `info` tone, which sit directly
+on the card or the page background — always flips. `NxAlert`'s `info` variant
+and `NxTimeline`'s `info` marker keep the light colour: their own ground
+(`bg-info-5`, `bg-info-15`) has no dark twin. See
+[Dark mode](guide/dark-mode.md#which-tokens-have-a-dark-value).
 
 ### A bug in `@nxgt/mail-ui` itself
 

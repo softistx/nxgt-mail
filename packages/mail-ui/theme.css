@@ -299,18 +299,23 @@
 	 * `'color-background-dark': '#0b1220'` — so a project can replace the
 	 * shipped dark palette without a different option shape.
 	 *
-	 * `primary` and `muted` are the two exceptions: each keeps material-vue's
-	 * behaviour (the same value in both modes) **by default** — its `-dark`
-	 * and `-foreground-dark` twins default to their light value below, so a
-	 * project that never sets them sees no change — but, unlike the rest of
-	 * this group, a project may give either a dark value of its own. A brand
-	 * whose primary is near-black (`#27272a`) would otherwise melt into the
-	 * dark card (`color-card-dark`, `oklch(0.208 0.042 265.755)`); a project
-	 * that darkens its own `color-card-dark` may want a `color-muted-dark`
-	 * that still reads as a step above it, the way `#1e293b` does against a
-	 * `#0f172b` card (1.22:1 — a visible step, not a contrast pair) with
-	 * `color-muted-foreground-dark: #e2e8f0` at 11.87:1 over it: see
-	 * docs/guide/dark-mode.md.
+	 * `primary`, `muted` and `info` are the three exceptions: each keeps
+	 * material-vue's behaviour (the same value in both modes) **by default**
+	 * — its `-dark` and `-foreground-dark` twins default to their light value
+	 * below, so a project that never sets them sees no change — but, unlike
+	 * the rest of this group, a project may give either a dark value of its
+	 * own. A brand whose primary is near-black (`#27272a`) would otherwise
+	 * melt into the dark card (`color-card-dark`, `oklch(0.208 0.042
+	 * 265.755)`); a project that darkens its own `color-card-dark` may want a
+	 * `color-muted-dark` that still reads as a step above it, the way
+	 * `#1e293b` does against a `#0f172b` card (1.22:1 — a visible step, not a
+	 * contrast pair) with `color-muted-foreground-dark: #e2e8f0` at 11.87:1
+	 * over it. `info` is the third: `NxLink`'s default `text-info` measures
+	 * 2.63:1 on the light card (`#54a2ff` on white) but 6.78:1 on the default
+	 * dark one — no single value clears WCAG AA's 4.5:1 on both, so a project
+	 * that needs one to fully pass sets `color-info-dark` (and, for text on
+	 * an info-coloured ground, `color-info-foreground-dark`) instead of
+	 * reusing `color-info`: see docs/guide/dark-mode.md.
 	 */
 	--color-background-dark: oklch(0.14 0.036 258.53);
 	--color-foreground-dark: oklch(0.984 0.003 247.858);
@@ -322,6 +327,8 @@
 	--color-primary-foreground-dark: var(--color-primary-foreground);
 	--color-muted-dark: var(--color-muted);
 	--color-muted-foreground-dark: var(--color-muted-foreground);
+	--color-info-dark: var(--color-info);
+	--color-info-foreground-dark: var(--color-info-foreground);
 	/* material-vue's dark border is white at 10% alpha: mixed solid, as light's tints are. */
 	--color-border-dark: color-mix(
 		in srgb,
@@ -460,6 +467,10 @@ html {
 		/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
 		color: var(--color-primary-foreground-dark) !important;
 	}
+	.nx-dark-text-info {
+		/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
+		color: var(--color-info-dark) !important;
+	}
 	.nx-dark-border-primary {
 		/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
 		border-color: var(--color-primary-dark) !important;
@@ -560,6 +571,11 @@ html {
 [data-ogsb] .nx-dark-text-primary-foreground {
 	/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
 	color: var(--color-primary-foreground-dark) !important;
+}
+[data-ogsc] .nx-dark-text-info,
+[data-ogsb] .nx-dark-text-info {
+	/* biome-ignore lint/complexity/noImportantStyles: must beat the inlined light utility's style attribute */
+	color: var(--color-info-dark) !important;
 }
 [data-ogsc] .nx-dark-border-primary,
 [data-ogsb] .nx-dark-border-primary {

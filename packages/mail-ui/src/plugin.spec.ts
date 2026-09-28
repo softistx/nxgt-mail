@@ -245,6 +245,47 @@ describe('ui — the plugin', () => {
 		).toBe(true);
 	});
 
+	test('defaults info-dark to info, and its foreground to info-foreground', () => {
+		const provided = new Map<unknown, unknown>();
+		const plugins = ui({ brand }).vue?.plugins as {
+			install(app: unknown): void;
+		}[];
+		for (const plugin of plugins) {
+			plugin.install({
+				config: {},
+				provide: (key: unknown, value: unknown) => provided.set(key, value),
+			});
+		}
+		const { css } = provided.get('nxgt:mail-ui') as { css: string };
+		expect(css).toContain('--color-info-dark: var(--color-info);');
+		expect(css).toContain(
+			'--color-info-foreground-dark: var(--color-info-foreground);',
+		);
+	});
+
+	test('shows a project-set dark info pair, the same as color-primary-dark', () => {
+		const provided = new Map<unknown, unknown>();
+		const plugins = ui({
+			brand,
+			theme: {
+				'color-info-dark': '#93c5fd',
+				'color-info-foreground-dark': '#0c1e3d',
+			},
+		}).vue?.plugins as { install(app: unknown): void }[];
+		for (const plugin of plugins) {
+			plugin.install({
+				config: {},
+				provide: (key: unknown, value: unknown) => provided.set(key, value),
+			});
+		}
+		const { css } = provided.get('nxgt:mail-ui') as { css: string };
+		expect(
+			css.endsWith(
+				'@theme {\n\t--color-info-dark: #93c5fd;\n\t--color-info-foreground-dark: #0c1e3d;\n}\n',
+			),
+		).toBe(true);
+	});
+
 	test('makes an error while rendering fail the build under NODE_ENV=production too', () => {
 		const config: Record<string, unknown> = {};
 		const plugins = ui({ brand }).vue?.plugins as {

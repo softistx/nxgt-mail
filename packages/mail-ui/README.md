@@ -240,13 +240,16 @@ Override a dark value the same way you override a light one — the same
 ui({ brand: { name: 'Acme' }, theme: { 'color-background-dark': '#0b1220' } });
 ```
 
-`color-primary`/`color-primary-foreground` and `color-muted`/
-`color-muted-foreground` have no dark value by default — a project that never
-sets their `-dark` twins reaches dark mode with the light value unchanged,
-exactly as before these tokens existed. Set the primary pair when a near-black
-brand primary would otherwise melt into the dark card — its tints
-(`bg-primary-15`, `border-primary-50`, …) follow it too — and the muted pair
-when a dark card needs its own step above it:
+`color-primary`/`color-primary-foreground`, `color-muted`/
+`color-muted-foreground` and `color-info`/`color-info-foreground` have no dark
+value by default — a project that never sets their `-dark` twins reaches dark
+mode with the light value unchanged, exactly as before these tokens existed.
+Set the primary pair when a near-black brand primary would otherwise melt into
+the dark card — its tints (`bg-primary-15`, `border-primary-50`, …) follow it
+too — the muted pair when a dark card needs its own step above it, and the
+info pair when `NxLink`'s default (2.63:1 on the light card, 6.78:1 on the
+dark one) needs a value that clears WCAG AA's 4.5:1 on both sides, which no
+single `color-info` can:
 
 ```ts
 ui({
@@ -257,6 +260,8 @@ ui({
 		'color-primary-foreground-dark': '#18181b',
 		'color-muted-dark': '#1e293b',
 		'color-muted-foreground-dark': '#e2e8f0',
+		'color-info-dark': '#93c5fd', // 9.89:1 on the default color-card-dark
+		'color-info-foreground-dark': '#0c1e3d',
 	},
 });
 ```

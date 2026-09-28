@@ -16,7 +16,9 @@ const DOT: Record<Tone, string> = {
 	neutral: 'text-muted-foreground nx-dark-text-muted-foreground',
 	primary: 'text-primary nx-dark-text-primary',
 	success: 'text-success',
-	info: 'text-info',
+	// The dot sits directly on the card or the page background — always
+	// flips — like `neutral` and `primary` above, so `info` follows too.
+	info: 'text-info nx-dark-text-info',
 	warning: 'text-warning',
 	error: 'text-error',
 };
