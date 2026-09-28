@@ -41,7 +41,7 @@ const classes = computed(() =>
 	twMerge('mt-2 mb-1.5 w-full', attrs.class as string),
 );
 const indicator = computed(() =>
-	twMerge('w-14 rounded bg-primary', props.indicatorClass),
+	twMerge('w-14 rounded bg-primary nx-dark-bg-primary', props.indicatorClass),
 );
 </script>
 

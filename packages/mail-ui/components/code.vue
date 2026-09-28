@@ -12,10 +12,11 @@ const attrs = useAttrs();
 const classes = computed(() =>
 	twMerge(
 		// `bg-muted` follows a project-set `color-muted-dark`, same as
-		// `color-primary-dark` (see theme.css); its text stays `text-foreground`,
-		// never flipped — pick a `color-muted-dark` light enough to keep it
-		// legible, or leave it unset: docs/guide/dark-mode.md.
-		'rounded-lg bg-muted nx-dark-bg-muted px-6 py-4 text-center font-mono text-3xl font-semibold tracking-[0.3em] text-foreground',
+		// `color-primary-dark` (see theme.css); its text is `text-foreground` in
+		// light mode, matching material-vue, but flips to
+		// `color-muted-foreground-dark` instead of staying pinned to the unflipped
+		// foreground once its own ground has flipped: docs/guide/dark-mode.md.
+		'rounded-lg bg-muted nx-dark-bg-muted px-6 py-4 text-center font-mono text-3xl font-semibold tracking-[0.3em] text-foreground nx-dark-text-muted-foreground',
 		attrs.class as string,
 	),
 );

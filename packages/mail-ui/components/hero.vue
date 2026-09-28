@@ -25,11 +25,16 @@ const classes = computed(() =>
   <table class="mb-4 w-full" role="presentation" cellpadding="0" cellspacing="0">
     <tr>
       <td v-bind="{ ...attrs, class: undefined }" :class="classes">
+        <!-- `bg-primary-5` keeps the same value in dark mode (see theme.css),
+             on purpose, even once `color-primary-dark` is set: the eyebrow's
+             `text-primary`, the title's `text-foreground` and the
+             description's `text-muted-foreground` below all stay un-flipped
+             too, since a text colour flips only if its own ground does — so
+             this box reads the same, self-contained, regardless of the page
+             around it (dark-mode.md). -->
         <p v-if="eyebrow" class="m-0 text-xs font-semibold uppercase tracking-wider text-primary">{{ eyebrow }}</p>
-        <!-- `bg-primary-5` keeps the same value in dark mode (see theme.css): its
-             text stays `text-foreground`, un-flipped, too. -->
         <h1 :class="['m-0 text-3xl font-semibold tracking-tight text-foreground', eyebrow && 'mt-3']">{{ title }}</h1>
-        <p v-if="description" class="m-0 mt-4 text-base text-muted-foreground nx-dark-text-muted-foreground">{{ description }}</p>
+        <p v-if="description" class="m-0 mt-4 text-base text-muted-foreground">{{ description }}</p>
         <div v-if="slots.actions" class="mt-6"><slot name="actions" /></div>
         <div v-if="slots.default" class="mt-8"><slot /></div>
       </td>

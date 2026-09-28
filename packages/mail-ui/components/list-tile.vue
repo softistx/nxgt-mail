@@ -53,9 +53,13 @@ const titleClass = computed(() =>
 	twMerge(
 		'no-underline',
 		size.value.title,
-		// idle/selected are `bg-primary-5/10/15`, a light tint keeping the same
-		// value in dark mode (see theme.css): the title stays un-flipped too.
-		props.disabled ? 'text-muted-foreground nx-dark-text-muted-foreground' : 'text-foreground',
+		// idle/selected (`bg-primary-5/10/15`, `border-primary-40`) are left
+		// un-wired to `color-primary-dark` on purpose: a decorative,
+		// self-contained ground like NxHero's and NxEventChip's, so a text
+		// colour over it — the title here, disabled or not, and the subtitle
+		// below — stays un-flipped too, since its own ground does not flip
+		// either (dark-mode.md).
+		props.disabled ? 'text-muted-foreground' : 'text-foreground',
 	),
 );
 const gap = computed(() => {
@@ -80,7 +84,7 @@ const gap = computed(() => {
             <td class="align-middle">
               <a v-if="href && !disabled" :href="href" :class="titleClass">{{ title }}</a>
               <span v-else :class="titleClass">{{ title }}</span>
-              <p v-if="subtitle" class="m-0 text-sm text-muted-foreground nx-dark-text-muted-foreground">{{ subtitle }}</p>
+              <p v-if="subtitle" class="m-0 text-sm text-muted-foreground">{{ subtitle }}</p>
             </td>
             <td v-if="slots.trailing" :class="`w-1 whitespace-nowrap align-middle ${dir === 'rtl' ? 'text-left' : 'text-right'} ${gap.trailing}`"><slot name="trailing" /></td>
           </tr>

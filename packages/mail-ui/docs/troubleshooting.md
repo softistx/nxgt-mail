@@ -824,6 +824,46 @@ text, 3.2–4.6:1 for the outlined border, in the reported case), and
 `color-paper-dark` keeps mixing the light `color-primary` regardless. A
 project that never sets `color-primary-dark` is unaffected either way.
 
+### `NxCode`, `NxAvatarFallback` or a table's footer is unreadable in dark mode after setting `color-muted-dark`
+
+(**Fixed** in the version that added a spec checking every dark text/ground
+pair — see this package's `CHANGELOG.md`. The rest of this entry is for
+anyone on an older version.)
+
+**When:** a project sets `color-muted-dark` — say, a `#1e293b` step above a
+`#0f172b` dark card — and `NxCode`'s digits, `NxAvatarFallback`'s initials or
+a table's footer look wrong or barely visible under
+`prefers-color-scheme: dark`.
+**Why:** their ground (`bg-muted`) followed `color-muted-dark` as
+documented, but their own text stayed pinned to the unflipped
+`color-foreground` instead of following `color-muted-foreground-dark`
+alongside it — a near-black light-mode foreground over the new dark ground
+measured 1.36:1.
+**Fix:** upgrade `@nxgt/mail-ui` to the version that flips the text with the
+ground (11.87:1 for the documented pair, `#e2e8f0` over `#1e293b`). A project
+that never sets `color-muted-dark` is unaffected either way.
+
+### An alert's or a banner's description is unreadable in dark mode
+
+(**Fixed** in the same version as the entry above. The rest of this entry is
+for anyone on an older version.)
+
+**When:** a project sets `color-muted-dark`/`color-muted-foreground-dark`,
+and `NxAlert`'s `primary`, `secondary`, `error`, `success`, `info` or
+`warning` variant, or any `NxBanner`, has a description that is hard to read
+under `prefers-color-scheme: dark` — reported at 1.16:1 for a warning alert.
+**Why:** the description flipped to `color-muted-foreground-dark`
+unconditionally, but these variants' and tones' own ground is a light tint
+with no dark twin at all — it never flips. A text colour must flip only if
+its own ground does; only `NxAlert`'s `foreground` variant's ground
+(`bg-muted`) actually has one.
+**Fix:** upgrade `@nxgt/mail-ui` to the version that stops flipping the
+description (and `NxEventChip`'s compact title, `NxListTile`'s subtitle and
+disabled title, and `NxHero`'s description — the same bug, each over its own
+never-flipping ground) — back to the light-mode contrast (4.46:1 for the
+reported warning alert), in both modes, exactly as before `color-muted-dark`
+existed.
+
 ### A bug in `@nxgt/mail-ui` itself
 
 A component that renders differently from what its props ask for, a colour

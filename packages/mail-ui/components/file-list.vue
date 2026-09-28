@@ -87,10 +87,10 @@ const emptyClasses = computed(() =>
     <template v-for="row in rows" :key="row.item.id">
       <NxListTile :title="row.item.name" :subtitle="row.size" :disabled="row.item.disabled">
         <template v-if="row.extension" #leading>
-          <span data-maizzle-html-only><span class="block h-9 w-9 rounded-full bg-primary-15 text-center text-[10px] font-semibold leading-9 text-primary">{{ row.extension }}</span></span>
+          <span data-maizzle-html-only><span class="block h-9 w-9 rounded-full bg-primary-15 nx-dark-bg-primary-15 text-center text-[10px] font-semibold leading-9 text-primary nx-dark-text-primary">{{ row.extension }}</span></span>
         </template>
         <template v-if="row.href" #trailing>
-          <a :href="row.href" class="text-sm font-medium text-primary no-underline">{{ download }}</a>
+          <a :href="row.href" class="text-sm font-medium text-primary nx-dark-text-primary no-underline">{{ download }}</a>
         </template>
       </NxListTile>
     </template>

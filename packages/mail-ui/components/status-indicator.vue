@@ -14,7 +14,7 @@ const props = withDefaults(defineProps<{ tone?: Tone }>(), { tone: 'neutral' });
 
 const DOT: Record<Tone, string> = {
 	neutral: 'text-muted-foreground nx-dark-text-muted-foreground',
-	primary: 'text-primary',
+	primary: 'text-primary nx-dark-text-primary',
 	success: 'text-success',
 	info: 'text-info',
 	warning: 'text-warning',

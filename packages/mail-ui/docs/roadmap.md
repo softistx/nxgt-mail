@@ -58,6 +58,35 @@ Nothing yet. A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **The optional dark tokens reach every remaining component, v0.7.0** —
+  `color-primary-dark`/`color-primary-foreground-dark` and
+  `color-muted-dark`/`color-muted-foreground-dark` now also carry
+  `NxActionCard`'s active and idle states, `NxExtendedLabel`'s bar,
+  `NxEventChip`'s bar and `selected` border, `NxFileList`'s badge, download
+  link and empty state, `NxHighlightText`'s mark, `NxRatioCard`'s right
+  figure, `NxStatusIndicator`'s `primary` and `neutral` tones,
+  `NxStepsItem`'s numbered circle and body, and `NxSummaryData`'s row
+  divider — nothing changes with no dark token set. Also fixed:
+  `NxTypography`'s `caption` variant showed `color-foreground-dark`, not
+  `color-muted-foreground-dark`, in dark mode (a stale class `twMerge`
+  cannot drop on its own), and `NxProgress`'s track kept its default 20%
+  dark tint even when a caller (`NxRatioCard`) retinted it, as `-15`; both
+  now read the light tint back to pick the matching dark one.
+  `NxHero`'s eyebrow, `NxListTile`'s idle and selected ground, and
+  `NxEventChip`'s own ground stay un-wired to `color-primary-dark` on
+  purpose — self-contained decorative grounds whose own text does not flip
+  either. Also fixed, found by a downstream project measuring actual
+  contrast in headless Chromium: `NxCode`, `NxAvatarFallback` and a table's
+  footer pinned their text to the unflipped `color-foreground` over their
+  own `bg-muted`, once flipped, at 1.36:1 — now `color-muted-foreground-dark`,
+  at 11.87:1; and `NxAlert`'s six colour variants, `NxBanner`'s four tones,
+  `NxEventChip`'s compact title, `NxListTile`'s subtitle/disabled title and
+  `NxHero`'s description flipped to `color-muted-foreground-dark` over a
+  ground that never flips (as low as 1.16:1 for a warning alert) — now
+  un-flipped there too, since a text colour flips only if its own ground
+  does. A spec renders every case with the dark tokens set and checks the
+  contrast. See
+  [Dark mode](guide/dark-mode.md#which-tokens-have-a-dark-value).
 - **Optional dark muted, and two dark-primary fixes, v0.6.0** —
   `color-muted-dark` and `color-muted-foreground-dark`, the same pattern as
   `color-primary-dark`: defaulting to their light value, so a project that
@@ -119,7 +148,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   by locale, and `NxRating`, read only or as a row of review links:
   material-vue's names and props, with their words in the shared messages
   in `en` and `fr`.
-- **Installed files resolve as the project's do, v0.2.0** — a template or
-  component installed from npm resolves its tags with Maizzle's own
-  resolver, so the project's `components/` subfolders (`<BrandLogo>`) and
-  every `components.source` folder count there too.

@@ -36,12 +36,10 @@ const VARIANT: Record<Variant, string> = {
 	'title-small': 'text-base font-semibold',
 	'body-medium': 'text-sm',
 	'body-small': 'text-xs',
-	// `text-muted-foreground` alone: the base class below already carries
-	// `nx-dark-text-foreground` unconditionally, and a second `nx-dark-*`
-	// text class on the same element is not something `twMerge` reconciles
-	// (it does not know our custom classes conflict) — adding one here would
-	// change the default dark-mode colour, not just let a project override it.
-	caption: 'text-[10px] text-muted-foreground',
+	// `nx-dark-text-muted-foreground`, not the base's `nx-dark-text-foreground`
+	// below: `classes` leaves that one out for `caption` so the two do not
+	// both end up on the element (docs/guide/dark-mode.md).
+	caption: 'text-[10px] text-muted-foreground nx-dark-text-muted-foreground',
 };
 
 const TAG: Partial<Record<Variant, string>> = {
@@ -57,7 +55,9 @@ const attrs = useAttrs();
 const tag = computed(() => props.as ?? TAG[props.variant] ?? 'p');
 const classes = computed(() =>
 	twMerge(
-		'm-0 mb-4 text-foreground nx-dark-text-foreground',
+		props.variant === 'caption'
+			? 'm-0 mb-4 text-foreground'
+			: 'm-0 mb-4 text-foreground nx-dark-text-foreground',
 		VARIANT[props.variant],
 		attrs.class as string,
 	),

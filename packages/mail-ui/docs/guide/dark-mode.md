@@ -84,25 +84,57 @@ step above it — `color-muted-dark: '#1e293b'` against a `#0f172b` card, with
 Every place primary paints carries the matching `nx-dark-*` class, at
 whatever strength it is used: `NxButton`, `NxLinkButton`, `NxIconButton` and
 `NxChip` (`filled`, `tonal` and `outlined`, and the `link` variant),
-`NxBadge`'s default variant, `NxProgress`'s track and fill, and `NxTimeline`'s
-`primary` marker. Once `color-primary-dark` is set, the primary tints
-(`-15`/`-20`/`-40`/`-50` — a tonal chip's ground, an outlined chip's border,
-`NxProgress`'s track, `NxTimeline`'s marker) are mixed from it over the dark
-background too, at the same percentages the light tints use over the light
-one: for a near-white `color-primary-dark`, that keeps a tonal chip's text
-(the dark primary itself) at 12.7–13.2:1 over its ground, and an outlined
-chip's border at 3.2–4.6:1 against the dark card, in the reported case. Left
-unset, the tints keep aliasing their light twin exactly as before.
+`NxBadge`'s default variant, `NxProgress`'s track and fill, `NxTimeline`'s
+`primary` marker, `NxActionCard`'s active ring, icon box and indicator,
+`NxExtendedLabel`'s bar, `NxEventChip`'s bar (a `color` of `primary`) and its
+`selected` border, `NxFileList`'s extension badge and download link,
+`NxHighlightText`'s mark, `NxStatusIndicator`'s `primary` tone and
+`NxStepsItem`'s numbered circle. Once `color-primary-dark` is set, the primary
+tints (`-15`/`-20`/`-40`/`-50` — a tonal chip's ground, an outlined chip's
+border, `NxProgress`'s track, `NxTimeline`'s marker, `NxFileList`'s badge,
+`NxHighlightText`'s mark, `NxSummaryData`'s row divider) are mixed from it
+over the dark background too, at the same percentages the light tints use
+over the light one: for a near-white `color-primary-dark`, that keeps a tonal
+chip's text (the dark primary itself) at 12.7–13.2:1 over its ground, and an
+outlined chip's border at 3.2–4.6:1 against the dark card, in the reported
+case. Left unset, the tints keep aliasing their light twin exactly as before.
 
-Every place muted paints carries the matching `nx-dark-*` class too:
-`NxCode`'s and `NxAvatarFallback`'s ground, `NxKbd`, `NxTimeline`'s default
-marker, a table's footer stripe and `NxAlert`'s `foreground` variant ground,
-and every place muted text is used. `NxCode`, `NxAvatarFallback` and a
-table's footer keep their own text pinned to `color-foreground`, unflipped,
-by design — the same "always legible, self-contained" ground `NxHero`'s,
-`NxListTile`'s and `NxEventChip`'s decorative tints keep unconditionally: pick
-a `color-muted-dark` light enough to keep that fixed text legible, or leave
-it unset.
+**A text colour flips in dark mode only if its own ground does.** Everywhere
+muted paints a ground of its own — `NxCode`, `NxAvatarFallback`, `NxKbd`, a
+table's footer stripe, `NxTimeline`'s default marker and `NxAlert`'s
+`foreground` variant (icon, title and description together) — its text
+carries the matching `nx-dark-text-muted-foreground`, flipping to
+`color-muted-foreground-dark` alongside it, rather than staying pinned to
+`color-foreground`: pick a `color-muted-dark` light enough to keep it
+legible, or leave both unset. `NxTypography`'s `caption` variant and every
+other place muted text sits on the card or the page background instead —
+`NxActionCard`'s idle icon box and indicator, `NxFileList`'s empty state,
+`NxRatioCard`'s right figure, `NxStepsItem`'s body, `NxStatusIndicator`'s
+`neutral` tone, `NxSummaryData`'s labels and the layout's own footer among
+them — carry the same class: the card and the background are never
+optional, so it always has one to follow, at a contrast at least as good as
+the documented pair's (background and card are darker than a
+`color-muted-dark` meant to read as "a step above" them).
+
+Everywhere muted (or a variant's own colour) tints a ground that has **no**
+dark twin, the text on it stays un-flipped too, since there is nothing for it
+to follow: `NxAlert`'s six other variants (each a light tint with no dark
+value at all), `NxBanner`'s four tones (the same), `NxEventChip`'s own ground
+(`bg-${color}-20`, including for `primary`, left un-wired on purpose even
+where the percentage would otherwise follow `color-primary-dark`),
+`NxHero`'s eyebrow, title and description over its fixed `bg-primary-5`, and
+`NxListTile`'s idle and selected title and subtitle over its fixed
+`bg-primary-5/10/15`. Flipping one side without the other is exactly the bug
+this rule prevents: a light `color-muted-foreground-dark` over one of these
+never-flipping light grounds reads at little better than 1:1.
+
+A component that lets a caller override its own colour classes through
+`class` (`NxProgress`'s track, which `NxRatioCard` retints to `bg-primary-15`)
+reads the tint back off the override to pick the matching `nx-dark-*` twin,
+rather than keeping a fixed one: `twMerge` drops a conflicting light utility
+class for you, but does not know a `nx-dark-*` class conflicts with another
+one the same way, so a fixed dark twin would go on mismatching an overridden
+light one silently.
 
 `color-paper` (the page behind the layout's card, mail-ui's own token, not
 material-vue's) gets a `color-paper-dark` computed the same way: the **light**

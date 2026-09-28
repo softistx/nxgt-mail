@@ -568,7 +568,7 @@ describe('a project built with the ui plugin', () => {
 			/<h3 class="nx-dark-text-foreground" style="margin: 0; font-size: 18px;[^>]*font-weight: 600;[^>]*>\s*Your inbox\s*<\/h3>/,
 		);
 		expect(html).toContain(
-			'<td height="4" style="height: 4px; line-height: 4px; font-size: 4px; mso-line-height-rule: exactly; width: 56px; border-radius: 4px; background-color: #485096;',
+			'<td class="nx-dark-bg-primary" height="4" style="height: 4px; line-height: 4px; font-size: 4px; mso-line-height-rule: exactly; width: 56px; border-radius: 4px; background-color: #485096;',
 		);
 		expect(styleOf(html, 'Unread', 'td')).toContain(
 			'text-align: right; vertical-align: bottom;',
@@ -596,7 +596,7 @@ describe('a project built with the ui plugin', () => {
 	test('marks each match of a query, whatever its case, and never inside a placeholder', async () => {
 		const html = await read('dist/en/content.html');
 		const mark = (text: string) =>
-			`<mark style="border-radius: 4px; background-color: #dadcea; color: inherit;">${text}</mark>`;
+			`<mark class="nx-dark-bg-primary-20" style="border-radius: 4px; background-color: #dadcea; color: inherit;">${text}</mark>`;
 		expect(html).toContain(
 			`<span>${mark('Acme')} invoices for {{ name }}, and ${mark('acme')} receipts</span>`,
 		);
@@ -619,7 +619,7 @@ describe('a project built with the ui plugin', () => {
 	test('rings an active action card, ticks its indicator, links its title, and leaves the indicator out of the text', async () => {
 		const html = await read('dist/en/content.html');
 		expect(html).toContain(
-			'<td class="nx-dark-border-border nx-dark-bg-card nx-dark-text-card-foreground" style="border-radius: 8px; border: 1px solid #a4a7cb;',
+			'<td class="nx-dark-border-border nx-dark-bg-card nx-dark-text-card-foreground nx-dark-border-primary-50" style="border-radius: 8px; border: 1px solid #a4a7cb;',
 		);
 		expect(html).toContain(
 			'<a href="https://acme.example/digest" class="nx-dark-text-card-foreground" style="color: #020618;',
@@ -1346,5 +1346,133 @@ describe('a right-to-left locale', () => {
 		expect(text).toContain('Oops');
 		expect(text).toContain('Signed in');
 		expect(text).not.toMatch(/[▲▼↗↖]/);
+	});
+});
+
+describe('dark mode: a text colour flips only if its own ground does', () => {
+	const root = `${cases}/dark-text-ground`;
+	afterAll(() => rmSync(root, { recursive: true, force: true }));
+	let html = '';
+
+	beforeAll(async () => {
+		rmSync(root, { recursive: true, force: true });
+		const files: Record<string, string> = {
+			'maizzle.config.ts': [
+				"import { defineMailConfig } from '@nxgt/mail-config';",
+				"import { ui } from '../../../src/index';",
+				'export default defineMailConfig({',
+				'  plugins: [',
+				'    ui({',
+				"      brand: { name: 'Acme' },",
+				'      theme: {',
+				"        'color-primary': '#0f766e',",
+				"        'color-primary-dark': '#fafafa',",
+				"        'color-primary-foreground-dark': '#18181b',",
+				"        'color-muted-dark': '#1e293b',",
+				"        'color-muted-foreground-dark': '#e2e8f0',",
+				'      },',
+				'    }),',
+				'  ],',
+				'});',
+			].join('\n'),
+			'emails/welcome.vue': [
+				'<template>',
+				'  <NxLayout>',
+				'    <NxCode>123456</NxCode>',
+				'    <NxAvatar><NxAvatarFallback>AL</NxAvatarFallback></NxAvatar>',
+				'    <NxTable>',
+				'      <NxTableBody><NxTableRow><NxTableCell>Pro plan</NxTableCell></NxTableRow></NxTableBody>',
+				'      <NxTableFooter><NxTableRow><NxTableHead>Total</NxTableHead><NxTableCell>Sum</NxTableCell></NxTableRow></NxTableFooter>',
+				'    </NxTable>',
+				'    <NxAlert variant="primary" title="Primary title" description="Primary description"><template #icon>!</template></NxAlert>',
+				'    <NxAlert variant="foreground" title="Foreground title" description="Foreground description"><template #icon>!</template></NxAlert>',
+				'    <NxBanner tone="warning" title="Banner title" description="Banner description" />',
+				'    <NxEventChip title="Compact chip" time="09:00" compact />',
+				'    <NxListTile title="Tile" subtitle="Subtitle" disabled />',
+				'    <NxHero title="Hero title" description="Hero description" />',
+				'  </NxLayout>',
+				'</template>',
+			].join('\n'),
+		};
+		for (const [path, content] of Object.entries(files)) {
+			mkdirSync(dirname(`${root}/${path}`), { recursive: true });
+			writeFileSync(`${root}/${path}`, content);
+		}
+		await build(root);
+		html = await Bun.file(`${root}/dist/welcome.html`).text();
+	}, 60_000);
+
+	/** The `class` of the `tag` around the first `text`. */
+	function classOf(text: string, tag = ''): string {
+		const at = html.indexOf(`>${text}<`);
+		const open = html.lastIndexOf(`<${tag}`, at);
+		return /class="([^"]*)"/.exec(html.slice(open, at))?.[1] ?? '';
+	}
+
+	test('flips NxCode, NxAvatarFallback and a table footer with color-muted-dark, not the unflipped foreground', () => {
+		expect(classOf('123456', 'td')).toContain('nx-dark-text-muted-foreground');
+		expect(classOf('AL', 'span')).toContain('nx-dark-text-muted-foreground');
+		expect(classOf('Total', 'th')).toContain('nx-dark-text-muted-foreground');
+		expect(classOf('Sum', 'td')).toContain('nx-dark-text-muted-foreground');
+		// WCAG AA body-text minimum, 4.5:1 — the pair documented in dark-mode.md.
+		expect(contrastRatio('#e2e8f0', '#1e293b')).toBeGreaterThanOrEqual(4.5);
+	});
+
+	test("flips NxAlert's foreground variant (icon, title, description) with its bg-muted ground, but no other variant, whose ground has no dark twin", () => {
+		expect(classOf('Primary title', 'p')).not.toContain(
+			'nx-dark-text-muted-foreground',
+		);
+		expect(classOf('Primary description', 'p')).not.toContain(
+			'nx-dark-text-muted-foreground',
+		);
+		expect(classOf('Foreground title', 'p')).toContain(
+			'nx-dark-text-muted-foreground',
+		);
+		expect(classOf('Foreground description', 'p')).toContain(
+			'nx-dark-text-muted-foreground',
+		);
+	});
+
+	test('never flips NxBanner text: every tone is a light tint with no dark twin', () => {
+		expect(classOf('Banner description', 'p')).not.toContain(
+			'nx-dark-text-muted-foreground',
+		);
+	});
+
+	test("never flips NxEventChip's compact title, NxListTile's subtitle/disabled title or NxHero's description: their own decorative ground does not flip either", () => {
+		expect(classOf('Compact chip', 'p')).not.toContain(
+			'nx-dark-text-muted-foreground',
+		);
+		expect(classOf('Subtitle', 'p')).not.toContain(
+			'nx-dark-text-muted-foreground',
+		);
+		expect(classOf('Tile', 'span')).not.toContain(
+			'nx-dark-text-muted-foreground',
+		);
+		expect(classOf('Hero description', 'p')).not.toContain(
+			'nx-dark-text-muted-foreground',
+		);
+	});
+
+	test('the muted pair reaches WCAG AA against every ground it is actually shown on', () => {
+		const cardDark =
+			/\.nx-dark-bg-card \{\n {2}background-color: (#[0-9a-f]{6})/.exec(
+				html,
+			)?.[1] as string;
+		const backgroundDark =
+			/\.nx-dark-bg-background \{\n {2}background-color: (#[0-9a-f]{6})/.exec(
+				html,
+			)?.[1] as string;
+		expect(cardDark).toBeTruthy();
+		expect(backgroundDark).toBeTruthy();
+		// `color-muted-foreground-dark` is documented against `color-muted-dark`
+		// (11.87:1, dark-mode.md); NxAlert's foreground variant and NxListTile's
+		// idle icon box put it directly on the card or the background instead —
+		// both darker than a `color-muted-dark` that reads as "a step above"
+		// them, so the same text reaches an even higher ratio there.
+		expect(contrastRatio('#e2e8f0', cardDark)).toBeGreaterThanOrEqual(4.5);
+		expect(contrastRatio('#e2e8f0', backgroundDark)).toBeGreaterThanOrEqual(
+			4.5,
+		);
 	});
 });

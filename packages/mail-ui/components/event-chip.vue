@@ -73,8 +73,15 @@ function tint(hex: string): string {
 const look = computed(() => {
 	if (THEME.includes(props.color)) {
 		const token = props.color === 'default' ? 'foreground' : props.color;
+		// The bar is a solid strip with nothing drawn over it: `primary` is the
+		// one of these with an optional dark twin, so it is the one that gets
+		// the `nx-dark-*` class (docs/guide/dark-mode.md). The ground stays as
+		// below.
 		return {
-			bar: { class: `bg-${token}`, style: undefined },
+			bar: {
+				class: token === 'primary' ? 'bg-primary nx-dark-bg-primary' : `bg-${token}`,
+				style: undefined,
+			},
 			ground: { class: `bg-${token}-20`, style: undefined },
 		};
 	}
@@ -93,7 +100,7 @@ const attrs = useAttrs();
 const classes = computed(() =>
 	twMerge(
 		'mb-2 w-full',
-		props.selected && 'border border-solid border-primary',
+		props.selected && 'border border-solid border-primary nx-dark-border-primary',
 		attrs.class as string,
 	),
 );
@@ -123,10 +130,13 @@ const groundClasses = computed(() =>
     <tr>
       <td width="4" :class="barClasses" :style="look.bar.style"><span data-maizzle-html-only>&zwj;</span></td>
       <td :class="groundClasses" :style="look.ground.style">
-        <!-- The ground (`bg-${token}-20`) keeps the same value in dark mode
-             (see theme.css): the text stays un-flipped too. -->
+        <!-- The ground (`bg-${token}-20`) is left un-wired to `color-primary-dark`
+             on purpose, even for `primary`: it is a decorative, self-contained
+             ground like NxHero's and NxListTile's, and its text (`text-foreground`/
+             `text-muted-foreground` below) stays un-flipped too — flipping one
+             without the other would break its own contrast (dark-mode.md). -->
         <p v-if="time && !allDay" class="m-0 text-[10px] font-medium leading-tight text-foreground">{{ time }}</p>
-        <p :class="['m-0 font-medium leading-tight', compact ? 'text-[10px] text-muted-foreground nx-dark-text-muted-foreground' : 'text-xs text-foreground']">{{ title }}</p>
+        <p :class="['m-0 font-medium leading-tight', compact ? 'text-[10px] text-muted-foreground' : 'text-xs text-foreground']">{{ title }}</p>
       </td>
     </tr>
   </table>
