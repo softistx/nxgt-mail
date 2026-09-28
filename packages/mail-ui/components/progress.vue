@@ -53,8 +53,12 @@ const cell = computed(
 // `nx-dark-*` twin conflicts with it too — left as `nx-dark-bg-primary-20`
 // unconditionally, an overridden track (as `NxRatioCard`'s `bg-primary-15`)
 // would keep the wrong dark class. Read the tint back off the incoming
-// override instead, so the two always match.
-const TRACK_TINT = /(?:^|\s)bg-primary-(15|20|40|50)(?:\s|$)/;
+// override instead, so the two always match. Only `15` and `20` have a
+// `.nx-dark-bg-primary-N` rule in `theme.css` — the track's own tint never
+// goes darker than `20`, so the other primary tints (`40`/`50`, used only as
+// borders elsewhere) are deliberately not matched here: they would produce a
+// class with no CSS behind it, silently keeping the light colour.
+const TRACK_TINT = /(?:^|\s)bg-primary-(15|20)(?:\s|$)/;
 const classes = computed(() => {
 	const override = attrs.class as string | undefined;
 	const tint = TRACK_TINT.exec(override ?? '')?.[1] ?? '20';

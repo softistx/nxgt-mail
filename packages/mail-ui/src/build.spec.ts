@@ -1388,8 +1388,15 @@ describe('dark mode: a text colour flips only if its own ground does', () => {
 				'    <NxAlert variant="foreground" title="Foreground title" description="Foreground description"><template #icon>!</template></NxAlert>',
 				'    <NxBanner tone="warning" title="Banner title" description="Banner description" />',
 				'    <NxEventChip title="Compact chip" time="09:00" compact />',
+				'    <NxEventChip title="Team sync" time="10:00" />',
+				'    <NxEventChip title="Board meeting" time="11:00" selected />',
 				'    <NxListTile title="Tile" subtitle="Subtitle" disabled />',
 				'    <NxHero title="Hero title" description="Hero description" />',
+				'    <NxRatioCard label="Storage" :left="{ label: \'Used\', value: \'12 GB\' }" :right="{ label: \'Total\', value: \'50 GB\' }" :percent="40" />',
+				"    <NxFileList :items=\"[{ id: '1', name: 'report.pdf', href: 'https://acme.example/report.pdf' }]\" />",
+				'    <NxStatusIndicator tone="primary">Active</NxStatusIndicator>',
+				'    <NxSteps><NxStepsItem title="Step A" /></NxSteps>',
+				"    <NxSummaryData :data=\"[{ label: 'Plan', value: 'Pro' }]\" />",
 				'  </NxLayout>',
 				'</template>',
 			].join('\n'),
@@ -1474,5 +1481,54 @@ describe('dark mode: a text colour flips only if its own ground does', () => {
 		expect(contrastRatio('#e2e8f0', backgroundDark)).toBeGreaterThanOrEqual(
 			4.5,
 		);
+	});
+
+	test("retints NxRatioCard's track to the tint it overrides (nx-dark-bg-primary-15), not NxProgress's default (nx-dark-bg-primary-20)", () => {
+		const track = /<table[^>]*class="([^"]*)"[^>]*role="progressbar"/.exec(
+			html,
+		)?.[1];
+		expect(track).toContain('nx-dark-bg-primary-15');
+		expect(track).not.toContain('nx-dark-bg-primary-20');
+	});
+
+	test("flips NxFileList's extension badge and download link with color-primary-dark", () => {
+		expect(classOf('PDF', 'span')).toContain('nx-dark-text-primary');
+		expect(classOf('Download', 'a')).toContain('nx-dark-text-primary');
+	});
+
+	test("flips NxEventChip's bar (its one theme colour with a dark twin) and its selected border, but never its own decorative ground", () => {
+		const barClassOf = (title: string) => {
+			const at = html.indexOf(`>${title}<`);
+			const table = html.slice(html.lastIndexOf('<table', at), at);
+			return /<td width="4" class="([^"]*)"/.exec(table)?.[1] ?? '';
+		};
+		const tableClassOf = (title: string) => {
+			const at = html.indexOf(`>${title}<`);
+			return (
+				/<table[^>]*class="([^"]*)"/.exec(
+					html.slice(html.lastIndexOf('<table', at), at),
+				)?.[1] ?? ''
+			);
+		};
+		expect(barClassOf('Team sync')).toContain('nx-dark-bg-primary');
+		expect(tableClassOf('Team sync')).not.toContain('nx-dark-border-primary');
+		expect(tableClassOf('Board meeting')).toContain('nx-dark-border-primary');
+	});
+
+	test("flips NxStatusIndicator's primary tone dot with color-primary-dark", () => {
+		expect(
+			/<span aria-hidden="true" class="([^"]*)"[^>]*>●<\/span>Active/.exec(
+				html,
+			)?.[1],
+		).toContain('nx-dark-text-primary');
+	});
+
+	test("flips NxStepsItem's numbered circle with color-primary-dark, since its ground (bg-background) flips too", () => {
+		expect(classOf('1', 'span')).toContain('nx-dark-text-primary');
+	});
+
+	test("flips NxSummaryData's row divider with color-primary-dark", () => {
+		expect(classOf('Plan', 'td')).toContain('nx-dark-border-primary-40');
+		expect(classOf('Pro', 'td')).toContain('nx-dark-border-primary-40');
 	});
 });
