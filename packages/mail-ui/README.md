@@ -50,6 +50,8 @@ Peers, all required:
 - `typescript` (6). Bundler resolution (`"moduleResolution": "bundler"`) is
   what is supported and tested; `nodenext` is out of contract.
 
+Runs on Node `>=20` (the active LTS) or Bun; CI tests on Bun only.
+
 `@nxgt/mail-i18n` is not a peer: add it (`bun add @nxgt/mail-i18n`) to
 translate your e-mails and to use `uiCatalogues`.
 
