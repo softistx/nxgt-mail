@@ -51,8 +51,9 @@ Peers, all required:
 - `typescript` (6). Bundler resolution (`"moduleResolution": "bundler"`) is
   what is supported and tested; `nodenext` is out of contract.
 
-Runs on Node `>=20` or Bun; CI runs the tests on Bun, and
-imports the packed package under Node 20.
+Runs wherever `maizzle build` does: Node `^22.22.3`, `^24.15.0` or `>=26` — the
+range Maizzle 6's own dependencies require — or Bun. CI runs the tests on
+Bun, and builds the starter under Node 22.22.3.
 
 `@nxgt/mail-i18n` is not a peer: add it (`bun add @nxgt/mail-i18n`) to
 translate your e-mails and to use `uiCatalogues`.

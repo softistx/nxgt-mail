@@ -250,7 +250,16 @@ matrix). Decided for 1.0: no `engines` field is added; each README's peers table
 names the supported Node floor, Node `>=20` (the active LTS this plan was
 written against), even though CI runs Bun only and does not test Node
 directly, since `@nxgt/mail`'s runtime-agnostic packages are used from
-Node servers today. Maizzle support stays pinned to `^6.1.7`
+Node servers today.
+
+**Corrected 2026-09-28**, once CI tested it: Node `>=20` holds for
+`@nxgt/mail`, `-smtp` and `-resend`, but not for the four build-time
+packages. `maizzle build` runs under Node, and Maizzle 6.1.7's own
+dependency `postcss-merge-longhand` 9 requires Node `^22.22.3`, `^24.15.0`
+or `>=26` (it calls `Set.prototype.difference`). Their READMEs name that
+range, and CI builds the starter at 22.22.3.
+
+Maizzle support stays pinned to `^6.1.7`
 (`@maizzle/tailwindcss` `^1.5.6`) until a Maizzle 7 exists to evaluate.
 
 ---

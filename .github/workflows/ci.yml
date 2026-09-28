@@ -65,10 +65,9 @@ jobs:
         run: bun run test
       # The build exits 0 on packages that throw the instant they are imported —
       # it happened three times in nxgt-core. This packs them, installs them as a consumer
-      # does and imports every declared subpath.
-      # Every README names Node >=20: the floor, not the runner's default, runs
-      # the same probe under Node.
-      - name: Setup Node at the floor the READMEs name
+      # does and imports every declared subpath — under Bun, then under Node 20,
+      # the floor @nxgt/mail, -smtp and -resend name in their READMEs.
+      - name: Setup Node at the run-time packages' floor
         uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -79,6 +78,13 @@ jobs:
       # the packages of this commit through workspace links to their dist/,
       # built above; its templates and send.ts were type-checked above too,
       # after a build that wrote generated/mail.ts, which git ignores.
+      # `maizzle` runs under Node, and Maizzle 6's own dependencies
+      # (postcss-merge-longhand) need ^22.22.3, ^24.15.0 or >=26: the floor the
+      # build-time packages' READMEs name, so the starter builds at it.
+      - name: Setup Node at the Maizzle build's floor
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.3
       - name: Build the starter
         working-directory: examples/starter
         run: bun run build
