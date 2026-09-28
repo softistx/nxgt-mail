@@ -1,6 +1,6 @@
 {
 	"name": "@nxgt/mail-config",
-	"version": "0.2.2",
+	"version": "1.0.0",
 	"description": "A shareable Maizzle config: defineMailConfig layers plugins under the project's own config, with every build event chained instead of overwritten.",
 	"license": "MIT",
 	"type": "module",
