@@ -43,7 +43,7 @@ Peers:
   own `package.json` when you want `t`, `locale`, `dir` and `placeholder`
   typed in templates ([Editor and type checking](#editor-and-type-checking)).
 
-Runs on Node `>=20` (the active LTS) or Bun; CI tests on Bun only.
+Runs on Node `>=20` or Bun; CI tests on Bun only.
 
 ## Setup
 
