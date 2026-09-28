@@ -238,11 +238,13 @@ Override a dark value the same way you override a light one — the same
 ui({ brand: { name: 'Acme' }, theme: { 'color-background-dark': '#0b1220' } });
 ```
 
-`color-primary` and `color-primary-foreground` are the one pair with no
-dark value by default — a project that never sets `color-primary-dark` and
-`color-primary-foreground-dark` reaches dark mode with `color-primary`
-unchanged, exactly as before this pair of tokens existed. Set them when a
-near-black brand primary would otherwise melt into the dark card:
+`color-primary`/`color-primary-foreground` and `color-muted`/
+`color-muted-foreground` have no dark value by default — a project that never
+sets their `-dark` twins reaches dark mode with the light value unchanged,
+exactly as before these tokens existed. Set the primary pair when a near-black
+brand primary would otherwise melt into the dark card — its tints
+(`bg-primary-15`, `border-primary-50`, …) follow it too — and the muted pair
+when a dark card needs its own step above it:
 
 ```ts
 ui({
@@ -251,6 +253,8 @@ ui({
 		'color-primary': '#27272a',
 		'color-primary-dark': '#a1a1aa',
 		'color-primary-foreground-dark': '#18181b',
+		'color-muted-dark': '#1e293b',
+		'color-muted-foreground-dark': '#e2e8f0',
 	},
 });
 ```

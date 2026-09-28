@@ -36,6 +36,11 @@ const VARIANT: Record<Variant, string> = {
 	'title-small': 'text-base font-semibold',
 	'body-medium': 'text-sm',
 	'body-small': 'text-xs',
+	// `text-muted-foreground` alone: the base class below already carries
+	// `nx-dark-text-foreground` unconditionally, and a second `nx-dark-*`
+	// text class on the same element is not something `twMerge` reconciles
+	// (it does not know our custom classes conflict) — adding one here would
+	// change the default dark-mode colour, not just let a project override it.
 	caption: 'text-[10px] text-muted-foreground',
 };
 

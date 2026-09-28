@@ -80,12 +80,12 @@ const why =
                 </td>
               </tr>
               <tr>
-                <td class="px-6 pt-6 text-center text-xs text-muted-foreground">
+                <td class="px-6 pt-6 text-center text-xs text-muted-foreground nx-dark-text-muted-foreground">
                   <slot name="footer">
                     <p v-if="why" class="m-0 mb-2">{{ why }}</p>
                   </slot>
                   <p class="m-0">
-                    <a v-if="brand.url" :href="brand.url" class="text-muted-foreground underline">{{ brand.name }}</a>
+                    <a v-if="brand.url" :href="brand.url" class="text-muted-foreground nx-dark-text-muted-foreground underline">{{ brand.name }}</a>
                     <template v-else>{{ brand.name }}</template>
                   </p>
                 </td>

@@ -126,7 +126,7 @@ const groundClasses = computed(() =>
         <!-- The ground (`bg-${token}-20`) keeps the same value in dark mode
              (see theme.css): the text stays un-flipped too. -->
         <p v-if="time && !allDay" class="m-0 text-[10px] font-medium leading-tight text-foreground">{{ time }}</p>
-        <p :class="['m-0 font-medium leading-tight', compact ? 'text-[10px] text-muted-foreground' : 'text-xs text-foreground']">{{ title }}</p>
+        <p :class="['m-0 font-medium leading-tight', compact ? 'text-[10px] text-muted-foreground nx-dark-text-muted-foreground' : 'text-xs text-foreground']">{{ title }}</p>
       </td>
     </tr>
   </table>

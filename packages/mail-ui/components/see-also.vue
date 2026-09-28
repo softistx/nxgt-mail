@@ -42,9 +42,9 @@ const classes = computed(() =>
               <table class="w-full" role="presentation" cellpadding="0" cellspacing="0">
                 <tr v-for="item in items" :key="item.id ?? item.href">
                   <td class="px-2 py-2.5">
-                    <a :href="item.href" class="text-sm text-muted-foreground no-underline">{{ item.title }}</a>
+                    <a :href="item.href" class="text-sm text-muted-foreground nx-dark-text-muted-foreground no-underline">{{ item.title }}</a>
                   </td>
-                  <td :class="`w-1 px-2 align-middle text-xs text-muted-foreground ${dir === 'rtl' ? 'text-left' : 'text-right'}`"><span aria-hidden="true"><span data-maizzle-html-only>{{ arrow }}</span></span></td>
+                  <td :class="`w-1 px-2 align-middle text-xs text-muted-foreground nx-dark-text-muted-foreground ${dir === 'rtl' ? 'text-left' : 'text-right'}`"><span aria-hidden="true"><span data-maizzle-html-only>{{ arrow }}</span></span></td>
                 </tr>
               </table>
             </td>

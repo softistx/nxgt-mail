@@ -58,6 +58,17 @@ Nothing yet. A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **Optional dark muted, and two dark-primary fixes, v0.6.0** —
+  `color-muted-dark` and `color-muted-foreground-dark`, the same pattern as
+  `color-primary-dark`: defaulting to their light value, so a project that
+  never sets them is unaffected. `NxCode`'s and `NxAvatarFallback`'s ground,
+  `NxKbd`, `NxTimeline`'s default marker, a table's footer stripe,
+  `NxAlert`'s `foreground` variant ground and every place muted text is used
+  all carry it. Also fixed: the primary tints (`-15`/`-20`/`-40`/`-50`) now
+  follow a project-set `color-primary-dark` instead of aliasing the light
+  tint unconditionally, and `color-paper-dark` keeps mixing the light
+  `color-primary`, never the dark one. See
+  [Dark mode](guide/dark-mode.md#which-tokens-have-a-dark-value).
 - **Optional dark primary, v0.5.0** — `color-primary-dark` and
   `color-primary-foreground-dark`, defaulting to their light value, so a
   project that never sets them is unaffected. Set them when a brand's

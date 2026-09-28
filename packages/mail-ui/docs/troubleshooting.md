@@ -798,6 +798,32 @@ such as `useAnchorContent` on `<a><slot /></a>`, is silenced on its element:
 <a :href="href"><slot /></a>
 ```
 
+### A tonal chip is unreadable in dark mode after setting `color-primary-dark`
+
+(**Fixed** in the version that shipped `color-muted-dark`/
+`color-muted-foreground-dark` alongside this fix — see this package's
+`CHANGELOG.md`. The rest of this entry is for anyone on an older version.)
+
+**When:** a project sets `color-primary-dark` — say, a near-white
+`#fafafa`, for a brand whose primary would otherwise be unreadable on a dark
+card — and a tonal `NxChip`/`NxButton`, or an outlined one's border, looks
+wrong or invisible under `prefers-color-scheme: dark`.
+**Why:** the primary tints (`color-primary-15-dark`, `-20-dark`, `-40-dark`,
+`-50-dark`) aliased their light twin unconditionally — the same colour mixed
+from `color-primary` over the **light** background — instead of being
+recomputed from `color-primary-dark` over the dark one. A tonal chip's text is
+`color-primary-dark` itself, so a near-white one over that unrelated,
+still-near-white ground measured 1.28:1 — nowhere near readable.
+`color-paper-dark` had the matching bug the other way: it mixed
+`color-primary-dark` instead of the light `color-primary`, so a near-white
+dark primary washed the whole page ground towards white too (1.02:1 against
+the dark card).
+**Fix:** upgrade `@nxgt/mail-ui` to the version that fixed both — the tints
+now follow `color-primary-dark` once it is set (12.7–13.2:1 for the tonal
+text, 3.2–4.6:1 for the outlined border, in the reported case), and
+`color-paper-dark` keeps mixing the light `color-primary` regardless. A
+project that never sets `color-primary-dark` is unaffected either way.
+
 ### A bug in `@nxgt/mail-ui` itself
 
 A component that renders differently from what its props ask for, a colour

@@ -57,6 +57,25 @@ function styleOf(html: string, text: string, tag = ''): string {
 	return /style="([^"]*)"/.exec(html.slice(open, at))?.[1] ?? '';
 }
 
+/** WCAG relative luminance of a `#rrggbb` colour. */
+function relativeLuminance(hex: string): number {
+	const r = Number.parseInt(hex.slice(1, 3), 16);
+	const g = Number.parseInt(hex.slice(3, 5), 16);
+	const b = Number.parseInt(hex.slice(5, 7), 16);
+	const linear = (channel: number) => {
+		const c = channel / 255;
+		return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+	};
+	return 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b);
+}
+
+/** The WCAG contrast ratio between two `#rrggbb` colours, from 1 to 21. */
+function contrastRatio(a: string, b: string): number {
+	const lighter = Math.max(relativeLuminance(a), relativeLuminance(b));
+	const darker = Math.min(relativeLuminance(a), relativeLuminance(b));
+	return (lighter + 0.05) / (darker + 0.05);
+}
+
 describe('a project built with the ui plugin', () => {
 	beforeAll(async () => {
 		for (const dir of ['dist', 'dist-override', '.maizzle']) {
@@ -187,6 +206,94 @@ describe('a project built with the ui plugin', () => {
 		);
 	});
 
+	test('keeps the default dark tints and paper unchanged with no dark primary', async () => {
+		const html = await read('dist/en/welcome.html');
+		expect(html).toContain(
+			'.nx-dark-bg-paper {\n  background-color: #060c1e !important;\n}',
+		);
+		expect(html).toContain(
+			'.nx-dark-bg-primary-15 {\n  background-color: #e4e5ef !important;\n}',
+		);
+		expect(html).toContain(
+			'.nx-dark-bg-primary-20 {\n  background-color: #dadcea !important;\n}',
+		);
+		expect(html).toContain(
+			'.nx-dark-border-primary-40 {\n  border-color: #b6b9d5 !important;\n}',
+		);
+		expect(html).toContain(
+			'.nx-dark-border-primary-50 {\n  border-color: #a4a7cb !important;\n}',
+		);
+	});
+
+	test('derives a dark tint from a project-set dark primary, at readable contrast', async () => {
+		const html = await read('dist-override/en/welcome.html');
+		// `color-primary-dark: #f4f4f5` mixed at the light tints' own
+		// percentages over `color-background-dark`, not aliased to the light
+		// tint (`#dbeae9`, mixed from `color-primary` over the *light*
+		// background) any more.
+		expect(html).toContain(
+			'.nx-dark-bg-primary-15 {\n  background-color: #272c39 !important;\n}',
+		);
+		expect(html).toContain(
+			'.nx-dark-bg-primary-20 {\n  background-color: #333844 !important;\n}',
+		);
+		expect(html).toContain(
+			'.nx-dark-border-primary-40 {\n  border-color: #636770 !important;\n}',
+		);
+		expect(html).toContain(
+			'.nx-dark-border-primary-50 {\n  border-color: #7b7e86 !important;\n}',
+		);
+		// A tonal chip: `color-primary-dark` (#f4f4f5) as text, on
+		// `color-primary-15-dark`. A WCAG AA body-text minimum, 4.5:1.
+		expect(contrastRatio('#f4f4f5', '#272c39')).toBeGreaterThanOrEqual(4.5);
+		// An outlined chip's border, against the dark card. WCAG's
+		// non-text minimum, 3:1.
+		expect(contrastRatio('#636770', '#0f172b')).toBeGreaterThanOrEqual(3);
+		expect(contrastRatio('#7b7e86', '#0f172b')).toBeGreaterThanOrEqual(3);
+	});
+
+	test('keeps paper mixing the light primary, not the dark one, so it never moves the page ground', async () => {
+		const html = await read('dist-override/en/welcome.html');
+		// `color-primary-dark: #f4f4f5` (near white) would otherwise wash
+		// `paper-dark` towards white; it stays `color-primary` (#0f766e)
+		// mixed 5% over `color-background-dark`, same contrast against the
+		// card as the default build's paper (~1.09:1), not the ~1.02:1 a
+		// near-white primary-dark would give it.
+		expect(html).toContain(
+			'.nx-dark-bg-paper {\n  background-color: #030e1c !important;\n}',
+		);
+		expect(contrastRatio('#030e1c', '#0f172b')).toBeCloseTo(
+			contrastRatio('#060c1e', '#0f172b'),
+			1,
+		);
+	});
+
+	test('derives a dark muted pair from a project-set colour, at readable contrast', async () => {
+		const defaultHtml = await read('dist/en/welcome.html');
+		// No override: `bg-muted`/`text-muted-foreground` alias their light
+		// value in dark mode too, unchanged.
+		expect(defaultHtml).toContain(
+			'.nx-dark-bg-muted {\n  background-color: #f1f5f9 !important;\n  background-color: lab(96.286% -.852436 -2.46847) !important;\n}',
+		);
+		expect(defaultHtml).toContain(
+			'.nx-dark-text-muted-foreground {\n  color: #62748e !important;\n  color: lab(48.0876% -2.03595 -16.5814) !important;\n}',
+		);
+
+		const html = await read('dist-override/en/welcome.html');
+		// `color-muted-dark: #1e293b`, `color-muted-foreground-dark: #e2e8f0`:
+		// shown as set, not the light pair, exactly like `color-primary-dark`.
+		expect(html).toContain(
+			'.nx-dark-bg-muted {\n  background-color: #1e293b !important;\n}',
+		);
+		expect(html).toContain(
+			'.nx-dark-text-muted-foreground {\n  color: #e2e8f0 !important;\n}',
+		);
+		// WCAG AA body-text minimum, 4.5:1.
+		expect(contrastRatio('#e2e8f0', '#1e293b')).toBeGreaterThanOrEqual(4.5);
+		// A visible step above the dark card, not just the border.
+		expect(contrastRatio('#1e293b', '#0f172b')).toBeGreaterThan(1);
+	});
+
 	test('shows the name, unlinked, for a brand without a URL or logo', async () => {
 		const html = await read('dist-override/en/welcome.html');
 		expect(html).toMatch(
@@ -225,7 +332,7 @@ describe('a project built with the ui plugin', () => {
 		);
 		expect(styleOf(html, '$30.00', 'td')).toContain('border-top-style: solid;');
 		expect(html).toContain(
-			'<caption align="bottom" style="caption-side: bottom;',
+			'<caption align="bottom" class="nx-dark-text-muted-foreground" style="caption-side: bottom;',
 		);
 		expect(html).toContain(
 			'<td colspan="2" class="nx-dark-text-foreground" style="padding: 40px 16px;',

@@ -76,7 +76,7 @@ const attrs = useAttrs();
 const classes = computed(() => twMerge('mb-4 w-full', attrs.class as string));
 const emptyClasses = computed(() =>
 	twMerge(
-		'mb-4 py-6 text-center text-sm text-muted-foreground',
+		'mb-4 py-6 text-center text-sm text-muted-foreground nx-dark-text-muted-foreground',
 		attrs.class as string,
 	),
 );
