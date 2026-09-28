@@ -940,14 +940,14 @@ calls it when present, and otherwise sends each message in turn over `send` —
 so it works with every `Mailer`, including a third-party one written before
 this function existed.
 
-### `withRetry` and `withTelemetry`
+### `withRetry` and `withMailTelemetry`
 
 `withRetry(mailer)` passes a `sendBatch` through **untouched** when `mailer`
 has one: no retry, no `idempotencyKey` added to a message that lacks its
 own. A batch's own contract already answers a result per message instead of
 throwing — retry the ones that come back `failed`, one by one, with `send`.
 
-`withTelemetry(mailer, { transport })` gives a `sendBatch` its own span,
+`withMailTelemetry(mailer, { transport })` gives a `sendBatch` its own span,
 `mail.sendBatch` — one for the whole call, `mail.outcome: 'ok'` whenever the
 call itself resolved (a `MailBatchResult` per message is the answer, not a
 throw), with `mail.batch.sent_count`, `mail.batch.refused_count` and

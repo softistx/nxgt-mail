@@ -64,6 +64,12 @@ Nothing yet.
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **Telemetry names collision-proofed, v0.9.0** — `withTelemetry` and
+  `withRendererTelemetry` are renamed to `withMailTelemetry` and
+  `withMailRendererTelemetry`: `@nxgt/telemetry` exports its own
+  `withTelemetry`, colliding for a project importing both. The old names are
+  kept as `@deprecated` aliases of the same functions — no behaviour change —
+  removed in 1.0.
 - **Sending many at once, `sendBatch`, v0.8.0** — sends every message and
   answers one `MailBatchResult` per message, `sent`, `refused` or `failed`,
   never a throw for one message's own outcome. Every message is checked with
@@ -71,7 +77,7 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   transport implements it to use its provider's own batching
   (`@nxgt/mail-resend`'s `POST /emails/batch`); `sendBatch(mailer, messages)`
   falls back to one `send` per message otherwise, so every `Mailer` works
-  with it. `withRetry` passes it through untouched; `withTelemetry` gives it
+  with it. `withRetry` passes it through untouched; `withMailTelemetry` gives it
   its own span, `mail.sendBatch`. `checkScheduledAt` is now exported, and
   `MailScheduleRefused` (`ALREADY_SENT`, `UNKNOWN_ID`) is what a
   provider-specific action against a scheduled send — `@nxgt/mail-resend`'s
@@ -86,9 +92,9 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   cannot be trusted; an event type it does not map is `null`, never a throw.
   `@nxgt/mail-resend/webhooks` is the first mapping; `@nxgt/mail/conformance`
   gains `sampleMailEvent` and `checkMailEvent` for a second provider's.
-- **Observability, v0.8.0** — `@nxgt/mail/telemetry`: `withTelemetry(mailer,
+- **Observability, v0.8.0** — `@nxgt/mail/telemetry`: `withMailTelemetry(mailer,
   { transport })` wraps a `Mailer` with a span `mail.send` per send, kind
-  `CLIENT`; `withRendererTelemetry(renderer)` wraps a `MailRenderer` with a
+  `CLIENT`; `withMailRendererTelemetry(renderer)` wraps a `MailRenderer` with a
   span `mail.render` per render, staying synchronous. Both record a
   duration histogram and a counter by outcome (`ok`, `refused`, `failure`),
   `error.type` on the codes this package throws, and never an address, a
@@ -139,9 +145,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   `new URL(url).href` and checks it as well as what it was given: a `%` that
   starts no escape, or a host escape decoded into a refused character, is a
   `MailRefused`. SMTP and Resend move their peer to `^0.5.0`.
-- **One-click unsubscribe, v0.4.0** — `listUnsubscribe({ url, mailto? })`
-  answers RFC 8058's `List-Unsubscribe` and `List-Unsubscribe-Post` headers,
-  to spread into a message's `headers`, so Gmail and Yahoo offer their
-  one-click unsubscribe. A `url` that is not an ASCII `https://` URL, or that
-  would break the header, and a `mailto` that is not a bare address are
-  refused with `MailRefused`, never quoting the value. No transport changes.

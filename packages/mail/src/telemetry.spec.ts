@@ -13,7 +13,12 @@ import {
 import { MailFailure, MailRefused } from './errors';
 import { createMemoryMailer } from './memory';
 import { createMailRenderer } from './renderer';
-import { withRendererTelemetry, withTelemetry } from './telemetry';
+import {
+	withMailRendererTelemetry,
+	withMailTelemetry,
+	withRendererTelemetry,
+	withTelemetry,
+} from './telemetry';
 import type { Mailer, MailMessage } from './types';
 
 const built = new URL('../test/built', import.meta.url).pathname;
@@ -93,10 +98,10 @@ function message(overrides: Partial<MailMessage> = {}): MailMessage {
 	};
 }
 
-describe('withTelemetry(mailer, options) — the span', () => {
+describe('withMailTelemetry(mailer, options) — the span', () => {
 	it('records a mail.send span, ok, with the shape of the message and never its value', async () => {
 		const memory = createMemoryMailer();
-		const mailer = withTelemetry(memory, { transport: 'memory' });
+		const mailer = withMailTelemetry(memory, { transport: 'memory' });
 
 		await mailer.send(
 			message({ tags: { category: 'verify' }, idempotencyKey: 'order-1' }),
@@ -118,7 +123,7 @@ describe('withTelemetry(mailer, options) — the span', () => {
 
 	it('reports the e-mail name from emailName when given', async () => {
 		const memory = createMemoryMailer();
-		const mailer = withTelemetry(memory, {
+		const mailer = withMailTelemetry(memory, {
 			transport: 'memory',
 			emailName: (m) => m.tags?.email,
 		});
@@ -131,7 +136,7 @@ describe('withTelemetry(mailer, options) — the span', () => {
 
 	it('marks a refusal an answer: span stays ok, outcome refused, error.type set, and rethrows', async () => {
 		const memory = createMemoryMailer();
-		const mailer = withTelemetry(memory, { transport: 'memory' });
+		const mailer = withMailTelemetry(memory, { transport: 'memory' });
 
 		await mailer.send({
 			...message({ idempotencyKey: 'dup' }),
@@ -153,7 +158,7 @@ describe('withTelemetry(mailer, options) — the span', () => {
 	it('marks a failure the span error, outcome failure, error.type set, and rethrows', async () => {
 		const memory = createMemoryMailer();
 		memory.failNext();
-		const mailer = withTelemetry(memory, { transport: 'memory' });
+		const mailer = withMailTelemetry(memory, { transport: 'memory' });
 
 		await expect(mailer.send(message())).rejects.toBeInstanceOf(MailFailure);
 
@@ -172,7 +177,7 @@ describe('withTelemetry(mailer, options) — the span', () => {
 				);
 			},
 		};
-		const mailer = withTelemetry(failing, { transport: 'stub' });
+		const mailer = withMailTelemetry(failing, { transport: 'stub' });
 
 		await expect(mailer.send(message())).rejects.toBeInstanceOf(MailFailure);
 
@@ -187,7 +192,7 @@ describe('withTelemetry(mailer, options) — the span', () => {
 
 	it('records mail.send.duration and mail.send.count by outcome', async () => {
 		const memory = createMemoryMailer();
-		const mailer = withTelemetry(memory, { transport: 'memory' });
+		const mailer = withMailTelemetry(memory, { transport: 'memory' });
 		await mailer.send(message());
 
 		await meterProvider.forceFlush();
@@ -216,7 +221,7 @@ describe('withTelemetry(mailer, options) — the span', () => {
 					{ status: 'failed', error: new MailFailure('failed') },
 				]),
 		};
-		const mailer = withTelemetry(fake, { transport: 'stub' });
+		const mailer = withMailTelemetry(fake, { transport: 'stub' });
 
 		const results = await mailer.sendBatch?.([message(), message(), message()]);
 
@@ -239,7 +244,7 @@ describe('withTelemetry(mailer, options) — the span', () => {
 			send: () => Promise.reject(new Error('not used in this test')),
 			sendBatch: () => Promise.reject(new MailFailure('the batch call failed')),
 		};
-		const mailer = withTelemetry(fake, { transport: 'stub' });
+		const mailer = withMailTelemetry(fake, { transport: 'stub' });
 
 		await expect(mailer.sendBatch?.([message()])).rejects.toBeInstanceOf(
 			MailFailure,
@@ -253,7 +258,7 @@ describe('withTelemetry(mailer, options) — the span', () => {
 
 	it('gives a Mailer with no sendBatch of its own none either', () => {
 		const memory = createMemoryMailer();
-		const mailer = withTelemetry(memory, { transport: 'memory' });
+		const mailer = withMailTelemetry(memory, { transport: 'memory' });
 		expect(mailer.sendBatch).toBeUndefined();
 	});
 
@@ -263,7 +268,7 @@ describe('withTelemetry(mailer, options) — the span', () => {
 			sendBatch: () =>
 				Promise.resolve([{ status: 'sent', sentMail: { messageId: 'a' } }]),
 		};
-		const mailer = withTelemetry(fake, { transport: 'stub' });
+		const mailer = withMailTelemetry(fake, { transport: 'stub' });
 		await mailer.sendBatch?.([message()]);
 
 		await meterProvider.forceFlush();
@@ -275,9 +280,9 @@ describe('withTelemetry(mailer, options) — the span', () => {
 	});
 });
 
-describe('withRendererTelemetry(renderer) — the span', () => {
+describe('withMailRendererTelemetry(renderer) — the span', () => {
 	it('records a mail.render span with the e-mail name, always known here', () => {
-		const mails = withRendererTelemetry(createMailRenderer({ dir: built }));
+		const mails = withMailRendererTelemetry(createMailRenderer({ dir: built }));
 
 		mails.render('verify-email', { name: 'Ada', link });
 
@@ -290,7 +295,7 @@ describe('withRendererTelemetry(renderer) — the span', () => {
 	});
 
 	it('marks a MailRefused (a bad URL variable) an answer, and rethrows', () => {
-		const mails = withRendererTelemetry(createMailRenderer({ dir: built }));
+		const mails = withMailRendererTelemetry(createMailRenderer({ dir: built }));
 
 		expect(() =>
 			mails.render('verify-email', {
@@ -306,9 +311,16 @@ describe('withRendererTelemetry(renderer) — the span', () => {
 	});
 
 	it('stays synchronous: render still returns Rendered, not a Promise', () => {
-		const mails = withRendererTelemetry(createMailRenderer({ dir: built }));
+		const mails = withMailRendererTelemetry(createMailRenderer({ dir: built }));
 		const rendered = mails.render('verify-email', { name: 'Ada', link });
 		expect(rendered).not.toBeInstanceOf(Promise);
 		expect(rendered.subject).toBe('Confirm your address, Ada');
+	});
+});
+
+describe('the deprecated names', () => {
+	it('withTelemetry and withRendererTelemetry are the same functions as the new names, not copies', () => {
+		expect(withTelemetry).toBe(withMailTelemetry);
+		expect(withRendererTelemetry).toBe(withMailRendererTelemetry);
 	});
 });
