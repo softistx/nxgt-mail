@@ -289,16 +289,29 @@ export function subjectFor(
 	return `[nxgt-mail samples ${sha}] ${name} · ${locale} — ${rendered}`;
 }
 
-/** A minimal, valid `.eml`: headers, then `text/plain` and `text/html` parts. */
+/** `MAIL_FROM`, or a default that needs no real domain — dry-run's `.eml` uses this even when no transport is ever wired. */
+function defaultFrom(): string {
+	return process.env.MAIL_FROM ?? 'nxgt-mail-samples@localhost';
+}
+
+/**
+ * A minimal, valid RFC 5322 message: `From`, `To`, `Subject`, `Date`, then
+ * `text/plain` and `text/html` parts. `from` is never read from the message
+ * itself — under `--dry-run` no transport, and so no default sender, is ever
+ * wired.
+ */
 function eml(
 	message: MailMessage & { readonly html: string; readonly text: string },
+	from: string,
 ): string {
 	const boundary = 'nxgt-mail-samples-boundary';
 	const to =
 		typeof message.to === 'string' ? message.to : JSON.stringify(message.to);
 	return [
+		`From: ${from}`,
 		`To: ${to}`,
 		`Subject: ${message.subject}`,
+		`Date: ${new Date().toUTCString()}`,
 		'MIME-Version: 1.0',
 		`Content-Type: multipart/alternative; boundary="${boundary}"`,
 		'',
@@ -341,7 +354,14 @@ function maizzleBuild(bin: string, cwd: string): void {
 	}
 }
 
-/** The right-to-left fixture `packages/mail-ui/src/build.spec.ts` builds for "a right-to-left locale" — reused here, built fresh under a scratch dir removed before this returns. */
+/**
+ * The right-to-left fixture `packages/mail-ui/src/build.spec.ts` builds for
+ * its "a right-to-left locale" describe block — the `maizzle.config.ts`,
+ * both locale files and `emails/welcome.vue` are a verbatim copy of that
+ * spec's own fixture (its `files` object): change both, or this stops being
+ * what that spec proves is mirrored. Built fresh under a scratch dir the
+ * caller removes once every job has read from it.
+ */
 function buildRtlFixture(mailUi: string): string {
 	const scratch = join(mailUi, 'test/.tmp/rtl');
 	rmSync(scratch, { recursive: true, force: true });
@@ -439,8 +459,36 @@ async function main(): Promise<void> {
 		join(mailUi, 'node_modules/.bin/maizzle'),
 		join(mailUi, 'test/fixture'),
 	);
+	const rtlScratch = join(mailUi, 'test/.tmp/rtl');
 	const rtlDist = buildRtlFixture(mailUi);
+	try {
+		await sendJobs({
+			args,
+			sha,
+			mailPresets,
+			mailUi,
+			rtlDist,
+		});
+	} finally {
+		rmSync(rtlScratch, { recursive: true, force: true });
+	}
+}
 
+interface SendJobsOptions {
+	readonly args: Args;
+	readonly sha: string;
+	readonly mailPresets: string;
+	readonly mailUi: string;
+	readonly rtlDist: string;
+}
+
+async function sendJobs({
+	args,
+	sha,
+	mailPresets,
+	mailUi,
+	rtlDist,
+}: SendJobsOptions): Promise<void> {
 	let jobs = [
 		...jobsOf('mail-presets', join(mailPresets, 'test/fixture/dist')),
 		// Prefixed: mail-ui's own showcase fixture is also named welcome, and
@@ -504,7 +552,7 @@ async function main(): Promise<void> {
 		if (scratch !== undefined) {
 			const base = `${job.name}-${job.locale}`;
 			writeFileSync(join(scratch, `${base}.html`), html);
-			writeFileSync(join(scratch, `${base}.eml`), eml(message));
+			writeFileSync(join(scratch, `${base}.eml`), eml(message, defaultFrom()));
 			console.log(`send-samples: wrote ${base}.html, ${base}.eml`);
 		} else {
 			await (mailer as Mailer).send(message);
@@ -519,6 +567,11 @@ async function main(): Promise<void> {
 	console.log(
 		`send-samples: ${sent} e-mail(s) ${scratch === undefined ? 'sent' : 'written'}`,
 	);
+	printChecklist();
+}
+
+/** Dark mode is the client's choice, not the e-mail's: what to look at once one is reopened under it. */
+function printChecklist(): void {
 	console.log('');
 	console.log('Dark mode is chosen by the client, not the e-mail. Checklist:');
 	console.log(
