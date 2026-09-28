@@ -1,5 +1,11 @@
 # @nxgt/mail-config
 
+## 0.2.2
+
+### Patch Changes
+
+- [#83](https://github.com/softistx/nxgt-mail/pull/83) [`0db7590`](https://github.com/softistx/nxgt-mail/commit/0db75908ebb7063d5620a1beabbb4d9c47c79739) Thanks [@SteveGT96](https://github.com/SteveGT96)! - Name the supported Node floor, `>=20`, next to each package's peers.
+
 ## 0.2.1
 
 ### Patch Changes
