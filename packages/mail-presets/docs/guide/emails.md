@@ -1,6 +1,6 @@
 # The e-mails
 
-This page is for sending one of the thirteen presets, or rewording it: what each
+This page is for sending one of the fourteen presets, or rewording it: what each
 one is for, what it shows, the placeholders the sender fills, its subject,
 and every message it uses in `en` and `fr`.
 
@@ -41,6 +41,7 @@ export default defineMailConfig({
 | [`new-sign-in`](#new-sign-in) | An account was signed in from a device not seen before | `device`, `link`, `location`, `name`, `time` | `link` |
 | [`two-factor-enabled`](#two-factor-enabled) | Two-factor authentication was just turned on | `link`, `name` | `link` |
 | [`two-factor-disabled`](#two-factor-disabled) | Two-factor authentication was just turned off | `link`, `name` | `link` |
+| [`recovery-code-used`](#recovery-code-used) | A second-factor recovery code was spent | `link`, `name`, `recoveryCodesLeft`, `when` | `link` |
 | [`welcome`](#welcome) | An account was just created | `link`, `name` | `link` |
 | [`invitation`](#invitation) | Someone invites the recipient to an organisation | `expiresIn`, `inviter`, `link`, `organization` | `link` |
 | [`invitation-accepted`](#invitation-accepted) | The recipient invited to join an organisation accepted — sent to the inviter | `invitee`, `link`, `organization` | `link` |
@@ -82,10 +83,11 @@ To say nothing about expiry, replace the template (see
 argument, because the template still passes it.
 
 The other presets do not take it: `password-changed`, `new-sign-in`,
-`two-factor-enabled`, `two-factor-disabled`, `welcome` and `invitation-accepted`
-link to your site, not to a token, and `email-changed` says nothing
-about a lifetime its undo link may not have. To tell one, replace
-`email-changed.vue` with your own and pass it as a placeholder of yours.
+`two-factor-enabled`, `two-factor-disabled`, `recovery-code-used`, `welcome`
+and `invitation-accepted` link to your site, not to a token, and
+`email-changed` says nothing about a lifetime its undo link may not have. To
+tell one, replace `email-changed.vue` with your own and pass it as a
+placeholder of yours.
 
 ## What they share
 
@@ -102,7 +104,7 @@ typography does, so a line never starts with `:`. Keep it in a `fr` override.
 | `presets.code-expires` | This code expires in {expiresIn}. | Ce code expire dans {expiresIn}. | `sign-in-code` |
 | `presets.link-expires` | This link expires in {expiresIn}. | Ce lien expire dans {expiresIn}. | `verify-email`, `reset-password`, `magic-link` |
 | `presets.link-fallback` | If the button does not work, open this link: | Si le bouton ne fonctionne pas, ouvrez ce lien : | every preset with a `link` |
-| `presets.not-you` | If this was not you, secure your account now. | Si ce n'était pas vous, sécurisez votre compte dès maintenant. | `password-changed`, `email-changed`, `new-sign-in`, `account-deleted`, `two-factor-enabled`, `two-factor-disabled` |
+| `presets.not-you` | If this was not you, secure your account now. | Si ce n'était pas vous, sécurisez votre compte dès maintenant. | `password-changed`, `email-changed`, `new-sign-in`, `account-deleted`, `two-factor-enabled`, `two-factor-disabled`, `recovery-code-used` |
 | `common.greeting` | Hello {name}, | Bonjour {name}, | every preset but `sign-in-code`, `magic-link`, `invitation` and `invitation-accepted` |
 | `common.footer.ignore` | If you did not ask for this, you can ignore this e-mail. | Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet e-mail. | `verify-email`, `reset-password`, `magic-link` |
 | `common.footer.why` | You received this e-mail because you have an account with {brand}. | Vous recevez cet e-mail parce que vous avez un compte chez {brand}. | every preset, in the footer |
@@ -372,6 +374,55 @@ as text.
 Placeholders: `name`, `link` (a URL). Samples:
 [en](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/en/two-factor-disabled.html) ·
 [fr](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/fr/two-factor-disabled.html).
+
+## `recovery-code-used`
+
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/en/recovery-code-used.png" width="420" alt="The recovery-code-used e-mail, in English">
+
+[In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/fr/recovery-code-used.png)
+
+A notice, after a second-factor recovery code was spent. A title, the
+greeting, a warning banner naming when the code was used, how many recovery
+codes remain, the body with `presets.not-you`, the **Secure my account**
+button, and the link as text. `link` is where the user regenerates codes or
+secures the account — your recovery or account-settings page.
+
+| Key | `en` | `fr` |
+| --- | --- | --- |
+| `recovery-code-used.subject` | A recovery code was used on your account | Un code de récupération a été utilisé sur votre compte |
+| `recovery-code-used.preheader` | A recovery code from your account was just used. | Un code de récupération de votre compte vient d'être utilisé. |
+| `recovery-code-used.title` | A recovery code was used on your account | Un code de récupération a été utilisé sur votre compte |
+| `recovery-code-used.banner` | A recovery code was used on your account at {when}. | Un code de récupération a été utilisé sur votre compte le {when}. |
+| `recovery-code-used.codes-left` | `{recoveryCodesLeft, plural, =0 {You have no recovery codes left.} one {You have # recovery code left.} other {You have # recovery codes left.}}` | `{recoveryCodesLeft, plural, =0 {Il ne vous reste aucun code de récupération.} one {Il vous reste # code de récupération.} other {Il vous reste # codes de récupération.}}` |
+| `recovery-code-used.body` | If this was you, generate new codes from your {brand} account when you are running low. | Si c'était vous, générez de nouveaux codes depuis votre compte {brand} lorsque vous êtes à court. |
+| `recovery-code-used.action` | Secure my account | Sécuriser mon compte |
+
+Placeholders: `name`, `when`, `recoveryCodesLeft`, `link` (a URL). `when` is
+text the sender writes, as `new-sign-in.time`: format it in the recipient's
+locale and time zone before sending (`2 janvier 2026, 14:05 (Paris)`).
+
+`recovery-code-used.codes-left` is not read by the template — the build has
+no way to pick a plural branch for a count it only learns at send time (see
+[`@nxgt/mail-i18n`'s troubleshooting — a plural, a number or a date](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-i18n/docs/troubleshooting.md#i18n-en-verify-email-passes-minutes-to-verify-emailexpires-as-a-string--the-message-uses-it-as-a-number)).
+It exists so your code can format the sentence itself, with the real count
+and the recipient's plural rules, and pass the result as `recoveryCodesLeft`:
+
+```ts
+import { createTranslator } from '@nxgt/mail-i18n';
+import { presetCatalogues } from '@nxgt/mail-presets';
+
+const t = createTranslator(presetCatalogues, () => locale);
+const recoveryCodesLeft = t('recovery-code-used.codes-left', { recoveryCodesLeft: count });
+// en, count 0: 'You have no recovery codes left.'
+// en, count 1: 'You have 1 recovery code left.'
+// fr, count 1: 'Il vous reste 1 code de récupération.'
+
+mails.render('recovery-code-used', { name, when, recoveryCodesLeft, link }, { locale });
+```
+
+Samples:
+[en](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/en/recovery-code-used.html) ·
+[fr](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/fr/recovery-code-used.html).
 
 ## `welcome`
 

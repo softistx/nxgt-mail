@@ -33,6 +33,12 @@ Nothing yet. A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **`recovery-code-used`, v0.5.0** — a security notice for a spent
+  second-factor recovery code: `name`, `when` and `recoveryCodesLeft` (text
+  the sender writes, formatted in the recipient's language and plural rules —
+  `recovery-code-used.codes-left` carries the ICU plural for it), and `link`
+  to regenerate codes or secure the account. `PRESETS` now lists fourteen
+  names.
 - **Four more presets, v0.4.0** — `account-deleted` (accounts, with a
   required `expiresIn` for its restoration link), `two-factor-enabled` and
   `two-factor-disabled` (security), and `invitation-accepted` (lifecycle,
@@ -76,6 +82,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   `ui({ brand, theme })`, in every locale you list. `only` keeps the presets
   you name and their messages; a preset that does not exist, or one named
   twice, is refused.
-- **Overriding a preset, v0.1.0** — a template of the same name in your project's
-  `emails/` replaces a preset, and your `locales/<locale>.json` overrides any
-  of its messages key by key.

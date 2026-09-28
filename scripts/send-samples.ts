@@ -80,6 +80,7 @@ const LINKS: Readonly<Record<string, string>> = {
 	'account-deleted': 'https://acme.example/restore?token=5f2c9e',
 	'two-factor-enabled': 'https://acme.example/security',
 	'two-factor-disabled': 'https://acme.example/security',
+	'recovery-code-used': 'https://acme.example/security',
 	'invitation-accepted': 'https://acme.example/team',
 };
 
@@ -99,6 +100,8 @@ const EXAMPLES: Readonly<Record<string, Readonly<Record<string, string>>>> = {
 		device: 'Firefox on macOS',
 		location: 'Lyon, France',
 		time: 'September 26, 2026, 9:14 PM',
+		when: 'September 26, 2026, 9:14 PM',
+		recoveryCodesLeft: 'You have 3 recovery codes left.',
 		inviter: 'Grace Hopper',
 		invitee: 'Marie Curie',
 		organization: 'Acme Labs',
@@ -116,6 +119,8 @@ const EXAMPLES: Readonly<Record<string, Readonly<Record<string, string>>>> = {
 		device: 'Firefox sur macOS',
 		location: 'Lyon, France',
 		time: '26 septembre 2026 à 21:14',
+		when: '26 septembre 2026 à 21:14',
+		recoveryCodesLeft: 'Il vous reste 3 codes de récupération.',
 		inviter: 'Grace Hopper',
 		invitee: 'Marie Curie',
 		organization: 'Acme Labs',
