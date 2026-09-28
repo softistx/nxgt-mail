@@ -15,11 +15,10 @@ const mailer = withMailTelemetry(resendMailer, { transport: 'resend' });
 await mailer.send({ to, ...mails.render('verify-email', { name, link }) });
 ```
 
-`withTelemetry` and `withRendererTelemetry` — the pre-0.9 names — are kept as
-`@deprecated` aliases of the same two functions, so existing code keeps
-working; they are removed in 1.0. They were renamed because a project
-importing both `@nxgt/mail/telemetry` and `@nxgt/telemetry` had two different
-`withTelemetry` functions to disambiguate — `@nxgt/telemetry` also exports one.
+Before 0.9 these were `withTelemetry` and `withRendererTelemetry`; the old
+names were removed in 1.0. Import `withMailTelemetry` and
+`withMailRendererTelemetry` — the same functions under names that do not
+collide with `@nxgt/telemetry`'s own `withTelemetry`.
 
 `@opentelemetry/api` is an **optional peer**. With no SDK installed and
 registered, `trace.getTracer()` and `metrics.getMeter()` answer no-op

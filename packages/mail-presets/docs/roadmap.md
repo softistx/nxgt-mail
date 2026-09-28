@@ -33,6 +33,10 @@ Nothing yet. A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **A stable surface, v1.0.0** — semantic versioning from here: a new
+  required variable or a renamed catalogue key waits for the next major. The
+  `@nxgt/mail-i18n` and `@nxgt/mail-ui` peers move to `^1.0.0`, so upgrade
+  the `@nxgt/mail*` packages together. No preset changes.
 - **Four more presets, v0.4.0** — `account-deleted` (accounts, with a
   required `expiresIn` for its restoration link), `two-factor-enabled` and
   `two-factor-disabled` (security), and `invitation-accepted` (lifecycle,

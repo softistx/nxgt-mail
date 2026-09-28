@@ -64,11 +64,11 @@ MANIFEST_FORMAT; // 1 — the newest manifest format this @nxgt/mail reads
 const MANIFEST_FORMAT = 1;
 ```
 
-The promise, within 0.x:
+The promise:
 
 - **A renderer reads every format up to its own.** A build from any earlier
-  `@nxgt/mail-i18n` 0.x keeps working with a newer `@nxgt/mail`: a package
-  that ships a prebuilt format-1 build can peer `@nxgt/mail` `>=0.1.0 <1`.
+  `@nxgt/mail-i18n` keeps working with a newer `@nxgt/mail`: a package that
+  ships a prebuilt format-1 build can peer `@nxgt/mail` `>=0.1.0 <2`.
   The peer's lower bound is the first `@nxgt/mail` that reads the build's
   format.
 - **A manifest without `formatVersion` is format 1**, as `@nxgt/mail-i18n`

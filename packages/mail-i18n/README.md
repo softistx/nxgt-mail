@@ -22,7 +22,8 @@ Your project stays a Maizzle project: `emails/`, `components/`, `public/`,
 `maizzle serve`, `maizzle build`. The plugin adds `locales/`, and gives each
 template `t`, `locale`, `dir` and `placeholder`.
 
-> **0.x.** A minor version may still change the surface; the changelog says how.
+> **1.x.** Semantic versioning: a breaking change waits for the next major,
+> and the changelog says what each release changes.
 
 ## Install
 
@@ -344,7 +345,7 @@ locale, and its files:
 
 `createMailRenderer` from `@nxgt/mail/renderer` reads it at send time:
 `createMailRenderer({ dir: 'dist' }).render('verify-email', { name, link })`
-answers the subject, HTML and text, every value escaped. Within 0.x, a newer
+answers the subject, HTML and text, every value escaped. A newer
 `@nxgt/mail` reads a build from any earlier `@nxgt/mail-i18n`: see
 [The manifest — `formatVersion`](docs/guide/manifest.md#formatversion).
 

@@ -21,7 +21,8 @@ export default defineMailConfig({
 Your project stays a Maizzle project: `emails/`, `components/`, `public/`,
 `maizzle serve`, `maizzle build`. Nothing here replaces a Maizzle command.
 
-> **0.x.** A minor version may still change the surface; the changelog says how.
+> **1.x.** Semantic versioning: a breaking change waits for the next major,
+> and the changelog says what each release changes.
 
 ## Install
 

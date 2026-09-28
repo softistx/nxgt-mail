@@ -1,9 +1,10 @@
 # Plan — 1.0
 
-**Status: Accepted.** Steve accepted every recommendation below, as written
-(the open questions at the end record his answers). Nothing here changes
-behaviour yet: it is what `1.0.0` freezes, across all seven published
-packages, and the rules this repository holds to afterwards.
+**Status: Done — `1.0.0` cut.** Steve accepted every recommendation below, as
+written (the questions at the end record his answers), then decided on
+2026-09-28 to cut `1.0.0` without waiting for the first two entry criteria
+(see [Entry criteria](#entry-criteria)). This is what `1.0.0` froze, across
+all seven published packages, and the rules this repository holds to since.
 
 Read [`AGENTS.md`](../AGENTS.md) and [`docs/plan.md`](./plan.md) first: this
 document assumes the invariant (*an absence is `null`, a failure throws*),
@@ -16,8 +17,8 @@ records what changes **on top of them** at the 1.0 boundary.
 
 All seven packages are `0.x`, released and used by `@nxgt/janus-mail`. Two
 renames already landed as `@deprecated` aliases scheduled for removal
-in 1.0 (`withTelemetry`/`withRendererTelemetry`, PR #77; `RetryOptions`, this
-session) — 1.0 is no longer a future abstraction, it is where those aliases
+in 1.0 (`withTelemetry`/`withRendererTelemetry`, PR #77; `RetryOptions`,
+PR #80) — 1.0 is no longer a future abstraction, it is where those aliases
 actually go away. This is the moment to write down, once, what freezes and
 what a consumer can rely on after that.
 
@@ -215,9 +216,11 @@ a build-time plugin than for a component library:
 ### Deprecation window
 
 Decided: an alias marked `@deprecated` is **never removed before the next
-major** — every alias added in 0.x stays until 2.0. A shorter window for a
-specific alias would have to be stated in that alias's own doc comment when
-it is added; absent that, the rule is "until the next major".
+major**. An alias whose own doc comment names the major it goes in is
+removed there: the three 0.x aliases (`withTelemetry`,
+`withRendererTelemetry`, `RetryOptions`) each said "removed in 1.0", and
+went in `1.0.0`. Absent such a note, the rule is "until the next major" —
+an alias added in 1.x stays until 2.0.
 
 ### Peer ranges after 1.0
 
@@ -254,7 +257,11 @@ Node servers today. Maizzle support stays pinned to `^6.1.7`
 
 ## Entry criteria
 
-Required, all of them, before cutting `1.0.0`:
+Required, all of them, before cutting `1.0.0` — as planned. **Steve waived
+1 and 2 on 2026-09-28** ("nothing stops us from going to 1.0"): `1.0.0` was
+cut without the four weeks of production and before the real-client check,
+which he runs on his own schedule; a defect either finds is a 1.x patch.
+3 to 6 held at the cut.
 
 1. **`@nxgt/janus-mail` in production for at least four weeks** with no
    rollback attributed to a `@nxgt/mail*` package.

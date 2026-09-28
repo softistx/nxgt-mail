@@ -45,6 +45,10 @@ Nothing yet. A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **A stable surface, v1.0.0** — semantic versioning from here: a breaking
+  change waits for the next major. `@nxgt/mail-i18n` and `@nxgt/mail-ui`
+  now peer this package at `^1.0.0`, so upgrade the `@nxgt/mail*` packages
+  together. No API change here.
 - **A source line Maizzle wrapped no longer breaks the text mid-sentence,
   v0.2.1** — `breakBlocks` marks a paragraph and a line break instead of
   writing `\n\n` and `\n` directly, so `tidyPlaintext` can tell a source line

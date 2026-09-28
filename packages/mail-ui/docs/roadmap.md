@@ -58,6 +58,11 @@ Nothing yet. A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **A stable surface, v1.0.0** — semantic versioning from here: a breaking
+  change waits for the next major; a new default for a theme token is a
+  minor, a token renamed or removed a major. The `@nxgt/mail-config` peer
+  moves to `^1.0.0`, so upgrade the `@nxgt/mail*` packages together. No
+  component, prop or token changes.
 - **The optional dark tokens reach every remaining component, v0.7.0** —
   `color-primary-dark`/`color-primary-foreground-dark` now also carries
   `NxActionCard`'s active ring, icon box and indicator, `NxExtendedLabel`'s

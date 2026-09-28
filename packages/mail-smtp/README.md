@@ -27,7 +27,8 @@ const { messageId } = await mailer.send({
 }); // '<…@acme.test>' — or it throws
 ```
 
-> **0.x.** A minor version may still change the surface; the changelog says how.
+> **1.x.** Semantic versioning: a breaking change waits for the next major,
+> and the changelog says what each release changes.
 
 ## Install
 
@@ -37,9 +38,8 @@ bun add @nxgt/mail-smtp @nxgt/mail nodemailer
 
 Peers, all required:
 
-- `@nxgt/mail` — the port, the errors and the checks: `^0.5`, the version
-  whose conformance suite checks `idempotencyKey`. One copy in your tree, so `error instanceof MailFailure`
-  holds.
+- `@nxgt/mail` (`^1`) — the port, the errors and the checks. One copy in your
+  tree, so `error instanceof MailFailure` holds.
 - `nodemailer` (`>=7 <11`; tested with 10). This package never imports it:
   you create the transporter, with every SMTP option nodemailer has.
 - `typescript` (6). Bundler resolution (`"moduleResolution": "bundler"`) is

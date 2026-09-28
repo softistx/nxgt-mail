@@ -40,6 +40,9 @@ Nothing planned yet. Say what you need in an issue.
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **A stable surface, v1.0.0** — semantic versioning from here: a breaking
+  change waits for the next major. The `@nxgt/mail` peer moves to `^1.0.0`,
+  so upgrade the two together. No API change here.
 - **`@nxgt/mail` 0.8, v0.5.1** — the peer moves to `^0.8.0`, the version with
   `@nxgt/mail/telemetry`, delivery events and `sendBatch`. No change here:
   SMTP has no webhook of its own, so it maps no delivery events — see

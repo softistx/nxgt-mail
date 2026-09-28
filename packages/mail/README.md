@@ -25,7 +25,8 @@ on your nodemailer, or
 [`@nxgt/mail-resend`](https://github.com/softistx/nxgt-mail/tree/develop/packages/mail-resend)
 over `fetch`.
 
-> **0.x.** A minor version may still change the surface; the changelog says how.
+> **1.x.** Semantic versioning: a breaking change waits for the next major,
+> and the changelog says what each release changes.
 
 ## Install
 
@@ -91,10 +92,10 @@ variable missing or unknown, and a number for a URL variable, as
 [Rendering](docs/guide/rendering.md) for the options, typing the renderer,
 the locale chosen through `getLanguage`, and every error.
 
-A renderer reads every manifest format up to its `MANIFEST_FORMAT`, within
-0.x: a build from any earlier `@nxgt/mail-i18n` 0.x keeps working with a newer
-`@nxgt/mail`, so a package that ships a prebuilt format-1 build can peer
-`@nxgt/mail` `>=0.1.0 <1` — the lower bound is the first `@nxgt/mail` that
+A renderer reads every manifest format up to its `MANIFEST_FORMAT`: a build
+from any earlier `@nxgt/mail-i18n` keeps working with a newer `@nxgt/mail`, so
+a package that ships a prebuilt format-1 build can peer `@nxgt/mail`
+`>=0.1.0 <2` — the lower bound is the first `@nxgt/mail` that
 reads the build's format. A build in a newer format fails at start-up with
 `… is manifest format 2, newer than this @nxgt/mail reads (1) — upgrade
 @nxgt/mail`. See
@@ -286,11 +287,6 @@ throws `MailFailure` for it, as for every other outage, since nothing tells
 the two apart. `withRetry` therefore retries it like any other `MailFailure`;
 pass `attempts: 1` to a mailer built on SMTP if that risk is not acceptable.
 See [Sending — retrying](docs/guide/sending.md#retrying--withretry).
-
-> `withRetry`'s options type is `MailRetryOptions`. The old name,
-> `RetryOptions`, is kept as a `@deprecated` type alias of the same shape —
-> for a project already importing `@nxgt/httpyz`, whose own `RetryOptions`
-> the old name collided with. Removed in 1.0.
 
 ### Sending many at once — `sendBatch`
 
@@ -601,11 +597,6 @@ const mailer = withMailTelemetry(resendMailer, { transport: 'resend' }); // span
 
 await mailer.send({ to, ...mails.render('verify-email', { name, link }) });
 ```
-
-> `withTelemetry` and `withRendererTelemetry` are kept as `@deprecated`
-> aliases of `withMailTelemetry` and `withMailRendererTelemetry` — the same
-> functions — for a project already importing `@nxgt/telemetry`, whose own
-> `withTelemetry` the old names collided with. Removed in 1.0.
 
 `mail.send` (kind `CLIENT`) carries the transport's name, the recipient
 **count**, the tags' **names** (never their values), whether an idempotency

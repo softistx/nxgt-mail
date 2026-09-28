@@ -258,9 +258,3 @@ export function withRetry(mailer: Mailer, options?: MailRetryOptions): Mailer {
 		DEFAULT_RETRY_HOOKS,
 	);
 }
-
-/**
- * @deprecated Use {@link MailRetryOptions} instead. `RetryOptions` collides
- * with `@nxgt/httpyz`'s own export of the same name — removed in 1.0.
- */
-export type RetryOptions = MailRetryOptions;

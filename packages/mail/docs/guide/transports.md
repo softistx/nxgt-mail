@@ -67,15 +67,15 @@ A transport:
 ```json
 {
 	"peerDependencies": {
-		"@nxgt/mail": "^0.3.0"
+		"@nxgt/mail": "^1.0.0"
 	}
 }
 ```
 
-On `0.x`, a caret covers one minor: `^0.3.0` is `>=0.3.0 <0.4.0`. Declare the
-minor whose `MailMessage` your transport reads — `0.2` is the one with
-`attachments`, `0.3` the one with `idempotencyKey` — and release your
-transport when `@nxgt/mail` moves to the next.
+A caret covers a major: `^1.0.0` is `>=1.0.0 <2.0.0`. A new `MailMessage`
+field arrives in a minor: set the lower bound to the minor whose fields your
+transport reads, and release your transport when `@nxgt/mail` adds one it
+should handle, or moves to the next major.
 
 An error's `message` reports a shape, never a value: never an address, a
 subject, a link, an API key or a connection string. What the provider said goes

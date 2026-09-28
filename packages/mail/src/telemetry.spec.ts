@@ -13,12 +13,7 @@ import {
 import { MailFailure, MailRefused } from './errors';
 import { createMemoryMailer } from './memory';
 import { createMailRenderer } from './renderer';
-import {
-	withMailRendererTelemetry,
-	withMailTelemetry,
-	withRendererTelemetry,
-	withTelemetry,
-} from './telemetry';
+import { withMailRendererTelemetry, withMailTelemetry } from './telemetry';
 import type { Mailer, MailMessage } from './types';
 
 const built = new URL('../test/built', import.meta.url).pathname;
@@ -315,12 +310,5 @@ describe('withMailRendererTelemetry(renderer) — the span', () => {
 		const rendered = mails.render('verify-email', { name: 'Ada', link });
 		expect(rendered).not.toBeInstanceOf(Promise);
 		expect(rendered.subject).toBe('Confirm your address, Ada');
-	});
-});
-
-describe('the deprecated names', () => {
-	it('withTelemetry and withRendererTelemetry are the same functions as the new names, not copies', () => {
-		expect(withTelemetry).toBe(withMailTelemetry);
-		expect(withRendererTelemetry).toBe(withMailRendererTelemetry);
 	});
 });
