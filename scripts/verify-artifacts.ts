@@ -517,18 +517,16 @@ async function main(): Promise<void> {
 
 		const subpaths = packages.flatMap((p) => p.subpaths);
 		console.log(`Importing ${subpaths.length} declared subpaths…\n`);
-		const probe = subpaths
-			.map(
-				(s) =>
-					`try { const m = await import(${JSON.stringify(s)});` +
-					` console.log("  ok      ${s.padEnd(40)}" + Object.keys(m).length + " exports"); }` +
-					` catch (e) { failed++; console.log("  FAIL    ${s.padEnd(40)}" + e.message.split("\\n")[0]); }`,
-			)
-			.join('\n');
-		await Bun.write(
-			join(workdir, 'probe.mjs'),
-			`let failed = 0;\n${probe}\nprocess.exit(failed);\n`,
-		);
+		const probeOf = (list: readonly string[]) =>
+			`let failed = 0;\n${list
+				.map(
+					(s) =>
+						`try { const m = await import(${JSON.stringify(s)});` +
+						` console.log("  ok      ${s.padEnd(40)}" + Object.keys(m).length + " exports"); }` +
+						` catch (e) { failed++; console.log("  FAIL    ${s.padEnd(40)}" + e.message.split("\\n")[0]); }`,
+				)
+				.join('\n')}\nprocess.exit(failed);\n`;
+		await Bun.write(join(workdir, 'probe.mjs'), probeOf(subpaths));
 
 		const result = await $`bun run probe.mjs`.cwd(workdir).nothrow();
 		if (result.exitCode !== 0) {
@@ -539,6 +537,37 @@ async function main(): Promise<void> {
 			process.exit(1);
 		}
 		console.log(`\nAll ${subpaths.length} subpaths load.`);
+
+		// The READMEs promise Node >=20; CI's setup-node pins that floor. The
+		// same probe under Node catches a subpath only Bun can load — a `bun`
+		// export condition, a `Bun.*` call, a `.ts` specifier. Without a
+		// `node` on PATH it is skipped locally, and fails in CI.
+		const node = await $`node --version`.quiet().nothrow();
+		if (node.exitCode !== 0) {
+			if (process.env.CI) {
+				console.error('\nNo `node` on PATH: CI must run the probe under Node.');
+				process.exit(1);
+			}
+			console.log('\nNo `node` on PATH: skipping the probe under Node.');
+		} else {
+			const version = node.stdout.toString().trim();
+			// A stylesheet subpath (`@nxgt/mail-ui/theme.css`) is read by Tailwind,
+			// never imported by JavaScript: Bun loads it, Node refuses the extension.
+			const scripts = subpaths.filter((s) => !s.endsWith('.css'));
+			await Bun.write(join(workdir, 'probe-node.mjs'), probeOf(scripts));
+			console.log(
+				`\nImporting the ${scripts.length} JavaScript subpaths again under Node ${version}…\n`,
+			);
+			const underNode = await $`node probe-node.mjs`.cwd(workdir).nothrow();
+			if (underNode.exitCode !== 0) {
+				console.error(
+					`\n${underNode.exitCode} subpath(s) failed to load under Node ${version}.\n` +
+						'Every README says the packages run on Node >=20.',
+				);
+				process.exit(1);
+			}
+			console.log(`\nAll ${scripts.length} load under Node ${version}.`);
+		}
 
 		// ── one class per package ─────────────────────────────────────────────────
 		//

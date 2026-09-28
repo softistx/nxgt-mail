@@ -38,7 +38,8 @@ No runtime dependency. `typescript` (6) is a required peer. Your tsconfig
 resolves as a bundler does (`"moduleResolution": "bundler"`): the declarations
 import without extensions, so `nodenext` is not supported.
 
-Runs on Node `>=20`, Bun or Deno; CI tests on Bun only.
+Runs on Node `>=20`, Bun or Deno; CI runs the tests on Bun, and
+imports the packed package under Node 20.
 
 ## Subpaths
 

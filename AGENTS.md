@@ -305,7 +305,11 @@ Carry each difference over when janus gets the same thing (`@nxgt/janus-mail`):
 `nxgt.noNodeBuiltins` step (`builtinImports`, `importTarget`,
 `noNodeBuiltinProblems` and its place in `main`): no janus package says it
 runs on an edge runtime. Carry it over the day one does, and keep it when
-syncing the copies.
+syncing the copies. It also runs the import probe a second time under Node
+(`probe-node.mjs`, the JavaScript subpaths only; a `.css` one is read by
+Tailwind, not imported), which CI pins to Node 20 with `setup-node`: every
+README here names Node `>=20`. Without a `node` on PATH that step is
+skipped locally and fails in CI.
 
 `scripts/check-nxgt-versions.ts` (and its `nxgt-versions` workflow, weekly)
 differs by reading `dependencies` as well as `devDependencies`: here the one

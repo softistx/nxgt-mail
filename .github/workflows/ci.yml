@@ -66,6 +66,12 @@ jobs:
       # The build exits 0 on packages that throw the instant they are imported —
       # it happened three times in nxgt-core. This packs them, installs them as a consumer
       # does and imports every declared subpath.
+      # Every README names Node >=20: the floor, not the runner's default, runs
+      # the same probe under Node.
+      - name: Setup Node at the floor the READMEs name
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
       - name: Verify the built artifacts load
         run: bun run verify:artifacts
       # examples/starter is the READMEs followed in an empty Maizzle project:
