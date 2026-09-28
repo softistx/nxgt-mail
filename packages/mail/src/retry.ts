@@ -2,7 +2,7 @@ import { MailFailure } from './errors';
 import type { MailBatchResult, Mailer, MailMessage, SentMail } from './types';
 
 /** Options `withRetry` accepts. Every field is optional; the defaults suit a transactional e-mail. */
-export interface RetryOptions {
+export interface MailRetryOptions {
 	/**
 	 * How many times `send` is tried in all, the first try included. A
 	 * message that still fails after this many is the final `MailFailure`,
@@ -77,7 +77,7 @@ export const DEFAULT_RETRY_HOOKS: RetryHooks = {
 	newIdempotencyKey: () => crypto.randomUUID(),
 };
 
-function checkOptions(options: RetryOptions): void {
+function checkOptions(options: MailRetryOptions): void {
 	if (typeof options !== 'object' || options === null) {
 		throw new TypeError(
 			'withRetry: options must be an object, as { attempts }',
@@ -151,7 +151,7 @@ function delayFor(
  */
 export function createRetryingMailer(
 	mailer: Mailer,
-	options: RetryOptions = {},
+	options: MailRetryOptions = {},
 	hooks: RetryHooks = DEFAULT_RETRY_HOOKS,
 ): Mailer {
 	if (
@@ -248,7 +248,7 @@ export function createRetryingMailer(
  * own contract already answers a `MailBatchResult` per message instead of
  * throwing; retry the ones that come back `failed`, one by one, with `send`.
  */
-export function withRetry(mailer: Mailer, options?: RetryOptions): Mailer {
+export function withRetry(mailer: Mailer, options?: MailRetryOptions): Mailer {
 	// Not `options ?? {}`: an explicit `null` must still reach checkOptions
 	// and be refused, as `undefined` (omitted) does not — createRetryingMailer's
 	// own default parameter only applies to `undefined`.
@@ -258,3 +258,9 @@ export function withRetry(mailer: Mailer, options?: RetryOptions): Mailer {
 		DEFAULT_RETRY_HOOKS,
 	);
 }
+
+/**
+ * @deprecated Use {@link MailRetryOptions} instead. `RetryOptions` collides
+ * with `@nxgt/httpyz`'s own export of the same name — removed in 1.0.
+ */
+export type RetryOptions = MailRetryOptions;

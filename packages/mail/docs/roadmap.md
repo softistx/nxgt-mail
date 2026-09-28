@@ -64,6 +64,11 @@ Nothing yet.
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **`RetryOptions` renamed, v0.9.0** — `withRetry`'s options type is renamed
+  `MailRetryOptions`: `@nxgt/httpyz` exports its own `RetryOptions`,
+  colliding for a project importing both. The old name is kept as a
+  `@deprecated` type alias of the same shape — no behaviour change — removed
+  in 1.0.
 - **Telemetry names collision-proofed, v0.9.0** — `withTelemetry` and
   `withRendererTelemetry` are renamed to `withMailTelemetry` and
   `withMailRendererTelemetry`: `@nxgt/telemetry` exports its own
@@ -138,10 +143,3 @@ before is in the [CHANGELOG](../CHANGELOG.md).
   other field: a newer format is refused at start-up, naming both numbers. A
   manifest without `formatVersion` is format 1, so a package that ships a
   prebuilt format-1 build can peer `@nxgt/mail` `>=0.1.0 <1`.
-- **The idempotency key in the conformance suite, and the unsubscribe URL as
-  written, v0.5.0** — a fourteenth case, `send.idempotencyKey`, delivers a
-  message with a fresh key and expects it never refused for it, the key in
-  none of its recipients, subject, HTML or text. `listUnsubscribe` writes
-  `new URL(url).href` and checks it as well as what it was given: a `%` that
-  starts no escape, or a host escape decoded into a refused character, is a
-  `MailRefused`. SMTP and Resend move their peer to `^0.5.0`.

@@ -48,6 +48,7 @@ export {
 	recipientsOf,
 } from './message';
 export {
+	type MailRetryOptions,
 	type RetryExhausted,
 	type RetryOptions,
 	withRetry,
