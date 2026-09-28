@@ -8,7 +8,7 @@ packages, and the rules this repository holds to afterwards.
 Read [`AGENTS.md`](../AGENTS.md) and [`docs/plan.md`](./plan.md) first: this
 document assumes the invariant (*an absence is `null`, a failure throws*),
 the manifest contract, and the casing and layout rules already hold, and
-proposes what changes **on top of them** at the 1.0 boundary.
+records what changes **on top of them** at the 1.0 boundary.
 
 ---
 
@@ -52,7 +52,7 @@ Subpaths `./renderer` (`MANIFEST_FORMAT`, `MailVariables`, `MailEmailsOf<E>`,
 `referenceMailerHarness`, the sample builders and harness types), and
 `./telemetry` (`withMailTelemetry`, `MailTelemetryOptions`,
 `withMailRendererTelemetry`, `MailRendererTelemetryOptions`). **Zero
-required dependencies** — proposed to freeze as a permanent invariant, not
+required dependencies** — frozen as a permanent invariant, not
 just today's state.
 
 **19 conformance cases**: 9 in `send` (`answersSentMail`, `deliversBytes`,
@@ -191,11 +191,11 @@ workspace:^`, `@nxgt/mail-ui: workspace:^`, `typescript: ^6.0.3`,
 
 ---
 
-## Policies proposed for after 1.0
+## Policies after 1.0
 
 ### What counts as a breaking change
 
-Proposed, package by package, since "breaking" means something different for
+Decided package by package, since "breaking" means something different for
 a build-time plugin than for a component library:
 
 | Change | Breaking? |
@@ -214,14 +214,14 @@ a build-time plugin than for a component library:
 
 ### Deprecation window
 
-Proposed: an alias marked `@deprecated` is **never removed before the next
-major**. If Steve wants a shorter window post-1.0 (a documented number of
-minor releases), state it in the alias's own doc comment when it is added —
-the default, absent that, is "until 2.0".
+Decided: an alias marked `@deprecated` is **never removed before the next
+major** — every alias added in 0.x stays until 2.0. A shorter window for a
+specific alias would have to be stated in that alias's own doc comment when
+it is added; absent that, the rule is "until the next major".
 
 ### Peer ranges after 1.0
 
-Proposed: every `workspace:^`-published peer on a `@nxgt/mail*` package
+Decided: every `workspace:^`-published peer on a `@nxgt/mail*` package
 moves from the 0.x cascade to `^1` once the peer itself reaches 1.0 —
 `@nxgt/mail-smtp` and `@nxgt/mail-resend`'s `@nxgt/mail` peer, `@nxgt/mail-i18n`'s
 `@nxgt/mail-config` peer, `@nxgt/mail-presets`'s `@nxgt/mail-i18n`/`@nxgt/mail-ui`
@@ -232,10 +232,10 @@ repository's own 1.0.
 ### The manifest format policy
 
 Already written in `AGENTS.md` ("The manifest is a contract across
-versions") and not proposed to change: `MANIFEST_FORMAT` bumps only when the
+versions") and not changed by this plan: `MANIFEST_FORMAT` bumps only when the
 shape changes, a renderer reads every format up to its own forever, and a
 newer format than a renderer understands is refused at start-up naming both
-numbers. The only addition proposed here is the semver classification above
+numbers. The only addition made here is the semver classification above
 — a new format is a **minor**, not a major, of both `@nxgt/mail` and
 `@nxgt/mail-i18n`, since nothing existing breaks.
 
@@ -243,10 +243,10 @@ numbers. The only addition proposed here is the semver classification above
 
 No package declares an `engines` field today; the root `package.json` only
 pins `packageManager: bun@1.4.2`, and CI runs Bun only (no Node version
-matrix). Proposed for 1.0: add `engines: { bun: ">=1.4.0" }` to every
-package, and document a Node floor in each README (proposed: Node `>=20`,
-the active LTS this plan was written against) even though CI does not test
-it directly, since `@nxgt/mail`'s runtime-agnostic packages are used from
+matrix). Decided for 1.0: no `engines` field is added; each README's peers table
+names the supported Node floor, Node `>=20` (the active LTS this plan was
+written against), even though CI runs Bun only and does not test Node
+directly, since `@nxgt/mail`'s runtime-agnostic packages are used from
 Node servers today. Maizzle support stays pinned to `^6.1.7`
 (`@maizzle/tailwindcss` `^1.5.6`) until a Maizzle 7 exists to evaluate.
 
@@ -254,7 +254,7 @@ Node servers today. Maizzle support stays pinned to `^6.1.7`
 
 ## Entry criteria
 
-Proposed, all of them, before cutting `1.0.0`:
+Required, all of them, before cutting `1.0.0`:
 
 1. **`@nxgt/janus-mail` in production for at least four weeks** with no
    rollback attributed to a `@nxgt/mail*` package.
@@ -316,4 +316,4 @@ Each with a recommended answer. **Steve accepted all five recommendations.**
 
 ---
 
-*See [`docs/plan.md`](./plan.md) for the 0.x work this proposal builds on.*
+*See [`docs/plan.md`](./plan.md) for the 0.x work this plan builds on.*
