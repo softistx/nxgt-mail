@@ -309,6 +309,7 @@ tell one from a line Maizzle wrapped in the built HTML:
 | --- | --- |
 | `p`, `h1`–`h6`, `ul`, `ol`, `table`, `blockquote` | A blank line, marked |
 | `br`, `hr`, and the end of a `div`, `tr` or `li` | A line break, marked: two list items in a row are two lines, not two paragraphs |
+| The end of a `td` or `th` | A space, marked: a row's cells stay on one line, even in a minified build where a line break sits before `</td>` |
 | `pre` | Its content, marked so `tidyPlaintext` keeps every line, between a blank line on either side |
 | Any other | What `string-strip-html` proposes — a link's address still written after it |
 

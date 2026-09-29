@@ -143,7 +143,8 @@ the error reaches Maizzle, which fails the build.
 ### The plain-text part
 
 Without asking, each template gets a `.txt` part that reads as one: a blank
-line between paragraphs, a line break for each `<br>`, row or list item, a
+line between paragraphs, a line break for each `<br>`, row or list item —
+a row's cells side by side, a space apart — a
 button's address on its own line, every line of a `<pre>` kept, no invisible
 character from a `<Spacer>`, an `<Hr>` or the preheader's padding, a link
 whose text is its address written once, and a long source line Maizzle

@@ -45,8 +45,8 @@ Nothing yet. A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
-- **A table row stays on one line in a minified build's text part, next
-  patch** — with `productionConfig`, `Device {{ device }}` no longer splits
+- **A table row stays on one line in a minified build's text part,
+  v1.0.2** — with `productionConfig`, `Device {{ device }}` no longer splits
   in two, nor gets a blank line between rows: a cell ends with a space.
 - **A stable surface, v1.0.0** — semantic versioning from here: a breaking
   change waits for the next major. `@nxgt/mail-i18n` and `@nxgt/mail-ui`

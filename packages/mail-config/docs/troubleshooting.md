@@ -528,9 +528,8 @@ table; the same template built with `defineMailConfig` alone writes
 `Device {{ device }}` on one line.
 **Why:** the minifier leaves a line break before each `</td>`, and the base
 kept it as a break of the text part whenever a placeholder or an address
-followed. Fixed in the next patch of `@nxgt/mail-config`.
-**Fix:** upgrade `@nxgt/mail-config` to the next patch. Until then, build
-the text part without minifying, or accept the two lines.
+followed. Fixed in `@nxgt/mail-config` 1.0.2.
+**Fix:** upgrade `@nxgt/mail-config` to 1.0.2 or later.
 
 ### A bug in `@nxgt/mail-config` itself
 
