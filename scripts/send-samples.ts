@@ -81,6 +81,7 @@ const LINKS: Readonly<Record<string, string>> = {
 	'two-factor-enabled': 'https://acme.example/security',
 	'two-factor-disabled': 'https://acme.example/security',
 	'recovery-code-used': 'https://acme.example/security',
+	'confirm-action': 'https://acme.example/security',
 	'invitation-accepted': 'https://acme.example/team',
 };
 

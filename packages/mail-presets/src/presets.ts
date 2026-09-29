@@ -21,6 +21,7 @@ export const PRESETS = [
 	'two-factor-enabled',
 	'two-factor-disabled',
 	'recovery-code-used',
+	'confirm-action',
 	'welcome',
 	'invitation',
 	'invitation-accepted',
