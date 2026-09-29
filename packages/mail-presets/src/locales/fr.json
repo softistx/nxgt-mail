@@ -89,6 +89,14 @@
 		"body": "Si c'était vous, générez de nouveaux codes depuis votre compte {brand} lorsque vous êtes à court.",
 		"action": "Sécuriser mon compte"
 	},
+	"confirm-action": {
+		"subject": "Votre code de confirmation",
+		"preheader": "Saisissez ce code pour confirmer votre demande.",
+		"title": "Votre code de confirmation",
+		"body": "Quelqu'un, nous l'espérons vous, a demandé une action sensible sur votre compte {brand}. Saisissez ce code pour la confirmer.",
+		"warning": "Si ce n'était pas vous, ne communiquez pas ce code : quelqu'un essaie peut-être d'agir sur votre compte. Sécurisez votre compte dès maintenant.",
+		"action": "Sécuriser mon compte"
+	},
 	"welcome": {
 		"subject": "Bienvenue, {name}",
 		"preheader": "Votre compte est prêt.",

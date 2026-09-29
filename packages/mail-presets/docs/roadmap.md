@@ -33,6 +33,11 @@ Nothing yet. A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **`confirm-action`, v1.1.0** — a one-time code e-mailed to confirm a
+  sensitive action (step-up re-authentication): `name`, `code`, `expiresIn`
+  and `link` to secure the account, with the "not you?" wording of the
+  security presets. Generic, with no `action` variable. `PRESETS` now lists
+  fifteen names.
 - **A stable surface, v1.0.0** — semantic versioning from here: a new
   required variable or a renamed catalogue key waits for the next major. The
   `@nxgt/mail-i18n` and `@nxgt/mail-ui` peers move to `^1.0.0`, so upgrade

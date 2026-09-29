@@ -89,6 +89,14 @@
 		"body": "If this was you, generate new codes from your {brand} account when you are running low.",
 		"action": "Secure my account"
 	},
+	"confirm-action": {
+		"subject": "Your confirmation code",
+		"preheader": "Enter this code to confirm your request.",
+		"title": "Your confirmation code",
+		"body": "Someone, we hope you, asked to do something sensitive on your {brand} account. Enter this code to confirm it.",
+		"warning": "If this was not you, do not share this code: someone may be trying to act on your account. Secure your account now.",
+		"action": "Secure my account"
+	},
 	"welcome": {
 		"subject": "Welcome, {name}",
 		"preheader": "Your account is ready.",

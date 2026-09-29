@@ -52,7 +52,7 @@ and the brand `Acme`.
 **Wiring**: when `maizzle.config.ts` loads
 - [`presets: options must be an object, as { only: ['verify-email'] }`](#presets-options-must-be-an-object-as--only-verify-email-)
 - [`presets: only must list at least one preset, as ['verify-email']`](#presets-only-must-list-at-least-one-preset-as-verify-email)
-- [`presets: only holds something that is not a preset — name one of verify-email, reset-password, …`](#presets-only-holds-something-that-is-not-a-preset--name-one-of-verify-email-reset-password-password-changed-email-changed-account-deleted-sign-in-code-magic-link-new-sign-in-two-factor-enabled-two-factor-disabled-recovery-code-used-welcome-invitation-invitation-accepted)
+- [`presets: only holds something that is not a preset — name one of verify-email, reset-password, …`](#presets-only-holds-something-that-is-not-a-preset--name-one-of-verify-email-reset-password-password-changed-email-changed-account-deleted-sign-in-code-magic-link-new-sign-in-two-factor-enabled-two-factor-disabled-recovery-code-used-confirm-action-welcome-invitation-invitation-accepted)
 - [`presets: only holds the same preset twice`](#presets-only-holds-the-same-preset-twice)
 - [`i18n: templates must be a list of template folders, as [{ dir: '/abs/path/emails' }] — emails, when given, names at least one, each once`](#i18n-templates-must-be-a-list-of-template-folders-as--dir-abspathemails---emails-when-given-names-at-least-one-each-once)
 - [`i18n: templates[0] and templates[1] both have welcome.vue — keep one with emails: [...], or write the project's own in its folder`](#i18n-templates0-and-templates1-both-have-welcomevue--keep-one-with-emails--or-write-the-projects-own-in-its-folder)
@@ -110,7 +110,7 @@ presets({ only: ['welcome'] });   // not only: 'welcome', not only: []
 presets();                        // every preset
 ```
 
-### `presets: only holds something that is not a preset — name one of verify-email, reset-password, password-changed, email-changed, account-deleted, sign-in-code, magic-link, new-sign-in, two-factor-enabled, two-factor-disabled, recovery-code-used, welcome, invitation, invitation-accepted`
+### `presets: only holds something that is not a preset — name one of verify-email, reset-password, password-changed, email-changed, account-deleted, sign-in-code, magic-link, new-sign-in, two-factor-enabled, two-factor-disabled, recovery-code-used, confirm-action, welcome, invitation, invitation-accepted`
 
 **When:** loading `maizzle.config.ts`, when `only` names an e-mail the
 package does not ship. Common causes are a typo, a name in camelCase

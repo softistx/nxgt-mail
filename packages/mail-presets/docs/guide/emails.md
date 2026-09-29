@@ -1,6 +1,6 @@
 # The e-mails
 
-This page is for sending one of the fourteen presets, or rewording it: what each
+This page is for sending one of the fifteen presets, or rewording it: what each
 one is for, what it shows, the placeholders the sender fills, its subject,
 and every message it uses in `en` and `fr`.
 
@@ -42,6 +42,7 @@ export default defineMailConfig({
 | [`two-factor-enabled`](#two-factor-enabled) | Two-factor authentication was just turned on | `link`, `name` | `link` |
 | [`two-factor-disabled`](#two-factor-disabled) | Two-factor authentication was just turned off | `link`, `name` | `link` |
 | [`recovery-code-used`](#recovery-code-used) | A second-factor recovery code was spent | `link`, `name`, `recoveryCodesLeft`, `when` | `link` |
+| [`confirm-action`](#confirm-action) | A one-time code confirms a sensitive action (step-up re-authentication) | `code`, `expiresIn`, `link`, `name` | `link` |
 | [`welcome`](#welcome) | An account was just created | `link`, `name` | `link` |
 | [`invitation`](#invitation) | Someone invites the recipient to an organisation | `expiresIn`, `inviter`, `link`, `organization` | `link` |
 | [`invitation-accepted`](#invitation-accepted) | The recipient invited to join an organisation accepted — sent to the inviter | `invitee`, `link`, `organization` | `link` |
@@ -55,7 +56,7 @@ build time.
 ## `expiresIn`: how long the link or the code lives
 
 `verify-email`, `reset-password`, `magic-link`, `sign-in-code`,
-`invitation` and `account-deleted` send something that stops working after a
+`confirm-action`, `invitation` and `account-deleted` send something that stops working after a
 while, and say so: `This link expires in {{ expiresIn }}.` under the button,
 `This code expires in {{ expiresIn }}.` under the code,
 `This invitation expires in {{ expiresIn }}.` under the invitation's button, or
@@ -101,7 +102,7 @@ typography does, so a line never starts with `:`. Keep it in a `fr` override.
 
 | Key | `en` | `fr` | Used by |
 | --- | --- | --- | --- |
-| `presets.code-expires` | This code expires in {expiresIn}. | Ce code expire dans {expiresIn}. | `sign-in-code` |
+| `presets.code-expires` | This code expires in {expiresIn}. | Ce code expire dans {expiresIn}. | `sign-in-code`, `confirm-action` |
 | `presets.link-expires` | This link expires in {expiresIn}. | Ce lien expire dans {expiresIn}. | `verify-email`, `reset-password`, `magic-link` |
 | `presets.link-fallback` | If the button does not work, open this link: | Si le bouton ne fonctionne pas, ouvrez ce lien : | every preset with a `link` |
 | `presets.not-you` | If this was not you, secure your account now. | Si ce n'était pas vous, sécurisez votre compte dès maintenant. | `password-changed`, `email-changed`, `new-sign-in`, `account-deleted`, `two-factor-enabled`, `two-factor-disabled`, `recovery-code-used` |
@@ -423,6 +424,35 @@ mails.render('recovery-code-used', { name, when, recoveryCodesLeft, link }, { lo
 Samples:
 [en](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/en/recovery-code-used.html) ·
 [fr](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/fr/recovery-code-used.html).
+
+## `confirm-action`
+
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/en/confirm-action.png" width="420" alt="The confirm-action e-mail, in English">
+
+[In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/fr/confirm-action.png)
+
+A one-time code to confirm a sensitive action — a step-up re-authentication
+before changing the e-mail address, turning off two-factor authentication or
+deleting the account. It is generic on purpose: the message does not name the
+action, because the renderer refuses a missing variable, so no optional
+placeholder could hold it. A title, the greeting, the body, the code in a
+large block (`<NxCode>`), `presets.code-expires`, a warning for the recipient
+who did not ask, the **Secure my account** button, and the link as text.
+`link` is where the user secures the account — your account-settings page.
+
+| Key | `en` | `fr` |
+| --- | --- | --- |
+| `confirm-action.subject` | Your confirmation code | Votre code de confirmation |
+| `confirm-action.preheader` | Enter this code to confirm your request. | Saisissez ce code pour confirmer votre demande. |
+| `confirm-action.title` | Your confirmation code | Votre code de confirmation |
+| `confirm-action.body` | Someone, we hope you, asked to do something sensitive on your {brand} account. Enter this code to confirm it. | Quelqu'un, nous l'espérons vous, a demandé une action sensible sur votre compte {brand}. Saisissez ce code pour la confirmer. |
+| `confirm-action.warning` | If this was not you, do not share this code: someone may be trying to act on your account. Secure your account now. | Si ce n'était pas vous, ne communiquez pas ce code : quelqu'un essaie peut-être d'agir sur votre compte. Sécurisez votre compte dès maintenant. |
+| `confirm-action.action` | Secure my account | Sécuriser mon compte |
+
+Placeholders: `name`, `code`, `expiresIn` (a duration, as text), `link` (a
+URL). The code is not in the subject, unlike `sign-in-code`'s. Samples:
+[en](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/en/confirm-action.html) ·
+[fr](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/fr/confirm-action.html).
 
 ## `welcome`
 

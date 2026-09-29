@@ -219,7 +219,7 @@ they are built.
 | `@nxgt/mail-config` | in the Maizzle project | `defineMailConfig`: the base config, and the plugins merged with their hooks chained |
 | `@nxgt/mail-i18n` | in the Maizzle project | The i18n plugin: ICU catalogues, `t()` in templates, one output per locale, the manifest; `createTranslator` |
 | `@nxgt/mail-ui` | in the Maizzle project | The `Nx*` components in the style of `@nxgt/material-vue`, its theme, the shared messages |
-| `@nxgt/mail-presets` | in the Maizzle project | Fourteen ready e-mails (templates and `en`/`fr` messages) for `i18n({ templates, catalogues })`, and their built HTML as samples |
+| `@nxgt/mail-presets` | in the Maizzle project | Fifteen ready e-mails (templates and `en`/`fr` messages) for `i18n({ templates, catalogues })`, and their built HTML as samples |
 | `@nxgt/mail-smtp`, `@nxgt/mail-resend`, … | at run time | One transport each, implementing the port, passing the conformance suite |
 
 `@nxgt/janus-mail` lives in `nxgt-janus`: a Maizzle project built with these
