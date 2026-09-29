@@ -54,7 +54,7 @@
     },
     "packages/mail-config": {
       "name": "@nxgt/mail-config",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "dependencies": {
         "defu": "^6.1.4",
       },
@@ -96,7 +96,7 @@
     },
     "packages/mail-presets": {
       "name": "@nxgt/mail-presets",
-      "version": "1.1.0",
+      "version": "1.1.1",
       "devDependencies": {
         "@maizzle/framework": "6.1.7",
         "@maizzle/tailwindcss": "1.5.6",

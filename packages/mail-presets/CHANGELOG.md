@@ -1,5 +1,14 @@
 # @nxgt/mail-presets
 
+## 1.1.1
+
+### Patch Changes
+
+- [#94](https://github.com/softistx/nxgt-mail/pull/94) [`cb9db0d`](https://github.com/softistx/nxgt-mail/commit/cb9db0d7a792410fe164d797d151e7a89cd7ecea) Thanks [@SteveGT96](https://github.com/SteveGT96)! - Keep a table row on one line in the text part of a minified build: with `productionConfig`, `Device {{ device }}` no longer splits over two lines with a blank line between rows.
+- Updated dependencies []:
+  - @nxgt/mail-i18n@1.0.1
+  - @nxgt/mail-ui@1.0.1
+
 ## 1.1.0
 
 ### Minor Changes
