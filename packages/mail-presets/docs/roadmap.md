@@ -33,7 +33,7 @@ Nothing yet. A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
-- **`confirm-action`, next minor** — a one-time code e-mailed to confirm a
+- **`confirm-action`, v1.1.0** — a one-time code e-mailed to confirm a
   sensitive action (step-up re-authentication): `name`, `code`, `expiresIn`
   and `link` to secure the account, with the "not you?" wording of the
   security presets. Generic, with no `action` variable. `PRESETS` now lists
