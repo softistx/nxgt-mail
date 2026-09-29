@@ -61,6 +61,18 @@ describe('breakBlocks', () => {
 		).toBe('Or paste this link into your browser:\nhttps://a.test/x\n');
 	});
 
+	test('writes a table row on one line, minified or not', () => {
+		const row = (label: string, value: string) =>
+			`<tr><td style="a:b">${label}\n</td><td style="a:b">${value}\n</td></tr>`;
+		const minified = `<table>${row('Device', '{{ device }}')}${row('Time', '{{ time }}')}</table>`;
+		const spaced = minified.replaceAll('\n</td>', '</td>');
+		for (const html of [minified, spaced]) {
+			expect(tidyPlaintext(strip(html))).toBe(
+				'Device {{ device }}\nTime {{ time }}\n',
+			);
+		}
+	});
+
 	test("keeps a <pre>'s lines, wrapped or not, between blank lines", () => {
 		expect(
 			tidyPlaintext(

@@ -49,6 +49,7 @@ How the messages are shaped:
 - [A plugin's component tag stays in the HTML, unresolved](#a-plugins-component-tag-stays-in-the-html-unresolved)
 - [One of two configs' hooks never runs](#one-of-two-configs-hooks-never-runs)
 - [The plain-text part is one long line again](#the-plain-text-part-is-one-long-line-again)
+- [A table row's cells sit on two lines in the plain-text part](#a-table-rows-cells-sit-on-two-lines-in-the-plain-text-part)
 - [A bug in `@nxgt/mail-config` itself](#a-bug-in-nxgtmail-config-itself)
 
 ---
@@ -518,6 +519,17 @@ base's too, since objects merge key by key.
 `maizzle serve`'s plain-text preview is always one line: it strips the HTML
 with Maizzle's defaults and runs no `afterBuild`. Look at the `.txt` that
 `maizzle build` writes.
+
+### A table row's cells sit on two lines in the plain-text part
+
+**When:** the text part of a build with `productionConfig` reads `Device`,
+then `{{ device }}` on the next line, a blank line between two rows of the same
+table; the same template built with `defineMailConfig` alone writes
+`Device {{ device }}` on one line.
+**Why:** the minifier leaves a line break before each `</td>`, and the base
+kept it as a break of the text part whenever a placeholder or an address
+followed. Fixed in `@nxgt/mail-config` 1.0.2.
+**Fix:** upgrade `@nxgt/mail-config` to 1.0.2 or later.
 
 ### A bug in `@nxgt/mail-config` itself
 

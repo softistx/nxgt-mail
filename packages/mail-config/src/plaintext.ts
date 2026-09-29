@@ -21,6 +21,7 @@ const PARAGRAPHS = new Set([
 	'ul',
 ]);
 const LINES = new Set(['br', 'div', 'hr', 'li', 'tr']);
+const CELLS = new Set(['td', 'th']);
 
 // A `<pre>` keeps the source's line breaks: a code sample, not prose Maizzle
 // wrapped. `breakBlocks` brackets it so `tidyPlaintext` can tell the two
@@ -38,6 +39,9 @@ const VERBATIM = new Set(['pre']);
  */
 const PARAGRAPH_MARK = '\uE002';
 const LINE_MARK = '\uE003';
+// The end of a table cell: a space in the text part, whatever whitespace a
+// minifier left before it (see `unwrapSourceLines`).
+const CELL_MARK = '\uE004';
 
 // The start and the end of a `<pre>`'s content, a private-use pair no source
 // ever contains. `tidyPlaintext` strips them once it has protected what they
@@ -85,6 +89,8 @@ export function breakBlocks({
 		);
 	} else if (PARAGRAPHS.has(name)) {
 		rangesArr.push(deleteFrom, deleteTo, PARAGRAPH_MARK);
+	} else if (CELLS.has(name) && closes) {
+		rangesArr.push(deleteFrom, deleteTo, CELL_MARK);
 	} else if (name === 'br' || name === 'hr' || (LINES.has(name) && closes)) {
 		rangesArr.push(deleteFrom, deleteTo, LINE_MARK);
 	} else {
@@ -109,7 +115,7 @@ const VERBATIM_BLOCK = new RegExp(
 
 // Either mark `breakBlocks` writes, built from the same constants: one
 // pattern to keep them in step, however many places read one.
-const MARK_CLASS = `[${PARAGRAPH_MARK}${LINE_MARK}]`;
+const MARK_CLASS = `[${PARAGRAPH_MARK}${LINE_MARK}${CELL_MARK}]`;
 
 /**
  * A real line break `breakBlocks` never wrote: a source line Maizzle
@@ -117,6 +123,9 @@ const MARK_CLASS = `[${PARAGRAPH_MARK}${LINE_MARK}]`;
  * address on its own line — `dumpLinkHrefsNearby`'s doing, kept nearby.
  */
 const HAS_MARK = new RegExp(MARK_CLASS);
+
+// A cell's end and the space around it: one space between two cells.
+const CELLS_BREAK = new RegExp(`[ \\t]*${CELL_MARK}[ \\t]*`, 'g');
 
 /** The line a marker-bounded chunk ends with (or starts with), trimmed. */
 function edgeLine(chunk: string, edge: 'start' | 'end'): string {
@@ -127,6 +136,7 @@ function edgeLine(chunk: string, edge: 'start' | 'end'): string {
 	const at = Math.max(
 		chunk.lastIndexOf(PARAGRAPH_MARK),
 		chunk.lastIndexOf(LINE_MARK),
+		chunk.lastIndexOf(CELL_MARK),
 	);
 	return chunk.slice(at + 1).trim();
 }
@@ -146,6 +156,12 @@ function unwrapSourceLines(text: string): string {
 		const after = segments[i + 1] ?? '';
 		const prevLine = edgeLine(before, 'end');
 		const nextLine = edgeLine(after, 'start');
+		// A cell ends here: the wrap is only the whitespace a minifier leaves
+		// before `</td>`, and the cell mark stands for the break between cells.
+		if (before.endsWith(CELL_MARK) || after.startsWith(CELL_MARK)) {
+			result = `${result}${after}`;
+			continue;
+		}
 		const keep =
 			prevLine === '' ||
 			nextLine === '' ||
@@ -175,6 +191,7 @@ export function tidyPlaintext(text: string): string {
 				.join('')
 				.replaceAll(PARAGRAPH_MARK, '\n\n')
 				.replaceAll(LINE_MARK, '\n')
+				.replace(CELLS_BREAK, ' ')
 		: text;
 	const lines: string[] = [];
 	for (const raw of unwrapped.replace(INVISIBLE, '').split(/\r?\n/)) {

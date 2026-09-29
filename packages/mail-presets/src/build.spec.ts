@@ -50,11 +50,17 @@ function install(name: string, files: readonly string[]): void {
 
 describe('the presets, built by a project', () => {
 	beforeAll(async () => {
-		for (const dir of ['dist', 'dist-override', '.maizzle']) {
+		for (const dir of [
+			'dist',
+			'dist-override',
+			'dist-production',
+			'.maizzle',
+		]) {
 			rmSync(`${fixture}/${dir}`, { recursive: true, force: true });
 		}
 		await build();
 		await build('-c', 'maizzle.config.override.ts');
+		await build('-c', 'maizzle.config.production.ts');
 	}, 180_000);
 
 	test('samples/ is what the build writes — run `bun run samples` after a change', async () => {
@@ -119,6 +125,11 @@ describe('the presets, built by a project', () => {
 		expect(await read('dist/fr/sign-in-code.txt')).toContain(
 			'Ce code expire dans {{ expiresIn }}.',
 		);
+	});
+
+	test('a minified build keeps a table row on one line in the text part', async () => {
+		const text = await read('dist-production/en/new-sign-in.txt');
+		expect(text).toContain('Device {{ device }}\nLocation {{ location }}\n');
 	});
 
 	test("builds only the presets asked for, the project's template replacing one", async () => {
