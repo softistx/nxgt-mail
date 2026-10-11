@@ -162,6 +162,7 @@ Every package is `1.x`, and follows the policies of
   next major**, and its doc comment says so.
 - **Internal peers are `workspace:^`**, published as `^1.0.0`, and move to
   the next major together, in one release.
+- **TypeScript peer**: `^6.0.3 || ^7.0.0` for `@nxgt/mail`, `-smtp`, `-resend` and `-config`. The Vue template packages (`-i18n`, `-ui`, `-presets`) stay `^6.0.3` until vue-tsc supports TypeScript 7 (vue-tsc 3.3.11 crashes with ERR_PACKAGE_PATH_NOT_EXPORTED on `typescript/lib/tsc`).
 - **Each README names its Node floor**, next to its peers; there is no
   `engines` field. `@nxgt/mail`, `-smtp` and `-resend` run on Node `>=20`;
   the four build-time packages run wherever `maizzle build` does — Node
