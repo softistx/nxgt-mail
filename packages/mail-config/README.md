@@ -36,7 +36,7 @@ Peers, all required:
 - `@maizzle/tailwindcss` (`^1.5.6`) — **as a direct dependency of your
   project**, even if another package already brings it: see
   [Setup](#setup).
-- `typescript` (6). Bundler resolution (`"moduleResolution": "bundler"`) is
+- `typescript` (6 or 7). Bundler resolution (`"moduleResolution": "bundler"`) is
   what is supported and tested; `nodenext` is out of contract.
 
 Runs wherever `maizzle build` does: Node `^22.22.3`, `^24.15.0` or `>=26` — the

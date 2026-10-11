@@ -34,7 +34,7 @@ over `fetch`.
 bun add @nxgt/mail
 ```
 
-No runtime dependency. `typescript` (6) is a required peer. Your tsconfig
+No runtime dependency. `typescript` (6 or 7) is a required peer. Your tsconfig
 resolves as a bundler does (`"moduleResolution": "bundler"`): the declarations
 import without extensions, so `nodenext` is not supported.
 

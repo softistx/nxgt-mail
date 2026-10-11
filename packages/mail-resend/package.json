@@ -53,7 +53,7 @@
 	},
 	"peerDependencies": {
 		"@nxgt/mail": "workspace:^",
-		"typescript": "^6.0.3"
+		"typescript": "^6.0.3 || ^7.0.0"
 	},
 	"nxgt": {
 		"entrypoints": [

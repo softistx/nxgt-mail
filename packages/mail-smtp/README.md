@@ -42,7 +42,7 @@ Peers, all required:
   tree, so `error instanceof MailFailure` holds.
 - `nodemailer` (`>=7 <11`; tested with 10). This package never imports it:
   you create the transporter, with every SMTP option nodemailer has.
-- `typescript` (6). Bundler resolution (`"moduleResolution": "bundler"`) is
+- `typescript` (6 or 7). Bundler resolution (`"moduleResolution": "bundler"`) is
   what is supported and tested; `nodenext` is out of contract.
 
 Runs on Node `>=20` or Bun; CI runs the tests on Bun, and

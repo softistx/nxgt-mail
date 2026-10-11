@@ -36,7 +36,7 @@ Peers, all required:
 
 - `@nxgt/mail` (`^1`) — the port, the errors and the checks. One copy in your
   tree, so `error instanceof MailFailure` holds.
-- `typescript` (6). Bundler resolution (`"moduleResolution": "bundler"`) is
+- `typescript` (6 or 7). Bundler resolution (`"moduleResolution": "bundler"`) is
   what is supported and tested; `nodenext` is out of contract.
 
 It runs wherever `fetch` does — Node `>=20`, Bun, Deno, an edge

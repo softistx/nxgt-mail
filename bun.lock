@@ -46,7 +46,7 @@
       },
       "peerDependencies": {
         "@opentelemetry/api": "^1.9.0",
-        "typescript": "^6.0.3",
+        "typescript": "^6.0.3 || ^7.0.0",
       },
       "optionalPeers": [
         "@opentelemetry/api",
@@ -66,7 +66,7 @@
       "peerDependencies": {
         "@maizzle/framework": "^6.1.7",
         "@maizzle/tailwindcss": "^1.5.6",
-        "typescript": "^6.0.3",
+        "typescript": "^6.0.3 || ^7.0.0",
       },
     },
     "packages/mail-i18n": {
@@ -125,7 +125,7 @@
       },
       "peerDependencies": {
         "@nxgt/mail": "workspace:^",
-        "typescript": "^6.0.3",
+        "typescript": "^6.0.3 || ^7.0.0",
       },
     },
     "packages/mail-smtp": {
@@ -144,7 +144,7 @@
       "peerDependencies": {
         "@nxgt/mail": "workspace:^",
         "nodemailer": ">=7.0.0 <11",
-        "typescript": "^6.0.3",
+        "typescript": "^6.0.3 || ^7.0.0",
       },
     },
     "packages/mail-ui": {
