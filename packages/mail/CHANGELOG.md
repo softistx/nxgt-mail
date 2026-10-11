@@ -1,5 +1,11 @@
 # @nxgt/mail
 
+## 1.0.2
+
+### Patch Changes
+
+- [#96](https://github.com/softistx/nxgt-mail/pull/96) [`e4632ee`](https://github.com/softistx/nxgt-mail/commit/e4632eeff02e94bcd5828069057dd1329c99947d) Thanks [@SteveGT96](https://github.com/SteveGT96)! - Accept TypeScript 7 as a peer: `typescript` is now `^6.0.3 || ^7.0.0`.
+
 ## 1.0.1
 
 ### Patch Changes
