@@ -37,7 +37,7 @@
     },
     "packages/mail": {
       "name": "@nxgt/mail",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "devDependencies": {
         "@opentelemetry/api": "1.9.1",
         "@opentelemetry/sdk-metrics": "^2.4.0",
@@ -54,7 +54,7 @@
     },
     "packages/mail-config": {
       "name": "@nxgt/mail-config",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "dependencies": {
         "defu": "^6.1.4",
       },
@@ -118,7 +118,7 @@
     },
     "packages/mail-resend": {
       "name": "@nxgt/mail-resend",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "devDependencies": {
         "@nxgt/mail": "workspace:*",
         "@types/bun": "^1.4.2",
@@ -130,7 +130,7 @@
     },
     "packages/mail-smtp": {
       "name": "@nxgt/mail-smtp",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "devDependencies": {
         "@nxgt/mail": "workspace:*",
         "@types/bun": "^1.4.2",
