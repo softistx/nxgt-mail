@@ -71,7 +71,7 @@
     },
     "packages/mail-i18n": {
       "name": "@nxgt/mail-i18n",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "dependencies": {
         "@formatjs/icu-messageformat-parser": "3.5.20",
         "@nxgt/i18n-vue": "^0.4.0",
