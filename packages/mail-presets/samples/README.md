@@ -12,6 +12,7 @@ Open a file in a browser to see it — GitHub shows its source.
 | `reset-password` | [en](en/reset-password.html) · [fr](fr/reset-password.html) |
 | `password-changed` | [en](en/password-changed.html) · [fr](fr/password-changed.html) |
 | `email-changed` | [en](en/email-changed.html) · [fr](fr/email-changed.html) |
+| `confirm-new-email` | [en](en/confirm-new-email.html) · [fr](fr/confirm-new-email.html) |
 | `account-deleted` | [en](en/account-deleted.html) · [fr](fr/account-deleted.html) |
 | `sign-in-code` | [en](en/sign-in-code.html) · [fr](fr/sign-in-code.html) |
 | `magic-link` | [en](en/magic-link.html) · [fr](fr/magic-link.html) |

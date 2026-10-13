@@ -1,6 +1,6 @@
 # The e-mails
 
-This page is for sending one of the fifteen presets, or rewording it: what each
+This page is for sending one of the sixteen presets, or rewording it: what each
 one is for, what it shows, the placeholders the sender fills, its subject,
 and every message it uses in `en` and `fr`.
 
@@ -35,6 +35,7 @@ export default defineMailConfig({
 | [`reset-password`](#reset-password) | A user asked to reset their password | `expiresIn`, `link`, `name` | `link` |
 | [`password-changed`](#password-changed) | A password was just changed | `link`, `name` | `link` |
 | [`email-changed`](#email-changed) | An account's address was changed — sent to the former one | `link`, `name`, `newEmail` | `link` |
+| [`confirm-new-email`](#confirm-new-email) | A user asked to move their account to a new address — sent to the new one | `expiresIn`, `link`, `name` | `link` |
 | [`account-deleted`](#account-deleted) | An account was deleted, with a grace period to restore it | `expiresIn`, `link`, `name` | `link` |
 | [`sign-in-code`](#sign-in-code) | A user signs in with a one-time code | `code`, `expiresIn` | — |
 | [`magic-link`](#magic-link) | A user signs in with a one-time link | `expiresIn`, `link` | `link` |
@@ -55,8 +56,8 @@ build time.
 
 ## `expiresIn`: how long the link or the code lives
 
-`verify-email`, `reset-password`, `magic-link`, `sign-in-code`,
-`confirm-action`, `invitation` and `account-deleted` send something that stops working after a
+`verify-email`, `reset-password`, `confirm-new-email`, `magic-link`,
+`sign-in-code`, `confirm-action`, `invitation` and `account-deleted` send something that stops working after a
 while, and say so: `This link expires in {{ expiresIn }}.` under the button,
 `This code expires in {{ expiresIn }}.` under the code,
 `This invitation expires in {{ expiresIn }}.` under the invitation's button, or
@@ -103,7 +104,7 @@ typography does, so a line never starts with `:`. Keep it in a `fr` override.
 | Key | `en` | `fr` | Used by |
 | --- | --- | --- | --- |
 | `presets.code-expires` | This code expires in {expiresIn}. | Ce code expire dans {expiresIn}. | `sign-in-code`, `confirm-action` |
-| `presets.link-expires` | This link expires in {expiresIn}. | Ce lien expire dans {expiresIn}. | `verify-email`, `reset-password`, `magic-link` |
+| `presets.link-expires` | This link expires in {expiresIn}. | Ce lien expire dans {expiresIn}. | `verify-email`, `reset-password`, `confirm-new-email`, `magic-link` |
 | `presets.link-fallback` | If the button does not work, open this link: | Si le bouton ne fonctionne pas, ouvrez ce lien : | every preset with a `link` |
 | `presets.not-you` | If this was not you, secure your account now. | Si ce n'était pas vous, sécurisez votre compte dès maintenant. | `password-changed`, `email-changed`, `new-sign-in`, `account-deleted`, `two-factor-enabled`, `two-factor-disabled`, `recovery-code-used` |
 | `common.greeting` | Hello {name}, | Bonjour {name}, | every preset but `sign-in-code`, `magic-link`, `invitation` and `invitation-accepted` |
@@ -210,6 +211,35 @@ Placeholders: `name`, `newEmail` (the new address, as text), `link` (a URL).
 Samples:
 [en](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/en/email-changed.html) ·
 [fr](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/fr/email-changed.html).
+
+## `confirm-new-email`
+
+<img src="https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/en/confirm-new-email.png" width="420" alt="The confirm-new-email e-mail, in English">
+
+[In French](https://raw.githubusercontent.com/softistx/nxgt-mail/refs/heads/develop/packages/mail-presets/previews/fr/confirm-new-email.png)
+
+Sent to the **new** address when a user asks to change the e-mail of their
+account: the account moves only once the link is clicked. It is not
+`verify-email` (that address already belongs to the account) nor
+`email-changed` (an after-the-fact notice, sent to the former address). A
+title, the greeting, the body, the **Confirm my new address** button,
+`presets.link-expires`, the link as text, and a caption saying that, if it was
+not the recipient, nothing changes. The new address is the recipient: the
+message does not repeat it.
+
+| Key | `en` | `fr` |
+| --- | --- | --- |
+| `confirm-new-email.subject` | Confirm your new e-mail address | Confirmez votre nouvelle adresse e-mail |
+| `confirm-new-email.preheader` | One click to move your account to this address. | Un clic pour rattacher votre compte à cette adresse. |
+| `confirm-new-email.title` | Confirm your new e-mail address | Confirmez votre nouvelle adresse e-mail |
+| `confirm-new-email.body` | Someone, we hope you, asked to move an existing {brand} account to this address. Confirm it to make this address the account's sign-in address. | Quelqu'un, nous l'espérons vous, a demandé à rattacher un compte {brand} existant à cette adresse. Confirmez pour en faire l'adresse de connexion du compte. |
+| `confirm-new-email.action` | Confirm my new address | Confirmer ma nouvelle adresse |
+| `confirm-new-email.ignore` | If this was not you, ignore this e-mail: nothing changes on the account. | Si ce n'était pas vous, ignorez cet e-mail : rien ne change sur le compte. |
+
+Placeholders: `name`, `link` (a URL), `expiresIn` (a duration, as text).
+Samples:
+[en](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/en/confirm-new-email.html) ·
+[fr](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/fr/confirm-new-email.html).
 
 ## `account-deleted`
 

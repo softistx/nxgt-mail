@@ -33,6 +33,14 @@
 		"body": "Votre compte {brand} utilise désormais {newEmail}. Nous envoyons cet avis à votre ancienne adresse.",
 		"action": "Annuler ce changement"
 	},
+	"confirm-new-email": {
+		"subject": "Confirmez votre nouvelle adresse e-mail",
+		"preheader": "Un clic pour rattacher votre compte à cette adresse.",
+		"title": "Confirmez votre nouvelle adresse e-mail",
+		"body": "Quelqu'un, nous l'espérons vous, a demandé à rattacher un compte {brand} existant à cette adresse. Confirmez pour en faire l'adresse de connexion du compte.",
+		"action": "Confirmer ma nouvelle adresse",
+		"ignore": "Si ce n'était pas vous, ignorez cet e-mail : rien ne change sur le compte."
+	},
 	"account-deleted": {
 		"subject": "Votre compte a été supprimé",
 		"preheader": "Votre compte et ses données sont en cours de suppression.",
