@@ -74,7 +74,7 @@
       "version": "1.0.1",
       "dependencies": {
         "@formatjs/icu-messageformat-parser": "3.5.20",
-        "@nxgt/i18n-vue": "^0.2.0",
+        "@nxgt/i18n-vue": "^0.4.0",
       },
       "devDependencies": {
         "@maizzle/framework": "6.1.7",
@@ -290,7 +290,7 @@
 
     "@mdit-vue/types": ["@mdit-vue/types@3.0.2", "", {}, "sha512-00aAZ0F0NLik6I6Yba2emGbHLxv+QYrPH00qQ5dFKXlAo1Ll2RHDXwY7nN2WAfrx2pP+WrvSRFTGFCNGdzBDHw=="],
 
-    "@nxgt/i18n-vue": ["@nxgt/i18n-vue@0.2.0", "", { "dependencies": { "@formatjs/icu-messageformat-parser": "3.5.20", "intl-messageformat": "12.1.2" }, "peerDependencies": { "@nuxt/kit": "^4.0.0", "nuxt": "^4.0.0", "typescript": "^6.0.3", "vite": ">=5.0.0", "vue": "^3.5.0" }, "optionalPeers": ["@nuxt/kit", "nuxt", "vite"] }, "sha512-oEfgpAaxWru6i1JPH08WicJkP5ps5GrQTPPSttHC1aLiANoeyjkluR6oiSrqqfqjfHbgWCPAp+IF1C56NSJ3bg=="],
+    "@nxgt/i18n-vue": ["@nxgt/i18n-vue@0.4.0", "", { "dependencies": { "@formatjs/icu-messageformat-parser": "3.5.20", "intl-messageformat": "12.1.2" }, "peerDependencies": { "@nuxt/kit": "^4.0.0", "nuxt": "^4.0.0", "typescript": "^6.0.3 || ^7.0.0", "vite": ">=5.0.0", "vue": "^3.5.0" }, "optionalPeers": ["@nuxt/kit", "nuxt", "vite"] }, "sha512-GQ4p+BChvtBy7YIwp04ViQHQ6KBhyQwxxjhKIHlZEwewGQS3CD47krK3RsZdtgv/g/EOfs9vQx8BlpkcVf2JQw=="],
 
     "@nxgt/mail": ["@nxgt/mail@workspace:packages/mail"],
 
