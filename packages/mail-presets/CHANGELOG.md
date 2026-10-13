@@ -1,5 +1,11 @@
 # @nxgt/mail-presets
 
+## 1.2.0
+
+### Minor Changes
+
+- [#100](https://github.com/softistx/nxgt-mail/pull/100) [`c22aada`](https://github.com/softistx/nxgt-mail/commit/c22aada7aa352f8344d9d1cddb114f252cbb1b58) Thanks [@SteveGT96](https://github.com/SteveGT96)! - A sixteenth preset, `confirm-new-email`: a link e-mailed to the new address when a user changes the e-mail of their account, which moves only once the link is clicked, written with `@nxgt/mail-ui` components in `en` and `fr`. It takes `name`, `link` and `expiresIn`, as `verify-email`, and says that nothing changes if it was not the recipient. `PRESETS` now lists sixteen names; `only` accepts any of them.
+
 ## 1.1.1
 
 ### Patch Changes
