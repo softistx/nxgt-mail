@@ -33,6 +33,12 @@ Nothing yet. A request is welcome as an
 The last ten, newest first, each with the version it came in. Everything
 before is in the [CHANGELOG](../CHANGELOG.md).
 
+- **`confirm-new-email`, v1.2.0** — a link e-mailed to the new address when a
+  user changes the e-mail of their account: the account moves only once the
+  link is clicked. `name`, `link` and `expiresIn`, as `verify-email`, with a
+  caption saying that nothing changes if it was not them. It is not
+  `email-changed`, the notice sent to the former address. `PRESETS` now lists
+  sixteen names.
 - **`confirm-action`, v1.1.0** — a one-time code e-mailed to confirm a
   sensitive action (step-up re-authentication): `name`, `code`, `expiresIn`
   and `link` to secure the account, with the "not you?" wording of the

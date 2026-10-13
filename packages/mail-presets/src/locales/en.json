@@ -33,6 +33,14 @@
 		"body": "Your {brand} account now uses {newEmail}. We send this notice to your former address.",
 		"action": "Undo this change"
 	},
+	"confirm-new-email": {
+		"subject": "Confirm your new e-mail address",
+		"preheader": "One click to move your account to this address.",
+		"title": "Confirm your new e-mail address",
+		"body": "Someone, we hope you, asked to move an existing {brand} account to this address. Confirm it to make this address the account's sign-in address.",
+		"action": "Confirm my new address",
+		"ignore": "If this was not you, ignore this e-mail: nothing changes on the account."
+	},
 	"account-deleted": {
 		"subject": "Your account was deleted",
 		"preheader": "Your account and its data are being removed.",

@@ -14,6 +14,7 @@ export const PRESETS = [
 	'reset-password',
 	'password-changed',
 	'email-changed',
+	'confirm-new-email',
 	'account-deleted',
 	'sign-in-code',
 	'magic-link',

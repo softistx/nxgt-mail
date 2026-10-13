@@ -113,6 +113,7 @@ describe('the presets, built by a project', () => {
 		expect(expiring).toEqual([
 			'account-deleted',
 			'confirm-action',
+			'confirm-new-email',
 			'invitation',
 			'magic-link',
 			'reset-password',

@@ -53,6 +53,7 @@ const LINKS: Readonly<Record<string, string>> = {
 	'reset-password': 'https://acme.example/reset?token=5f2c9e',
 	'password-changed': 'https://acme.example/security',
 	'email-changed': 'https://acme.example/security',
+	'confirm-new-email': 'https://acme.example/confirm-email?token=8d41b7',
 	'magic-link': 'https://acme.example/sign-in?token=5f2c9e',
 	'new-sign-in': 'https://acme.example/security',
 	welcome: 'https://acme.example/start',

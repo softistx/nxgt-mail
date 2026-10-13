@@ -1,8 +1,8 @@
 # @nxgt/mail-presets
 
-Fifteen ready transactional e-mails for a [Maizzle](https://maizzle.com) 6
+Sixteen ready transactional e-mails for a [Maizzle](https://maizzle.com) 6
 project: `verify-email`, `reset-password`, `password-changed`,
-`email-changed`, `account-deleted`, `sign-in-code`, `magic-link`,
+`email-changed`, `confirm-new-email`, `account-deleted`, `sign-in-code`, `magic-link`,
 `new-sign-in`, `two-factor-enabled`, `two-factor-disabled`,
 `recovery-code-used`, `confirm-action`, `welcome`, `invitation` and
 `invitation-accepted`, written with `@nxgt/mail-ui`'s
@@ -82,7 +82,7 @@ overrides nothing: `@nxgt/mail-i18n` requires it.
 | Export | What it is |
 | --- | --- |
 | `presets(options?)` | `{ templates, catalogues }` for `i18n({ templates, catalogues })`: every preset, or the ones in `only` |
-| `PRESETS` | The fifteen names, `['verify-email', 'reset-password', …]`, as a readonly tuple |
+| `PRESETS` | The sixteen names, `['verify-email', 'reset-password', …]`, as a readonly tuple |
 | `PresetName` | One of them, as a type |
 | `presetCatalogues` | Every preset's messages, `{ en, fr }`, before `presets()` keeps the ones asked for; frozen, every group in it |
 | `TEMPLATES_DIR` | The absolute path of the package's `emails/` folder |
@@ -116,6 +116,7 @@ manifest:
 | `reset-password` | `expiresIn`, `link`, `name` | Reset your password |
 | `password-changed` | `link`, `name` | Your password was changed |
 | `email-changed` | `link`, `name`, `newEmail` | Your e-mail address was changed |
+| `confirm-new-email` | `expiresIn`, `link`, `name` | Confirm your new e-mail address |
 | `account-deleted` | `expiresIn`, `link`, `name` | Your account was deleted |
 | `sign-in-code` | `code`, `expiresIn` | Your sign-in code: `{{ code }}` |
 | `magic-link` | `expiresIn`, `link` | Your sign-in link |
