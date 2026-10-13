@@ -1,5 +1,11 @@
 # @nxgt/mail-i18n
 
+## 1.0.2
+
+### Patch Changes
+
+- [#102](https://github.com/softistx/nxgt-mail/pull/102) [`3e98340`](https://github.com/softistx/nxgt-mail/commit/3e983403270e4e07e472efb0df41eb68ee54caa7) Thanks [@SteveGT96](https://github.com/SteveGT96)! - Move to `@nxgt/i18n-vue` `^0.4.0`; no change to this package's behaviour or API.
+
 ## 1.0.1
 
 ### Patch Changes
