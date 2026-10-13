@@ -18,8 +18,8 @@ import { layerCatalogues } from '@nxgt/i18n-vue/core';
 // below, unchanged: `@nxgt/i18n-vue`'s own version has grown a check this
 // package does not want yet (two conventions of the same key collide) and a
 // reworded message, which would change what `docs/troubleshooting.md`
-// documents as silently accepted in the fallback locale — see the
-// changeset for the full comparison.
+// documents as silently accepted in the fallback locale: an old-camelCase
+// override would fail the build instead (still so in `@nxgt/i18n-vue` 0.4).
 export type { ArgumentKind, Catalogue, Catalogues, Message, Messages };
 export { layerCatalogues };
 
