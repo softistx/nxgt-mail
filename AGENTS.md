@@ -353,6 +353,24 @@ bun run verify:artifacts   # on the tarball actually packed
 bun run changeset:private  # no changeset names a private or unknown package
 ```
 
+**`bun check` replaces `tsc --noEmit` in the packages' `typecheck`** (Bun 1.4.3,
+measured 2026-10-14; `bun check` is Bun's built-in checker, there is no `bun tsc`).
+Same diagnostics as tsc on this repository's tsconfigs (`exactOptionalPropertyTypes`,
+`noUncheckedIndexedAccess`, `verbatimModuleSyntax`, `noImplicitAny`, a missing module:
+identical codes, positions and messages; exit code 1 where tsc gives 2). Median of
+3 runs, warm: tsc 0.4 to 0.95 s per package, `bun check` 0.05 to 0.09 s. Traps:
+- A `package.json` `check` script shadows the builtin (the root's `check` is
+  biome), and the lookup walks up to the root, so `bun check -p scripts`,
+  `--cwd` and `bun --bun check` all run biome from anywhere inside the repository.
+  A package must therefore never get a `check` script, and `typecheck:scripts`
+  stays on `tsc --noEmit -p scripts/tsconfig.json` (`cd / && bun check -p
+  "$OLDPWD/scripts"` works but is too fragile to keep).
+- `bun check` has no emit: `build.ts` keeps `tsc --emitDeclarationOnly`, and
+  vue-tsc stays for the templates. Like tsc, it needs the siblings' `dist/`.
+- Piped output is `file(line,col): error TSxxxx` lines plus a summary; add
+  `--all` to avoid grouping identical errors above 50.
+
+
 `bun run previews` builds the packages, rewrites mail-presets' `samples/`, then
 rewrites the PNGs the READMEs show (`mail-presets/previews/`,
 `mail-ui/previews/`) with a headless Chromium and ImageMagick 7. Run it after

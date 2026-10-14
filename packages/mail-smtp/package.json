@@ -41,11 +41,11 @@
 	"scripts": {
 		"build": "bun run ../../build.ts",
 		"test": "bun test src",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "bun check"
 	},
 	"devDependencies": {
 		"@nxgt/mail": "workspace:*",
-		"@types/bun": "^1.4.2",
+		"@types/bun": "^1.4.3",
 		"@types/mailparser": "^3.4.6",
 		"@types/nodemailer": "^8.0.2",
 		"@types/smtp-server": "^3.5.13",

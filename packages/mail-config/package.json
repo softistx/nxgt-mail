@@ -40,7 +40,7 @@
 	"scripts": {
 		"build": "bun run ../../build.ts",
 		"test": "bun test src",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "bun check"
 	},
 	"dependencies": {
 		"defu": "^6.1.4"
@@ -48,7 +48,7 @@
 	"devDependencies": {
 		"@maizzle/framework": "6.1.7",
 		"@maizzle/tailwindcss": "1.5.6",
-		"@types/bun": "^1.4.2"
+		"@types/bun": "^1.4.3"
 	},
 	"peerDependencies": {
 		"@maizzle/framework": "^6.1.7",

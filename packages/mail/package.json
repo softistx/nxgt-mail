@@ -55,7 +55,7 @@
 	"scripts": {
 		"build": "bun run ../../build.ts",
 		"test": "bun test src",
-		"typecheck": "tsc --noEmit"
+		"typecheck": "bun check"
 	},
 	"nxgt": {
 		"entrypoints": [
@@ -74,7 +74,7 @@
 		"@opentelemetry/api": "1.9.1",
 		"@opentelemetry/sdk-metrics": "^2.4.0",
 		"@opentelemetry/sdk-trace-base": "^2.4.0",
-		"@types/bun": "^1.4.2"
+		"@types/bun": "^1.4.3"
 	},
 	"peerDependencies": {
 		"@opentelemetry/api": "^1.9.0",

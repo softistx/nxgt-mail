@@ -233,7 +233,7 @@ export function duplicateClasses(
 /**
  * What Bun's `builtinModules` lists that is an npm package, not a Node
  * built-in: Bun ships its own copy, and a dependency by that name is not a
- * built-in an edge runtime refuses. Measured on Bun 1.4.2.
+ * built-in an edge runtime refuses. Measured on Bun 1.4.3.
  */
 const NOT_NODE_BUILTINS = new Set(['ws', 'undici']);
 
