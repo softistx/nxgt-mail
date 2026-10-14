@@ -1,4 +1,7 @@
 {
 	"extends": "../tsconfig.base.json",
+	// The close-released-issues copies are typed for noImplicitAny (an empty
+	// array literal is evolving, not never[]).
+	"compilerOptions": { "noImplicitAny": true },
 	"include": ["**/*.ts"]
 }

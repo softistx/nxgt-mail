@@ -26,6 +26,14 @@ on:
   # does not have, and a step that cannot find its script fails the run.
   push:
     branches: [develop]
+  # The "chore: Version packages" pull request is pushed by release.yml with
+  # GITHUB_TOKEN, and GitHub starts no workflow from an event that token
+  # caused, so `pull_request` never fires for it. release.yml dispatches this
+  # workflow on `changeset-release/develop` instead; a dispatched run reports
+  # its check on the branch's head commit, which is what the pull request
+  # shows. Only `Changeset present` reads the event (it skips here, as it does
+  # on that branch for a pull request); nothing else depends on it.
+  workflow_dispatch:
 
 jobs:
   ci:

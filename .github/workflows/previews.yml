@@ -1,0 +1,51 @@
+name: Previews
+
+# Regenerates the PNG previews the READMEs show (scripts/previews.ts) on a
+# GitHub-hosted Linux runner and hands them over as an artifact. Run by hand
+# only; it commits, pushes and opens nothing: download the artifact, copy the
+# images into packages/*/previews and commit them.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  previews:
+    name: Previews
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup
+        uses: ./.github/actions/setup
+      # ubuntu-latest carries Google Chrome, not a `chromium` binary (the apt
+      # package is a snap stub). Ubuntu 24.04 also forbids the unprivileged
+      # user namespaces Chrome's sandbox needs, hence --no-sandbox, through a
+      # wrapper because scripts/previews.ts takes the command as a path only.
+      - name: Chromium wrapper
+        run: |
+          printf '#!/bin/sh\nexec google-chrome --no-sandbox "$@"\n' > "$RUNNER_TEMP/chromium"
+          chmod +x "$RUNNER_TEMP/chromium"
+      # apt's imagemagick is version 6 (`convert`, no `magick`). The official
+      # AppImage is ImageMagick 7 in one file; the runner has no FUSE, so it
+      # is extracted and its AppRun is the `magick` command.
+      - name: ImageMagick 7
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/magick.AppImage" https://imagemagick.org/archive/binaries/magick
+          chmod +x "$RUNNER_TEMP/magick.AppImage"
+          cd "$RUNNER_TEMP" && ./magick.AppImage --appimage-extract > /dev/null
+          "$RUNNER_TEMP/squashfs-root/AppRun" -version | head -1
+      - name: Generate the previews
+        env:
+          CHROMIUM: ${{ runner.temp }}/chromium
+          MAGICK: ${{ runner.temp }}/squashfs-root/AppRun
+        run: bun run previews
+      - name: Upload the previews
+        uses: actions/upload-artifact@v4
+        with:
+          name: previews
+          path: packages/*/previews
+          if-no-files-found: error
