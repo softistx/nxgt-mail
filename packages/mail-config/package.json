@@ -48,7 +48,7 @@
 	"devDependencies": {
 		"@maizzle/framework": "6.1.7",
 		"@maizzle/tailwindcss": "1.5.6",
-		"@types/bun": "^1.4.2"
+		"@types/bun": "^1.4.3"
 	},
 	"peerDependencies": {
 		"@maizzle/framework": "^6.1.7",

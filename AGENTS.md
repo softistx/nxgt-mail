@@ -353,6 +353,31 @@ bun run verify:artifacts   # on the tarball actually packed
 bun run changeset:private  # no changeset names a private or unknown package
 ```
 
+**`tsc --noEmit` stays in the packages' `typecheck`; `bun check` was tried and
+rejected** (Bun 1.4.3, measured 2026-10-14; `bun check` is Bun's built-in checker,
+there is no `bun tsc`). It is about 10x faster (median of 3, warm: tsc 0.4 to
+0.95 s per package, `bun check` 0.05 to 0.09 s) and matched tsc on seven seeded
+errors (`exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`,
+`verbatimModuleSyntax`, `noImplicitAny`, a missing module), but it is **not
+identical**: in `packages/mail-presets`, `bun check` reports TS2883 on
+`test/types/refusals.ts:16` ("The inferred type of 'plugin' cannot be named
+without a reference to 'MailPlugin' from
+'@nxgt/mail-ui/node_modules/@nxgt/mail-config'"), every run, where tsc 6.0.3
+reports nothing. Retry on the next Bun release. Traps, for whoever retries:
+- A `package.json` `check` script shadows the builtin (the root's `check` is
+  biome), and the lookup walks up to the root, so `bun check -p scripts`,
+  `--cwd` and `bun --bun check` all run biome from anywhere inside the
+  repository; a package with no `check` script of its own reaches the builtin.
+- `bun check` uses Bun's own bundled TypeScript (6.0.3 in Bun 1.4.3), not the
+  repository's `typescript` devDependency: a check against the TypeScript 7 peer
+  must run `tsc`.
+- `bun check` has no emit: `build.ts` needs `tsc --emitDeclarationOnly`
+  whatever happens, and vue-tsc stays for the templates.
+- Piped output is `file(line,col): error TSxxxx` lines plus a summary; add
+  `--all` to avoid grouping identical errors above 50. Exit code 1 where tsc
+  gives 2.
+
+
 `bun run previews` builds the packages, rewrites mail-presets' `samples/`, then
 rewrites the PNGs the READMEs show (`mail-presets/previews/`,
 `mail-ui/previews/`) with a headless Chromium and ImageMagick 7. Run it after
