@@ -30,11 +30,16 @@ jobs:
           printf '#!/bin/sh\nexec google-chrome --no-sandbox "$@"\n' > "$RUNNER_TEMP/chromium"
           chmod +x "$RUNNER_TEMP/chromium"
       # apt's imagemagick is version 6 (`convert`, no `magick`). The official
-      # AppImage is ImageMagick 7 in one file; the runner has no FUSE, so it
-      # is extracted and its AppRun is the `magick` command.
+      # AppImage is ImageMagick 7 in one file, pinned to a release and checked
+      # against the digest GitHub publishes for it (bump both together); the
+      # runner has no FUSE, so it is extracted and its AppRun is `magick`.
       - name: ImageMagick 7
+        env:
+          MAGICK_URL: https://github.com/ImageMagick/ImageMagick/releases/download/7.1.2-33/ImageMagick-7.1.2-33-gcc-x86_64.AppImage
+          MAGICK_SHA256: af598b07ab4dd8b8123623602dc9fc69d5e32185a36fd3739795a0deb02c1fb7
         run: |
-          curl -fsSL -o "$RUNNER_TEMP/magick.AppImage" https://imagemagick.org/archive/binaries/magick
+          curl -fsSL -o "$RUNNER_TEMP/magick.AppImage" "$MAGICK_URL"
+          echo "$MAGICK_SHA256  $RUNNER_TEMP/magick.AppImage" | sha256sum -c -
           chmod +x "$RUNNER_TEMP/magick.AppImage"
           cd "$RUNNER_TEMP" && ./magick.AppImage --appimage-extract > /dev/null
           "$RUNNER_TEMP/squashfs-root/AppRun" -version | head -1

@@ -26,9 +26,6 @@ concurrency:
 permissions:
   contents: write
   pull-requests: write
-  packages: write
-  # `gh workflow run ci.yml` for the Version pull request, see the last step.
-  actions: write
 
 jobs:
   release:
@@ -43,6 +40,7 @@ jobs:
     outputs:
       published: ${{ steps.changesets.outputs.published }}
       published-packages: ${{ steps.changesets.outputs.published-packages }}
+      pr-number: ${{ steps.changesets.outputs.pr-number }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -69,15 +67,26 @@ jobs:
           # NPM_TOKEN publishes, read through bunfig.toml.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      # The Version pull request is pushed with GITHUB_TOKEN, which starts no
-      # `pull_request` run: ci.yml would never run on it (someone had to close
-      # and reopen it). A `workflow_dispatch` is the one event GITHUB_TOKEN may
-      # start, so dispatch CI on the release branch, as the pull request's head.
-      - name: Run CI on the Version pull request
-        if: steps.changesets.outputs.pullRequestNumber != ''
+
+  # The Version pull request is pushed with GITHUB_TOKEN, which starts no
+  # `pull_request` run: ci.yml would never run on it (someone had to close and
+  # reopen it). A `workflow_dispatch` is the one event GITHUB_TOKEN may start,
+  # so dispatch CI on the release branch, the pull request's head. A job of its
+  # own so that `actions: write` never sits beside the npm token. `pr-number`
+  # is v2's output name (v1's `pullRequestNumber` is gone).
+  version-pr-ci:
+    name: Run CI on the Version pull request
+    needs: release
+    if: ${{ needs.release.outputs.pr-number != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
+      - name: Dispatch ci.yml
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh workflow run ci.yml --ref changeset-release/develop
+        run: gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref changeset-release/develop
 
   # Comments on, labels `released` and closes the issues the published versions
   # fix. A job of its own so that `issues: write` reaches this step only, not

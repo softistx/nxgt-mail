@@ -35,6 +35,11 @@ on:
   # on that branch for a pull request); nothing else depends on it.
   workflow_dispatch:
 
+
+# Read-only: CI checks out, builds and tests, and writes nothing back.
+permissions:
+  contents: read
+
 jobs:
   ci:
     name: CI
