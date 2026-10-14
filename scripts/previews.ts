@@ -20,6 +20,8 @@
  * compares them: run `bun run previews` after changing how an e-mail looks,
  * and commit the images. Needs Chromium (`CHROMIUM=/path/to/chrome`, default
  * `chromium`) and ImageMagick 7 (`MAGICK`, default `magick`); tried on Linux.
+ * The `previews` workflow (`.github/workflows/previews.yml`, run by hand)
+ * runs it on `ubuntu-latest` and uploads the PNGs as an artifact.
  *
  * One extra shot, `components-en-dark.png`, forces Chromium's
  * `prefers-color-scheme` to `dark` (`--blink-settings=preferredColorScheme=0`,

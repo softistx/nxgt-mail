@@ -324,6 +324,12 @@ patch of `@nxgt/mail-i18n`, with `bun.lock`.
 `scripts/publish.ts` differs by `pinDocs` and `pinPackageDocs`, which pin the
 docs' picture URLs to the release tag: janus's READMEs show no picture.
 
+### Copied from elsewhere
+
+| Files | Canonical source | Notes |
+| --- | --- | --- |
+| `scripts/close-released-issues.ts`, `-lib.ts`, `-git.ts` and `.spec.ts` | `plugins/nxgt-issues/scripts/release/` in the plugins repository; nxgt-core and nxgt-janus hold the same four | Byte-for-byte copies; change the canonical file first, then every copy. Run by the `close-issues` job of `release.yml` after a publish. There is no copy spec here (the plugin is not in this repository, as in nxgt-janus): compare by hand with `cmp` against nxgt-core's. `biome.json` has an override for them (`useNamingConvention`, `useLiteralKeys` off) and `scripts/tsconfig.json` sets `noImplicitAny`, which the base config turns off. |
+
 **One word per idea.** The words are defined once, in a `docs/vocabulary.md`
 the first package writes: *e-mail* (not "mail" in prose, not "email"),
 *template*, *catalogue*, *message*, *locale*, *plugin*, *placeholder*,
@@ -353,6 +359,11 @@ rewrites the PNGs the READMEs show (`mail-presets/previews/`,
 changing how an e-mail looks, and commit the images; CI never compares them,
 since fonts differ between machines. They are not in any package's `files`:
 the READMEs load them from GitHub.
+
+Without a Linux machine at hand, the `previews` workflow (Actions tab, run by
+hand only) runs `bun run previews` on `ubuntu-latest` and uploads
+`packages/*/previews` as the `previews` artifact; it pushes and opens nothing.
+Download it and commit the images yourself.
 
 `bun run send-samples` is a private, unpublished root script: it sends every
 preset and mail-ui showcase fixture, in a fresh build, to one address, for a
