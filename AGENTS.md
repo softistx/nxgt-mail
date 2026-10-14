@@ -365,6 +365,9 @@ identical codes, positions and messages; exit code 1 where tsc gives 2). Median 
   A package must therefore never get a `check` script, and `typecheck:scripts`
   stays on `tsc --noEmit -p scripts/tsconfig.json` (`cd / && bun check -p
   "$OLDPWD/scripts"` works but is too fragile to keep).
+- `bun check` uses Bun's own bundled TypeScript (6.0.3 in Bun 1.4.3), not the
+  repository's `typescript` devDependency: a check against the TypeScript 7 peer
+  must run `tsc`, not `bun check`.
 - `bun check` has no emit: `build.ts` keeps `tsc --emitDeclarationOnly`, and
   vue-tsc stays for the templates. Like tsc, it needs the siblings' `dist/`.
 - Piped output is `file(line,col): error TSxxxx` lines plus a summary; add
