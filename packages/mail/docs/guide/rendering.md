@@ -98,11 +98,11 @@ format it wrote against the renderers it supports when it builds: see
 ```ts
 type WantedLocales = string | null | undefined | readonly (string | null | undefined)[];
 
-interface MailRendererOptions {
-	readonly dir: string;
+// Exactly one of `dir` and `files`:
+type MailRendererOptions = ({ readonly dir: string } | { readonly files: Readonly<Record<string, string>> }) & {
 	readonly getLanguage?: () => WantedLocales;
 	readonly fallbackLocale?: string;
-}
+};
 
 type MailEmailsOf<E> = { readonly [K in keyof E]: MailVariables };
 type AnyMailEmails = Readonly<Record<string, MailVariables>>;
@@ -130,7 +130,8 @@ checks the names and the variables at compile time: see
 
 | Option | Type | Default | Effect |
 | --- | --- | --- | --- |
-| `dir` | `string` | required | The build's output folder, where `mail-manifest.json` is. A relative path is read from the process's working directory |
+| `dir` | `string` | one of `dir` and `files` | The build's output folder, where `mail-manifest.json` is. A relative path is read from the process's working directory |
+| `files` | `Readonly<Record<string, string>>` | one of `dir` and `files` | The same files in memory: relative path (`/` separated) to content, `mail-manifest.json` included. See [Rendering from memory](#rendering-from-memory) |
 | `getLanguage` | `() => WantedLocales` | none: the fallback locale | Asked **at each render** for the wanted locales, most wanted first, then matched against the build's locales with [`pickLocale`](locales.md) |
 | `fallbackLocale` | `string` | the manifest's `fallbackLocale` | The locale when nothing wanted is built. Must be one of the build's locales |
 
@@ -433,16 +434,43 @@ mails.render('verify-email', {
 Every message names the e-mail, the locale or the variable — **never a
 value**: a link in a verification e-mail is a credential.
 
+### Rendering from memory
+
+A package that ships prebuilt templates and gets bundled by its consumer cannot
+rely on a folder next to its code. Inline the build's files and pass them as
+`files`; nothing is written to disk and nothing is read from it:
+
+```ts
+import { createMailRenderer } from '@nxgt/mail/renderer';
+
+const files = {
+	'mail-manifest.json': '{ "locales": ["en"], … }', // the build's, as text
+	'en/verify-email.html': '<!DOCTYPE html>…',
+	'en/verify-email.txt': 'Hello {{name}}…',
+};
+
+const mails = createMailRenderer({ files });
+```
+
+The keys are the paths of the built folder, relative to it and `/` separated;
+the values are the file contents. Rendering is the same as from `dir`, and the
+files are read once, when the renderer is created. Give exactly one of `dir`
+and `files`.
+
 ### When the renderer is created
 
 A mistake in the options is a bare `TypeError`; a build that is missing or
 broken is an `Error`, the file system's error as `cause` when a file cannot be
-read. The paths are `dir` joined with the file, as you passed `dir`.
+read. The paths are `dir` joined with the file, as you passed `dir`; with
+`files`, the key.
 
 | Message | Class | Cause |
 | --- | --- | --- |
 | `createMailRenderer: options must be an object, as { dir: 'dist' }` | `TypeError` | No options object |
 | `createMailRenderer: dir must be the folder maizzle build wrote, as dist` | `TypeError` | `dir` missing, empty or not a string |
+| `createMailRenderer: give exactly one of dir (a build folder) and files (the build as a map of path to content)` | `TypeError` | Both `dir` and `files`, or neither |
+| `createMailRenderer: files must be an object of relative path to file content, as { "mail-manifest.json": "…" }` | `TypeError` | `files` is an array, or a value of it is not a string |
+| `createMailRenderer: mail-manifest.json cannot be read — files must hold every file of the build, mail-manifest.json included` | `Error` | A file of the build, as `mail-manifest.json` here, is missing from `files` |
 | `createMailRenderer: getLanguage must be a function that answers the wanted locales, as () => user.locale` | `TypeError` | `getLanguage` given as a locale rather than a function |
 | `createMailRenderer: dist/mail-manifest.json cannot be read — run maizzle build, and deploy its output folder` | `Error` | No build at `dir`: not built, not deployed, or `dir` read from another working directory |
 | `createMailRenderer: dist/mail-manifest.json is not valid JSON` | `Error` | The manifest was cut or edited |

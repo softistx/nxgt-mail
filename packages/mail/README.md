@@ -642,6 +642,16 @@ that breaks the rule.
 from the working directory; resolve it from the module when the process may
 start elsewhere: `fileURLToPath(new URL('../mails/dist', import.meta.url))`.
 
+**Bundled, with no folder to read?** Pass the build's files from memory,
+instead of `dir` (exactly one of the two): relative path to content,
+`mail-manifest.json` included.
+
+```ts
+const mails = createMailRenderer({
+	files: { 'mail-manifest.json': manifestJson, 'en/verify-email.html': html, 'en/verify-email.txt': text },
+});
+```
+
 **The renderer needs a file system.** `@nxgt/mail/renderer` imports
 `node:fs`: it runs on Node, Bun and Deno, not on an edge runtime without `fs`.
 `@nxgt/mail` itself imports no Node built-in.
@@ -721,7 +731,7 @@ that fails the typecheck the moment it stops holding:
 8. A `MailErrorCode` the union does not declare.
 9. A bare `new MailError(…)` — it is abstract, so nothing throws an error that
    passes a `code` check and fails `instanceof MailFailure`.
-10. A `createMailRenderer` without `dir`, the build's output folder.
+10. A `createMailRenderer` with neither `dir`, the build's output folder, nor `files`, or with both.
 11. A `getLanguage` given as a locale rather than a function answering one.
 12. A `render` variable that is neither a string nor a number (a `URL`).
 

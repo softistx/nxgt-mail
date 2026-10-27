@@ -6,7 +6,9 @@ the only number.
 
 ## Now
 
-Nothing between releases.
+- **Render from in-memory templates** — `createMailRenderer({ files })` takes
+  the build's files as a map of path to content instead of `dir`, so a bundled
+  package inlines its templates and writes no temporary folder.
 
 ## Next
 
