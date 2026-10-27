@@ -103,6 +103,13 @@ describe('the presets, built by a project', () => {
 			'{{ inviter }} vous invite à rejoindre {{ organization }}',
 		);
 		expect(emails['sign-in-code'].urlVariables).toEqual([]);
+		expect(emails['sign-up-attempted'].variables).toEqual([
+			'device',
+			'link',
+			'name',
+			'time',
+		]);
+		expect(emails['sign-up-attempted'].urlVariables).toEqual(['link']);
 	});
 
 	test('each preset whose link or code expires takes expiresIn, in its HTML and its text', async () => {
