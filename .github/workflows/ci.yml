@@ -54,7 +54,7 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
       - name: Lint code
-        run: biome ci
+        run: bunx biome ci
       # A changeset naming a private package is consumed by `changeset
       # version` and published by nothing: the release stays in version mode.
       # A typo in a package name is the same release that never happens.
