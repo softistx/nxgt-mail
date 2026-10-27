@@ -74,6 +74,17 @@
 		"body": "If this was you, there is nothing to do.",
 		"action": "Secure my account"
 	},
+	"sign-up-attempted": {
+		"subject": "Someone tried to sign up with your e-mail address",
+		"preheader": "An account already exists for this address.",
+		"title": "Someone tried to create an account with your address",
+		"banner": "Someone tried to create an account with this e-mail address, which already has one.",
+		"device": "Device",
+		"time": "Time",
+		"body": "If this was you, sign in, or reset your password if you have forgotten it, with the button below.",
+		"action": "Sign in or reset my password",
+		"ignore": "If this was not you, ignore this e-mail: nothing was changed on your account."
+	},
 	"two-factor-enabled": {
 		"subject": "Two-factor authentication was turned on",
 		"preheader": "Your account now asks for a second factor at sign-in.",

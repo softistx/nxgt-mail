@@ -110,7 +110,7 @@ presets({ only: ['welcome'] });   // not only: 'welcome', not only: []
 presets();                        // every preset
 ```
 
-### `presets: only holds something that is not a preset — name one of verify-email, reset-password, password-changed, email-changed, confirm-new-email, account-deleted, sign-in-code, magic-link, new-sign-in, two-factor-enabled, two-factor-disabled, recovery-code-used, confirm-action, welcome, invitation, invitation-accepted`
+### `presets: only holds something that is not a preset — name one of verify-email, reset-password, password-changed, email-changed, confirm-new-email, account-deleted, sign-in-code, magic-link, new-sign-in, sign-up-attempted, two-factor-enabled, two-factor-disabled, recovery-code-used, confirm-action, welcome, invitation, invitation-accepted`
 
 **When:** loading `maizzle.config.ts`, when `only` names an e-mail the
 package does not ship. Common causes are a typo, a name in camelCase

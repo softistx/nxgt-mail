@@ -1,6 +1,6 @@
 # The e-mails
 
-This page is for sending one of the sixteen presets, or rewording it: what each
+This page is for sending one of the seventeen presets, or rewording it: what each
 one is for, what it shows, the placeholders the sender fills, its subject,
 and every message it uses in `en` and `fr`.
 
@@ -40,6 +40,7 @@ export default defineMailConfig({
 | [`sign-in-code`](#sign-in-code) | A user signs in with a one-time code | `code`, `expiresIn` | — |
 | [`magic-link`](#magic-link) | A user signs in with a one-time link | `expiresIn`, `link` | `link` |
 | [`new-sign-in`](#new-sign-in) | An account was signed in from a device not seen before | `device`, `link`, `location`, `name`, `time` | `link` |
+| [`sign-up-attempted`](#sign-up-attempted) | Someone tried to sign up with an address that already has an account — sent to its owner | `device`, `link`, `name`, `time` | `link` |
 | [`two-factor-enabled`](#two-factor-enabled) | Two-factor authentication was just turned on | `link`, `name` | `link` |
 | [`two-factor-disabled`](#two-factor-disabled) | Two-factor authentication was just turned off | `link`, `name` | `link` |
 | [`recovery-code-used`](#recovery-code-used) | A second-factor recovery code was spent | `link`, `name`, `recoveryCodesLeft`, `when` | `link` |
@@ -84,7 +85,7 @@ To say nothing about expiry, replace the template (see
 [Replacing a template](presets.md#replacing-a-template)): a message override cannot drop the
 argument, because the template still passes it.
 
-The other presets do not take it: `password-changed`, `new-sign-in`,
+The other presets do not take it: `password-changed`, `new-sign-in`, `sign-up-attempted`,
 `two-factor-enabled`, `two-factor-disabled`, `recovery-code-used`, `welcome`
 and `invitation-accepted` link to your site, not to a token, and
 `email-changed` says nothing about a lifetime its undo link may not have. To
@@ -358,6 +359,39 @@ format a value it does not have, so format `time` in the recipient's locale
 and time zone before sending (`2 janvier 2026, 14:05 (Paris)`). Samples:
 [en](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/en/new-sign-in.html) ·
 [fr](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/fr/new-sign-in.html).
+
+## `sign-up-attempted`
+
+An alert for the owner of an address, after someone tried to sign up with it
+while it already has an account. Send it when your sign-up answers a
+duplicate exactly like a new registration, so that accounts cannot be
+enumerated. A title, the greeting, a warning banner, a summary of the device
+and the time, the body, the **Sign in or reset my password** button, the link
+as text, and a closing line telling the owner to ignore the e-mail if it was
+not them.
+
+| Key | `en` | `fr` |
+| --- | --- | --- |
+| `sign-up-attempted.subject` | Someone tried to sign up with your e-mail address | Quelqu'un a tenté de s'inscrire avec votre adresse e-mail |
+| `sign-up-attempted.preheader` | An account already exists for this address. | Un compte existe déjà pour cette adresse. |
+| `sign-up-attempted.title` | Someone tried to create an account with your address | Quelqu'un a tenté de créer un compte avec votre adresse |
+| `sign-up-attempted.banner` | Someone tried to create an account with this e-mail address, which already has one. | Quelqu'un a tenté de créer un compte avec cette adresse e-mail, qui en a déjà un. |
+| `sign-up-attempted.device` | Device | Appareil |
+| `sign-up-attempted.time` | Time | Heure |
+| `sign-up-attempted.body` | If this was you, sign in, or reset your password if you have forgotten it, with the button below. | Si c'était vous, connectez-vous, ou réinitialisez votre mot de passe si vous l'avez oublié, avec le bouton ci-dessous. |
+| `sign-up-attempted.action` | Sign in or reset my password | Me connecter ou réinitialiser mon mot de passe |
+| `sign-up-attempted.ignore` | If this was not you, ignore this e-mail: nothing was changed on your account. | Si ce n'était pas vous, ignorez cet e-mail : rien n'a été modifié sur votre compte. |
+
+Placeholders: `name`, `device`, `time`, `link` (a URL, to your sign-in or
+password-reset page). Like every placeholder, `device` and `time` are
+required and are text the sender writes: format `time` in the recipient's
+locale and time zone before sending (`2 janvier 2026, 14:05 (Paris)`). When
+your sign-up does not know the device or the time, pass a neutral text in the
+recipient's language (`'Unknown'`, `'Inconnu'`), or replace the template with
+one that leaves the summary out (see
+[Replacing a template](presets.md#replacing-a-template)). Samples:
+[en](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/en/sign-up-attempted.html) ·
+[fr](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail-presets/samples/fr/sign-up-attempted.html).
 
 ## `two-factor-enabled`
 
