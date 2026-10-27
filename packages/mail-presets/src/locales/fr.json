@@ -74,6 +74,17 @@
 		"body": "Si c'était vous, vous n'avez rien à faire.",
 		"action": "Sécuriser mon compte"
 	},
+	"sign-up-attempted": {
+		"subject": "Quelqu'un a tenté de s'inscrire avec votre adresse e-mail",
+		"preheader": "Un compte existe déjà pour cette adresse.",
+		"title": "Quelqu'un a tenté de créer un compte avec votre adresse",
+		"banner": "Quelqu'un a tenté de créer un compte avec cette adresse e-mail, qui en a déjà un.",
+		"device": "Appareil",
+		"time": "Heure",
+		"body": "Si c'était vous, connectez-vous, ou réinitialisez votre mot de passe si vous l'avez oublié, avec le bouton ci-dessous.",
+		"action": "Me connecter ou réinitialiser mon mot de passe",
+		"ignore": "Si ce n'était pas vous, ignorez cet e-mail : rien n'a été modifié sur votre compte."
+	},
 	"two-factor-enabled": {
 		"subject": "L'authentification à deux facteurs a été activée",
 		"preheader": "Votre compte demande désormais un second facteur à la connexion.",

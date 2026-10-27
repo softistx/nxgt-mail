@@ -19,6 +19,7 @@ export const PRESETS = [
 	'sign-in-code',
 	'magic-link',
 	'new-sign-in',
+	'sign-up-attempted',
 	'two-factor-enabled',
 	'two-factor-disabled',
 	'recovery-code-used',

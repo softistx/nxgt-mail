@@ -1,9 +1,9 @@
 # @nxgt/mail-presets
 
-Sixteen ready transactional e-mails for a [Maizzle](https://maizzle.com) 6
+Seventeen ready transactional e-mails for a [Maizzle](https://maizzle.com) 6
 project: `verify-email`, `reset-password`, `password-changed`,
 `email-changed`, `confirm-new-email`, `account-deleted`, `sign-in-code`, `magic-link`,
-`new-sign-in`, `two-factor-enabled`, `two-factor-disabled`,
+`new-sign-in`, `sign-up-attempted`, `two-factor-enabled`, `two-factor-disabled`,
 `recovery-code-used`, `confirm-action`, `welcome`, `invitation` and
 `invitation-accepted`, written with `@nxgt/mail-ui`'s
 components and translated in `en` and `fr`. Your project builds them with its
@@ -83,7 +83,7 @@ overrides nothing: `@nxgt/mail-i18n` requires it.
 | Export | What it is |
 | --- | --- |
 | `presets(options?)` | `{ templates, catalogues }` for `i18n({ templates, catalogues })`: every preset, or the ones in `only` |
-| `PRESETS` | The sixteen names, `['verify-email', 'reset-password', …]`, as a readonly tuple |
+| `PRESETS` | The seventeen names, `['verify-email', 'reset-password', …]`, as a readonly tuple |
 | `PresetName` | One of them, as a type |
 | `presetCatalogues` | Every preset's messages, `{ en, fr }`, before `presets()` keeps the ones asked for; frozen, every group in it |
 | `TEMPLATES_DIR` | The absolute path of the package's `emails/` folder |
@@ -122,6 +122,7 @@ manifest:
 | `sign-in-code` | `code`, `expiresIn` | Your sign-in code: `{{ code }}` |
 | `magic-link` | `expiresIn`, `link` | Your sign-in link |
 | `new-sign-in` | `device`, `link`, `location`, `name`, `time` | New sign-in to your account |
+| `sign-up-attempted` | `device`, `link`, `name`, `time` | Someone tried to sign up with your e-mail address |
 | `two-factor-enabled` | `link`, `name` | Two-factor authentication was turned on |
 | `two-factor-disabled` | `link`, `name` | Two-factor authentication was turned off |
 | `recovery-code-used` | `link`, `name`, `recoveryCodesLeft`, `when` | A recovery code was used on your account |

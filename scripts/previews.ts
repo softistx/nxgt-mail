@@ -58,6 +58,7 @@ const LINKS: Readonly<Record<string, string>> = {
 	'confirm-new-email': 'https://acme.example/confirm-email?token=8d41b7',
 	'magic-link': 'https://acme.example/sign-in?token=5f2c9e',
 	'new-sign-in': 'https://acme.example/security',
+	'sign-up-attempted': 'https://acme.example/sign-in',
 	welcome: 'https://acme.example/start',
 	invitation: 'https://acme.example/join?invite=5f2c9e',
 	'account-deleted': 'https://acme.example/restore?token=5f2c9e',
