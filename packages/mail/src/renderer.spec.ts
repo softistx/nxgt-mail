@@ -351,6 +351,50 @@ describe('createMailRenderer — in-memory files', () => {
 		}
 	});
 
+	it('takes keys written with ./, a leading / or \\, and the same in the manifest', () => {
+		const spelled = Object.fromEntries(
+			Object.entries(files).map(([path, content], index) => [
+				[`./${path}`, `/${path}`, path.replaceAll('/', '\\')][index % 3],
+				content,
+			]),
+		);
+		expect(
+			createMailRenderer({ files: spelled }).render('sign-in-code', {
+				code: 7,
+			}),
+		).toEqual(
+			createMailRenderer({ dir: built }).render('sign-in-code', { code: 7 }),
+		);
+		const manifest = JSON.parse(files['mail-manifest.json'] as string);
+		manifest.emails['sign-in-code'].files.en.html = './en/sign-in-code.html';
+		manifest.emails['sign-in-code'].files.en.text = 'en\\sign-in-code.txt';
+		expect(
+			createMailRenderer({
+				files: { ...files, 'mail-manifest.json': JSON.stringify(manifest) },
+			}).render('sign-in-code', { code: 7 }).subject,
+		).toBe('Your sign-in code: 7');
+	});
+
+	it('names the file the manifest lists and the map lacks', () => {
+		const manifest = JSON.parse(files['mail-manifest.json'] as string);
+		manifest.emails['sign-in-code'].files.en.html = 'en/elsewhere.html';
+		expect(() =>
+			createMailRenderer({
+				files: { ...files, 'mail-manifest.json': JSON.stringify(manifest) },
+			}),
+		).toThrow('createMailRenderer: en/elsewhere.html cannot be read');
+	});
+
+	it('types exactly one of dir and files', () => {
+		const typed = () => {
+			// @ts-expect-error both dir and files
+			createMailRenderer({ dir: built, files });
+			// @ts-expect-error neither dir nor files
+			createMailRenderer({});
+		};
+		expect(typed).toThrow('give exactly one');
+	});
+
 	it('refuses both dir and files, or neither', () => {
 		const message =
 			'createMailRenderer: give exactly one of dir (a build folder) and files (the build as a map of path to content)';

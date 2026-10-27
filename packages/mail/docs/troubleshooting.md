@@ -108,6 +108,8 @@ How the messages are shaped:
 - [`createMailRenderer: options must be an object, as { dir: 'dist' }`](#createmailrenderer-options-must-be-an-object-as--dir-dist-)
 - [`createMailRenderer: give exactly one of dir (a build folder) and files (the build as a map of path to content)`](#createmailrenderer-give-exactly-one-of-dir-a-build-folder-and-files-the-build-as-a-map-of-path-to-content)
 - [`createMailRenderer: dir must be the folder maizzle build wrote, as dist`](#createmailrenderer-dir-must-be-the-folder-maizzle-build-wrote-as-dist)
+- [`createMailRenderer: files must be an object of relative path to file content, as { "mail-manifest.json": "…" }`](#createmailrenderer-files-must-be-an-object-of-relative-path-to-file-content-as--mail-manifestjson--)
+- [`createMailRenderer: <file> cannot be read — files must hold every file of the build, mail-manifest.json included`](#createmailrenderer-file-cannot-be-read--files-must-hold-every-file-of-the-build-mail-manifestjson-included)
 - [`createMailRenderer: getLanguage must be a function that answers the wanted locales, as () => user.locale`](#createmailrenderer-getlanguage-must-be-a-function-that-answers-the-wanted-locales-as---userlocale)
 - [`createMailRenderer: fallbackLocale must be one of the build's locales, <locales>`](#createmailrenderer-fallbacklocale-must-be-one-of-the-builds-locales-locales)
 - [`createMailRenderer: <dir>/mail-manifest.json cannot be read — run maizzle build, and deploy its output folder`](#createmailrenderer-dirmail-manifestjson-cannot-be-read--run-maizzle-build-and-deploy-its-output-folder)
@@ -1444,7 +1446,7 @@ A `TypeError`.
 
 **When:** `createMailRenderer()` with no argument, or with a string:
 typically `createMailRenderer('dist')`.
-**Why:** the options are one object, and `dir` is required in it.
+**Why:** the options are one object, and `dir` or `files` is required in it.
 **Fix:**
 
 ```ts
@@ -1476,6 +1478,35 @@ not set in this environment (`dir: process.env.MAIL_DIR`).
 deployment that forgot the variable does not silently read another folder.
 **Fix:** pass the output folder of `maizzle build`. When it comes from the
 environment, check that it is set before the call.
+
+### `createMailRenderer: files must be an object of relative path to file content, as { "mail-manifest.json": "…" }`
+
+A `TypeError`.
+
+**When:** `createMailRenderer({ files })` where `files` is an array, a string,
+or an object with a value that is not a string (a `Buffer`, a parsed
+manifest).
+**Why:** `files` stands for the build's folder: each key is a path, each value
+the file's text.
+**Fix:** pass every file as a string, the manifest as its JSON text:
+
+```ts
+createMailRenderer({
+	files: { 'mail-manifest.json': JSON.stringify(manifest), 'en/verify-email.html': html },
+});
+```
+
+### `createMailRenderer: <file> cannot be read — files must hold every file of the build, mail-manifest.json included`
+
+An `Error`.
+
+**When:** `createMailRenderer({ files })` where `files` lacks `mail-manifest.json`,
+or a file the manifest lists (`en/verify-email.html`, `en/verify-email.txt`).
+**Why:** with `files` nothing is read from disk, so the map must hold the whole
+build. Keys may be written `a/b`, `./a/b`, `/a/b` or `a\b`; they are matched
+after that is normalised.
+**Fix:** inline every file of the build folder, as the error's `<file>` names
+the first one missing.
 
 ### `createMailRenderer: getLanguage must be a function that answers the wanted locales, as () => user.locale`
 

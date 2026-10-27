@@ -4,10 +4,14 @@
  * main entry, which every transport imports, stays free of Node built-ins.
  */
 
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { MailRefused } from './errors';
 import { pickLocale, type WantedLocales } from './locale';
+import {
+	type Built,
+	builtOf,
+	type MailFiles,
+	type MailRendererSource,
+} from './renderer-source';
 import type { Rendered } from './types';
 
 /** The manifest's name in the build's output folder, as `@nxgt/mail-i18n` writes it. */
@@ -47,27 +51,7 @@ export type RenderArguments<V> =
 		? [variables?: V, options?: RenderOptions]
 		: [variables: V, options?: RenderOptions];
 
-/** The built files by relative path, as `{ 'mail-manifest.json': '…', 'en/verify-email.html': '…' }`. */
-export type MailFiles = Readonly<Record<string, string>>;
-
-/**
- * Where the build is read from: exactly one of `dir` and `files`.
- */
-export type MailRendererSource =
-	| {
-			/** The build's output folder — where `mail-manifest.json` is — as `dist`. */
-			readonly dir: string;
-			readonly files?: never;
-	  }
-	| {
-			/**
-			 * The same files as the build folder, `mail-manifest.json` included, in
-			 * memory: relative path (`/` separated) to content. For templates
-			 * inlined in a bundle, with no folder to read.
-			 */
-			readonly files: MailFiles;
-			readonly dir?: never;
-	  };
+export type { MailFiles, MailRendererSource };
 
 export type MailRendererOptions = MailRendererSource & MailRendererCommon;
 
@@ -199,46 +183,6 @@ function checkOptions(options: MailRendererOptions): void {
 			'createMailRenderer: getLanguage must be a function that answers the wanted locales, as () => user.locale',
 		);
 	}
-}
-
-/** Where files are read from: a folder or a map, the same by path. */
-interface Built {
-	/** The name shown in an error for `path`. */
-	name(path: string): string;
-	/** The content of `path`; a missing file **throws**, naming it. */
-	read(path: string): string;
-}
-
-function builtOf(options: MailRendererSource): Built {
-	const { files } = options;
-	if (files !== undefined) {
-		return {
-			name: (path) => path,
-			read(path) {
-				const content = Object.hasOwn(files, path) ? files[path] : undefined;
-				if (content === undefined) {
-					throw new Error(
-						`createMailRenderer: ${path} cannot be read — files must hold every file of the build, mail-manifest.json included`,
-					);
-				}
-				return content;
-			},
-		};
-	}
-	const dir = options.dir as string;
-	return {
-		name: (path) => join(dir, path),
-		read(path) {
-			try {
-				return readFileSync(join(dir, path), 'utf8');
-			} catch (error) {
-				throw new Error(
-					`createMailRenderer: ${join(dir, path)} cannot be read — run maizzle build, and deploy its output folder`,
-					{ cause: error },
-				);
-			}
-		},
-	};
 }
 
 /** The manifest, its shape checked: a broken one **throws**. */
