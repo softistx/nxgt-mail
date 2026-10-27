@@ -1,5 +1,11 @@
 # @nxgt/mail
 
+## 1.1.0
+
+### Minor Changes
+
+- [#113](https://github.com/softistx/nxgt-mail/pull/113) [`ade8a6e`](https://github.com/softistx/nxgt-mail/commit/ade8a6e73fd109d8e64a8d6c99329ce36cb72ded) Thanks [@SteveGT96](https://github.com/SteveGT96)! - `createMailRenderer` accepts `{ files }`, the build's files in memory (relative path to content, `mail-manifest.json` included), as an alternative to `{ dir }`; give exactly one of the two. For templates inlined in a bundle, with no folder to read.
+
 ## 1.0.2
 
 ### Patch Changes
