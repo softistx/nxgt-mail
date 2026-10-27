@@ -2,12 +2,13 @@ import { afterEach, describe, expect, it } from 'bun:test';
 import {
 	cpSync,
 	mkdtempSync,
+	readdirSync,
 	readFileSync,
 	rmSync,
 	writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { MailRefused } from './errors';
 import { createMailRenderer, MANIFEST_FORMAT } from './renderer';
@@ -313,6 +314,69 @@ describe('createMailRenderer — wiring and a broken build', () => {
 		});
 		expect(() => createMailRenderer({ dir: at })).toThrow(
 			"createMailRenderer: sign-in-code has no text part in fr — keep Maizzle's plaintext on, as @nxgt/mail-config sets it",
+		);
+	});
+});
+
+describe('createMailRenderer — in-memory files', () => {
+	/** Every file of the build, by path relative to its folder. */
+	const collect = (dir: string): Record<string, string> =>
+		Object.fromEntries(
+			readdirSync(dir, { recursive: true, withFileTypes: true })
+				.filter((entry) => entry.isFile())
+				.map((entry) => {
+					const file = join(entry.parentPath, entry.name);
+					return [
+						relative(dir, file).split(sep).join('/'),
+						readFileSync(file, 'utf8'),
+					];
+				}),
+		);
+	const files = collect(built);
+
+	it('renders from files exactly as from the dir of the same build', () => {
+		const fromDir = createMailRenderer({ dir: built });
+		const fromFiles = createMailRenderer({ files });
+		expect(fromFiles.emails).toEqual(fromDir.emails);
+		expect(fromFiles.locales).toEqual(fromDir.locales);
+		for (const locale of fromDir.locales) {
+			expect(
+				fromFiles.render('verify-email', { name: 'Ada', link }, { locale }),
+			).toEqual(
+				fromDir.render('verify-email', { name: 'Ada', link }, { locale }),
+			);
+			expect(fromFiles.render('sign-in-code', { code: 7 }, { locale })).toEqual(
+				fromDir.render('sign-in-code', { code: 7 }, { locale }),
+			);
+		}
+	});
+
+	it('refuses both dir and files, or neither', () => {
+		const message =
+			'createMailRenderer: give exactly one of dir (a build folder) and files (the build as a map of path to content)';
+		expect(() => createMailRenderer({ dir: built, files } as never)).toThrow(
+			message,
+		);
+		expect(() => createMailRenderer({} as never)).toThrow(message);
+	});
+
+	it('refuses a files that is not a map of strings', () => {
+		expect(() => createMailRenderer({ files: [] as never })).toThrow(
+			'createMailRenderer: files must be an object of relative path to file content, as { "mail-manifest.json": "…" }',
+		);
+		expect(() =>
+			createMailRenderer({ files: { 'mail-manifest.json': 1 } as never }),
+		).toThrow('createMailRenderer: files must be an object');
+	});
+
+	it('names the missing file of a files map', () => {
+		const { 'fr/sign-in-code.txt': _gone, ...partial } = files;
+		expect(() => createMailRenderer({ files: partial })).toThrow(
+			'createMailRenderer: fr/sign-in-code.txt cannot be read',
+		);
+		const { 'mail-manifest.json': _manifest, ...noManifest } = files;
+		expect(() => createMailRenderer({ files: noManifest })).toThrow(
+			'createMailRenderer: mail-manifest.json cannot be read',
 		);
 	});
 });

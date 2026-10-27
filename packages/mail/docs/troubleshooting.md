@@ -106,6 +106,7 @@ How the messages are shaped:
 
 **Creating the renderer**
 - [`createMailRenderer: options must be an object, as { dir: 'dist' }`](#createmailrenderer-options-must-be-an-object-as--dir-dist-)
+- [`createMailRenderer: give exactly one of dir (a build folder) and files (the build as a map of path to content)`](#createmailrenderer-give-exactly-one-of-dir-a-build-folder-and-files-the-build-as-a-map-of-path-to-content)
 - [`createMailRenderer: dir must be the folder maizzle build wrote, as dist`](#createmailrenderer-dir-must-be-the-folder-maizzle-build-wrote-as-dist)
 - [`createMailRenderer: getLanguage must be a function that answers the wanted locales, as () => user.locale`](#createmailrenderer-getlanguage-must-be-a-function-that-answers-the-wanted-locales-as---userlocale)
 - [`createMailRenderer: fallbackLocale must be one of the build's locales, <locales>`](#createmailrenderer-fallbacklocale-must-be-one-of-the-builds-locales-locales)
@@ -1451,6 +1452,18 @@ import { createMailRenderer } from '@nxgt/mail/renderer';
 
 const mails = createMailRenderer({ dir: 'dist' });
 ```
+
+### `createMailRenderer: give exactly one of dir (a build folder) and files (the build as a map of path to content)`
+
+A `TypeError`.
+
+**When:** `createMailRenderer({})`, or both `dir` and `files` given: typically
+an environment variable that is not set, with a `files` fallback beside it.
+**Why:** the build is read from one place, a folder or a map in memory; two
+would leave it open which one wins.
+**Fix:** pass `dir`, or `files` (relative path to content, `mail-manifest.json`
+included), not both. A `files` that is not an object of strings, or that lacks
+a file of the build, fails with its own message naming the file.
 
 ### `createMailRenderer: dir must be the folder maizzle build wrote, as dist`
 

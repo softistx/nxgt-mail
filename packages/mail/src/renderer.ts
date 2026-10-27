@@ -47,9 +47,31 @@ export type RenderArguments<V> =
 		? [variables?: V, options?: RenderOptions]
 		: [variables: V, options?: RenderOptions];
 
-export interface MailRendererOptions {
-	/** The build's output folder — where `mail-manifest.json` is — as `dist`. */
-	readonly dir: string;
+/** The built files by relative path, as `{ 'mail-manifest.json': '…', 'en/verify-email.html': '…' }`. */
+export type MailFiles = Readonly<Record<string, string>>;
+
+/**
+ * Where the build is read from: exactly one of `dir` and `files`.
+ */
+export type MailRendererSource =
+	| {
+			/** The build's output folder — where `mail-manifest.json` is — as `dist`. */
+			readonly dir: string;
+			readonly files?: never;
+	  }
+	| {
+			/**
+			 * The same files as the build folder, `mail-manifest.json` included, in
+			 * memory: relative path (`/` separated) to content. For templates
+			 * inlined in a bundle, with no folder to read.
+			 */
+			readonly files: MailFiles;
+			readonly dir?: never;
+	  };
+
+export type MailRendererOptions = MailRendererSource & MailRendererCommon;
+
+interface MailRendererCommon {
 	/**
 	 * The locales wanted, most wanted first, asked at each render — as
 	 * `@nxgt/i18n`'s language provider: `() => user.locale`, or a Hono
@@ -148,7 +170,23 @@ function checkOptions(options: MailRendererOptions): void {
 			"createMailRenderer: options must be an object, as { dir: 'dist' }",
 		);
 	}
-	if (typeof options.dir !== 'string' || options.dir.trim() === '') {
+	if ((options.dir === undefined) === (options.files === undefined)) {
+		throw new TypeError(
+			'createMailRenderer: give exactly one of dir (a build folder) and files (the build as a map of path to content)',
+		);
+	}
+	if (options.files !== undefined) {
+		if (
+			!isObject(options.files) ||
+			!Object.values(options.files).every(
+				(content) => typeof content === 'string',
+			)
+		) {
+			throw new TypeError(
+				'createMailRenderer: files must be an object of relative path to file content, as { "mail-manifest.json": "…" }',
+			);
+		}
+	} else if (typeof options.dir !== 'string' || options.dir.trim() === '') {
 		throw new TypeError(
 			'createMailRenderer: dir must be the folder maizzle build wrote, as dist',
 		);
@@ -163,24 +201,52 @@ function checkOptions(options: MailRendererOptions): void {
 	}
 }
 
-/** Reads `dir/path`; a missing file **throws**, naming it. */
-function readBuilt(dir: string, path: string): string {
-	try {
-		return readFileSync(join(dir, path), 'utf8');
-	} catch (error) {
-		throw new Error(
-			`createMailRenderer: ${join(dir, path)} cannot be read — run maizzle build, and deploy its output folder`,
-			{ cause: error },
-		);
+/** Where files are read from: a folder or a map, the same by path. */
+interface Built {
+	/** The name shown in an error for `path`. */
+	name(path: string): string;
+	/** The content of `path`; a missing file **throws**, naming it. */
+	read(path: string): string;
+}
+
+function builtOf(options: MailRendererSource): Built {
+	const { files } = options;
+	if (files !== undefined) {
+		return {
+			name: (path) => path,
+			read(path) {
+				const content = Object.hasOwn(files, path) ? files[path] : undefined;
+				if (content === undefined) {
+					throw new Error(
+						`createMailRenderer: ${path} cannot be read — files must hold every file of the build, mail-manifest.json included`,
+					);
+				}
+				return content;
+			},
+		};
 	}
+	const dir = options.dir as string;
+	return {
+		name: (path) => join(dir, path),
+		read(path) {
+			try {
+				return readFileSync(join(dir, path), 'utf8');
+			} catch (error) {
+				throw new Error(
+					`createMailRenderer: ${join(dir, path)} cannot be read — run maizzle build, and deploy its output folder`,
+					{ cause: error },
+				);
+			}
+		},
+	};
 }
 
 /** The manifest, its shape checked: a broken one **throws**. */
-function readManifest(dir: string) {
-	const file = join(dir, MANIFEST_FILE);
+function readManifest(built: Built) {
+	const file = built.name(MANIFEST_FILE);
 	let manifest: unknown;
 	try {
-		manifest = JSON.parse(readBuilt(dir, MANIFEST_FILE));
+		manifest = JSON.parse(built.read(MANIFEST_FILE));
 	} catch (error) {
 		if (error instanceof SyntaxError) {
 			throw new Error(`createMailRenderer: ${file} is not valid JSON`, {
@@ -227,7 +293,7 @@ function readManifest(dir: string) {
 
 /** One e-mail of the manifest, with its files read in every locale. */
 function readEmail(
-	dir: string,
+	built: Built,
 	name: string,
 	entry: unknown,
 	locales: readonly string[],
@@ -263,8 +329,8 @@ function readEmail(
 		}
 		parts.set(locale, {
 			subject,
-			html: readBuilt(dir, files.html),
-			text: readBuilt(dir, files.text),
+			html: built.read(files.html),
+			text: built.read(files.text),
 		});
 	}
 	return {
@@ -349,8 +415,8 @@ export function createMailRenderer<E extends MailEmailsOf<E> = AnyMailEmails>(
 	options: MailRendererOptions,
 ): MailRenderer<E> {
 	checkOptions(options);
-	const { dir } = options;
-	const manifest = readManifest(dir);
+	const built = builtOf(options);
+	const manifest = readManifest(built);
 	const fallback = options.fallbackLocale ?? manifest.fallbackLocale;
 	if (!manifest.locales.includes(fallback)) {
 		throw new TypeError(
@@ -359,7 +425,7 @@ export function createMailRenderer<E extends MailEmailsOf<E> = AnyMailEmails>(
 	}
 	const emails = new Map<string, Email>();
 	for (const [name, entry] of Object.entries(manifest.emails)) {
-		emails.set(name, readEmail(dir, name, entry, manifest.locales));
+		emails.set(name, readEmail(built, name, entry, manifest.locales));
 	}
 	const getLanguage = options.getLanguage;
 
