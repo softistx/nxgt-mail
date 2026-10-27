@@ -1,5 +1,11 @@
 # @nxgt/mail-presets
 
+## 1.3.0
+
+### Minor Changes
+
+- [#109](https://github.com/softistx/nxgt-mail/pull/109) [`f915bc1`](https://github.com/softistx/nxgt-mail/commit/f915bc14210e2966ee3a6ada75f7b527b9a8dccb) Thanks [@SteveGT96](https://github.com/SteveGT96)! - Add the `sign-up-attempted` preset: the e-mail for the owner of an address someone tried to sign up with while it already has an account. Placeholders `name`, `device`, `time` and `link`; `en` and `fr`.
+
 ## 1.2.0
 
 ### Minor Changes
