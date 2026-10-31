@@ -10,7 +10,7 @@
  * The calls that **must keep compiling** are here too, unmarked: a refusal
  * that refuses the correct call is a bug.
  *
- * **31 plausible mistakes, 31 refused.**
+ * **33 plausible mistakes, 33 refused.**
  */
 
 import type { DeliveredMail, MailerHarness } from '../../src/conformance/index';
@@ -34,6 +34,10 @@ import {
 	withRetry,
 } from '../../src/index';
 import { createMailRenderer } from '../../src/renderer';
+import {
+	signUnsubscribeToken,
+	verifyUnsubscribeToken,
+} from '../../src/unsubscribe-token';
 
 declare const rendered: Rendered;
 
@@ -429,3 +433,23 @@ void wrongBatchResult;
 // @ts-expect-error — the codes are ALREADY_SENT and UNKNOWN_ID.
 const unknownScheduleCode: MailScheduleErrorCode = 'RATE_LIMITED';
 void unknownScheduleCode;
+
+// ── 32. Claims JSON cannot hold in signUnsubscribeToken ─────────────────────
+// A function, `undefined` and `null` are not claims: JSON drops or nulls them,
+// and a verifier answers `null` for "not a token", so `null` claims would be
+// ambiguous.
+// @ts-expect-error — claims are a JSON value other than null.
+signUnsubscribeToken(() => 'u_1', 'a-secret-of-at-least-32-characters!');
+
+// ── 33. Arguments swapped in verifyUnsubscribeToken ─────────────────────────
+// The token comes first, then the secret — the reverse of signUnsubscribeToken
+// would be a number or an object where a string is wanted.
+// @ts-expect-error — the token is a string, not claims.
+verifyUnsubscribeToken({ user: 'u_1' }, 'a-secret-of-at-least-32-characters!');
+
+// Must compile: claims narrowed by the caller.
+const claimsBack = verifyUnsubscribeToken<{ readonly user: string }>(
+	'token',
+	'a-secret-of-at-least-32-characters!',
+);
+void claimsBack?.user;

@@ -371,6 +371,50 @@ be read, and **never log it** — nor the URL that carries it, nor the query
 string of the endpoint's access log. `listUnsubscribe` does its part: a
 refused `url` is reported by the rule it broke, never quoted.
 
+### Signing the token — `signUnsubscribeToken` and `verifyUnsubscribeToken`
+
+`@nxgt/mail/unsubscribe-token` makes the token and checks it on the `POST`,
+with `node:crypto` only. It imports a Node built-in, so it is its own subpath:
+`@nxgt/mail` itself still runs anywhere.
+
+```ts
+import { listUnsubscribe } from '@nxgt/mail';
+import {
+	signUnsubscribeToken,
+	verifyUnsubscribeToken,
+} from '@nxgt/mail/unsubscribe-token';
+
+const secret = process.env.UNSUBSCRIBE_SECRET as string; // at least 32 characters
+
+const token = signUnsubscribeToken({ user: 'u_1', list: 'news' }, secret);
+const headers = listUnsubscribe({ url: `https://example.com/unsubscribe?token=${token}` });
+
+// In the POST handler:
+export function unsubscribeFrom(received: string): { user: string; list: string } | null {
+	return verifyUnsubscribeToken<{ user: string; list: string }>(received, secret);
+}
+```
+
+```ts
+type UnsubscribeClaims = string | number | boolean | readonly UnsubscribeClaims[] | { readonly [key: string]: UnsubscribeClaims | null };
+
+function signUnsubscribeToken(claims: UnsubscribeClaims, secret: string): string;
+function verifyUnsubscribeToken<T extends UnsubscribeClaims = UnsubscribeClaims>(token: string, secret: string): T | null;
+```
+
+| Rule | Why |
+| --- | --- |
+| The token is `base64url(claims).base64url(HMAC-SHA256)`, a version tag inside the claims | URL-safe as it is, and a future layout is told apart |
+| Signed, **not encrypted** | Anyone holding the link reads the claims: put ids, never an address |
+| No expiry | The link in an old e-mail must keep working; claim only what switches mail off |
+| `verify` answers `null` for a forged, tampered, truncated or malformed token, or another secret's | An absence is `null`; answer 400 |
+| The signature is compared in constant time, after a length check | No timing signal on the signature |
+| A secret under 32 characters is a `TypeError`, on both sides | Fails at the first call, not as a weak token. Use random bytes, such as `openssl rand -base64 48` |
+| `null`, `undefined`, a function or a cycle as claims is a `TypeError` | `null` is what `verify` answers for "not a token" |
+| The claims are returned as written, not checked | Narrow them (`typeof claims.user === 'string'`) before using them |
+
+Rotating the secret invalidates every link already sent.
+
 ### Commas must be percent-encoded
 
 `List-Unsubscribe` is a comma-separated list of URLs: a raw `,` in the URL

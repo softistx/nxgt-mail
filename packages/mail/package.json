@@ -34,6 +34,11 @@
 			"import": "./dist/telemetry.js",
 			"default": "./dist/telemetry.js"
 		},
+		"./unsubscribe-token": {
+			"types": "./dist/unsubscribe-token.d.ts",
+			"import": "./dist/unsubscribe-token.js",
+			"default": "./dist/unsubscribe-token.js"
+		},
 		"./package.json": "./package.json"
 	},
 	"keywords": [
@@ -62,7 +67,8 @@
 			"src/index.ts",
 			"src/renderer.ts",
 			"src/conformance/index.ts",
-			"src/telemetry.ts"
+			"src/telemetry.ts",
+			"src/unsubscribe-token.ts"
 		],
 		"noNodeBuiltins": [
 			".",

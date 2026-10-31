@@ -48,6 +48,7 @@ imports the packed package under Node 20.
 | `@nxgt/mail` | The port (`Mailer`, `MailMessage`, `Rendered`, `SentMail`, `MailBatchResult`, `Address`, `MailAttachment`), the errors (`MailError`, `MailFailure`, `MailRefused`, `MailScheduleRefused`), the neutral delivery events (`MailEvent` and its members, `MailWebhookRefused`), `createMemoryMailer`, `withRetry` with `MailRetryOptions` and `RetryExhausted`, `sendBatch`, `pickLocale` and `parseAcceptLanguage`, `listUnsubscribe` with `ListUnsubscribeOptions` and `ListUnsubscribeHeaders`, and what a transport calls first: `checkMessage`, `checkScheduledAt`, `recipientsOf`, `addressOf`. No Node built-in: it runs anywhere |
 | `@nxgt/mail/renderer` | The renderer: `createMailRenderer`, `MailRenderer`, `MailRendererOptions`, `RenderOptions`, `MailVariables`, the types that type it with a build's `MailEmails` (`MailEmailsOf`, `AnyMailEmails`, `RenderArguments`), and `MANIFEST_FORMAT`, the newest manifest format it reads. Reads the build with `node:fs` |
 | `@nxgt/mail/conformance` | **For transport authors**: `describeMailer`, its cases as data, `runMailerCase`, the messages they send (`sampleMessage`, `sampleAttachment`, `sampleInlineImage`), and the memory mailer's harness as a worked example |
+| `@nxgt/mail/unsubscribe-token` | `signUnsubscribeToken` and `verifyUnsubscribeToken`, the signed token an unsubscribe link carries (HMAC-SHA256, `node:crypto`), with `UnsubscribeClaims`. Imports `node:crypto`, so not for an edge runtime |
 | `@nxgt/mail/telemetry` | **Optional**: `withMailTelemetry` and `withMailRendererTelemetry`, a span per send and per render on `@opentelemetry/api` — an optional peer, installed only if this subpath is imported |
 
 ## Usage
@@ -415,6 +416,44 @@ marketing and bulk mail, not on a password reset or a sign-in code. See
 [Sending — one-click unsubscribe](docs/guide/sending.md#one-click-unsubscribe)
 for the endpoint and DKIM.
 
+#### The token in the URL — `signUnsubscribeToken` and `verifyUnsubscribeToken`
+
+`@nxgt/mail/unsubscribe-token` signs what the link must say and checks it on
+the `POST`, with `node:crypto` and no dependency:
+
+```ts
+import { listUnsubscribe } from '@nxgt/mail';
+import {
+	signUnsubscribeToken,
+	verifyUnsubscribeToken,
+} from '@nxgt/mail/unsubscribe-token';
+
+const secret = process.env.UNSUBSCRIBE_SECRET as string; // at least 32 characters
+
+// When sending: claims are any JSON value but null.
+const token = signUnsubscribeToken({ user: 'u_1', list: 'news' }, secret);
+const headers = listUnsubscribe({
+	url: `https://example.com/unsubscribe?token=${token}`,
+});
+
+// In the endpoint that handles the POST:
+const claims = verifyUnsubscribeToken<{ user: string; list: string }>(token, secret);
+if (claims === null) {
+	// forged, tampered, truncated or signed with another secret: answer 400
+} else {
+	// unsubscribe claims.user from claims.list
+}
+```
+
+The token is `base64url(claims).base64url(HMAC-SHA256)`, URL-safe as it is.
+It is signed, not encrypted — anyone with the link can read the claims — and
+it never expires, since the link in an old e-mail must keep working: claim only
+what switches mail off. `verifyUnsubscribeToken` compares in constant time and
+answers `null` for anything this secret did not sign; the claims are not
+checked for shape, so narrow them. A secret shorter than 32 characters is a
+`TypeError`, on both sides. See
+[Sending — signing the token](docs/guide/sending.md#signing-the-token--signunsubscribetoken-and-verifyunsubscribetoken).
+
 ### Delivery events — `MailEvent`
 
 What a provider reports **after** `send` hands a message over: delivered,
@@ -716,7 +755,7 @@ gives a test file `describe` and `it` as bare identifiers, not on `globalThis`.
 
 ## Type safety, counted
 
-**31 plausible mistakes, 31 refused** at compile time, each measured by a
+**33 plausible mistakes, 33 refused** at compile time, each measured by a
 `@ts-expect-error` in
 [`test/types/refusals.ts`](https://github.com/softistx/nxgt-mail/blob/develop/packages/mail/test/types/refusals.ts)
 that fails the typecheck the moment it stops holding:
@@ -797,6 +836,13 @@ And `sendBatch`:
 31. A `MailScheduleErrorCode` the union does not declare: a provider's
     `cancel` or `reschedule` refuses with `ALREADY_SENT` or `UNKNOWN_ID`,
     never a third code of its own.
+
+And the unsubscribe token:
+
+32. Claims JSON cannot hold (a function) in `signUnsubscribeToken`: a token
+    carries a JSON value other than `null`.
+33. `verifyUnsubscribeToken` called with the claims where the token goes: the
+    token is the text of the link, the secret comes second.
 
 The same file holds the calls that must keep compiling: a refusal that refuses
 the correct call is a bug.
