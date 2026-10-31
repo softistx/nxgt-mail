@@ -98,6 +98,9 @@ How the messages are shaped:
 - [`listUnsubscribe: options must be an object, as { url }`](#listunsubscribe-options-must-be-an-object-as--url-)
 - [`listUnsubscribe: url must be a string`](#listunsubscribe-url-must-be-a-string)
 - [`listUnsubscribe: mailto must be a string`](#listunsubscribe-mailto-must-be-a-string)
+- [`signUnsubscribeToken: the secret must be a string of at least 32 characters`](#signunsubscribetoken-the-secret-must-be-a-string-of-at-least-32-characters)
+- [`signUnsubscribeToken: claims must be a JSON-serialisable value other than null`](#signunsubscribetoken-claims-must-be-a-json-serialisable-value-other-than-null)
+- [`verifyUnsubscribeToken` answers `null` for a token you just sent](#verifyunsubscribetoken-answers-null-for-a-token-you-just-sent)
 - [Gmail shows no unsubscribe button](#gmail-shows-no-unsubscribe-button)
 
 **Locale**
@@ -1333,6 +1336,49 @@ A `TypeError`.
 but is not a string — `null`, or an `{ name, address }` object.
 **Why:** `mailto` is one bare address, as text; leave it out for none.
 **Fix:** `mailto: 'unsubscribe@example.com'`, or no `mailto` at all.
+
+### `signUnsubscribeToken: the secret must be a string of at least 32 characters`
+
+A `TypeError`. `verifyUnsubscribeToken` throws the same with its own name: `verifyUnsubscribeToken: the secret must be a string of at least 32 characters`.
+
+**When:** the secret is shorter than 32 characters, or is `undefined` because
+an environment variable is not set.
+**Why:** a short secret makes a token that can be guessed offline; a mistake
+in the code, not in a token, so it throws rather than answering `null`.
+**Fix:** generate a long random secret and keep it in the environment:
+
+```ts
+import { signUnsubscribeToken } from '@nxgt/mail/unsubscribe-token';
+
+// openssl rand -base64 48
+const secret = process.env.UNSUBSCRIBE_SECRET as string;
+const token = signUnsubscribeToken({ user: 'u_1' }, secret);
+```
+
+### `signUnsubscribeToken: claims must be a JSON-serialisable value other than null`
+
+A `TypeError`.
+
+**When:** the claims are `undefined`, `null`, a function, a symbol or hold a
+cycle.
+**Why:** JSON cannot write them, and `null` is what `verifyUnsubscribeToken`
+answers for a token it refuses.
+**Fix:** pass plain data, such as `{ user: 'u_1', list: 'news' }`.
+
+### `verifyUnsubscribeToken` answers `null` for a token you just sent
+
+**When:** the endpoint refuses links that were valid.
+**Why, in order of likelihood:**
+
+- The secret differs between the sender and the endpoint, or was rotated
+  since the e-mail went out.
+- The token was cut or changed on the way (a mail client or a proxy that
+  truncated the URL). Compare the received string with the sent one.
+- The token was signed by another version of the layout: a verifier only
+  reads the layout it knows.
+
+**Fix:** log the fact, never the token or the secret, and check the secrets
+first.
 
 ### Gmail shows no unsubscribe button
 

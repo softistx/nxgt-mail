@@ -216,7 +216,7 @@ they are built.
 
 | Package | Runs | Holds |
 | --- | --- | --- |
-| `@nxgt/mail` | at run time | The `Mailer` port, the errors, locale selection, a memory mailer, `./conformance` for transports, and `./renderer`, which fills built files. **No dependency**; only `./renderer` imports a Node built-in (`node:fs`), held by `nxgt.noNodeBuiltins` |
+| `@nxgt/mail` | at run time | The `Mailer` port, the errors, locale selection, a memory mailer, `./conformance` for transports, and `./renderer`, which fills built files. **No dependency**; only `./renderer` (`node:fs`) and `./unsubscribe-token` (`node:crypto`) import a Node built-in; `.`, `./conformance` and `./telemetry` are held by `nxgt.noNodeBuiltins` |
 | `@nxgt/mail-config` | in the Maizzle project | `defineMailConfig`: the base config, and the plugins merged with their hooks chained |
 | `@nxgt/mail-i18n` | in the Maizzle project | The i18n plugin: ICU catalogues, `t()` in templates, one output per locale, the manifest; `createTranslator` |
 | `@nxgt/mail-ui` | in the Maizzle project | The `Nx*` components in the style of `@nxgt/material-vue`, its theme, the shared messages |
